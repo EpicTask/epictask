@@ -1,7 +1,9 @@
 # Task Coin
 Experimental blockchain project
 
-## Title: "TaskCoin: Incentivizing Task Completion with Digital Tokens on the XRPL"
+## Title: 
+
+"TaskCoin: Incentivizing Task Completion with Digital Tokens on the XRPL"
 
 ## Description: 
 
