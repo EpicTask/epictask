@@ -1,0 +1,33 @@
+# Ignore development files
+*.pyc
+*.pyo
+*.pyd
+__pycache__/
+
+# Ignore version control files
+.git/
+.svn/
+
+# Ignore testing and debugging files
+.env
+.env.*
+pytest_cache/
+coverage.xml
+htmlcov/
+
+# Ignore local configuration files
+*.log
+*.cfg
+*.ini
+
+# Ignore documentation files
+docs/
+README.md
+LICENSE
+
+# Ignore build and package files
+*.egg-info/
+dist/
+build/
+*.tar.gz
+*.whl
