@@ -83,6 +83,14 @@ tasks = [
         "deadline": "2023-05-10",
         "reward": 5.0,
         "status": "Pending"
+    },
+    {
+        "id": 11,
+        "title": "Take out trash",
+        "description": "Remove the trash and recyclables",
+        "deadline": "2023-05-11",
+        "reward": 5.0,
+        "status": "Pending"
     }
 
 ]
