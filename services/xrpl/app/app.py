@@ -6,7 +6,7 @@ import xumm
 import json
 import asyncio
 import nest_asyncio
-from flask import Flask, render_template
+from flask import Flask, render_template, request
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -39,7 +39,7 @@ async def send_payment_request(amount, source, destination, payment_reference):
     try:
         subscription = sdk.payload.create(xumm_payload)
         print(json.dumps(subscription.to_dict(), indent=4, sort_keys=True))
-        url = 'New payload created, URL: {}'.format(subscription.next.always)
+        url = '{}'.format(subscription.next.always)
         return url
     except Exception as e:
         print(f"Error creating subscription: {e}")
@@ -122,19 +122,20 @@ def hello():
         Service=service,
         Revision=revision)
 
-@app.route('/payment')
-def start_payment():
-    # try:
-    #     loop = asyncio.get_event_loop()
-    # except RuntimeError as e:
-    #     print(f"Error occurred: {e}")
-    #     data = {'url': f"Error occurred: {e}"}
-    #     return render_template('payment.html', data=data)
+@app.route('/payment', methods=["Get", "POST"])
+def process_payment():
+    data = request.get_json()
+    amount = data.get('amount')
+    source = data.get('source')
+    destination = data.get('destination')
+    note = data.get('note')
 
+    return initiate_payment(amount, source, destination, note)
+
+def initiate_payment(amount, source, destination, note):
     try:
         asyncio.set_event_loop(asyncio.SelectorEventLoop())
-        url = asyncio.get_event_loop().run_until_complete(send_payment_request(100000, 'rB4iz44nvW2yGDBYTkspVfyR2NMsR3NtfF', 'rpaxHGQVgQSXF1HaKGRpLKm6X7eh26v6eV', 'test payment request'))
-        # url = loop.run_until_complete(send_payment_request(100000, 'rB4iz44nvW2yGDBYTkspVfyR2NMsR3NtfF', 'rpaxHGQVgQSXF1HaKGRpLKm6X7eh26v6eV', 'test payment request'))
+        url = asyncio.get_event_loop().run_until_complete(send_payment_request(amount, source, destination, note))
         data = {'url': url}
     except RuntimeError as e:
         print(f"Error occurred: {e}")
@@ -142,6 +143,23 @@ def start_payment():
         return render_template('payment.html', data=data)
 
     return render_template('payment.html', data=data)
+
+@app.route('/paymentTest', methods=["Get", "POST"])
+def test_payment():
+    try:
+        asyncio.set_event_loop(asyncio.SelectorEventLoop())
+        url = asyncio.get_event_loop().run_until_complete(send_payment_request(100000, 'rB4iz44nvW2yGDBYTkspVfyR2NMsR3NtfF', 'rpaxHGQVgQSXF1HaKGRpLKm6X7eh26v6eV', 'test payment request'))
+        data = {'url': url}
+    except RuntimeError as e:
+        print(f"Error occurred: {e}")
+        data = {'url': f"Error occurred: {e}"}
+        return render_template('payment.html', data=data)
+
+    return render_template('payment.html', data=data)
+
+@app.route('/paymentForm', methods=["Get", "POST"])
+def paymentForm():
+    return render_template('payment_form.html')
 
 
 if __name__ == '__main__':
