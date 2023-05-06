@@ -1,0 +1,13 @@
+runtime: python39
+service: xrpl
+port: 8080
+
+# Set the container image to be built and deployed
+containers:
+  - name: app
+    image: gcr.io/task-coin-384722/xrpl-service
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - containerPort: 8080
