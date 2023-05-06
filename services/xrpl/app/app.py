@@ -124,11 +124,10 @@ def hello():
 
 @app.route('/payment', methods=["Get", "POST"])
 def process_payment():
-    data = request.get_json()
-    amount = data.get('amount')
-    source = data.get('source')
-    destination = data.get('destination')
-    note = data.get('note')
+    amount = request.form.get('amount')
+    source = request.form.get('source')
+    destination = request.form.get('destination')
+    note = request.form.get('note')
 
     return initiate_payment(amount, source, destination, note)
 
