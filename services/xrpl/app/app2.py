@@ -1,15 +1,12 @@
-"""
-A sample Hello World server.
-"""
+# app.py that uses FastAPI framework instead of FLASK
 import os
 import time
 import xumm
 import json
 import asyncio
-import websocket
-from flask import Flask, render_template, request, jsonify
+from fastapi import FastAPI, Request
+from starlette.responses import JSONResponse, HTMLResponse
 from dotenv import load_dotenv
-# XRPL imports
 from xrpl.clients import JsonRpcClient, WebsocketClient
 from xrpl.asyncio.account import get_account_info, get_balance, does_account_exist
 from xrpl.asyncio.transaction import ledger, send_reliable_submission
@@ -19,10 +16,8 @@ from xrpl.models.transactions import EscrowCreate, EscrowCancel, EscrowFinish
 from xrpl.models.requests import Subscribe, Unsubscribe, AccountObjects
 from xrpl.utils import xrp_to_drops
 
-
 load_dotenv()
-# pylint: disable=C0103
-app = Flask(__name__)
+app = FastAPI()
 
 api_key = os.environ.get('API_KEY')
 api_secret = os.environ.get('API_SECRET')
@@ -30,6 +25,7 @@ sdk = xumm.XummSdk(api_key, api_secret)
 
 client = JsonRpcClient("https://s.altnet.rippletest.net:51234/")
 clientWebsocket = WebsocketClient("wss://s.altnet.rippletest.net:51233")
+
 async def send_payment_request(amount, source, destination, payment_reference):
     url = ''
     # Create the XUMM payment request payload
@@ -121,6 +117,17 @@ async def send_payment_request_no_user_token(amount, source, destination, paymen
     except:
         print('Error')
 
+@app.get('/')
+def hello():
+    """Return a friendly HTTP greeting."""
+    message = "It's running!"
+
+    """Get Cloud Run environment variables."""
+    service = os.environ.get('K_SERVICE', 'Unknown service')
+    revision = os.environ.get('K_REVISION', 'Unknown revision')
+
+    return {"message": message, "Service": service, "Revision": revision}
+
 # Define a function that gets the account balance for a given address using asyncio
 async def get_balance(address: str, client) -> int:
     balance = await client.get_balance(address=address)
@@ -136,18 +143,15 @@ def get_account_balance(address: str) -> int:
     balance = loop.run_until_complete(get_balance(address=address, client=client))
     return balance
 
-# Define a route for retrieving balance for a given address
-@app.route('/balance/<address>')
+
+@app.get('/balance/{address}')
 def balance(address: str):
     try:
-        # Retrieve the balance for the given address
         balance = get_account_balance(address)
-        # Return the balance in JSON format
-        return jsonify({"address": address, "balance": balance})
+        return JSONResponse({"address": address, "balance": balance})
     except Exception as e:
-        # If there's an exception, return the error message
-        return jsonify({"error": str(e)})
-    
+        return JSONResponse({"error": str(e)})
+
 # Define an asynchronous function that takes an address as parameter
 async def get_account_info_async(address: str):
     
@@ -173,17 +177,13 @@ def get_account_info_sync(address: str):
 
 # Call the 'get_account_info_sync' function with the given address and store 
 # the result in a variable called 'account_info'
-@app.route('/account_info/<address>')
+@app.get('/account_info/{address}')
 def account_info(address: str):
     try:
         account_info = get_account_info_sync(address)
-
-        # Return a JSON representation of the 'result' attribute of the 'account_info' object
-        return jsonify(account_info.result)
+        return JSONResponse(account_info.result)
     except Exception as e:
-
-        # Return a JSON object with an 'error' key and a string value representing the encountered exception
-        return jsonify({"error": str(e)})
+        return JSONResponse({"error": str(e)})
 
 async def does_account_exist_async(address: str):
 
@@ -207,34 +207,14 @@ def does_account_exist_sync(address: str) -> bool:
     return exists
 
 # Checks whether an account exists with the specified address parameter.
-@app.route('/account_exists/<address>')
+@app.get('/account_exists/{address}')
 def account_exists(address: str):
     try:
         exists = does_account_exist_sync(address)
-        return jsonify({"address": address, "exists": exists})
+        return JSONResponse({"address": address, "exists": exists})
     except Exception as e:
-        return jsonify({"error": str(e)})
-        
-@app.route('/')
-def hello():
-    """Return a friendly HTTP greeting."""
-    message = "It's running!"
+        return JSONResponse({"error": str(e)})
 
-    """Get Cloud Run environment variables."""
-    service = os.environ.get('K_SERVICE', 'Unknown service')
-    revision = os.environ.get('K_REVISION', 'Unknown revision')
-
-    return render_template('index.html',
-                           message=message,
-                           Service=service,
-                           Revision=revision)
-
-# Send payment request
-@app.route('/payment_request/<int:amount>/<string:source>/<string:destination>/<string:note>', methods=['GET', 'POST'])
-def process_payment(amount, source, destination, note):
-    return initiate_payment(amount, source, destination, note)
-# http://localhost:8080/payment_request/500/rB4iz44nvW2yGDBYTkspVfyR2NMsR3NtfF/rpaxHGQVgQSXF1HaKGRpLKm6X7eh26v6eV/Grocery%20shopping
-# Send a payment request to the specified source and destination with the specified amount and note. 
 def initiate_payment(amount, source, destination, note):
     try:
         asyncio.set_event_loop(asyncio.SelectorEventLoop())
@@ -244,13 +224,17 @@ def initiate_payment(amount, source, destination, note):
     except RuntimeError as e:
         print(f"Error occurred: {e}")
         data = {'url': f"Error occurred: {e}"}
-        return render_template('payment.html', data=data)
+        return JSONResponse(data)
 
-    return render_template('payment.html', data=data)
+    return JSONResponse(data)
+
+@app.get('/payment_request/{amount}/{source}/{destination}/{note}')
+def process_payment(amount: int, source: str, destination: str, note: str):
+    return initiate_payment(amount, source, destination, note)
 
 
-@app.route('/paymentTest', methods=["Get", "POST"])
-def test_payment():
+@app.get('/paymentTest')
+async def test_payment(request: Request):
     try:
         asyncio.set_event_loop(asyncio.SelectorEventLoop())
         url = asyncio.get_event_loop().run_until_complete(send_payment_request(100000,
@@ -259,14 +243,10 @@ def test_payment():
     except RuntimeError as e:
         print(f"Error occurred: {e}")
         data = {'url': f"Error occurred: {e}"}
-        return render_template('payment.html', data=data)
+        return JSONResponse(data)
 
-    return render_template('payment.html', data=data)
+    return JSONResponse(data)
 
-
-@app.route('/paymentForm', methods=["Get", "POST"])
-def paymentForm():
-    return render_template('payment_form.html')
 
 async def get_fee_async():
     return await get_fee(client)
@@ -278,14 +258,14 @@ def get_fee_sync() -> int:
     return fee
 
 # Returns the transaction fee as a JSON object
-@app.route('/transaction_fee')
-def transaction_fee():
+@app.get('/transaction_fee')
+async def transaction_fee():
     try:
         fee = get_fee_sync()
-        return jsonify({"transaction_fee": fee})
+        return JSONResponse({"transaction_fee": fee})
     except Exception as e:
-        return jsonify({"error": str(e)})
-    
+        return JSONResponse({"error": str(e)})
+
 async def get_transaction_async(tx_hash: str):
     return await ledger.get_transaction_from_hash(tx_hash, client)
 
@@ -295,17 +275,16 @@ def get_transaction_sync(tx_hash: str):
     tx = loop.run_until_complete(get_transaction_async(tx_hash))
     return tx
 
-@app.route('/verify_transaction/<tx_hash>', methods=['GET'])
-def verify_transaction(tx_hash: str):
+@app.get('/verify_transaction/{tx_hash}')
+async def verify_transaction(tx_hash: str):
     if not tx_hash:
-        return jsonify({"error": "Missing 'tx_hash' parameter."})
+        return JSONResponse({"error": "Missing 'tx_hash' parameter."})
 
     try:
         tx = get_transaction_sync(tx_hash)
-        return jsonify({"transaction_hash": tx_hash, "transaction": tx.result})
+        return JSONResponse({"transaction_hash": tx_hash, "transaction": tx.result})
     except Exception as e:
-        return jsonify({"error": str(e)})
-
+        return JSONResponse({"error": str(e)})
 
 async def submit_escrow_async(wallet: Wallet, destination: str, amount: int, finish_after: int):
     escrow = EscrowCreate(
@@ -339,11 +318,11 @@ def generate_xrpl_timestamp(interval):
     return timestamp
 
 # Create an Escrow 
-@app.route('/create_escrow/<string:destination>/<int:amount>/<string:finish_after>', methods=["GET","POST"])
-def create_escrow(destination, amount, finish_after):
-
+@app.get('/create_escrow/{destination}/{amount}/{finish_after}')
+async def create_escrow(destination: str, amount: int, finish_after: str):
     if not all([destination, amount, finish_after]):
-        return jsonify({"error": "Missing required parameters."})
+        return JSONResponse({"error": "Missing required parameters."})
+    
     fiveMinute = generate_xrpl_timestamp('5min')
     tenMinute = generate_xrpl_timestamp('10min')
     # finish_after = int(finish_after)
@@ -366,9 +345,9 @@ def create_escrow(destination, amount, finish_after):
             "CancelAfter":tenMinute
         },
     }
-
     payload = sdk.payload.create(escrow_create)
-    return json.dumps(payload.to_dict(), indent=4, sort_keys=True)
+    return JSONResponse(payload.to_dict())
+
 # Example    
 # http://localhost:8080/create_escrow/rB4iz44nvW2yGDBYTkspVfyR2NMsR3NtfF/10000/1677649420
 # curl -X POST http://localhost:5000/create_escrow_xumm \
@@ -376,10 +355,11 @@ def create_escrow(destination, amount, finish_after):
 #      -F amount=1000000 \
 #      -F finish_after=1677649420
 
-# Check Escrow 
-@app.route('/lookup_escrow/<string:account>', methods=["GET","POST"])
-def lookup_escrow(account):
-
+# Lookup Escrow 
+@app.get('/lookup_escrow/{account}')
+async def lookup_escrow(account: str):
+    if not account:
+        return JSONResponse({"error": "Missing 'account' parameter."})
     escrows = []
     ledger_index = "validated"
     marker = None
@@ -403,14 +383,11 @@ def lookup_escrow(account):
             break
 
     return escrows
-# http://localhost:8080/lookup_escrow/rB4iz44nvW2yGDBYTkspVfyR2NMsR3NtfF
 
-# Cancel Escrow
-@app.route('/cancel_escrow_xumm/<string:owner>', methods=["GET","POST"])
-def cancel_escrow_xumm(owner):
-
-    if not all([owner]):
-        return jsonify({"error": "Missing required parameters."})
+@app.get('/cancel_escrow_xumm/{owner}')
+async def cancel_escrow_xumm(owner: str):
+    if not owner:
+        return JSONResponse({"error": "Missing 'owner' parameter."})
 
     wallet = "rB4iz44nvW2yGDBYTkspVfyR2NMsR3NtfF"
     offer_sequence = int(37541655)
@@ -423,14 +400,14 @@ def cancel_escrow_xumm(owner):
         },
     }
     payload = sdk.payload.create(escrow_cancel)
-    return json.dumps(payload.to_dict(), indent=4, sort_keys=True)
+
+    return JSONResponse(payload.to_dict())
 
 # Finish Escrow
-@app.route('/finish_escrow_xumm/<string:owner>', methods=["GET","POST"])
-def finish_escrow_xumm(owner):
-
-    if not all([owner]):
-        return jsonify({"error": "Missing required parameters."})
+@app.get('/finish_escrow_xumm/{owner}')
+async def finish_escrow_xumm(owner: str):
+    if not owner:
+        return JSONResponse({"error": "Missing 'owner' parameter."})
 
     wallet = "rB4iz44nvW2yGDBYTkspVfyR2NMsR3NtfF"
     offer_sequence = int(1)
@@ -448,62 +425,9 @@ def finish_escrow_xumm(owner):
         },
     }
     payload = sdk.payload.create(escrow_finish)
-    return json.dumps(payload.to_dict(), indent=4, sort_keys=True)
+
+    return JSONResponse(payload.to_dict())
 # http://localhost:8080/finish_escrow_xumm/rB4iz44nvW2yGDBYTkspVfyR2NMsR3NtfF/1
-
-
-# async def submit_transaction_async(transaction, wallet: Wallet):
-#     return await send_reliable_submission(transaction, wallet, client)
-
-# def submit_transaction_sync(transaction, wallet: Wallet):
-#     loop = asyncio.new_event_loop()
-#     asyncio.set_event_loop(loop)
-#     result = loop.run_until_complete(submit_transaction_async(transaction, wallet))
-#     return result
-
-# @app.route('/cancel_escrow', methods=['POST'])
-# def cancel_escrow():
-#     secret = request.form.get('wallet_secret')
-#     offer_sequence = request.form.get('offer_sequence')
-
-#     if not all([secret, offer_sequence]):
-#         return jsonify({"error": "Missing required parameters."})
-
-#     wallet = Wallet.from_seed(secret)
-#     offer_sequence = int(offer_sequence)
-
-#     try:
-#         escrow_cancel = EscrowCancel(
-#             account=wallet.classic_address,
-#             offer_sequence=offer_sequence,
-#         )
-#         result = submit_transaction_sync(escrow_cancel, wallet)
-#         return jsonify(result)
-#     except Exception as e:
-#         return jsonify({"error": str(e)})
-
-# @app.route('/finish_escrow', methods=['POST'])
-# def finish_escrow():
-#     secret = request.form.get('wallet_secret')
-#     owner = request.form.get('owner')
-#     offer_sequence = request.form.get('offer_sequence')
-
-#     if not all([secret, owner, offer_sequence]):
-#         return jsonify({"error": "Missing required parameters."})
-
-#     wallet = Wallet.from_seed(secret)
-#     offer_sequence = int(offer_sequence)
-
-#     try:
-#         escrow_finish = EscrowFinish(
-#             account=wallet.classic_address,
-#             owner=owner,
-#             offer_sequence=offer_sequence,
-#         )
-#         result = submit_transaction_sync(escrow_finish, wallet)
-#         return jsonify(result)
-#     except Exception as e:
-#         return jsonify({"error": str(e)})      
 
 # Subscribe functions to listen to status updates on one or more accounts
 async def account_subscription_async(command, accounts):
@@ -517,33 +441,32 @@ async def account_subscription_sync(command, accounts):
     result = asyncio.get_event_loop().run_until_complete(account_subscription_async(command, accounts))
     return result
 
-@app.route('/subscribe', methods=['GET','POST'])
-def subscribe():
-    accounts = request.args.getlist('accounts')
+@app.get('/subscribe')
+async def subscribe(request: Request):
+    accounts = request.query_params.getlist('accounts')
 
     if not accounts:
-        return jsonify({"error": "Missing 'accounts' parameter."})
+        return JSONResponse({"error": "Missing 'accounts' parameter."})
 
     try:
         result = account_subscription_sync("subscribe", accounts)
-        return jsonify(result)
+        return JSONResponse(result)
     except Exception as e:
-        return jsonify({"error": str(e)})
-
+        return JSONResponse({"error": str(e)})
 #http://localhost:8080/subscribe?accounts=rB4iz44nvW2yGDBYTkspVfyR2NMsR3NtfF
-@app.route('/unsubscribe', methods=['POST'])
-def unsubscribe():
-    accounts = request.args.getlist('accounts')
+
+@app.post('/unsubscribe')
+async def unsubscribe(request: Request):
+    accounts = request.query_params.getlist('accounts')
 
     if not accounts:
-        return jsonify({"error": "Missing 'accounts' parameter."})
+        return JSONResponse({"error": "Missing 'accounts' parameter."})
 
     try:
         result = account_subscription_sync("unsubscribe", accounts)
-        return jsonify(result)
+        return JSONResponse(result)
     except Exception as e:
-        return jsonify({"error": str(e)})
-
+        return JSONResponse({"error": str(e)})
 
 if __name__ == '__main__':
     server_port = os.environ.get('PORT', '8080')
