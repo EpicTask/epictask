@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Account Info | Task Coin</title>
+    <link
+      href="https://fonts.googleapis.com/css?family=Roboto"
+      rel="preload"
+      as="font"
+    />
+    <link href="/static/cloud-run-32-color.png" rel="icon" type="image/png" />
+    <link href="/static/style.css" rel="stylesheet" type="text/css" />
+  </head>
+
+  <body>
+    <div class="container">
+      <div class="hero">
+        <div style="text-align: center">
+          <picture>
+            <source
+              srcset="/static/celebration-dark.svg"
+              media="(prefers-color-scheme: dark)"
+            />
+            <img
+              src="/static/celebration.svg"
+              alt="A group celebrating"
+              width="427"
+              height="231"
+            />
+          </picture>
+        </div>
+
+        <div class="message">
+          <h1>Account Information</h1>
+        </div>
+      </div>
+      <div class="details">
+        <p>
+			This created the revision <code>{{Revision}}</code> of the Cloud Run
+			service <code>{{Service}}</code>.
+		  </p>
+  
+		  <h3>Test Functions</h3>
+		  <p class="cta">
+			  <a href="/paymentForm" target="_blank" rel="noopener">
+				  Payment Form
+			  </a>
+			  <a href="/payment" target="_blank" rel="noopener">
+				  Test Payment
+			  </a>
+		  </p>
+      </div>
+    </div>
+  </body>
+</html>
