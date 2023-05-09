@@ -3,15 +3,15 @@ Experimental Blockchain Project
 
 ## Micro-Service List: 
 
-### XRPL
+### 1. XRPL
 Description: Controls all functionality related to the xrp ledger.
 
-### Verification
+### 2. Verification
 Description: Verifies task completion
 
-### Task Management
+### 3. Task Management
 Description: Manages task lifecycle.
 
-### Cloud Functions
+### 4. Cloud Functions
 
-### Pub/Sub
+### 5. Pub/Sub
