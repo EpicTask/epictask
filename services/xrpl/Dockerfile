@@ -14,7 +14,7 @@ RUN pip install --trusted-host pypi.python.org -r requirements.txt
 COPY app/ .
 
 # Run app.py when the container launches
-ENTRYPOINT ["python", "app2.py"]
+ENTRYPOINT ["python", "app.py"]
 # # Expose port 8080 to the outside world
 # EXPOSE 8080
 
