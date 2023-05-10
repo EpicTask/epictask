@@ -4,7 +4,7 @@ import os
 import uvicorn
 import xumm
 from accounts_xrpl import (does_account_exist_sync, get_account_balance,
-                           get_account_info_sync, get_fee_sync, lookup_escrow,
+                           get_account_info_sync, lookup_escrow,
                            get_transaction_sync)
 from escrow_xrpl import generate_xrpl_timestamp
 from fastapi import FastAPI, Request
@@ -12,7 +12,9 @@ from google_secrets import get_secret
 from payments_xrpl import initiate_payment, send_payment_request
 from starlette.responses import JSONResponse
 from subscription_xrpl import account_subscription_sync
+from firestore_db import write_response_to_firestore
 from xrpl.clients import JsonRpcClient, WebsocketClient
+from xrpl.asyncio.ledger import get_fee
 
 app = FastAPI()
 
@@ -40,7 +42,9 @@ def hello():
 def balance(address: str):
     try:
         balance = get_account_balance(address)
-        return JSONResponse({"address": address, "balance": balance})
+        response = {"address": address, "balance": balance}
+        doc_id = write_response_to_firestore(response, "balance")
+        return JSONResponse({"doc_id": doc_id, "response": response})
     except Exception as e:
         return JSONResponse({"error": str(e)})
 #    http://0.0.0.0:8080/balance/rB4iz44nvW2yGDBYTkspVfyR2NMsR3NtfF
@@ -51,6 +55,7 @@ def balance(address: str):
 def account_info(address: str):
     try:
         account_info = get_account_info_sync(address)
+        write_response_to_firestore(account_info.result,"account_info")
         return JSONResponse(account_info.result)
     except Exception as e:
         return JSONResponse({"error": str(e)})
@@ -61,7 +66,9 @@ def account_info(address: str):
 def account_exists(address: str):
     try:
         exists = does_account_exist_sync(address)
-        return JSONResponse({"address": address, "exists": exists})
+        response = {"address": address, "exists": exists}
+        write_response_to_firestore(response,"account_exists")
+        return JSONResponse(response)
     except Exception as e:
         return JSONResponse({"error": str(e)})
 
@@ -88,10 +95,12 @@ async def test_payment(request: Request):
 
 # Returns the transaction fee as a JSON object
 @app.get('/transaction_fee')
-def transaction_fee():
+async def transaction_fee():
     try:
-        fee = get_fee_sync()
-        return JSONResponse({"transaction_fee": fee})
+        fee = await get_fee(client)
+        response = {"transaction_fee": fee}
+        doc_id = write_response_to_firestore(response,"transaction_fee")
+        return JSONResponse({"doc_id": doc_id, "response": response})
     except Exception as e:
         return JSONResponse({"error": str(e)})
 
@@ -103,7 +112,9 @@ async def verify_transaction(tx_hash: str):
 
     try:
         tx = get_transaction_sync(tx_hash)
-        return JSONResponse({"transaction_hash": tx_hash, "transaction": tx.result})
+        response = {"transaction_hash": tx_hash, "transaction": tx.result}
+        doc_id = write_response_to_firestore(response,"verify_transaction")
+        return JSONResponse({"doc_id": doc_id, "response": response})
     except Exception as e:
         return JSONResponse({"error": str(e)})
 

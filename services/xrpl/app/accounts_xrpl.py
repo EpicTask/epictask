@@ -57,13 +57,6 @@ def does_account_exist_sync(address: str) -> bool:
     # Return the 'exists' variable containing the result from does_account_exist_async
     return exists
 
-# Get Fee
-
-async def get_fee_sync() -> int:
-    fee = await get_fee(client)
-    return fee
-
-
 async def get_transaction_async(tx_hash: str):
     return await ledger.get_transaction_from_hash(tx_hash, client)
 
