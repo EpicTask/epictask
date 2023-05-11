@@ -1,0 +1,16 @@
+{
+    "configurations": [
+      {
+        "name": "Deploy Cloud Function",
+        "type": "cloudcode.cloudfunctions",
+        "request": "launch",
+        "functionName": "generatContract",
+        "gen": "GEN_2",
+        "entryPoint": "generateContract",
+        "revision": "generatcontract-00004-hef",
+        "testInput": "",
+        "region": "us-central1",
+        "runtime": "nodejs16"
+      }
+    ]
+}
