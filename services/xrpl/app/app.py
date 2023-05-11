@@ -1,22 +1,33 @@
 # app.py that uses FastAPI framework instead of FLASK
 import asyncio
+import json
 import os
+from xrpl_models import PaymentRequest
+
 import uvicorn
 import xumm
-from accounts_xrpl import (does_account_exist_sync, get_account_balance,
-                           get_account_info_sync, lookup_escrow,
-                           get_transaction_sync)
+from accounts_xrpl import (does_account_exist_async, get_account_balance,
+                           get_account_info_async, lookup_escrow,
+                           get_transaction_async)
 from escrow_xrpl import generate_xrpl_timestamp
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, Request, WebSocket, WebSocketDisconnect
+from fastapi.responses import HTMLResponse
+from fastapi.templating import Jinja2Templates
 from google_secrets import get_secret
-from payments_xrpl import initiate_payment, send_payment_request
+from payments_xrpl import send_payment_request, handle_payment_request
 from starlette.responses import JSONResponse
 from subscription_xrpl import account_subscription_sync
 from firestore_db import write_response_to_firestore
+from websocket_handler import connection_manager
 from xrpl.clients import JsonRpcClient, WebsocketClient
 from xrpl.asyncio.ledger import get_fee
 
+
 app = FastAPI()
+
+
+
+templates = Jinja2Templates(directory="templates")
 
 api_key = get_secret('xumm-key')
 api_secret = get_secret('xumm-secret')
@@ -26,8 +37,8 @@ client = JsonRpcClient("https://s.altnet.rippletest.net:51234/")
 clientWebsocket = WebsocketClient("wss://s.altnet.rippletest.net:51233")
 
 
-@app.get('/')
-def hello():
+@app.get('/', response_class=HTMLResponse)
+async def hello(request: Request):
     """Return a friendly HTTP greeting."""
     message = "It's running!"
 
@@ -35,13 +46,13 @@ def hello():
     service = os.environ.get('K_SERVICE', 'Unknown service')
     revision = os.environ.get('K_REVISION', 'Unknown revision')
 
-    return {"message": message, "Service": service, "Revision": revision}
+    return templates.TemplateResponse("index.html", {"request": request, "message": message, "Service": service, "Revision": revision})
 
 
 @app.get('/balance/{address}')
-def balance(address: str):
+async def balance(address: str):
     try:
-        balance = get_account_balance(address)
+        balance = await get_account_balance(address)
         response = {"address": address, "balance": balance}
         doc_id = write_response_to_firestore(response, "balance")
         return JSONResponse({"doc_id": doc_id, "response": response})
@@ -51,11 +62,12 @@ def balance(address: str):
 
 # Call the 'get_account_info_sync' function with the given address and store
 # the result in a variable called 'account_info'
+
 @app.get('/account_info/{address}')
 def account_info(address: str):
     try:
-        account_info = get_account_info_sync(address)
-        write_response_to_firestore(account_info.result,"account_info")
+        account_info = get_account_info_async(address)
+        write_response_to_firestore(account_info.result, "account_info")
         return JSONResponse(account_info.result)
     except Exception as e:
         return JSONResponse({"error": str(e)})
@@ -63,19 +75,15 @@ def account_info(address: str):
 
 # Checks whether an account exists with the specified address parameter.
 @app.get('/account_exists/{address}')
-def account_exists(address: str):
+async def account_exists(address: str):
     try:
-        exists = does_account_exist_sync(address)
+        exists = await does_account_exist_async(address)
         response = {"address": address, "exists": exists}
-        write_response_to_firestore(response,"account_exists")
+        write_response_to_firestore(response, "account_exists")
         return JSONResponse(response)
     except Exception as e:
         return JSONResponse({"error": str(e)})
 
-
-@app.get('/payment_request/{amount}/{source}/{destination}/{note}')
-def process_payment(amount: int, source: str, destination: str, note: str):
-    return initiate_payment(amount, source, destination, note)
 
 
 @app.get('/paymentTest')
@@ -99,7 +107,7 @@ async def transaction_fee():
     try:
         fee = await get_fee(client)
         response = {"transaction_fee": fee}
-        doc_id = write_response_to_firestore(response,"transaction_fee")
+        doc_id = write_response_to_firestore(response, "transaction_fee")
         return JSONResponse({"doc_id": doc_id, "response": response})
     except Exception as e:
         return JSONResponse({"error": str(e)})
@@ -111,9 +119,9 @@ async def verify_transaction(tx_hash: str):
         return JSONResponse({"error": "Missing 'tx_hash' parameter."})
 
     try:
-        tx = get_transaction_sync(tx_hash)
+        tx = await get_transaction_async(tx_hash)
         response = {"transaction_hash": tx_hash, "transaction": tx.result}
-        doc_id = write_response_to_firestore(response,"verify_transaction")
+        doc_id = write_response_to_firestore(response, "verify_transaction")
         return JSONResponse({"doc_id": doc_id, "response": response})
     except Exception as e:
         return JSONResponse({"error": str(e)})
@@ -213,6 +221,7 @@ async def finish_escrow_xumm(owner: str):
     return JSONResponse(payload.to_dict())
 # http://localhost:8080/finish_escrow_xumm/rB4iz44nvW2yGDBYTkspVfyR2NMsR3NtfF/1
 
+
 @app.get('/subscribe')
 async def subscribe(request: Request):
     accounts = request.query_params.getlist('accounts')
@@ -221,7 +230,7 @@ async def subscribe(request: Request):
         return JSONResponse({"error": "Missing 'accounts' parameter."})
 
     try:
-        result = account_subscription_sync("subscribe", accounts)
+        result = await account_subscription_sync("subscribe", accounts)
         return JSONResponse(result)
     except Exception as e:
         return JSONResponse({"error": str(e)})
@@ -236,10 +245,36 @@ async def unsubscribe(request: Request):
         return JSONResponse({"error": "Missing 'accounts' parameter."})
 
     try:
-        result = account_subscription_sync("unsubscribe", accounts)
-        return JSONResponse(result)
+        result = await account_subscription_sync("unsubscribe", accounts)
+        return result
     except Exception as e:
         return JSONResponse({"error": str(e)})
+
+
+# Make a payment request
+@app.post('/payment_request/')
+async def process_payment(payment_request: PaymentRequest):
+    response = await handle_payment_request(payment_request)
+    await connection_manager.send_update(response)
+    return response
+
+
+# Websocket Logic
+async def handle_websocket_message(websocket: WebSocket, message: str):
+    data = json.loads(message)
+    payment_request = PaymentRequest(**data)
+    if payment_request.type == "payment_request":
+        await handle_payment_request(payment_request)
+
+@app.websocket("/ws")
+async def websocket_endpoint(websocket: WebSocket):
+    await connection_manager.connect(websocket)
+    try:
+        while True:
+            message = await websocket.receive_text()
+            await handle_websocket_message(websocket, message)
+    except WebSocketDisconnect:
+        connection_manager.disconnect(websocket)
 
 # Execute the application when the script is run
 if __name__ == "__main__":
