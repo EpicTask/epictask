@@ -1,11 +1,10 @@
-from datetime import datetime
 from pydantic import BaseModel
 from typing import Optional
 
 class TaskEvent(BaseModel):
     event_id: str
     event_type: str
-    timestamp: datetime
+    timestamp: str
     task_id: str
     user_id: str
     status: str
@@ -23,6 +22,7 @@ class TaskCreatedEvent(BaseModel):
     terms_id: str
     reward_amount: float
     reward_currency: str
+    payment_method: str #Pay directly or Create Escrow
 
 class TaskAssignedEvent(BaseModel):
     task_id: str
@@ -48,7 +48,7 @@ class TaskCancelledEvent(BaseModel):
 
 class TaskExpiredEvent(BaseModel):
     task_id: str
-    expiry_time: datetime
+    expiry_time: str
 
 class TaskRewardedEvent(BaseModel):
     task_id: str
@@ -68,7 +68,7 @@ class TaskCommentAddedEvent(BaseModel):
 
 class UserRegisteredEvent(BaseModel):
     user_id: str
-    registration_date: datetime
+    registration_date: str
 
 class UserUpdatedEvent(BaseModel):
     user_id: str
