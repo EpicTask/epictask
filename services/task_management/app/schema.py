@@ -1,5 +1,5 @@
 from pydantic import BaseModel
-from typing import Optional
+from typing import Optional, List
 
 class TaskEvent(BaseModel):
     event_id: str
@@ -18,6 +18,8 @@ class TaskCreatedEvent(BaseModel):
     task_id: str
     project_id: str
     project_name: str
+    requires_attachments:bool
+    attachments: List[str]
     terms_blob: str
     terms_id: str
     reward_amount: float
