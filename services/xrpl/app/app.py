@@ -156,6 +156,7 @@ async def create_escrow(destination: str, amount: int, finish_after: str):
         },
     }
     payload = sdk.payload.create(escrow_create)
+    write_response_to_firestore(payload.to_dict(), "create_escrow")
     return JSONResponse(payload.to_dict())
 
 # Example
@@ -171,6 +172,7 @@ async def create_escrow(destination: str, amount: int, finish_after: str):
 @app.get('/lookup_escrow/{account}')
 def lookup_escrow_sync(account: str):
     escrow_info = lookup_escrow(account)
+    write_response_to_firestore(escrow_info, "lookup_escrow")
     return escrow_info
 
 
@@ -190,7 +192,7 @@ async def cancel_escrow_xumm(owner: str):
         },
     }
     payload = sdk.payload.create(escrow_cancel)
-
+    write_response_to_firestore(payload.to_dict(), "cancel_escrow_xumm")
     return JSONResponse(payload.to_dict())
 
 # Finish Escrow
@@ -217,7 +219,7 @@ async def finish_escrow_xumm(owner: str):
         },
     }
     payload = sdk.payload.create(escrow_finish)
-
+    write_response_to_firestore(payload.to_dict(), "finish_escrow_xumm")
     return JSONResponse(payload.to_dict())
 # http://localhost:8080/finish_escrow_xumm/rB4iz44nvW2yGDBYTkspVfyR2NMsR3NtfF/1
 

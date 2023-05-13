@@ -1,5 +1,6 @@
 import asyncio
 import json
+from firestore_db import write_response_to_firestore
 from xrpl_models import PaymentRequest
 import xumm
 from google_secrets import get_secret
@@ -40,6 +41,7 @@ async def send_payment_request(amount, source, destination, payment_reference):
 
     try:
         subscription = sdk.payload.create(xumm_payload)
+        write_response_to_firestore(subscription.to_dict(), "payment_request")
         response = json.dumps(subscription.to_dict(), indent=4, sort_keys=True)
         await connection_manager.send_update(response)
         # url = '{}'.format(subscription.next.always)
