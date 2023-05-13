@@ -18,8 +18,7 @@ class TaskCreatedEvent(BaseModel):
     task_id: str
     project_id: str
     project_name: str
-    requires_attachments:bool
-    attachments: List[str]
+    requires_attachments:bool = False
     terms_blob: str
     terms_id: str
     reward_amount: float
@@ -43,6 +42,8 @@ class TaskUpdatedEvent(BaseModel):
 class TaskCompletedEvent(BaseModel):
     task_id: str
     completed_by: str
+    requires_attachments:bool = False
+    attachments: List[str] = None
 
 class TaskCancelledEvent(BaseModel):
     task_id: str
