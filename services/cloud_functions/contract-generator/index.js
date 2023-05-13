@@ -67,6 +67,8 @@ http("generateContract", async (req, res) => {
       temperature: 0.5,
     });
 
+    // TODO: Call TaskManagement api to generate terms_id and save contract to database.
+
     const contract = response.data.choices[0].text.trim();
     res.status(200).send(contract);
   } catch (error) {
