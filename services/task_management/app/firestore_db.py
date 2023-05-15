@@ -24,7 +24,7 @@ def write_response_to_firestore(response):
 
         # Update the document with the generated ID
         doc_ref.update({
-            'doc_id': doc_id,
+            'task_id': doc_id,
             'timestamp': firestore.SERVER_TIMESTAMP
         })
 
