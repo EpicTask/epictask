@@ -2,12 +2,6 @@ import { http } from "@google-cloud/functions-framework";
 import { SecretManagerServiceClient } from "@google-cloud/secret-manager";
 import { Configuration, OpenAIApi } from "openai";
 
-// Register an HTTP function with the Functions Framework that will be executed
-// when you make an HTTP request to the deployed function's endpoint.
-http("helloHttp", (req, res) => {
-  res.send("Hello World!");
-});
-
 /**
  * Retrieves the latest version of a secret from Google Cloud Secret Manager.
  * @async
