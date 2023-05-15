@@ -39,11 +39,11 @@ def get_tasks():
     db = firestore.Client(project='task-coin-384722')
     doc_output = []
 
-    users_ref = db.collection(u'task_management_service')
-    docs = users_ref.stream()
+    task_events = db.collection(u'task_events')
+    docs = task_events.stream()
 
     for doc in docs:
-        print(f'{doc.id} => {doc.to_dict()}')
-        doc_output.append(doc.id)
+        # print(f'{doc.id} => {doc.to_dict()}')
+        doc_output.append(doc.to_dict())
 
     return {"docs": doc_output}
