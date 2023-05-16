@@ -29,7 +29,7 @@
 
       <v-toolbar-title>{{ title }}</v-toolbar-title>
       <v-spacer />
-      <v-btn text class="ml-4" @click="login"> Login </v-btn>
+      <v-btn text class="ml-4" @click="login"> Connect Wallet </v-btn>
     </v-app-bar>
     <v-main>
       <v-container>
@@ -64,7 +64,7 @@ export default {
         {
           icon: "mdi-home",
           title: "Home",
-          to: "/",
+          to: "/main",
         },
         {
           icon: "mdi-clipboard",
