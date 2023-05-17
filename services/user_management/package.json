@@ -1,0 +1,32 @@
+{
+  "name": "user-management-service",
+  "version": "0.0.1",
+  "description": "Service for managing users",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "lint": "eslint **.js",
+    "fix": "eslint --fix *.js",
+    "test": "mocha test/*.test.js --check-leaks --timeout 5000"
+  },
+  "author": "Randy Nolden",
+  "engines": {
+    "node": ">=11.14"
+  },
+  "dependencies": {
+    "express": "^4.17.1",
+    "handlebars": "^4.7.4",
+    "firebase-admin": "11.8.0",
+    "mongoose": "7.1.1"
+  },
+  "devDependencies": {
+    "eslint": "8.29.0",
+    "eslint-config-prettier": "8.5.0",
+    "eslint-plugin-node": "11.1.0",
+    "eslint-plugin-prettier": "4.2.1",
+    "eslint-plugin-promise": "6.1.1",
+    "gaxios": "5.0.2",
+    "mocha": "10.1.0",
+    "prettier": "2.8.1"
+  }
+}
