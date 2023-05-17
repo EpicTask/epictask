@@ -23,11 +23,11 @@ class TaskCreatedEvent(BaseModel):
     terms_id: str
     reward_amount: float
     reward_currency: str
-    payment_method: str #Pay directly or Create Escrow
+    payment_method: str #Pay directly or Create Escrow, Tokens
 
 class TaskAssignedEvent(BaseModel):
     task_id: str
-    assigned_to: str
+    assigned_to_id: str
     assigned_to_wallet_address: str
     task_creator_id: str
     task_creator_wallet_address: str
@@ -47,7 +47,7 @@ class TaskCompletedEvent(BaseModel):
 
 class TaskCancelledEvent(BaseModel):
     task_id: str
-    cancelled_by: str
+    cancelled_by_id: str
 
 class TaskExpiredEvent(BaseModel):
     task_id: str
