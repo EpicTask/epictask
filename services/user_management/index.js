@@ -1,16 +1,17 @@
 const express = require('express');
 const saveUserEvent = require('./fb_functions');
 const {UserEvent, getSchema} = require('./schema');
+const { handleIncomingEvent } = require('./event_handler');
 const app = express();
 const router = express.Router();
 // Serve the files in /assets at the URI /assets.
 app.use(express.json());
 
 // Create a new UserEvent
-app.post('/events/:event_type', async (req, res) => {
+app.post('/events/', async (req, res) => {
   try {
-    const eventType = req.params.event_type;
     const eventData = req.body;
+    const eventType = eventData.event_type;
     console.log(req.body);
 
 
@@ -32,7 +33,12 @@ app.post('/events/:event_type', async (req, res) => {
 
     // Save the user event to Firestore
     saveUserEvent(eventType, userEvent);
-    res.status(201).json(result);
+    try {
+      handleIncomingEvent(eventType, userEvent);
+    } catch (error) {
+      console.error(error);
+    }
+    res.status(201).json('Successful created UserEvent');
   } catch (error) {
     console.error(error);
     res.status(500).json({error: 'Failed to create UserEvent'});
