@@ -5,9 +5,14 @@ import {PubSub} from "@google-cloud/pubsub";
 import axios from "axios";
 import {Buffer} from "buffer";
 import {onDocumentCreated} from "firebase-functions/v2/firestore";
+import {firestore} from "firebase-admin";
+import {FieldValue} from "firebase-admin/firestore";
+import * as functions from "firebase-functions";
+
 
 initializeApp();
 const _pubsub = new PubSub();
+const db = firestore();
 
 exports.pubsubRouter = onDocumentCreated(
   "task_events/{eventId}",
@@ -356,4 +361,18 @@ exports.handleRecommendationGeneratedMessage = pubsub.onMessagePublished(
   }
 );
 
+exports.newUserCreated = functions.auth.user().onCreate((user) => {
+  const email = user.email; // The email of the user.
+  const displayName = user.displayName;
+  const imageUrl = user.photoURL;
+  const uid = user.uid;
+  
+  db.collection("users").doc(uid).set({
+    email: email,
+    displayName: displayName,
+    imageUrl: imageUrl,
+    dateCreated: FieldValue.serverTimestamp(),
+    uid: uid,
+  });
+});
 // npm run lint -- --fix
