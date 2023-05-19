@@ -366,7 +366,7 @@ exports.newUserCreated = functions.auth.user().onCreate((user) => {
   const displayName = user.displayName;
   const imageUrl = user.photoURL;
   const uid = user.uid;
-  
+
   db.collection("users").doc(uid).set({
     email: email,
     displayName: displayName,
