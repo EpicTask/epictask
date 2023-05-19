@@ -1,0 +1,16 @@
+{
+    "configurations": [
+      {
+        "name": "Deploy Cloud Function",
+        "type": "cloudcode.cloudfunctions",
+        "request": "launch",
+        "functionName": "webhook-callback",
+        "gen": "GEN_2",
+        "entryPoint": "webhook_callback",
+        "revision": "webhook-callback-00006-kil",
+        "testInput": "",
+        "region": "us-central1",
+        "runtime": "python310"
+      }
+    ]
+}
