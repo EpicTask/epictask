@@ -2,29 +2,27 @@
 import asyncio
 import json
 import os
-from xrpl_models import PaymentRequest
 
 import uvicorn
 import xumm
-from accounts_xrpl import (does_account_exist_async, get_account_balance,
-                           get_account_info_async, lookup_escrow,
-                           get_transaction_async)
+from accounts_xrpl import (connectWallet, does_account_exist_async,
+                           get_account_balance, get_account_info_async,
+                           get_transaction_async, lookup_escrow)
 from escrow_xrpl import generate_xrpl_timestamp
 from fastapi import FastAPI, Request, WebSocket, WebSocketDisconnect
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
+from firestore_db import write_response_to_firestore
 from google_secrets import get_secret
-from payments_xrpl import send_payment_request, handle_payment_request
+from payments_xrpl import handle_payment_request, send_payment_request
 from starlette.responses import JSONResponse
 from subscription_xrpl import account_subscription_sync
-from firestore_db import write_response_to_firestore
 from websocket_handler import connection_manager
-from xrpl.clients import JsonRpcClient, WebsocketClient
 from xrpl.asyncio.ledger import get_fee
-
+from xrpl.clients import JsonRpcClient, WebsocketClient
+from xrpl_models import PaymentRequest
 
 app = FastAPI()
-
 
 
 templates = Jinja2Templates(directory="templates")
@@ -48,6 +46,13 @@ async def hello(request: Request):
 
     return templates.TemplateResponse("index.html", {"request": request, "message": message, "Service": service, "Revision": revision})
 
+# XUMM sign in request
+
+
+@app.get('/xummSignInRequest')
+async def signInRequest():
+    return await connectWallet()
+
 
 @app.get('/balance/{address}')
 async def balance(address: str):
@@ -62,6 +67,7 @@ async def balance(address: str):
 
 # Call the 'get_account_info_sync' function with the given address and store
 # the result in a variable called 'account_info'
+
 
 @app.get('/account_info/{address}')
 def account_info(address: str):
@@ -83,7 +89,6 @@ async def account_exists(address: str):
         return JSONResponse(response)
     except Exception as e:
         return JSONResponse({"error": str(e)})
-
 
 
 @app.get('/paymentTest')
@@ -267,6 +272,7 @@ async def handle_websocket_message(websocket: WebSocket, message: str):
     payment_request = PaymentRequest(**data)
     if payment_request.type == "payment_request":
         await handle_payment_request(payment_request)
+
 
 @app.websocket("/ws")
 async def websocket_endpoint(websocket: WebSocket):

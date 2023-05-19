@@ -1,12 +1,13 @@
 import asyncio
+import json
 import os
 
 import xumm
+from firestore_db import write_response_to_firestore
 from google_secrets import get_secret
 from starlette.responses import JSONResponse
 from xrpl.asyncio.account import (does_account_exist, get_account_info,
                                   get_balance)
-from xrpl.asyncio.ledger import get_fee
 from xrpl.asyncio.transaction import ledger
 from xrpl.clients import JsonRpcClient, WebsocketClient
 from xrpl.models.requests import AccountObjects
@@ -17,6 +18,31 @@ sdk = xumm.XummSdk(api_key, api_secret)
 
 client = JsonRpcClient("https://s.altnet.rippletest.net:51234/")
 clientWebsocket = WebsocketClient("wss://s.altnet.rippletest.net:51233")
+
+# Connect wallet
+
+
+async def connectWallet():
+    # Create the XUMM payment request payload
+    xumm_payload = {
+        "txjson": {
+            "TransactionType": "SignIn"
+        }
+    }
+
+    # Create the payment request with the XUMM SDK
+
+    try:
+        subscription = sdk.payload.create(xumm_payload)
+        write_response_to_firestore(subscription.to_dict(), "signin_request")
+        response = json.dumps(subscription.to_dict(), indent=4, sort_keys=True)
+        url = '{}'.format(subscription.next.always)
+        return url
+    except Exception as e:
+        print(f"Error creating subscription: {e}")
+        # Handle the error as appropriate
+        return f"Error creating subscription: {e}"
+
 
 # Define a function that retrieves and returns the balance for a given address
 async def get_account_balance(address: str) -> int:
