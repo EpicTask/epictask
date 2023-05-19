@@ -3,6 +3,7 @@
   "version": "0.0.1",
   "description": "Service for managing users",
   "main": "index.js",
+  "type": "module",
   "scripts": {
     "start": "node index.js",
     "lint": "eslint **.js",
@@ -14,14 +15,15 @@
     "node": ">=11.14"
   },
   "dependencies": {
+    "dotenv": "^16.0.3",
     "express": "^4.17.1",
-    "handlebars": "^4.7.4",
+    "firebase": "^9.22.0",
     "firebase-admin": "11.8.0",
-    "mongoose": "7.1.1",
-    "@firebase/auth": "0.23.2"
+    "handlebars": "^4.7.4",
+    "mongoose": "7.1.1"
   },
   "devDependencies": {
-    "eslint": "8.29.0",
+    "eslint": "8.40.0",
     "eslint-config-prettier": "8.5.0",
     "eslint-plugin-node": "11.1.0",
     "eslint-plugin-prettier": "4.2.1",

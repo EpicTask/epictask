@@ -1,22 +1,26 @@
-const { initializeApp } = require('firebase-admin/app');
-const { firestore } = require('firebase-admin');
-initializeApp();
+import * as dotenv from 'dotenv';
+import {db} from './firebase_config.js';
+import {addDoc, collection, FieldValue} from 'firebase/firestore';
 
-const db = firestore();
+dotenv.config();
+
+// const userRef = collection(db, process.env.USERS_COLLECTION);
 
 async function saveUserEvent(eventType, eventData) {
   try {
     // Generate a unique event ID
-    const eventId = db.collection('user_events').doc().id;
+    const eventId = userEventRef.doc().id;
 
-    // Save the event to Firestore
-    await db.collection('user_events').doc(eventId).set({
-      event_id: eventId,
-      event_type: eventType,
-      user_id: eventData.user_id,
-      timestamp: firestore.FieldValue.serverTimestamp(),
-      additional_data: eventData.additional_data || {}
-    });
+    const userEventRef = await addDoc(
+      collection(db, process.env.USER_EVENT_COLLECTION),
+      {
+        event_id: eventId,
+        event_type: eventType,
+        user_id: eventData.user_id,
+        timestamp: FieldValue.serverTimestamp(),
+        additional_data: eventData.additional_data || {},
+      }
+    );
 
     console.log('Event saved successfully');
     return true;
@@ -26,5 +30,16 @@ async function saveUserEvent(eventType, eventData) {
   }
 }
 
-module.exports = saveUserEvent;
+// async function profileUpdate(eventData) {
+//   try {
+//     // Save the update to Firestore
+//     await userRef.doc(eventData.user_id).update(eventData.fields);
+//     console.log('Event saved successfully');
+//     return true;
+//   } catch (error) {
+//     console.error('Failed to save event:', error);
+//     return false;
+//   }
+// }
 
+export {saveUserEvent};
