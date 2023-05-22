@@ -83,12 +83,13 @@ app.post('/loginWithPassword', async (req, res) => {
     const email = response.email;
     const password = response.password;
     const uid = await loginWithEmailAndPassword(email, password);
-    res.status(201).json({message: 'Successful Login:' + uid});
+    res.status(201).json({message: uid});
   } catch (error) {
     console.log('Error: ', error);
     res.status(500).json({error: 'Failed to login'});
   }
 });
+
 // Get all UserEvents of a specific type
 // router.get('/events/:event_type', async (req, res) => {
 //   try {
