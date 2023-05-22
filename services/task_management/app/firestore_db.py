@@ -8,7 +8,7 @@ def write_response_to_firestore(response):
         db = firestore.Client()
 
         # Create a reference to the "xrpl_service" collection
-        collection_ref = db.collection('task_events')
+        collection_ref = db.collection('test_task_events')
 
         # Generate a custom document ID
         doc_ref = collection_ref.document()
