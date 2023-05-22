@@ -24,7 +24,7 @@ To use the Task Management Service, follow these steps:
 10. Monitor and maintain the service to ensure its smooth operation and address any issues or bugs that may arise.
 
 ## API Reference
-The Task Management Service exposes a set of APIs that allow developers to interact with the service programmatically. Refer to the API documentation for detailed information on the available endpoints, request/response formats, and authentication requirements.
+The Task Management Service exposes a set of APIs that allow developers to interact with the service programmatically. Contact admin for detailed information on the available endpoints, request/response formats, and authentication requirements.
 
 ## Contributing
 Contributions to the Task Management Service and Task Coin project are welcome. If you want to contribute, please follow the guidelines outlined in the project's CONTRIBUTING.md file. Ensure that you adhere to the project's coding standards, write comprehensive tests, and submit well-documented pull requests.
