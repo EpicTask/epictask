@@ -27,7 +27,6 @@ def write_response_to_firestore(response):
             'task_id': doc_id,
             'timestamp': firestore.SERVER_TIMESTAMP
         })
-        print('Created Document')
 
         # Return the custom document ID
         return doc_id
