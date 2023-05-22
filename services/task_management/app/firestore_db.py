@@ -7,7 +7,7 @@ def write_response_to_firestore(response):
         # Initialize Firestore client
         db = firestore.Client()
 
-        # Create a reference to the "xrpl_service" collection
+        # Create a reference to the "test_task_events" collection
         collection_ref = db.collection('test_task_events')
 
         # Generate a custom document ID
@@ -27,6 +27,7 @@ def write_response_to_firestore(response):
             'task_id': doc_id,
             'timestamp': firestore.SERVER_TIMESTAMP
         })
+        print('Created Document')
 
         # Return the custom document ID
         return doc_id
