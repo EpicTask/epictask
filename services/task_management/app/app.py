@@ -7,13 +7,9 @@ import uvicorn
 from fastapi import FastAPI, Request
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
-from firestore_db import write_response_to_firestore
-from schema import (RecommendationGeneratedEvent, TaskAssignedEvent,
-                    TaskCancelledEvent, TaskCommentAddedEvent,
-                    TaskCompletedEvent, TaskCreatedEvent, TaskEvent,
-                    TaskExpiredEvent, TaskRatingUpdatedEvent,
-                    TaskRewardedEvent, TaskUpdatedEvent, UserRegisteredEvent,
-                    UserUpdatedEvent, UserVerifiedEvent)
+from firestore_db import create_task, update_task
+from schema import (TaskAssigned, TaskCreated, TaskCancelled, TaskCompleted,
+                    TaskCommentAdded, TaskExpired, TaskRatingUpdate, TaskRewarded, TaskUpdated)
 
 # pylint: disable=C0103
 app = FastAPI()
@@ -32,53 +28,84 @@ async def hello(request: Request):
     return templates.TemplateResponse("index.html", {"request": request, "message": message, "Service": service, "Revision": revision})
 
 
-@app.post("/create_task_event")
-async def create_task_event(task_event: TaskEvent):
+@app.post('/TaskCreated')
+async def task_func(request: TaskCreated):
     try:
-        event_type = task_event.event_type
-
-        # Create the appropriate event model based on the event_type
-        if event_type == "TaskCreated":
-            event_data = TaskCreatedEvent(**task_event.additional_data)
-        elif event_type == "TaskAssigned":
-            event_data = TaskAssignedEvent(**task_event.additional_data)
-        elif event_type == "TaskUpdated":
-            event_data = TaskUpdatedEvent(**task_event.additional_data)
-        elif event_type == "TaskCompleted":
-            event_data = TaskCompletedEvent(**task_event.additional_data)
-        elif event_type == "TaskCancelled":
-            event_data = TaskCancelledEvent(**task_event.additional_data)
-        elif event_type == "TaskExpired":
-            event_data = TaskExpiredEvent(**task_event.additional_data)
-        elif event_type == "TaskRewarded":
-            event_data = TaskRewardedEvent(**task_event.additional_data)
-        elif event_type == "TaskRatingUpdated":
-            event_data = TaskRatingUpdatedEvent(**task_event.additional_data)
-        elif event_type == "TaskCommentAdded":
-            event_data = TaskCommentAddedEvent(**task_event.additional_data)
-        elif event_type == "UserRegistered":
-            event_data = UserRegisteredEvent(**task_event.additional_data)
-        elif event_type == "UserUpdated":
-            event_data = UserUpdatedEvent(**task_event.additional_data)
-        elif event_type == "UserVerified":
-            event_data = UserVerifiedEvent(**task_event.additional_data)
-        elif event_type == "RecommendationGenerated":
-            event_data = RecommendationGeneratedEvent(
-                **task_event.additional_data)
-        else:
-            return {"error": f"Invalid event_type: {event_type}"}
-
-        # Set the additional_data field to the created event model
-        task_event.additional_data = event_data.dict()
-        
-        # Call the write_response_to_firestore function
-        doc_id = write_response_to_firestore(task_event)
-
-        return {"doc_id": doc_id, "write": "success"}
-
+        response = await create_task(request)
     except Exception as e:
         return {"error": str(e)}
 
+
+@app.post('/TaskAssigned')
+async def task_func(request: TaskAssigned):
+    try:
+        event_type = 'TaskAssigned'
+        response = await update_task(event_type, request)
+    except Exception as e:
+        return {"error": str(e)}
+
+
+@app.post('/TaskCancelled')
+async def task_func(request: TaskCancelled):
+    try:
+        event_type = 'TaskCancelled'
+        response = await update_task(event_type, request)
+    except Exception as e:
+        return {"error": str(e)}
+
+
+@app.post('/TaskCommentAdded')
+async def task_func(request: TaskCommentAdded):
+    try:
+        event_type = 'TaskCommentAdded'
+        response = await update_task(event_type, request)
+    except Exception as e:
+        return {"error": str(e)}
+
+
+@app.post('/TaskCompleted')
+async def task_func(request: TaskCompleted):
+    try:
+        event_type = 'TaskCompleted'
+        response = await update_task(event_type, request)
+    except Exception as e:
+        return {"error": str(e)}
+
+
+@app.post('/TaskExpired')
+async def task_func(request: TaskExpired):
+    try:
+        event_type = 'TaskExpired'
+        response = await update_task(event_type, request)
+    except Exception as e:
+        return {"error": str(e)}
+
+
+@app.post('/TaskRatingUpdate')
+async def task_func(request: TaskRatingUpdate):
+    try:
+        event_type = 'TaskRatingUpdate'
+        response = await update_task(event_type, request)
+    except Exception as e:
+        return {"error": str(e)}
+
+
+@app.post('/TaskRewarded')
+async def task_func(request: TaskRewarded):
+    try:
+        event_type = 'TaskRewarded'
+        response = await update_task(event_type, request)
+    except Exception as e:
+        return {"error": str(e)}
+
+
+@app.post('/TaskUpdated')
+async def task_func(request: TaskUpdated):
+    try:
+        event_type = 'TaskUpdated'
+        response = await update_task(event_type, request)
+    except Exception as e:
+        return {"error": str(e)}
 
 
 # Execute the application when the script is run

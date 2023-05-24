@@ -1,6 +1,7 @@
 from pydantic import BaseModel
 from typing import Optional, List
 
+
 class TaskEvent(BaseModel):
     event_id: str
     event_type: str
@@ -12,75 +13,65 @@ class TaskEvent(BaseModel):
 
 # Corresponding models that would go into additional_data depending on event type.
 
-class TaskCreatedEvent(BaseModel):
+
+class TaskCreated(BaseModel):
     task_title: str
     task_description: str
     task_id: str
     project_id: str
     project_name: str
-    requires_attachments:bool = False
+    expiration_date: str
+    requires_attachments: bool = False
     terms_blob: str
     terms_id: str
     reward_amount: float
     reward_currency: str
-    payment_method: str #Pay directly or Create Escrow, Tokens
+    payment_method: str  # Pay directly or Create Escrow, Tokens
+    rating: int
+    user_id: str
+    assigned_to_ids: List[str]
+    rewarded: bool
 
-class TaskAssignedEvent(BaseModel):
+
+class TaskAssigned(BaseModel):
     task_id: str
     assigned_to_id: str
-    assigned_to_wallet_address: str
-    task_creator_id: str
-    task_creator_wallet_address: str
-    reward_amount: float
-    reward_currency: str
-    wallet_type: str
-
-class TaskUpdatedEvent(BaseModel):
-    task_id: str
-    updated_fields: dict
-
-class TaskCompletedEvent(BaseModel):
-    task_id: str
-    completed_by: str
-    requires_attachments:bool = False
-    attachments: List[str] = None
-
-class TaskCancelledEvent(BaseModel):
-    task_id: str
-    cancelled_by_id: str
-
-class TaskExpiredEvent(BaseModel):
-    task_id: str
-    expiry_time: str
-
-class TaskRewardedEvent(BaseModel):
-    task_id: str
-    user_id: str
     reward_amount: float
     reward_currency: str
 
-class TaskRatingUpdatedEvent(BaseModel):
-    task_id: str
-    user_id: str
-    new_rating: int
 
-class TaskCommentAddedEvent(BaseModel):
+class TaskCancelled(BaseModel):
+    task_id: str
+
+
+class TaskCommentAdded(BaseModel):
     task_id: str
     user_id: str
     comment: str
 
-class UserRegisteredEvent(BaseModel):
-    user_id: str
-    registration_date: str
 
-class UserUpdatedEvent(BaseModel):
+class TaskCompleted(BaseModel):
+    task_id: str
+    completed_by_id: str
+    requires_attachments: bool = False
+    attachments: List[str] = None
+    verification_result: bool
+
+
+class TaskExpired(BaseModel):
+    task_id: str
+
+
+class TaskRatingUpdate(BaseModel):
+    task_id: str
     user_id: str
+
+
+class TaskRewarded(BaseModel):
+    task_id: str
+    user_id: str
+
+
+class TaskUpdated(BaseModel):
+    task_id: str
     updated_fields: dict
-
-class UserVerifiedEvent(BaseModel):
-    user_id: str
-    verification_method: str
-
-class RecommendationGeneratedEvent(BaseModel):
-    user_id: str
-    recommendation: str
