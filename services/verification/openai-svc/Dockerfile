@@ -1,20 +1,16 @@
-# Use the official Python image as the base image
-FROM python:3.9-slim-buster
 
-# Set the working directory to /app
-WORKDIR /app
+FROM python:3.9
 
-# Copy the requirements file into the container
-COPY requirements.txt .
+WORKDIR /code
 
-# Install the dependencies
-RUN pip install --no-cache-dir -r requirements.txt
+COPY ./requirements.txt /code/requirements.txt
 
-# Copy the rest of the application code into the container
-COPY app/ .
+COPY ./task-coin-firestore-creds.json /code/task-coin-firestore-creds.json
 
-# Expose port 8080 to the outside world
-EXPOSE 8080
+RUN pip install --no-cache-dir --upgrade -r /code/requirements.txt
 
-# Start the Flask application
-CMD ["gunicorn", "--bind", "0.0.0.0:8080", "main:app"]
+COPY ./app /code/app
+
+ENV GOOGLE_APPLICATION_CREDENTIALS="/code/task-coin-firestore-creds.json"
+
+CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "80"]
