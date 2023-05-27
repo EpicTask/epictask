@@ -31,7 +31,7 @@ async def hello(request: Request):
 @app.post('/TaskCreated')
 async def task_func(request: TaskCreated):
     try:
-        response = await create_task(request)
+        response = create_task(request)
     except Exception as e:
         return {"error": str(e)}
 

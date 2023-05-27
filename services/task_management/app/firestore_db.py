@@ -29,7 +29,7 @@ def create_task(response):
             'task_id': doc_id,
             'timestamp': firestore.SERVER_TIMESTAMP
         })
-        write_event_to_firestore('TaskCreated', doc_id, data)
+        write_event_to_firestore('TaskCreated', doc_id, response)
         # Return the custom document ID
         return doc_id
 
@@ -80,7 +80,7 @@ def delete_task(event_type, response):
         doc_id = data.task_id
         # Generate a custom document ID
         doc_ref = collection_ref.document(doc_id).delete()
-        
+
         write_event_to_firestore(event_type, doc_id, data)
         return doc_id
 
