@@ -1,0 +1,6 @@
+fastapi==0.95.1
+requests==2.28.1
+ptvsd==4.3.2 # Required for debugging.
+uvicorn==0.22.0
+Jinja2==3.1.2
+google-cloud-firestore==2.11.1

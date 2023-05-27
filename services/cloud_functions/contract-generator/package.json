@@ -1,0 +1,24 @@
+{
+    "name": "nodejs-cloud-code-samples-functions-hello-world",
+    "version": "0.0.1",
+    "private": true,
+    "license": "Apache-2.0",
+    "author": "Kai Tech Corp.",
+    "type": "module",
+    "engines": {
+        "node": "16"
+    },
+    "dependencies": {
+        "@google-cloud/functions-framework": "^3.1.0",
+        "@google-cloud/secret-manager": "^4.2.1",
+        "openai": "^3.2.1"
+    },
+    "devDependencies": {
+        "@typescript-eslint/eslint-plugin": "^5.12.0",
+        "@typescript-eslint/parser": "^5.12.0",
+        "eslint": "^8.40.0",
+        "eslint-config-google": "^0.14.0",
+        "eslint-plugin-import": "^2.25.4",
+        "typescript": "^4.9.0"
+    }
+}

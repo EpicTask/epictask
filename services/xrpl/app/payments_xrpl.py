@@ -1,17 +1,23 @@
 import asyncio
 import json
-import os
-
+from firestore_db import write_response_to_firestore
+from xrpl_models import PaymentRequest
 import xumm
 from google_secrets import get_secret
+from websocket_handler import connection_manager
 from starlette.responses import JSONResponse
 from xrpl.clients import JsonRpcClient
+from pydantic import BaseModel
 
 api_key = get_secret('xumm-key')
 api_secret = get_secret('xumm-secret')
 sdk = xumm.XummSdk(api_key, api_secret)
 
 client = JsonRpcClient("https://s.altnet.rippletest.net:51234/")
+
+
+async def handle_payment_request(payment_request: PaymentRequest):
+    return await send_payment_request_no_user_token(payment_request.amount, payment_request.source, payment_request.destination, payment_request.note)
 
 
 async def send_payment_request(amount, source, destination, payment_reference):
@@ -28,20 +34,22 @@ async def send_payment_request(amount, source, destination, payment_reference):
         "options": {
             "expire": 3
         },
-        "user_token": "f53f2b43-a000-47fc-bcd8-d4f5acf9d234"
+        # "user_token": "f53f2b43-a000-47fc-bcd8-d4f5acf9d234"
     }
 
     # Create the payment request with the XUMM SDK
 
     try:
         subscription = sdk.payload.create(xumm_payload)
-        print(json.dumps(subscription.to_dict(), indent=4, sort_keys=True))
-        url = '{}'.format(subscription.next.always)
-        return url
+        write_response_to_firestore(subscription.to_dict(), "payment_request")
+        response = json.dumps(subscription.to_dict(), indent=4, sort_keys=True)
+        await connection_manager.send_update(response)
+        # url = '{}'.format(subscription.next.always)
+        return response
     except Exception as e:
         print(f"Error creating subscription: {e}")
         # Handle the error as appropriate
-        return url
+        return f"Error creating subscription: {e}"
 
 
 async def send_payment_request_no_user_token(amount, source, destination, payment_reference):
@@ -56,65 +64,46 @@ async def send_payment_request_no_user_token(amount, source, destination, paymen
         },
         "Fee": "12",
         "options": {
-            "expire": 1
+            "expire": 2
         },
-        "user_token": "f53f2b43-a000-47fc-bcd8-d4f5acf9d234"
     }
 
     def callback_func(event):
-        print('New payload event: {}'.format(event['data']))
+        print("Callback got here")
+        try:
+            event_status = 'New payload event: {}'.format(event['data'])
+            print(event_status)
+            # data_str = json.dumps(event['data'], indent=4, sort_keys=True)
+            # await connection_manager.send_update(event_status)
+            if 'expired' in event['data'] or 'signed' in event['data']:
+                # payload is reolved return the data
+                return event['data']
+        except Exception as e:
+            print(f"Error in callback_func: {e}")
 
-        if 'signed' in event['data']:
-            print('Signed')
-            return event['data']
-
-    # Create the payment request with the XUMM SDK
-    sdk = xumm.XummSdk(api_key, api_secret)
-    pong = sdk.ping()
-    print(pong)
-    subscription = await sdk.payload.create_and_subscribe(
-        xumm_payload,
-        callback_func,
-    )
-
-    # Print the payment request URL
-    print(json.dumps(subscription.created.to_dict(), indent=4, sort_keys=True))
-    print('New payload created, URL: {}'.format(
-        subscription.created.next.always))
-    print('  > Pushed: {}'.format('yes' if subscription.created.pushed else 'no'))
-
-    """
-    Wait until the subscription resolves (by returning something)
-    in the callback function.
-    """
-    resolve_data = await subscription.resolved()
-    print(resolve_data)
     try:
-        if resolve_data['signed'] == False:
-            print('The sign request was rejected.')
+        # Create the payment request with the XUMM SDK
+        create_payload = sdk.payload.create(xumm_payload)
+        print(create_payload.uuid)
+        response = json.dumps(create_payload.to_dict(), indent=4, sort_keys=True)
+        await connection_manager.send_update(response)
 
-        else:
-            print('The sign request was approved.')
-            """
-            Fetch the full payload end result, and get the issued
-            user token, we can use to send our next payload per Push notification
-            """
-            result = sdk.payload.get(resolve_data['payload_uuidv4'])
-            print('User token: {}'.format(result.application.issued_user_token))
-
-    except:
-        print('Error')
-
-
-def initiate_payment(amount, source, destination, note):
+    except Exception as e:
+        return f"Error: {e}"
+    
+        # start the websocket subscription on this payload and listen for changes
     try:
-        asyncio.set_event_loop(asyncio.SelectorEventLoop())
-        url = asyncio.get_event_loop().run_until_complete(
-            send_payment_request(amount, source, destination, note))
-        data = {'url': url}
-    except RuntimeError as e:
-        print(f"Error occurred: {e}")
-        data = {'url': f"Error occurred: {e}"}
-        return JSONResponse(data)
+        subscription = await sdk.payload.subscribe(create_payload.uuid, callback_func)
+        # wait for the payload to resolve
+        print("Subscribe to payload")
+        resolve_data = await subscription.resolved()
+        # now we can cancel the subscription
+        sdk.payload.unsubscribe()
+    except RuntimeWarning as e:
+        print(f"Caught RuntimeWarning: {e}")
 
-    return JSONResponse(data)
+
+    # subscription_resp = json.dumps(subscription.to_dict(), indent=4, sort_keys=True)
+    get_payload = sdk.payload.get(resolve_data.payload_uuidv4)
+    get_payload_resp = json.dumps(get_payload, indent=4, sort_keys=True)
+    return get_payload_resp

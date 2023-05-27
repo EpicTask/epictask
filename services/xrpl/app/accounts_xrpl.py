@@ -1,12 +1,13 @@
 import asyncio
+import json
 import os
 
 import xumm
+from firestore_db import write_response_to_firestore
 from google_secrets import get_secret
 from starlette.responses import JSONResponse
 from xrpl.asyncio.account import (does_account_exist, get_account_info,
                                   get_balance)
-from xrpl.asyncio.ledger import get_fee
 from xrpl.asyncio.transaction import ledger
 from xrpl.clients import JsonRpcClient, WebsocketClient
 from xrpl.models.requests import AccountObjects
@@ -18,85 +19,49 @@ sdk = xumm.XummSdk(api_key, api_secret)
 client = JsonRpcClient("https://s.altnet.rippletest.net:51234/")
 clientWebsocket = WebsocketClient("wss://s.altnet.rippletest.net:51233")
 
+# Connect wallet
+
+
+async def connectWallet():
+    # Create the XUMM payment request payload
+    xumm_payload = {
+        "txjson": {
+            "TransactionType": "SignIn"
+        }
+    }
+
+    # Create the payment request with the XUMM SDK
+
+    try:
+        subscription = sdk.payload.create(xumm_payload)
+        write_response_to_firestore(subscription.to_dict(), "signin_request")
+        response = json.dumps(subscription.to_dict(), indent=4, sort_keys=True)
+        url = '{}'.format(subscription.next.always)
+        return url
+    except Exception as e:
+        print(f"Error creating subscription: {e}")
+        # Handle the error as appropriate
+        return f"Error creating subscription: {e}"
+
+
 # Define a function that retrieves and returns the balance for a given address
-
-
-def get_account_balance(address: str) -> int:
-    # Create a new event loop
-    loop = asyncio.new_event_loop()
-    # Set the event loop
-    asyncio.set_event_loop(loop)
-    # Retrieve the balance using the previous function, while passing the event loop
-    balance = loop.run_until_complete(
-        get_balance(address=address, client=client))
-        # Close the event loop
-    loop.close()
+async def get_account_balance(address: str) -> int:
+    balance = await get_balance(address=address, client=client)
     return balance
 
 
 async def does_account_exist_async(address: str):
-
-    # Return an awaitable call to the function 'does_account_exist'
-    # passing the account address and the client object as arguments
     return await does_account_exist(address=address, client=client)
-
-
-def does_account_exist_sync(address: str) -> bool:
-
-    # Create a new event loop
-    loop = asyncio.new_event_loop()
-
-    # Set the created event loop as the current event loop
-    asyncio.set_event_loop(loop)
-
-    # Run the does_account_exist_async function asynchronously with the specified address
-    # and store the result in a variable called 'exists'
-    exists = loop.run_until_complete(does_account_exist_async(address))
-    # Close the event loop
-    loop.close()
-    # Return the 'exists' variable containing the result from does_account_exist_async
-    return exists
-
-# Get Fee
-
-async def get_fee_sync() -> int:
-    fee = await get_fee(client)
-    return fee
 
 
 async def get_transaction_async(tx_hash: str):
     return await ledger.get_transaction_from_hash(tx_hash, client)
 
 
-def get_transaction_sync(tx_hash: str):
-    loop = asyncio.new_event_loop()
-    asyncio.set_event_loop(loop)
-    tx = loop.run_until_complete(get_transaction_async(tx_hash))
-    return tx
-
-# Define an asynchronous function that takes an address as parameter
-
-
+# Retrieves account information for ledger, takes an address as parameter
 async def get_account_info_async(address: str):
-
-    # Return an awaitable call to the function 'get_account_info',
-    # passing the account address and the client object as arguments
     return await get_account_info(address=address, client=client)
 # Define a synchronous function that also takes an address as parameter
-
-
-def get_account_info_sync(address: str):
-
-    # Create a new event loop
-    loop = asyncio.new_event_loop()
-
-    # Set the created event loop as the current event loop
-    asyncio.set_event_loop(loop)
-    account_info = loop.run_until_complete(get_account_info_async(address))
-    # Close the event loop
-    loop.close()
-    # Return the 'account_info' variable holding the result from get_account_info_async
-    return account_info
 
 
 def lookup_escrow(account: str):
