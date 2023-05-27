@@ -2,6 +2,9 @@ import * as dotenv from 'dotenv';
 import {db} from './firebase_config.js';
 import {
   addDoc,
+  arrayUnion,
+  doc,
+  setDoc,
   updateDoc,
   collection,
   serverTimestamp,
@@ -11,6 +14,7 @@ dotenv.config();
 
 const ref = collection(db, 'test_user_events');
 const userRef = collection(db, 'users');
+
 async function saveUserEvent(eventType, eventData) {
   try {
     await addDoc(ref, {
@@ -41,4 +45,30 @@ async function profileUpdate(eventData) {
   }
 }
 
-export {saveUserEvent, profileUpdate};
+async function createChildUID(parentUID) {
+  try {
+    const parentRef = collection(db, 'users', parentUID);
+    const uid = userRef.id;
+    await updateDoc(parentRef, {children: arrayUnion(uid)});
+    return uid;
+  } catch (error) {
+    console.error('Failed to create child uid:', error);
+  }
+}
+
+async function linkChild(data) {
+  try {
+    const parentUID = data.parentUID;
+    const childUID = data.childUID;
+    const parentRef = collection(db, 'users', parentUID);
+    const childCollectionRef = collection(parentRef, 'children');
+    const childDocRef = doc(childCollectionRef, childUID);
+
+    await setDoc(childDocRef, data);
+    return 'Successful';
+  } catch (error) {
+    console.error('Failed to create child uid:', error);
+  }
+}
+
+export {saveUserEvent, profileUpdate, createChildUID, linkChild};

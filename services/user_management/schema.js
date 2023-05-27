@@ -4,7 +4,10 @@ import {Schema, model} from 'mongoose';
 const eventSchemas = {
   userRegistration: new Schema({
     email: {type: String, required: true},
-    password: {type: String, required: true},
+    timestamp: {type: Date, default: Date.now},
+    status: {type: String, required: true},
+    social: {type: Boolean, required: true},
+    social_type: {type: String, required: false},
     // Additional fields specific to user registration
   }),
   userSignIn: new Schema({
@@ -73,8 +76,16 @@ const getSchema = (event) => {
   }
 };
 
+// Link Child Schema
+const linkChildSchema = new Schema({
+  parentUID: {type: String, required: true},
+  childUID: {type: String, required: true},
+  child_name: {type: String, required: true},
+  child_age: {type: Number, required: false},
+});
+
 // Define the model for the master schema
 const UserEvent = model('UserEvent', userEventSchema);
 
 // Export the models
-export {UserEvent, eventSchemas, getSchema};
+export {UserEvent, eventSchemas, getSchema, linkChildSchema};

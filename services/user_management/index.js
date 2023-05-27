@@ -1,8 +1,8 @@
 import * as dotenv from 'dotenv';
 import express, {json} from 'express';
-import {saveUserEvent} from './fb_functions.js';
+import {createChildUID, linkChild, saveUserEvent} from './fb_functions.js';
 import {handleIncomingEvent} from './user_event_handler.js';
-import {UserEvent, getSchema} from './schema.js';
+import {UserEvent, getSchema, linkChildSchema} from './schema.js';
 import {
   createUserWithPassword,
   signUserOut,
@@ -69,7 +69,7 @@ app.post('/registerWithPassword', async (req, res) => {
     const email = response.email;
     const password = response.password;
     const uid = await createUserWithPassword(email, password);
-    res.status(201).json({message: 'Successfully created User:', uid});
+    res.status(201).json({message: uid});
   } catch (error) {
     console.log('Error: ', error);
     res.status(500).json({error: 'Failed to create User'});
@@ -90,79 +90,32 @@ app.post('/loginWithPassword', async (req, res) => {
   }
 });
 
-// Get all UserEvents of a specific type
-// router.get('/events/:event_type', async (req, res) => {
-//   try {
-//     const eventType = req.params.event_type;
+// Create child UID
+app.post('/createChildUID', async (req, res) => {
+  try {
+    const response = req.body;
+    const parentUID = response.parentUID;
 
-//     // Get the appropriate event model based on the event type
-//     const EventModel = eventModels[eventType];
-//     if (!EventModel) {
-//       res.status(400).json({error: 'Invalid event type'});
-//       return;
-//     }
+    const uid = await createChildUID(parentUID);
+    res.status(201).json({message: uid});
+  } catch (error) {
+    console.log('Error: ', error);
+    res.status(500).json({error: 'Failed to create child UID'});
+  }
+});
 
-//     // Find all events of the specified type
-//     const userEvents = await EventModel.find();
-//     res.status(200).json(userEvents);
-//   } catch (error) {
-//     console.error(error);
-//     res.status(500).json({error: 'Failed to fetch UserEvents'});
-//   }
-// });
-
-// // Get a specific UserEvent of a specific type by ID
-// app.get('/events/:event_type/:id', async (req, res) => {
-//   try {
-//     const eventType = req.params.event_type;
-
-//     // Get the appropriate event model based on the event type
-//     const EventModel = eventModels[eventType];
-//     if (!EventModel) {
-//       res.status(400).json({error: 'Invalid event type'});
-//       return;
-//     }
-
-//     const userEvent = await EventModel.findById(req.params.id);
-//     if (!userEvent) {
-//       res.status(404).json({error: 'UserEvent not found'});
-//       return;
-//     }
-//     res.status(200).json(userEvent);
-//   } catch (error) {
-//     console.error(error);
-//     res.status(500).json({error: 'Failed to fetch UserEvent'});
-//   }
-// });
-
-// // Update a specific UserEvent of a specific type by ID
-// router.put('/events/:event_type/:id', async (req, res) => {
-//   try {
-//     const eventType = req.params.event_type;
-//     const eventData = req.body;
-
-//     // Get the appropriate event model based on the event type
-//     const EventModel = eventModels[eventType];
-//     if (!EventModel) {
-//       res.status(400).json({error: 'Invalid event type'});
-//       return;
-//     }
-
-//     const userEvent = await EventModel.findByIdAndUpdate(
-//       req.params.id,
-//       eventData,
-//       {new: true}
-//     );
-//     if (!userEvent) {
-//       res.status(404).json({error: 'UserEvent not found'});
-//       return;
-//     }
-//     res.status(200).json(userEvent);
-//   } catch (error) {
-//     console.error(error);
-//     res.status(500).json({error: 'Failed to update UserEvent'});
-//   }
-// });
+// Link child to parent
+app.post('/linkChild', async (req, res) => {
+  try {
+    const response = req.body;
+    const data = linkChildSchema(response);
+    const status = await linkChild(data);
+    res.status(201).json({message: status});
+  } catch (error) {
+    console.log('Error: ', error);
+    res.status(500).json({error: 'Failed to link child to parent'});
+  }
+});
 
 // Delete a specific User
 
