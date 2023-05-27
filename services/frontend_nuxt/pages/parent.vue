@@ -7,25 +7,37 @@
     <section>
       <h2>Create a Task</h2>
       <form @submit.prevent="createTask">
-        <label for="taskDescription">Task Description:</label>
-        <input
-          type="text"
-          id="taskDescription"
-          v-model="taskDescription"
-          required
-        />
-        <label for="tokenReward">Token Reward:</label>
-        <input type="number" id="tokenReward" v-model="tokenReward" required />
+        <v-row>
+          <v-col cols="12" sm="6">
+            <label for="taskDescription">Task Description:</label>
+            <input
+              type="text"
+              id="taskDescription"
+              v-model="taskDescription"
+              required
+            />
+            <label for="tokenReward">Token Reward:</label>
+            <input type="number" id="tokenReward" v-model="tokenReward" required />
+          </v-col>
+          <v-col cols="12" sm="6">
+            <v-select
+              v-model="currencyOptions"
+              :items="currencyOptions"
+              label="Reward Currency"
+              required
+            ></v-select>
+          </v-col>
+        </v-row>
         <button type="submit">Create Task</button>
       </form>
     </section>
     <section>
-      <h2>Your Child's Tasks</h2>
+      <h2>Open Tasks</h2>
       <ul>
         <li v-for="task in childTasks" :key="task.id">
           <span>{{ task.description }}</span>
           <span>Tokens: {{ task.tokenReward }}</span>
-          <button @click="completeTask(task.id)">Complete</button>
+          <button type="submit" @click="completeTask(task.id)">Complete</button>
         </li>
         <li v-if="childTasks.length === 0">No tasks assigned</li>
       </ul>
@@ -38,6 +50,7 @@ export default {
   name: "Parent",
   data() {
     return {
+      currencyOptions: ["XRP", "BTC", "eTask"],
       parentName: "John Doe",
       taskDescription: "",
       tokenReward: "",
@@ -45,6 +58,11 @@ export default {
         { id: 1, description: "Clean the room", tokenReward: 10 },
         { id: 2, description: "Wash the dishes", tokenReward: 15 },
         { id: 3, description: "Do homework", tokenReward: 20 },
+      ],
+      rewards: [
+        { id: 1, description: "Ice Cream", tokenReward: 50 },
+        { id: 2, description: "Movie Day", tokenReward: 75 },
+        { id: 3, description: "New Bike", tokenReward: 300 },
       ],
     };
   },
@@ -55,6 +73,7 @@ export default {
         id: this.childTasks.length + 1,
         description: this.taskDescription,
         tokenReward: parseInt(this.tokenReward),
+        reward_currency: this.reward_currency
       };
       this.childTasks.push(newTask);
       this.taskDescription = "";

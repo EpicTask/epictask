@@ -107,7 +107,7 @@ export default {
             reward_amount: 0,
             reward_currency: "",
             payment_method: "",
-            currencyOptions: ["XRP", "BTC", "SOL", "ADA"],
+            currencyOptions: ["XRP", "BTC", "eTask"],
             paymentOptions: ["Pay directly", "Create Escrow"],
             isTaskCreated: false,
         };

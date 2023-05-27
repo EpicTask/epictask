@@ -1,67 +1,67 @@
+
 <template>
-  <div class="main">
-    <v-card>
-      <header>
-        <h1>Welcome to EpicTask</h1>
-        <p>
-          A platform to incentivize and teach children money management skills
-          through tasks and rewards
-        </p>
-      </header>
-    </v-card>
-    <section>
-      <h2>Get Started Today!</h2>
-      <p>
-        Sign up or log in to start using EpicTask and empower your children with
-        financial literacy.
-      </p>
-      <div class="cta-buttons">
-        <router-link to="/parent" class="cta-button">Parent Login</router-link>
-        <router-link to="/child" class="cta-button">Child Login</router-link>
-      </div>
-    </section>
-  </div>
+  <v-row justify="center" align="center">
+    
+    <v-col cols="12" sm="6" md="8" lg="12">
+      <div><CategoryCarousel /></div>
+      <v-row class="justify-left">
+        <div class="main-div">
+          <h3>Recommendations</h3>
+        </div>
+    
+        <div style="overflow-x: auto; width: 1200px" class="main-div">
+          <v-row class="d-flex flex-nowrap" style="width: 1200px">
+            <v-col
+              cols="12"
+              sm="6"
+              md="4"
+              lg="3"
+              v-for="index in 12"
+              :key="index"
+              class="mb-4"
+            >
+              <TaskCardShort />
+            </v-col>
+          </v-row>
+        </div>
+      </v-row>
+
+      <v-row class="justify-left">
+        <h3>Open Tasks</h3>
+        <div style="overflow-x: auto; width: 1200px" class="main-div">
+          <v-row class="d-flex flex-nowrap" style="width: 1200px">
+            <v-col
+              cols="12"
+              sm="6"
+              md="4"
+              lg="3"
+              v-for="index in 6"
+              :key="index"
+              class="mb-4"
+            >
+              <TaskCardShort />
+            </v-col>
+          </v-row>
+        </div>
+      </v-row>
+    </v-col>
+  </v-row>
 </template>
 
 <script>
+import CategoryCarousel from "~/components/CategoryCarousel.vue";
+import TaskCardShort from "~/components/TaskCardShort.vue";
+
 export default {
-  name: "Main",
+  name: "IndexPage",
+  components: { CategoryCarousel, TaskCardShort },
 };
 </script>
-
-<style scoped>
-/* Add your main component styles here */
-.main {
-  text-align: center;
-  margin: 50px auto;
-  max-width: 600px;
-}
-
-.cta-buttons {
-  display: flex;
-  justify-content: center;
-  margin-top: 20px;
-}
-
-.cta-button {
-  margin: 0 10px;
-  padding: 10px 20px;
-  font-size: 16px;
-  font-weight: bold;
-  text-decoration: none;
-  background-color: #007bff;
-  color: #fff;
-  border: none;
-  border-radius: 5px;
-  cursor: pointer;
-}
-
-.cta-button:hover {
-  background-color: #555;
-}
-footer {
-  font-size: 14px;
-  color: #888;
-  margin-top: 30px;
+<style>
+.main-div {
+  padding-top: 20px;
+  padding-bottom: 10px;
+  padding-left: 10px;
+  padding-right: 10px;
 }
 </style>
