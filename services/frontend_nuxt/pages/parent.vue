@@ -28,7 +28,10 @@
             ></v-select>
           </v-col>
         </v-row>
-        <button type="submit">Create Task</button>
+        <v-col class="justify-center">
+          <button type="submit">Create Task</button>
+          <v-btn variant="text" size="small"> Advanced</v-btn>
+        </v-col>
       </form>
     </section>
     <section>
@@ -79,9 +82,20 @@ export default {
       this.taskDescription = "";
       this.tokenReward = "";
     },
-    completeTask(taskId) {
+    async completeTask(taskId) {
       // Logic to mark a task as completed
-      this.childTasks = this.childTasks.filter((task) => task.id !== taskId);
+      // this.childTasks = this.childTasks.filter((task) => task.id !== taskId);
+      try{
+        const currentDate = new Date();
+        const formattedDate = currentDate.toISOString();
+        const baseUrl = "https://xrpl-5wpxgn35iq-uc.a.run.app";
+        const address = "rB4iz44nvW2yGDBYTkspVfyR2NMsR3NtfF"
+
+        const balance = await this.$axios.get(`${baseUrl}/balance/${address}`);
+        console.log(balance);
+      }catch(e) {
+
+      }
     },
     logout() {
       // Logic to log out the parent user
@@ -107,6 +121,7 @@ input[type="number"] {
   padding: 5px;
   margin-top: 5px;
   width: 100%;
+  color: white;
 }
 
 button[type="submit"] {
