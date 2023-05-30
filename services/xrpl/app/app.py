@@ -53,6 +53,8 @@ async def hello(request: Request):
 async def signInRequest():
     return await connectWallet()
 
+# Get account balance
+
 
 @app.get('/balance/{address}')
 async def balance(address: str):
@@ -63,10 +65,8 @@ async def balance(address: str):
         return JSONResponse({"doc_id": doc_id, "response": response})
     except Exception as e:
         return JSONResponse({"error": str(e)})
-#    http://0.0.0.0:8080/balance/rB4iz44nvW2yGDBYTkspVfyR2NMsR3NtfF
 
-# Call the 'get_account_info_sync' function with the given address and store
-# the result in a variable called 'account_info'
+# Get account information
 
 
 @app.get('/account_info/{address}')
@@ -89,6 +89,8 @@ async def account_exists(address: str):
         return JSONResponse(response)
     except Exception as e:
         return JSONResponse({"error": str(e)})
+
+# Payment test
 
 
 @app.get('/paymentTest')
@@ -117,6 +119,8 @@ async def transaction_fee():
     except Exception as e:
         return JSONResponse({"error": str(e)})
 
+# Verify a transaction
+
 
 @app.get('/verify_transaction/{tx_hash}')
 async def verify_transaction(tx_hash: str):
@@ -143,13 +147,6 @@ async def create_escrow(destination: str, amount: int, finish_after: str):
     # finish_after = int(finish_after)
     finish_after = fiveMinute
     amount = int(amount)
-    # escrow_create = EscrowCreate(
-    #     account="rB4iz44nvW2yGDBYTkspVfyR2NMsR3NtfF",
-    #     amount=amount,
-    #     # destination=destination,
-    #     destination = "rB4iz44nvW2yGDBYTkspVfyR2NMsR3NtfF",
-    #     finish_after=finish_after,
-    # )
     escrow_create = {
         "txjson": {
             "TransactionType": "EscrowCreate",
@@ -164,21 +161,15 @@ async def create_escrow(destination: str, amount: int, finish_after: str):
     write_response_to_firestore(payload.to_dict(), "create_escrow")
     return JSONResponse(payload.to_dict())
 
-# Example
-# http://localhost:8080/create_escrow/rB4iz44nvW2yGDBYTkspVfyR2NMsR3NtfF/10000/1677649420
-# curl -X POST http://localhost:5000/create_escrow_xumm \
-#      -F destination=YOUR_DESTINATION_ADDRESS \
-#      -F amount=1000000 \
-#      -F finish_after=1677649420
 
 # Lookup Escrow
-
-
 @app.get('/lookup_escrow/{account}')
 def lookup_escrow_sync(account: str):
     escrow_info = lookup_escrow(account)
     write_response_to_firestore(escrow_info, "lookup_escrow")
     return escrow_info
+
+# Cancel Escrow
 
 
 @app.get('/cancel_escrow_xumm/{owner}')
@@ -210,11 +201,6 @@ async def finish_escrow_xumm(owner: str):
 
     wallet = "rB4iz44nvW2yGDBYTkspVfyR2NMsR3NtfF"
     offer_sequence = int(1)
-    # escrow_finish = EscrowFinish(
-    #     account=wallet.classic_address,
-    #     owner=owner,
-    #     offer_sequence=offer_sequence,
-    # )
     escrow_finish = {
         "txjson": {
             "TransactionType": "EscrowFinish",
@@ -226,7 +212,6 @@ async def finish_escrow_xumm(owner: str):
     payload = sdk.payload.create(escrow_finish)
     write_response_to_firestore(payload.to_dict(), "finish_escrow_xumm")
     return JSONResponse(payload.to_dict())
-# http://localhost:8080/finish_escrow_xumm/rB4iz44nvW2yGDBYTkspVfyR2NMsR3NtfF/1
 
 
 @app.get('/subscribe')
