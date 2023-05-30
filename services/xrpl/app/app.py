@@ -10,6 +10,7 @@ from accounts_xrpl import (connectWallet, does_account_exist_async,
                            get_transaction_async, lookup_escrow)
 from escrow_xrpl import generate_xrpl_timestamp
 from fastapi import FastAPI, Request, WebSocket, WebSocketDisconnect
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
 from firestore_db import write_response_to_firestore
@@ -24,6 +25,19 @@ from xrpl_models import PaymentRequest
 
 app = FastAPI()
 
+origins = [
+    "http://localhost",
+    "http://localhost:8080",
+    "http://localhost:3000",
+]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 templates = Jinja2Templates(directory="templates")
 
