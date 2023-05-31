@@ -135,7 +135,7 @@ async def task_func(request: TaskUpdated):
 @app.get("/tasks")
 async def get_all_tasks():
     try:
-        tasks = await get_tasks()
+        tasks = get_tasks()
 
         return {"docs": tasks}
     except Exception as e:
