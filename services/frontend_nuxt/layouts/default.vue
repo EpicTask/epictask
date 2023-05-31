@@ -30,6 +30,9 @@
       <v-toolbar-title>{{ title }}</v-toolbar-title>
       <v-spacer />
       <v-btn text class="ml-4" @click="login"> Connect Wallet </v-btn>
+      <v-btn v-if="isSignedIn" text class="ml-4" @click="signOut"
+        >Sign Out</v-btn
+      >
     </v-app-bar>
     <v-main>
       <v-container>
@@ -54,7 +57,7 @@ export default {
         {
           icon: "mdi-home",
           title: "Home",
-          to: "/main",
+          to: "/",
         },
         {
           icon: "mdi-clipboard",
@@ -76,17 +79,64 @@ export default {
           title: "Profile",
           to: "/profile",
         },
+        {
+          icon: "mdi-signout",
+          title: "Sign Out",
+          to: "/",
+        },
       ],
       miniVariant: false,
       right: true,
       rightDrawer: false,
       title: "Epic Task",
+      isSignedIn: false, // Initialize the property with false
     };
   },
+  created() {
+    this.checkAuthState(); // Call the method to check the initial authentication state
+  },
   methods: {
+    async checkAuthState() {
+      try {
+        this.$fire.auth.onAuthStateChanged((user) => {
+          if (user && user.uid) {
+            this.isSignedIn = true; // Update the isSignedIn value if user is signed in
+          } else {
+            this.isSignedIn = false; // Update the isSignedIn value if user is signed out
+          }
+        });
+      } catch (error) {
+        console.error(error);
+      }
+    },
     login() {
       // Handle login functionality
-    }
+    },
+    async signOut() {
+      try {
+        const currentDate = new Date();
+        const formattedDate = currentDate.toISOString();
+        const baseUrl = "https://user-management-5wpxgn35iq-uc.a.run.app";
+        const user = await this.$fire.auth.currentUser;
+
+        await this.$axios.post(`${baseUrl}/events`, {
+          event_id: "unique-event-id",
+          event_type: "userInteraction",
+          user_id: user.uid,
+          timestamp: formattedDate,
+          additional_data: {
+            user_id: user.uid,
+            interaction: "SignOut",
+          },
+        });
+
+        await this.$fire.auth.signOut();
+        console.log(user);
+        this.$router.push("/");
+      } catch (error) {
+        console.error(error);
+      }
+    },
   },
 };
 </script>

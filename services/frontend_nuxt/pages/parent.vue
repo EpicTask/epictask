@@ -54,17 +54,11 @@ export default {
       parentName: "John Doe",
       taskDescription: "",
       tokenReward: "",
-      childTasks: [
-        { id: 1, description: "Clean the room", tokenReward: 10 },
-        { id: 2, description: "Wash the dishes", tokenReward: 15 },
-        { id: 3, description: "Do homework", tokenReward: 20 },
-      ],
-      rewards: [
-        { id: 1, description: "Ice Cream", tokenReward: 50 },
-        { id: 2, description: "Movie Day", tokenReward: 75 },
-        { id: 3, description: "New Bike", tokenReward: 300 },
-      ],
+      childTasks: [],
     };
+  },
+  mounted(){
+    this.getTasks();
   },
   methods: {
     createTask() {
@@ -86,6 +80,32 @@ export default {
     logout() {
       // Logic to log out the parent user
       // Redirect to login page or perform necessary actions
+    },
+    async getTasks(){
+      //logic to get tasks
+      const baseUrl = "https://task-management-5wpxgn35iq-uc.a.run.app";
+      let childTaskObj =  this.childTasks;
+        const axios = require('axios');
+        axios.get(`${baseUrl}/tasks`,)
+          .then(function (response) {
+            console.log(response);
+            // handle success
+            for(let i = 0; i < response.data.docs.docs.length; i++) {
+                  const newTask = {
+                    id: response.data.docs.docs[i].task_id,
+                    description: response.data.docs.docs[i].task_description,
+                    tokenReward: parseInt(response.data.docs.docs[i].reward_amount),
+                  };
+                  childTaskObj.push(newTask);
+            };
+          })
+          .catch(function (error) {
+            // handle error
+            console.log(error);
+          })
+          .finally(function () {
+            // always executed
+          });
     },
   },
 };
