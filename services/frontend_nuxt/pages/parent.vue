@@ -6,18 +6,29 @@
     </header>
     <section>
       <h2>Create a Task</h2>
-      <form @submit.prevent="createTask">
-        <label for="taskDescription">Task Description:</label>
-        <input
-          type="text"
-          id="taskDescription"
-          v-model="taskDescription"
-          required
-        />
-        <label for="tokenReward">Token Reward:</label>
-        <input type="number" id="tokenReward" v-model="tokenReward" required />
-        <button type="submit">Create Task</button>
-      </form>
+      <v-row>
+        <v-col cols="6"
+              sm="1"
+              md="2"
+              lg="4">
+          <form @submit.prevent="createTask">
+          <v-text-field
+                  v-model="taskDescription"
+                  id="taskDescription"
+                  label="Task Description:"
+                  required
+                ></v-text-field>
+          <v-text-field
+                  v-model="tokenReward"
+                  id="tokenReward"
+                  label="Token Reward:"
+                  type="number"
+                  required
+                ></v-text-field>
+          <button type="submit">Create Task</button>
+        </form>
+        </v-col>
+      </v-row>
     </section>
     <section>
       <h2>Your Child's Tasks</h2>
@@ -41,12 +52,11 @@ export default {
       parentName: "John Doe",
       taskDescription: "",
       tokenReward: "",
-      childTasks: [
-        { id: 1, description: "Clean the room", tokenReward: 10 },
-        { id: 2, description: "Wash the dishes", tokenReward: 15 },
-        { id: 3, description: "Do homework", tokenReward: 20 },
-      ],
+      childTasks: [],
     };
+  },
+  mounted(){
+    this.getTasks();
   },
   methods: {
     createTask() {
@@ -68,6 +78,30 @@ export default {
       // Logic to log out the parent user
       // Redirect to login page or perform necessary actions
     },
+    async getTasks(){
+      //logic to get tasks
+      let childTaskObj =  this.childTasks;
+        const axios = require('axios');
+        axios.get('http://localhost:80/get/tasks')
+          .then(function (response) {
+            // handle success
+            for(let i = 0; i < response.data.docs.length; i++) {
+                  const newTask = {
+                    id: response.data.docs[i].task_id,
+                    description: response.data.docs[i].additional_data.task_description,
+                    tokenReward: parseInt(response.data.docs[i].additional_data.reward_amount),
+                  };
+                  childTaskObj.push(newTask);
+            };
+          })
+          .catch(function (error) {
+            // handle error
+            console.log(error);
+          })
+          .finally(function () {
+            // always executed
+          });
+    },
   },
 };
 </script>
@@ -75,7 +109,7 @@ export default {
 form {
   display: flex;
   flex-direction: column;
-  align-items: center;
+  align-items: left;
 }
 
 label {
@@ -113,5 +147,9 @@ li {
 
 footer {
   margin-top: 30px;
+}
+
+div {
+  outline: 0px solid blue;
 }
 </style>

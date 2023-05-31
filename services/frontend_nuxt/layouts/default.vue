@@ -47,7 +47,7 @@
       </v-list>
     </v-navigation-drawer>
     <v-footer :absolute="!fixed" app>
-      <span>&copy; {{ new Date().getFullYear() }} Task Coin</span>
+      <span>&copy; {{ new Date().getFullYear() }} EpicTask</span>
     </v-footer>
   </v-app>
 </template>
@@ -90,7 +90,7 @@ export default {
       miniVariant: false,
       right: true,
       rightDrawer: false,
-      title: "Task Coin",
+      title: "EpicTask",
     };
   },
   methods: {

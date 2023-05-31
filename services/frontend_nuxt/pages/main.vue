@@ -2,7 +2,7 @@
   <div class="main">
     <v-card>
       <header>
-        <h1>Welcome to EpicTask</h1>
+        <h1>Welcome to EpicTask!</h1>
         <p>
           A platform to incentivize and teach children money management skills
           through tasks and rewards
