@@ -10,6 +10,7 @@ from fastapi.templating import Jinja2Templates
 from firestore_db import create_task, update_task
 from schema import (TaskAssigned, TaskCreated, TaskCancelled, TaskCompleted,
                     TaskCommentAdded, TaskExpired, TaskRatingUpdate, TaskRewarded, TaskUpdated)
+from firestore_db import get_tasks
 
 # pylint: disable=C0103
 app = FastAPI()
@@ -32,6 +33,7 @@ async def hello(request: Request):
 async def task_func(request: TaskCreated):
     try:
         response = create_task(request)
+        return {"message": response}
     except Exception as e:
         return {"error": str(e)}
 
@@ -41,6 +43,7 @@ async def task_func(request: TaskAssigned):
     try:
         event_type = 'TaskAssigned'
         response = await update_task(event_type, request)
+        return {"message": response}
     except Exception as e:
         return {"error": str(e)}
 
@@ -50,6 +53,7 @@ async def task_func(request: TaskCancelled):
     try:
         event_type = 'TaskCancelled'
         response = await update_task(event_type, request)
+        return {"message": response}
     except Exception as e:
         return {"error": str(e)}
 
@@ -59,6 +63,7 @@ async def task_func(request: TaskCommentAdded):
     try:
         event_type = 'TaskCommentAdded'
         response = await update_task(event_type, request)
+        return {"message": response}
     except Exception as e:
         return {"error": str(e)}
 
@@ -68,6 +73,7 @@ async def task_func(request: TaskCompleted):
     try:
         event_type = 'TaskCompleted'
         response = await update_task(event_type, request)
+        return {"message": response}
     except Exception as e:
         return {"error": str(e)}
 
@@ -77,6 +83,7 @@ async def task_func(request: TaskExpired):
     try:
         event_type = 'TaskExpired'
         response = await update_task(event_type, request)
+        return {"message": response}
     except Exception as e:
         return {"error": str(e)}
 
@@ -86,6 +93,7 @@ async def task_func(request: TaskRatingUpdate):
     try:
         event_type = 'TaskRatingUpdate'
         response = await update_task(event_type, request)
+        return {"message": response}
     except Exception as e:
         return {"error": str(e)}
 
@@ -95,6 +103,7 @@ async def task_func(request: TaskRewarded):
     try:
         event_type = 'TaskRewarded'
         response = await update_task(event_type, request)
+        return {"message": response}
     except Exception as e:
         return {"error": str(e)}
 
@@ -104,10 +113,20 @@ async def task_func(request: TaskUpdated):
     try:
         event_type = 'TaskUpdated'
         response = await update_task(event_type, request)
+        return {"message": response}
     except Exception as e:
         return {"error": str(e)}
 
 
+@app.get("/get/tasks")
+async def get_all_tasks():
+    try:
+        tasks = await get_tasks()
+
+        return {"docs": tasks}
+    except Exception as e:
+        return {"error": str(e)}
+    
 # Execute the application when the script is run
 if __name__ == "__main__":
     # Get the server port from the environment variable

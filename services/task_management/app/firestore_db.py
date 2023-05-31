@@ -1,12 +1,12 @@
 import json
 from google.cloud import firestore
 
+# Initialize Firestore client
+db = firestore.Client()
+
 
 def create_task(response):
     try:
-        # Initialize Firestore client
-        db = firestore.Client()
-
         # Create a reference to the "test_task_events" collection
         collection_ref = db.collection('test_tasks')
 
@@ -41,9 +41,6 @@ def create_task(response):
 
 def update_task(event_type, response):
     try:
-        # Initialize Firestore client
-        db = firestore.Client()
-
         # Create a reference to the "test_task_events" collection
         collection_ref = db.collection('test_tasks')
 
@@ -68,9 +65,6 @@ def update_task(event_type, response):
 
 def delete_task(event_type, response):
     try:
-        # Initialize Firestore client
-        db = firestore.Client()
-
         # Create a reference to the "test_task_events" collection
         collection_ref = db.collection('test_tasks')
 
@@ -90,11 +84,20 @@ def delete_task(event_type, response):
         return None
 
 
+def get_tasks():
+    doc_output = []
+
+    task_events = db.collection('test_tasks')
+    docs = task_events.stream()
+
+    for doc in docs:
+        doc_output.append(doc.to_dict())
+
+    return {"docs": doc_output}
+
+
 def write_event_to_firestore(event_type, task_id, response):
     try:
-        # Initialize Firestore client
-        db = firestore.Client()
-
         # Create a reference to the "test_task_events" collection
         collection_ref = db.collection('test_task_events')
 
