@@ -7,6 +7,7 @@ import uvicorn
 from fastapi import FastAPI, Request
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
+from fastapi.middleware.cors import CORSMiddleware
 from firestore_db import create_task, update_task
 from schema import (TaskAssigned, TaskCreated, TaskCancelled, TaskCompleted,
                     TaskCommentAdded, TaskExpired, TaskRatingUpdate, TaskRewarded, TaskUpdated)
@@ -14,6 +15,19 @@ from firestore_db import get_tasks
 
 # pylint: disable=C0103
 app = FastAPI()
+origins = [
+    "http://localhost",
+    "http://localhost:8080",
+    "http://localhost:3000",
+]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 templates = Jinja2Templates(directory="templates")
 
 
@@ -118,7 +132,7 @@ async def task_func(request: TaskUpdated):
         return {"error": str(e)}
 
 
-@app.get("/get/tasks")
+@app.get("/tasks")
 async def get_all_tasks():
     try:
         tasks = await get_tasks()
