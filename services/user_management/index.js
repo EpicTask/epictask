@@ -8,6 +8,7 @@ import {
   createUserWithPassword,
   signUserOut,
   loginWithEmailAndPassword,
+  getUser,
 } from './auth/email_password_auth.js';
 
 dotenv.config();
@@ -28,6 +29,16 @@ app.use(
 );
 app.use(json());
 
+// Get user
+app.get('/getCurrentUser', async (req, res) => {
+  try {
+    const uid = getUser();
+    return {message: uid};
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({error: 'No user found'});
+  }
+});
 // Create a new UserEvent
 app.post('/events/', async (req, res) => {
   try {

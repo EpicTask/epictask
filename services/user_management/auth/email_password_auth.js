@@ -3,6 +3,7 @@ import {
   createUserWithEmailAndPassword,
   signOut,
   signInWithEmailAndPassword,
+  onAuthStateChanged,
 } from 'firebase/auth';
 
 // Function to create a new user with email and password
@@ -35,6 +36,22 @@ async function loginWithEmailAndPassword(email, password) {
   }
 }
 
+// Get user authentificaion
+function getUser() {
+  onAuthStateChanged(auth, (user) => {
+    if (user) {
+      // User is signed in, see docs for a list of available properties
+      // https://firebase.google.com/docs/reference/js/auth.user
+      const uid = user.uid;
+      return uid;
+      // ...
+    } else {
+      // User is signed out
+      return null;
+    }
+  });
+}
+
 // Sign out user
 async function signUserOut() {
   try {
@@ -45,4 +62,9 @@ async function signUserOut() {
   }
 }
 
-export {createUserWithPassword, loginWithEmailAndPassword, signUserOut};
+export {
+  createUserWithPassword,
+  loginWithEmailAndPassword,
+  signUserOut,
+  getUser,
+};
