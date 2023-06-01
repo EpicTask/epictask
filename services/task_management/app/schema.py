@@ -15,18 +15,18 @@ class TaskEvent(BaseModel):
 
 
 class TaskCreated(BaseModel):
-    task_title: str
-    task_description: str = None
+    task_title: str = None
+    task_description: str
     task_id: str
     project_id: str = None
     project_name: str = None
     expiration_date: int
     requires_attachments: bool = False
-    terms_blob: str 
+    terms_blob: str = None
     terms_id: str = None
     reward_amount: float
     reward_currency: str
-    payment_method: str  # Pay directly or Create Escrow, Tokens
+    payment_method: str  # Pay directly or Escrow, Tokens
     rating: int = None
     user_id: str
     assigned_to_ids: List[str] = None
