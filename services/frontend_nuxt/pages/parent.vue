@@ -44,14 +44,14 @@
     </section>
     <section>
       <h2>Open Tasks</h2>
-      <ul>
-        <li v-for="task in tasks" :key="task.task_id">
-          <span>{{ task.task_description }}</span>
-          <span>Tokens: {{ task.reward_amount }}</span>
-          <button type="submit" @click="completeTask(task.id)">Complete</button>
-        </li>
-        <li v-if="tasks.length === 0">No tasks assigned</li>
-      </ul>
+      <div v-if="tasks.length === 0">No tasks assigned</div>
+    <div v-else>
+      <task-card
+        v-for="task in tasks"
+        :key="task.id"
+        :task="task"
+      ></task-card>
+    </div>
     </section>
   </div>
 </template>
