@@ -18,17 +18,17 @@ class TaskCreated(BaseModel):
     task_title: str = None
     task_description: str
     task_id: str
-    project_id: str = None
-    project_name: str = None
     expiration_date: int
-    requires_attachments: bool = False
-    terms_blob: str = None
-    terms_id: str = None
     reward_amount: float
     reward_currency: str
     payment_method: str  # Pay directly or Escrow, Tokens
-    rating: int = None
     user_id: str
+    project_id: str = None
+    project_name: str = None
+    requires_attachments: bool = False
+    terms_blob: str = None
+    terms_id: str = None
+    rating: int = None
     assigned_to_ids: List[str] = None
     rewarded: bool = None
 
@@ -75,3 +75,12 @@ class TaskRewarded(BaseModel):
 class TaskUpdated(BaseModel):
     task_id: str
     updated_fields: dict
+
+
+"expiration_date": 1686257027
+"payment_method": "Pay directly"
+"reward_amount": 663.5
+"reward_currency": "XRP"
+"task_description": "Test Task"
+"task_id": ""
+"user_id": "7ywLtEPiu4VGFyxkD6EobNQBhh72"

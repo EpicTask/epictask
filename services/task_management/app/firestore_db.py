@@ -84,16 +84,17 @@ def delete_task(event_type, response):
         return None
 
 
-def get_tasks():
+def get_tasks(user_id: str):
     doc_output = []
 
-    task_events = db.collection('test_tasks')
+    task_events = db.collection('test_tasks').where('user_id', '==', user_id)
     docs = task_events.stream()
 
     for doc in docs:
         doc_output.append(doc.to_dict())
 
     return {"docs": doc_output}
+
 
 
 def write_event_to_firestore(event_type, task_id, response):

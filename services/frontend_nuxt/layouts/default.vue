@@ -79,11 +79,6 @@ export default {
           title: "Profile",
           to: "/profile",
         },
-        {
-          icon: "mdi-signout",
-          title: "Sign Out",
-          to: "/",
-        },
       ],
       miniVariant: false,
       right: true,
