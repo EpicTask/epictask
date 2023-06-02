@@ -62,9 +62,9 @@ async def hello(request: Request):
 # XUMM sign in request
 
 
-@app.get('/xummSignInRequest')
-async def signInRequest():
-    return await connectWallet()
+@app.get('/xummSignInRequest/{uid}')
+async def signInRequest(uid: str):
+    return await connectWallet(uid)
 
 
 @app.get('/balance/{address}')

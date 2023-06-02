@@ -22,12 +22,13 @@ clientWebsocket = WebsocketClient("wss://s.altnet.rippletest.net:51233")
 # Connect wallet
 
 
-async def connectWallet():
+async def connectWallet(uid:str):
     # Create the XUMM payment request payload
     xumm_payload = {
         "txjson": {
             "TransactionType": "SignIn"
-        }
+        },
+        "custom_meta": {"identifier": uid}
     }
 
     # Create the payment request with the XUMM SDK
