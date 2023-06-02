@@ -36,8 +36,6 @@ class TaskCreated(BaseModel):
 class TaskAssigned(BaseModel):
     task_id: str
     assigned_to_id: str
-    reward_amount: float
-    reward_currency: str
 
 
 class TaskCancelled(BaseModel):
@@ -75,12 +73,3 @@ class TaskRewarded(BaseModel):
 class TaskUpdated(BaseModel):
     task_id: str
     updated_fields: dict
-
-
-"expiration_date": 1686257027
-"payment_method": "Pay directly"
-"reward_amount": 663.5
-"reward_currency": "XRP"
-"task_description": "Test Task"
-"task_id": ""
-"user_id": "7ywLtEPiu4VGFyxkD6EobNQBhh72"
