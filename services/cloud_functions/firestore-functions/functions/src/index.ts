@@ -9,7 +9,6 @@ import {firestore} from "firebase-admin";
 import {FieldValue} from "firebase-admin/firestore";
 import * as functions from "firebase-functions";
 
-
 initializeApp();
 const _pubsub = new PubSub();
 const db = firestore();
@@ -375,4 +374,28 @@ exports.newUserCreated = functions.auth.user().onCreate((user) => {
     uid: uid,
   });
 });
+
+exports.updateXummUserToken = onDocumentCreated(
+  "test_xumm_callbacks/{doc}",
+  async (event) => {
+    try {
+      const snapshot = event.data;
+      if (!snapshot) {
+        console.log("No data associated with webhook callback event");
+        return;
+      }
+      const data = snapshot.data();
+      const uid = data.custom_meta.identifier;
+      const userToken = data.user_token;
+      console.log(userToken);
+      if (uid) {
+        await db.collection("users").doc(uid).update(userToken);
+      }
+    } catch (error) {
+      console.error("Error occurred while updating Xumm User Token:", error);
+      // Handle the error here, log the error or perform any necessary actions
+    }
+  }
+);
+
 // npm run lint -- --fix
