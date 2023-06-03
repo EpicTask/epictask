@@ -1,5 +1,6 @@
 import * as dotenv from 'dotenv';
 import express, {json} from 'express';
+import cors from 'cors';
 import {createChildUID, linkChild, saveUserEvent} from './fb_functions.js';
 import {handleIncomingEvent} from './user_event_handler.js';
 import {UserEvent, getSchema, linkChildSchema} from './schema.js';
@@ -7,12 +8,37 @@ import {
   createUserWithPassword,
   signUserOut,
   loginWithEmailAndPassword,
+  getUser,
 } from './auth/email_password_auth.js';
 
 dotenv.config();
 const app = express();
+const origins = [
+  'http://localhost',
+  'http://localhost:8080',
+  'http://localhost:3000',
+];
+
+app.use(
+  cors({
+    origin: origins,
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
+  })
+);
 app.use(json());
 
+// Get user
+app.get('/getCurrentUser', async (req, res) => {
+  try {
+    const uid = getUser();
+    return {message: uid};
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({error: 'No user found'});
+  }
+});
 // Create a new UserEvent
 app.post('/events/', async (req, res) => {
   try {

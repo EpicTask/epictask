@@ -1,87 +1,144 @@
-import Vue from 'vue'
-import VueSnip from 'vue-snip'
-
-Vue.use(VueSnip)
 <template>
-  <v-card class="task-details-card">
-    <v-card-title>
-      <span class="headline">{{ task_title }}</span>
-    </v-card-title>
-    <v-card-subtitle>
-      {{ project_name }}
-    </v-card-subtitle>
-    <v-card-text>
-      <div>
-        <strong>{{ task_description }}</strong>
-      </div>
-      <div>
-        <strong class="d-inline-block text-truncate" style="max-width: 250px;"><v-icon>mdi-alert-outline</v-icon> {{ terms_blob }}</strong>
-      </div>
-      
-        <div>
-          <strong><v-icon>mdi-folder-outline</v-icon> {{ project_name }}</strong>
-          
-        </div>
-        <div>
-          <strong
-            ><v-icon>mdi-attachment</v-icon>
-            {{ requires_attachments ? "Requires Attachments" : "No" }}</strong
-          >
-        </div>
-        <div>
-          <strong><v-icon>mdi-currency-usd</v-icon> Amount:</strong>
-          {{ reward_amount }}
-        </div>
-        <div>
-          <strong><v-icon>mdi-currency-usd</v-icon> Currency:</strong>
-          {{ reward_currency }}
-        </div>
-
-      <div>
-        <strong><v-icon>mdi-cash-multiple</v-icon> {{ payment_method }}</strong>
-      </div>
-    </v-card-text>
-  </v-card>
+  <div class="task-card">
+    <div class="task-details">
+      <h3>{{ task.task_description }}</h3>
+      <p>Reward: {{ task.reward_amount }} {{ task.reward_currency }}</p>
+      <p>Due Date: {{ formatDate(task.expiration_date) }}</p>
+      <p>Assigned To: {{ assignedUser }}</p>
+    </div>
+    <div class="task-actions">
+      <button @click="completeTask(task.task_id)">Completed</button>
+      <button @click="editTask(task.task_id)">Edit</button>
+      <button @click="assignTask(task.task_id)">Assign</button>
+      <button @click="deleteTask(task.task_id)">Delete</button>
+    </div>
+    <UserList
+      v-if="showModal"
+      :show-modal="showModal"
+      :task-id="task.task_id"
+      @close-modal="showModal = false"
+    />
+  </div>
 </template>
 
 <script>
 export default {
+  props: {
+    task: {
+      type: Object,
+      required: true,
+    },
+  },
   data() {
     return {
-      task_title: "Sample Task Title",
-      task_description: "This is a sample task description. That can have a long detail explanation as to what this task is or isn't that depends on the user that created this task.",
-      project_name: "Sample Project",
-      requires_attachments: true,
-      terms_blob:     "Must have at least 2 years of relevant experience. Ability to work independently and meet deadlines. Strong communication and teamwork skills. Familiarity with the latest industry trends and technologies. Attention to detail and strong problem-solving abilities",
-      reward_amount: 100.0,
-      reward_currency: "XRP",
-      payment_method: "Pay directly",
+      showModal: false,
+      assignedUser: null,
     };
+  },
+  created() {
+    this.loadAssignedUser();
+  },
+  methods: {
+    formatDate(timestamp) {
+      const date = new Date(timestamp * 1000);
+      const options = { year: "numeric", month: "long", day: "numeric" };
+      return date.toLocaleDateString(undefined, options);
+    },
+
+    completeTask(taskId) {
+      // Logic to mark a task as completed
+      // Emit an event or call a method to handle the completion
+    },
+    editTask(taskId) {
+      // Logic to edit a task
+      // Emit an event or call a method to handle the editing
+    },
+    assignTask(taskId) {
+      // Logic to assign a task
+      // Emit an event or call a method to handle the assignment
+      console.log(taskId);
+      this.showModal = !this.showModal;
+      this.taskId = taskId;
+    },
+    deleteTask(taskId) {
+      // Logic to delete a task
+      const deleteTaskData = {
+        task_id: taskId,
+      };
+
+      try {
+        const baseUrl = "https://task-management-5wpxgn35iq-uc.a.run.app";
+        const result = this.$axios.post(
+          `${baseUrl}/TaskCancelled`,
+          deleteTaskData
+        );
+        console.log(result);
+
+      } catch (error) {
+        console.log(error);
+    
+      }
+    },
+    async loadAssignedUser() {
+      const user_ids = this.task.assigned_to;
+      if (user_ids && user_ids.length > 0) {
+        try {
+          const user = user_ids[0];
+          if (user) {
+            const userDocRef = this.$fire.firestore.collection("users").doc(user);
+            const userDocSnapshot = await userDocRef.get();
+
+            if (userDocSnapshot.exists) {
+              const userData = userDocSnapshot.data();
+              const displayName = userData.displayName;
+              if (displayName) {
+                this.assignedUser = displayName;
+              } else {
+                const uid = userData.uid;
+                const lastSixCharacters = uid.slice(-6);
+                this.assignedUser = `User ${lastSixCharacters}`;
+              }
+            }
+          }
+        } catch (error) {
+          console.error("Error fetching user profile:", error);
+          this.assignedUser = "Unassigned";
+        }
+      } else {
+        this.assignedUser = "Unassigned";
+      }
+    },
   },
 };
 </script>
+
 <style scoped>
-.task-details-card {
-  max-width: 400px;
-  margin: 0 auto;
-  padding: 20px;
-  border-radius: 8px;
+.task-card {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 1rem;
+  /* background-color: #f1f1f1; */
+  border-radius: 4px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
-.task-details-card-title {
-  background-color: #2196f3;
-  color: white;
-  padding: 16px;
-  border-radius: 8px 8px 0 0;
+.task-details {
+  margin-bottom: 1rem;
 }
 
-.task-detail-row {
-  margin-top: 10px;
-  margin-bottom: 10px;
+.task-actions {
+  display: flex;
+  justify-content: flex-start;
 }
 
-.task-detail-value {
-  margin-left: 10px;
-  font-weight: bold;
+button {
+  margin: 10px;
+  padding: 5px 10px;
+  background-color: #007bff;
+  color: #fff;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
 }
 </style>

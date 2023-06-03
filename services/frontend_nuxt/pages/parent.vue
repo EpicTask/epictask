@@ -1,7 +1,7 @@
 <template>
   <div class="parent">
     <header>
-      <h1>Welcome, {{ parentName }}!</h1>
+      <h1>Welcome, {{ displayName }}!</h1>
       <p>Manage tasks and rewards for your children.</p>
     </header>
     <section>
@@ -9,23 +9,34 @@
       <form @submit.prevent="createTask">
         <v-row>
           <v-col cols="12" sm="6">
-            <label for="taskDescription">Task Description:</label>
+            <label for="task_description">Task Description:</label>
             <input
               type="text"
-              id="taskDescription"
-              v-model="taskDescription"
+              id="task_description"
+              class="white-text"
+              v-model="task_description"
               required
             />
-            <label for="tokenReward">Token Reward:</label>
-            <input type="number" id="tokenReward" v-model="tokenReward" required />
+            <label for="reward_amount">Token Reward:</label>
+            <input
+              type="float"
+              id="reward_amount"
+              class="white-text"
+              v-model="reward_amount"
+              required
+            />
           </v-col>
           <v-col cols="12" sm="6">
             <v-select
-              v-model="currencyOptions"
-              :items="currencyOptions"
-              label="Reward Currency"
+              v-model="reward_currency"
+              :items="reward_currencyOptions"
               required
             ></v-select>
+            <DateSelector
+              v-model="expiration_date"
+              :defaultDate="calculateOneWeekFromNow"
+              @change="handleDateChange"
+            />
           </v-col>
         </v-row>
         <v-col class="justify-center">
@@ -36,74 +47,134 @@
     </section>
     <section>
       <h2>Open Tasks</h2>
-      <ul>
-        <li v-for="task in childTasks" :key="task.id">
-          <span>{{ task.description }}</span>
-          <span>Tokens: {{ task.tokenReward }}</span>
-          <button type="submit" @click="completeTask(task.id)">Complete</button>
-        </li>
-        <li v-if="childTasks.length === 0">No tasks assigned</li>
-      </ul>
+
+      <hr class="content-separator" />
+      <div v-if="tasks.length === 0">No tasks assigned</div>
+      <div v-else>
+        <task-card
+          v-for="task in tasks"
+          :key="task.id"
+          :task="task"
+        ></task-card>
+      </div>
     </section>
   </div>
 </template>
 
 <script>
+import DateSelector from "~/components/DateSelector.vue";
+
 export default {
   name: "Parent",
   data() {
+    const currentDate = new Date();
+    const formattedDate = currentDate.toISOString();
+    const oneWeekFromNow = new Date(
+      currentDate.getTime() + 7 * 24 * 60 * 60 * 1000
+    );
     return {
-      currencyOptions: ["XRP", "BTC", "eTask"],
-      parentName: "John Doe",
-      taskDescription: "",
-      tokenReward: "",
-      childTasks: [
-        { id: 1, description: "Clean the room", tokenReward: 10 },
-        { id: 2, description: "Wash the dishes", tokenReward: 15 },
-        { id: 3, description: "Do homework", tokenReward: 20 },
-      ],
-      rewards: [
-        { id: 1, description: "Ice Cream", tokenReward: 50 },
-        { id: 2, description: "Movie Day", tokenReward: 75 },
-        { id: 3, description: "New Bike", tokenReward: 300 },
-      ],
+      displayName: "",
+      imageUrl: require("~/assets/profile.png"),
+      reward_currencyOptions: ["XRP", "EPIC"],
+      userName: "Randy Nolden",
+      task_description: "",
+      reward_amount: "",
+      tasks: [],
+      reward_currency: "XRP",
+      expiration_date: formattedDate,
+      calculateOneWeekFromNow: oneWeekFromNow.toISOString(),
     };
   },
+
+  created() {
+    this.getTasks();
+  },
+  mounted() {
+    this.fetchUserProfile();
+  },
   methods: {
-    createTask() {
+    async fetchUserProfile() {
+      try {
+        const user_id = this.$fire.auth.currentUser.uid;
+        const userDocRef = this.$fire.firestore
+          .collection("users")
+          .doc(user_id);
+        const userDocSnapshot = await userDocRef.get();
+
+        if (userDocSnapshot.exists) {
+          const userData = userDocSnapshot.data();
+          this.displayName = userData.displayName;
+          this.userEmail = userData.email;
+          if (userData.imageUrl) {
+            this.imageUrl = userData.imageUrl;
+          }
+        }
+      } catch (error) {
+        console.error("Error fetching user profile:", error);
+      }
+    },
+    async createTask() {
       // Logic to create a task
       const newTask = {
-        id: this.childTasks.length + 1,
-        description: this.taskDescription,
-        tokenReward: parseInt(this.tokenReward),
-        reward_currency: this.reward_currency
+        task_id: "",
+        task_description: this.task_description,
+        reward_amount: parseFloat(this.reward_amount),
+        reward_currency: this.reward_currency,
+        expiration_date: this.expiration_date,
+        user_id: this.$fire.auth.currentUser.uid,
+        payment_method: "Pay directly",
       };
-      this.childTasks.push(newTask);
-      this.taskDescription = "";
-      this.tokenReward = "";
+      try {
+        const baseUrl = "https://task-management-5wpxgn35iq-uc.a.run.app";
+        const result = await this.$axios.post(
+          `${baseUrl}/TaskCreated`,
+          newTask
+        );
+        console.log(result);
+      } catch (error) {
+        console.log(error);
+      }
     },
     async completeTask(taskId) {
       // Logic to mark a task as completed
-      // this.childTasks = this.childTasks.filter((task) => task.id !== taskId);
-      try{
-        const currentDate = new Date();
-        const formattedDate = currentDate.toISOString();
-        const baseUrl = "https://xrpl-5wpxgn35iq-uc.a.run.app";
-        const address = "rB4iz44nvW2yGDBYTkspVfyR2NMsR3NtfF"
-
-        const balance = await this.$axios.get(`${baseUrl}/balance/${address}`);
-        console.log(balance);
-      }catch(e) {
-
-      }
+      this.tasks = this.tasks.filter((task) => task.task_id !== taskId);
     },
     logout() {
       // Logic to log out the parent user
       // Redirect to login page or perform necessary actions
     },
+    async getTasks() {
+      const user_id = this.$fire.auth.currentUser.uid;
+      const docOutput = [];
+
+      const taskEvents = this.$fire.firestore
+        .collection("test_tasks")
+        .where("user_id", "==", user_id);
+      const snapshot = await taskEvents.get();
+      const childTaskObj = this.tasks;
+      snapshot.forEach((doc) => {
+        console.log(doc.data());
+        const newTask = {
+          task_id: doc.data().task_id,
+          task_description: doc.data().task_description,
+          reward_amount: parseInt(doc.data().reward_amount),
+          reward_currency: doc.data().reward_currency,
+          expiration_date: doc.data().expiration_date,
+          assigned_to: doc.data().assigned_to_ids,
+        };
+        childTaskObj.push(newTask);
+      });
+
+      return { docs: docOutput };
+    },
+    handleDateChange(date) {
+      this.expiration_date = date;
+    },
   },
+  components: { DateSelector },
 };
 </script>
+
 <style>
 form {
   display: flex;
@@ -147,5 +218,13 @@ li {
 
 footer {
   margin-top: 30px;
+}
+
+.white-text {
+  color: white;
+}
+
+.v-picker__body {
+  color: white;
 }
 </style>

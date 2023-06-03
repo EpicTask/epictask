@@ -13,6 +13,7 @@ from fastapi import FastAPI, Request, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
+from fastapi.middleware.cors import CORSMiddleware
 from firestore_db import write_response_to_firestore
 from google_secrets import get_secret
 from payments_xrpl import handle_payment_request, send_payment_request
@@ -24,7 +25,6 @@ from xrpl.clients import JsonRpcClient, WebsocketClient
 from xrpl_models import PaymentRequest
 
 app = FastAPI()
-
 origins = [
     "http://localhost",
     "http://localhost:8080",
@@ -63,9 +63,9 @@ async def hello(request: Request):
 # XUMM sign in request
 
 
-@app.get('/xummSignInRequest')
-async def signInRequest():
-    return await connectWallet()
+@app.get('/xummSignInRequest/{uid}')
+async def signInRequest(uid: str):
+    return await connectWallet(uid)
 
 # Get account balance
 

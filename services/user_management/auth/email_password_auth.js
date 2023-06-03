@@ -35,6 +35,14 @@ async function loginWithEmailAndPassword(email, password) {
   }
 }
 
+// Get user authentificaion
+function getUser() {
+  // User is signed in, see docs for a list of available properties
+  // https://firebase.google.com/docs/reference/js/auth.user
+  const uid = auth.currentUser.uid;
+  return uid;
+}
+
 // Sign out user
 async function signUserOut() {
   try {
@@ -45,4 +53,9 @@ async function signUserOut() {
   }
 }
 
-export {createUserWithPassword, loginWithEmailAndPassword, signUserOut};
+export {
+  createUserWithPassword,
+  loginWithEmailAndPassword,
+  signUserOut,
+  getUser,
+};
