@@ -1,7 +1,7 @@
 <template>
   <div class="parent">
     <header>
-      <h1>Welcome, {{ userName }}!</h1>
+      <h1>Welcome, {{ displayName }}!</h1>
       <p>Manage tasks and rewards for your children.</p>
     </header>
     <section>
@@ -44,14 +44,16 @@
     </section>
     <section>
       <h2>Open Tasks</h2>
+
+      <hr class="content-separator" />
       <div v-if="tasks.length === 0">No tasks assigned</div>
-    <div v-else>
-      <task-card
-        v-for="task in tasks"
-        :key="task.id"
-        :task="task"
-      ></task-card>
-    </div>
+      <div v-else>
+        <task-card
+          v-for="task in tasks"
+          :key="task.id"
+          :task="task"
+        ></task-card>
+      </div>
     </section>
   </div>
 </template>
@@ -68,8 +70,10 @@ export default {
       currentDate.getTime() + 7 * 24 * 60 * 60 * 1000
     );
     return {
+      displayName: "",
+      imageUrl: require("~/assets/profile.png"),
       reward_currencyOptions: ["XRP", "EPIC"],
-      userName: "John Doe",
+      userName: "Randy Nolden",
       task_description: "",
       reward_amount: "",
       tasks: [],
@@ -79,10 +83,33 @@ export default {
     };
   },
 
-  mounted() {
+  created() {
     this.getTasks();
   },
+  mounted() {
+    this.fetchUserProfile();
+  },
   methods: {
+    async fetchUserProfile() {
+      try {
+        const user_id = this.$fire.auth.currentUser.uid;
+        const userDocRef = this.$fire.firestore
+          .collection("users")
+          .doc(user_id);
+        const userDocSnapshot = await userDocRef.get();
+
+        if (userDocSnapshot.exists) {
+          const userData = userDocSnapshot.data();
+          this.displayName = userData.displayName;
+          this.userEmail = userData.email;
+          if (userData.imageUrl) {
+            this.imageUrl = userData.imageUrl;
+          }
+        }
+      } catch (error) {
+        console.error("Error fetching user profile:", error);
+      }
+    },
     async createTask() {
       // Logic to create a task
       const newTask = {
@@ -114,24 +141,6 @@ export default {
       // Redirect to login page or perform necessary actions
     },
     async getTasks() {
-      // try {
-      //   const baseUrl = "https://task-management-5wpxgn35iq-uc.a.run.app";
-      //   const response = await this.$axios.get(`${baseUrl}/tasks`);
-      //   console.log(response);
-
-      //   const childTaskObj = this.tasks;
-      //   for (let i = 0; i < response.data.docs.docs.length; i++) {
-          // const newTask = {
-          //   task_id: response.data.docs.docs[i].task_id,
-          //   task_description: response.data.docs.docs[i].task_description,
-          //   reward_amount: parseInt(response.data.docs.docs[i].reward_amount),
-          // };
-          // childTaskObj.push(newTask);
-      //   }
-      // } catch (error) {
-      //   console.log(error);
-      //   // Handle the error here
-      // }
       const user_id = this.$fire.auth.currentUser.uid;
       const docOutput = [];
 
@@ -143,11 +152,14 @@ export default {
       snapshot.forEach((doc) => {
         console.log(doc.data());
         const newTask = {
-            task_id: doc.data().task_id,
-            task_description: doc.data().task_description,
-            reward_amount: parseInt(doc.data().reward_amount),
-          };
-          childTaskObj.push(newTask);
+          task_id: doc.data().task_id,
+          task_description: doc.data().task_description,
+          reward_amount: parseInt(doc.data().reward_amount),
+          reward_currency: doc.data().reward_currency,
+          expiration_date: doc.data().expiration_date,
+          assigned_to: doc.data().assigned_to_ids,
+        };
+        childTaskObj.push(newTask);
       });
 
       return { docs: docOutput };

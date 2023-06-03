@@ -69,6 +69,14 @@ export default {
       signUpFailed: false, // New variable to track registration failure
     };
   },
+  created(){
+    try {
+      const user_id = this.$fire.auth.currentUser.uid;
+      if (user_id){
+        this.$router.push("/parent");
+      }
+    } catch (e) {}
+  },
   methods: {
     async login() {
       try {

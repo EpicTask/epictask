@@ -29,7 +29,7 @@
 
       <v-toolbar-title>{{ title }}</v-toolbar-title>
       <v-spacer />
-      <v-btn text class="ml-4" @click="login"> Connect Wallet </v-btn>
+      <v-btn text class="ml-4" @click="connectWallet"> Connect Wallet </v-btn>
       <v-btn v-if="isSignedIn" text class="ml-4" @click="signOut"
         >Sign Out</v-btn
       >
@@ -104,9 +104,47 @@ export default {
         console.error(error);
       }
     },
-    login() {
-      // Handle login functionality
+    async connectWallet() {
+      try {
+        // Connect wallet functionality
+        const user_id = this.$fire.auth.currentUser.uid;
+        const baseUrl = "https://xrpl-5wpxgn35iq-uc.a.run.app";
+        const { data } = await this.$axios.get(
+          `${baseUrl}/xummSignInRequest/${user_id}`
+        );
+        const windowFeatures = "width=700,height=700"; // Customize the window features
+        window.open(data, "_blank", windowFeatures);
+      } catch (error) {
+        console.error("Error occurred while connecting wallet:", error);
+        // Handle the error here, show an error message, or perform any necessary actions
+      }
     },
+    async checkWalletConnection() {
+      const user_id = this.$fire.auth.currentUser.uid;
+      const userDoc = this.$fire.firestore.collection("users").doc(user_id);
+
+      try {
+        const snapshot = await userDoc.get();
+        if (snapshot.exists) {
+          const userToken = snapshot.data().userToken;
+          if (userToken && userToken.token_expiration) {
+            const currentTimestamp = Date.now();
+            const tokenExpiration = userToken.token_expiration;
+            const isTokenValid = currentTimestamp < tokenExpiration;
+            return isTokenValid;
+          }
+        }
+      } catch (error) {
+        console.error(
+          "Error occurred while checking wallet connection:",
+          error
+        );
+        // Handle the error here, log the error or perform any necessary actions
+      }
+
+      return false;
+    },
+
     async signOut() {
       try {
         const currentDate = new Date();
@@ -137,5 +175,19 @@ export default {
 </script>
 
 <style>
-/* add your styles here */
+button {
+  margin-top: 10px;
+  padding: 5px 10px;
+  background-color: #007bff;
+  color: #fff;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.content-separator {
+  border: none;
+  border-top: 1px solid #ccc;
+  margin: 10px 0;
+}
 </style>
