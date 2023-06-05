@@ -1,7 +1,7 @@
 import asyncio
 import json
 import os
-
+import datetime
 import xumm
 from firestore_db import write_response_to_firestore
 from google_secrets import get_secret
@@ -22,13 +22,14 @@ clientWebsocket = WebsocketClient("wss://s.altnet.rippletest.net:51233")
 # Connect wallet
 
 
-async def connectWallet(uid:str):
+async def connectWallet(uid: str):
+    current_date = datetime.datetime.now().isoformat()
     # Create the XUMM payment request payload
     xumm_payload = {
         "txjson": {
             "TransactionType": "SignIn"
         },
-        "custom_meta": {"identifier": uid}
+        "custom_meta": {"identifier": uid, "blob": current_date}
     }
 
     # Create the payment request with the XUMM SDK
