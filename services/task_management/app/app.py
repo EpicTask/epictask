@@ -8,7 +8,7 @@ from fastapi import FastAPI, Request
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
 from fastapi.middleware.cors import CORSMiddleware
-from firestore_db import create_task, update_task, delete_task, assign_task
+from firestore_db import create_task, update_task, delete_task, assign_task, completed_task
 from schema import (TaskAssigned, TaskCreated, TaskCancelled, TaskCompleted,
                     TaskCommentAdded, TaskExpired, TaskRatingUpdate, TaskRewarded, TaskUpdated)
 from firestore_db import get_tasks
@@ -86,7 +86,7 @@ async def task_func(request: TaskCommentAdded):
 async def task_func(request: TaskCompleted):
     try:
         event_type = 'TaskCompleted'
-        response = await update_task(event_type, request)
+        response = completed_task(event_type, request)
         return {"message": response}
     except Exception as e:
         return {"error": str(e)}
@@ -140,7 +140,7 @@ async def get_all_tasks(user_id: str):
         return {"docs": tasks}
     except Exception as e:
         return {"error": str(e)}
-    
+
 # Execute the application when the script is run
 if __name__ == "__main__":
     # Get the server port from the environment variable

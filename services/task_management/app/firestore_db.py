@@ -114,6 +114,37 @@ def delete_task(event_type, response):
         return None
 
 
+def completed_task(event_type, response):
+    try:
+        # Create a reference to the "test_task_events" collection
+        collection_ref = db.collection('test_tasks')
+
+        # Convert the TaskEvent object to a JSON string
+        data = response.dict()
+
+        doc_id = data["task_id"]
+        doc_ref = collection_ref.document(doc_id)
+
+        # Get the user_id field from the document
+        doc_data = doc_ref.get().to_dict()
+        doc_user_id = doc_data["user_id"]
+
+  
+
+        # Check if the user_id is task owner
+        if data["verified"] is None or data["verified"] is False:
+            doc_ref.update({"marked_completed": data["marked_completed"]})
+
+        write_event_to_firestore(event_type, doc_id, data)
+        # Return the custom document ID
+        return doc_id
+
+    except Exception as e:
+        # Handle any errors that occur during the Firestore operation
+        print(f"Error writing to Firestore: {e}")
+        return None
+
+
 def get_tasks(user_id: str):
     doc_output = []
 
@@ -124,6 +155,36 @@ def get_tasks(user_id: str):
         doc_output.append(doc.to_dict())
 
     return {"docs": doc_output}
+
+# Write comments to comments collection
+
+
+def write_comment(event_type, response):
+    try:
+        # Create a reference to the "test_task_events" collection
+        collection_ref = db.collection('test_task_comments')
+
+        # Convert the TaskEvent object to a JSON string
+        data = response.dict()
+        # Get task_id to create/update document
+        doc_id = data["task_id"]
+        # Generate a custom document ID
+        doc_ref = collection_ref.document(doc_id)
+
+        # Update the document with the generated ID
+        doc_ref.set(data)
+        # Update the document with the generated ID
+        doc_ref.update({
+            'timestamp': firestore.SERVER_TIMESTAMP
+        })
+        write_event_to_firestore(event_type, doc_id, data)
+        # Return the custom document ID
+        return doc_id
+
+    except Exception as e:
+        # Handle any errors that occur during the Firestore operation
+        print(f"Error writing to Firestore: {e}")
+        return None
 
 
 def write_event_to_firestore(event_type, task_id, response):
@@ -137,7 +198,6 @@ def write_event_to_firestore(event_type, task_id, response):
         # Get the generated document ID
         doc_id = doc_ref.id
 
-
         # Update the document with the generated ID
         doc_ref.set({
             'event_id': doc_id,
@@ -145,7 +205,7 @@ def write_event_to_firestore(event_type, task_id, response):
             'task_id': task_id,
             # 'user_id': response["user_id"] if response["user_id"] is not None else None,
             'timestamp': firestore.SERVER_TIMESTAMP,
-            'status': 'success',
+            'status': "success",
             'additional_data': response
         })
 

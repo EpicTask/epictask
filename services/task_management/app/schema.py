@@ -31,6 +31,7 @@ class TaskCreated(BaseModel):
     rating: int = None
     assigned_to_ids: List[str] = None
     rewarded: bool = None
+    marked_completed: bool = None
 
 
 class TaskAssigned(BaseModel):
@@ -51,9 +52,9 @@ class TaskCommentAdded(BaseModel):
 class TaskCompleted(BaseModel):
     task_id: str
     completed_by_id: str
-    requires_attachments: bool = False
     attachments: List[str] = None
-    verification_result: bool
+    marked_completed: bool = None
+    verified: bool = None
 
 
 class TaskExpired(BaseModel):
