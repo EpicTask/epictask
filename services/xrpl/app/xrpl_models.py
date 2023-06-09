@@ -7,4 +7,5 @@ class PaymentRequest(BaseModel):
     destination: str
     note: str | None = None
     user_token: str | None = None
+    task_id: str | None = None
 

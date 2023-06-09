@@ -7,6 +7,7 @@ from google_secrets import get_secret
 from websocket_handler import connection_manager
 from starlette.responses import JSONResponse
 from xrpl.clients import JsonRpcClient
+from xrpl.utils import xrp_to_drops
 from pydantic import BaseModel
 
 api_key = get_secret('xumm-key')
@@ -31,13 +32,14 @@ async def send_payment_request(payment_request: PaymentRequest):
             "TransactionType": payment_request.type,
             "Account": payment_request.source,
             "Destination": payment_request.destination,
-            "Amount": str(payment_request.amount),
+            "Amount": str(xrp_to_drops(payment_request.amount)),
         },
         "Fee": "12",
         "options": {
             "expire": 3
         },
-        "user_token": payment_request.user_token
+        "user_token": payment_request.user_token,
+        "custom_meta": {"blob": {"task_id":payment_request.task_id}}
     }
 
     # Create the payment request with the XUMM SDK
@@ -63,12 +65,13 @@ async def send_payment_request_no_user_token(payment_request: PaymentRequest):
             "TransactionType": payment_request.type,
             "Account": payment_request.source,
             "Destination": payment_request.destination,
-            "Amount": str(payment_request.amount),
+            "Amount": str(xrp_to_drops(payment_request.amount)),
         },
         "Fee": "12",
         "options": {
             "expire": 3
         },
+        "custom_meta": {"blob": {"task_id":payment_request.task_id}}
     }
 
     def callback_func(event):

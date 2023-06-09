@@ -261,7 +261,6 @@ async def unsubscribe(request: Request):
 @app.post('/payment_request/')
 async def process_payment(payment_request: PaymentRequest):
     response = await handle_payment_request(payment_request)
-    await connection_manager.send_update(response)
     return response
 
 
