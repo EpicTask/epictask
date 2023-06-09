@@ -7,7 +7,7 @@
         "functionName": "webhook-callback",
         "gen": "GEN_2",
         "entryPoint": "webhook_callback",
-        "revision": "webhook-callback-00006-kil",
+        "revision": "webhook-callback-00016-sos",
         "testInput": "",
         "region": "us-central1",
         "runtime": "python310"

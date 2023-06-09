@@ -385,17 +385,140 @@ exports.updateXummUserToken = onDocumentCreated(
         return;
       }
       const data = snapshot.data();
-      const uid = data.custom_meta.identifier;
-      const userToken = data.user_token;
+      const uid = data.custom_meta.blob;
+      const userToken = data.userToken;
       console.log(userToken);
       if (uid) {
-        await db.collection("users").doc(uid).update(userToken);
+        await db.collection("users").doc(uid).update({userToken: userToken});
       }
     } catch (error) {
       console.error("Error occurred while updating Xumm User Token:", error);
-      // Handle the error here, log the error or perform any necessary actions
+      // Handle the error here, log the error, or perform any necessary actions
     }
   }
 );
 
+exports.createXRPPaymentRequest = onDocumentCreated(
+  "test_task_events/{doc}",
+  async (event) => {
+    try {
+      const snapshot = event.data;
+      if (!snapshot) {
+        console.log("No data associated with webhook callback event");
+        return;
+      }
+      const taskEventDocData = snapshot.data();
+
+      if (taskEventDocData && taskEventDocData.additional_data.verified) {
+        const taskDocRef = db
+          .collection("test_tasks")
+          .doc(taskEventDocData.task_id);
+        const taskDocSnapshot = await taskDocRef.get();
+        const taskDocData = taskDocSnapshot.data();
+
+        const userId = taskDocData?.user_id;
+        const rewardAmount = taskDocData?.reward_amount;
+        const paymentMethod = taskDocData?.payment_method;
+        const rewardCurrency = taskDocData?.reward_currency;
+
+        if (!userId || !rewardAmount || !paymentMethod || !rewardCurrency) {
+          throw new Error("Missing required fields in task document");
+        }
+
+        if (!taskEventDocData.additional_data.completed_by_id) {
+          throw new Error("No user id found");
+        }
+
+        const assignedToId = taskEventDocData.additional_data.completed_by_id;
+        const usersCollectionRef = db.collection("users");
+        const userQuerySnapshot = await usersCollectionRef
+          .where("uid", "in", [assignedToId, userId])
+          .get();
+        const usersData: { [key: string]: any } = {};
+        userQuerySnapshot.forEach((userDoc) => {
+          const userData = userDoc.data();
+          usersData[userData.uid] = {
+            publicAddress: userData.publicAddress,
+            userToken: userData.userToken.user_token,
+          };
+        });
+        const rewardJsonMap = {
+          amount: rewardAmount,
+          source: usersData[userId].publicAddress,
+          destination: usersData[assignedToId].publicAddress,
+          user_token: usersData[userId].userToken,
+          task_id: taskEventDocData.task_id,
+        };
+
+        // Use the rewardJsonMap as needed for further processing
+        console.log(rewardJsonMap);
+        const xrplUrl = "https://xrpl-5wpxgn35iq-uc.a.run.app/payment_request/";
+        const response = await axios.post(xrplUrl, rewardJsonMap);
+
+        return response; // Modify the return statement if necessary
+      } else {
+        console.log("Task not verified");
+        return null;
+      }
+    } catch (error) {
+      console.error("Error creating XRP payment request:", error);
+      return null;
+    }
+  }
+);
+
+exports.deleteTaskAfterSuccessfulPayment = onDocumentCreated(
+  "test_xumm_callbacks/{doc}",
+  async (event) => {
+    try {
+      const snapshot = event.data;
+      if (!snapshot) {
+        console.log("No data associated with webhook callback event");
+        return;
+      }
+      const taskEventDocData = snapshot.data();
+
+      // Check if the task_id exists in the test_tasks collection
+      const taskSnapshot = await db
+        .collection("test_tasks")
+        .doc(taskEventDocData.custom_meta.blob.task_id)
+        .get();
+
+      if (taskSnapshot.exists) {
+        const taskData = taskSnapshot.data();
+        const returnURLSigned = taskEventDocData.payloadResponse?.signed;
+
+        if (returnURLSigned && returnURLSigned === true) {
+          // Save the contents of the task_id document
+          await db
+            .collection("test_paid_tasks")
+            .doc(taskEventDocData.custom_meta.blob.task_id)
+            .set(taskData!);
+
+          // Delete the original document in test_tasks
+          await db
+            .collection("test_tasks")
+            .doc(taskEventDocData.custom_meta.blob.task_id)
+            .delete();
+
+          console.log(
+            "Task saved to test_paid_tasks and deleted from test_tasks"
+          );
+        } else {
+          console.log(
+            "return_url.signed is not true, skipping document deletion"
+          );
+        }
+      } else {
+        console.log("Task does not exist in test_tasks");
+      }
+      return null;
+    } catch (error) {
+      console.error("Error deleting task:", error);
+      return null;
+    }
+  }
+);
+
+// firebase deploy --only functions:updateXummUserToken
 // npm run lint -- --fix

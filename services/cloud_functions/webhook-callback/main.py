@@ -1,9 +1,8 @@
-import functions_framework
 from google.cloud import firestore
+from google.cloud.firestore import SERVER_TIMESTAMP
 
 # Initialize Firestore client
 db = firestore.Client()
-
 
 def webhook_callback(request):
     try:
@@ -14,7 +13,6 @@ def webhook_callback(request):
         user_agent_header = request.headers.get('user-agent')
         print(user_agent_header)
         # Verify the X-Signature
-        # Replace with your Xumm webhook secret key
         user_agent = 'xumm-webhook'
 
         if user_agent_header != user_agent:
@@ -22,8 +20,13 @@ def webhook_callback(request):
             return
 
         # Save the callback data to Firestore
-        # Replace this with your Firestore saving logic
-        db.collection('test_xumm_callbacks').add(callback_data)
+        db = firestore.Client()  # Initialize the Firestore client
+        collection_ref = db.collection('test_xumm_callbacks')
+        doc_ref = collection_ref.document()  # Create a new document reference
+        doc_ref.set(callback_data)  # Set the document data
+
+        # Update the created document with a server timestamp
+        doc_ref.update({'timestamp': SERVER_TIMESTAMP})
 
         print('Callback data saved successfully:', callback_data)
         return
