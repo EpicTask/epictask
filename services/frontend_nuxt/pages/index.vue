@@ -17,8 +17,8 @@
       </p>
       <div class="login-container">
         <div class="form-container">
-          <div class="input-row">
-            <input type="email" v-model="email" placeholder="Email" required />
+          <div class="input-row white-text">
+            <input class="white-text" type="email" v-model="email" placeholder="Email" required />
           </div>
           <div class="input-row">
             <input
@@ -259,9 +259,5 @@ button {
 
 .cta-button {
   margin-right: 10px;
-}
-
-.section-container {
-  margin-top: 0; /* Remove the default margin */
 }
 </style>

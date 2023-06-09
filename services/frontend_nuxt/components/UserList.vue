@@ -62,13 +62,13 @@ export default {
         assigned_to_id: assigned_to_id, // Use an array to match the API payload structure
       };
         try {
+          this.closeModal();
           const baseUrl = "https://task-management-5wpxgn35iq-uc.a.run.app";
           const result = await this.$axios.post(
             `${baseUrl}/TaskAssigned`,
             assignTask
           );
           console.log(result);
-          this.closeModal();
         } catch (error) {
           console.log(error);
           this.closeModal();
@@ -78,7 +78,7 @@ export default {
 };
 </script>
 
-<style>
+<style scoped>
 /* Styles for the modal */
 .modal {
   position: fixed;
@@ -130,7 +130,4 @@ li:hover {
   ); /* Change background color on hover */
 }
 
-button {
-  align-self: flex-end; /* Align the button at the bottom right */
-}
 </style>

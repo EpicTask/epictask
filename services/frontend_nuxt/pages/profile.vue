@@ -10,9 +10,13 @@
       <div class="email">
         {{ userEmail }}
       </div>
+      <div class="email"> Public Address:
+        {{ publicAddress }}
+      </div>
       <div class="edit-buttons">
-        <button @click="editDisplayName">Edit Display Name</button>
-        <button @click="editImage">Edit Image</button>
+        <button class="item-button" @click="editDisplayName">Edit Display Name</button>
+        <button class="item-button" @click="editImage">Edit Image</button>
+        <button class="item-button" @click="editPublicAddress">Edit Public Address</button>
       </div>
     </div>
 
@@ -31,8 +35,8 @@
         />
       </div>
       <div>
-        <button type="submit">Save</button>
-        <button @click="cancelEdit">Cancel</button>
+        <button class="item-button" type="submit">Save</button>
+        <button class="item-button" @click="cancelEdit">Cancel</button>
       </div>
     </form>
 
@@ -47,8 +51,28 @@
         />
       </div>
       <div>
-        <button type="submit">Save</button>
-        <button @click="cancelEdit">Cancel</button>
+        <button class="item-button" type="submit">Save</button>
+        <button class="item-button" @click="cancelEdit">Cancel</button>
+      </div>
+    </form>
+
+    <form
+      v-if="editingField === 'publicAddress'"
+      @submit.prevent="updatePublicAddress"
+    >
+      <div>
+        <label for="public-address">Public Wallet Address:</label>
+        <input
+          type="text"
+          id="public-address"
+          v-model="updatedPublicAddress"
+          class="white-text"
+          required
+        />
+      </div>
+      <div>
+        <button class="item-button" type="submit">Save</button>
+        <button class="item-button" @click="cancelEdit">Cancel</button>
       </div>
     </form>
   </div>
@@ -63,6 +87,8 @@ export default {
     userEmail: "",
     image: null,
     imageUrl: require("~/assets/profile.png"),
+    publicAddress:"",
+    updatedPublicAddress:"",
     editingField: null,
   };
 },
@@ -83,6 +109,7 @@ export default {
           const userData = userDocSnapshot.data();
           this.displayName = userData.displayName;
           this.userEmail = userData.email;
+          this.publicAddress = userData.publicAddress;
           if (userData.imageUrl) {
             this.imageUrl = userData.imageUrl;
           }
@@ -121,6 +148,10 @@ export default {
       this.editingField = "displayName";
       this.updatedDisplayName = this.displayName;
     },
+    editPublicAddress() {
+      this.editingField = "publicAddress";
+      this.updatedpublicAddress = this.publicAddress;
+    },
     editImage() {
       this.editingField = "image";
     },
@@ -140,6 +171,22 @@ export default {
         this.editingField = null;
       } catch (error) {
         console.error("Error updating display name:", error);
+        // Handle the error here, show error message, etc.
+      }
+    },
+    async updatePublicAddress() {
+      try {
+        const user_id = this.$fire.auth.currentUser.uid;
+        // Update the user's display name
+        const userDocRef = this.$fire.firestore
+          .collection("users")
+          .doc(user_id);
+          
+        await userDocRef.update({ publicAddress: this.updatedPublicAddress});
+        this.publicAddress = this.updatedPublicAddress;
+        this.editingField = null;
+      } catch (error) {
+        console.error("Error updating public address:", error);
         // Handle the error here, show error message, etc.
       }
     },

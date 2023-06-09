@@ -5,17 +5,11 @@
       <p>Reward: {{ task.reward_amount }} {{ task.reward_currency }}</p>
       <p>Due Date: {{ formatDate(task.expiration_date) }}</p>
       <p>Assigned To: {{ assignedUser }}</p>
-      <p v-if="task.marked_completed">
-        Marked Completed
-      </p>
+      <p v-if="task.marked_completed">Marked Completed</p>
     </div>
     <div class="task-actions">
-      <button class="item-button" @click="completeTask(task, task.user_id)">
-        Completed
-      </button>
-      <!-- <button class="item-button" @click="editTask(task.task_id)">Edit</button> -->
-      <button class="item-button" @click="assignTask(task.task_id)">Assign</button>
-      <button class="item-button" @click="deleteTask(task.task_id)">Delete</button>
+      <button @click="completeTask(task, task.user_id)">Completed</button>
+      <!-- <button @click="editTask(task.task_id)">Edit</button> -->
     </div>
     <UserList
       v-if="showModal"
@@ -53,21 +47,19 @@ export default {
     },
     completeTask(task, ownerId) {
       const user_id = this.$fire.auth.currentUser.uid;
-      const user_ids = this.task.assigned_to;
       let completeTaskData;
 
       if (user_id === ownerId) {
         completeTaskData = {
           task_id: task.task_id,
-          completed_by_id: user_ids[0],
+          completed_by_id: this.assignedUser,
           verified: true,
-          marked_completed:
-            task.marked_completed
+          marked_completed: !!task.marked_completed,
         };
       } else {
         completeTaskData = {
           task_id: task.task_id,
-          completed_by_id: user_ids[0],
+          completed_by_id: this.assignedUser,
           marked_completed:
             task.marked_completed !== null ? !task.marked_completed : true,
         };
@@ -89,29 +81,6 @@ export default {
     //     // Logic to edit a task
     //     // Emit an event or call a method to handle the editing
     // },
-    assignTask(taskId) {
-      // Logic to assign a task
-      // Emit an event or call a method to handle the assignment
-      console.log(taskId);
-      this.showModal = !this.showModal;
-      this.taskId = taskId;
-    },
-    deleteTask(taskId) {
-      // Logic to delete a task
-      const deleteTaskData = {
-        task_id: taskId,
-      };
-      try {
-        const baseUrl = "https://task-management-5wpxgn35iq-uc.a.run.app";
-        const result = this.$axios.post(
-          `${baseUrl}/TaskCancelled`,
-          deleteTaskData
-        );
-        console.log(result);
-      } catch (error) {
-        console.log(error);
-      }
-    },
     async loadAssignedUser() {
       const user_ids = this.task.assigned_to;
       if (user_ids && user_ids.length > 0) {
@@ -165,5 +134,15 @@ export default {
 .task-actions {
   display: flex;
   justify-content: flex-start;
+}
+
+button {
+  margin: 10px;
+  padding: 5px 10px;
+  background-color: #007bff;
+  color: #fff;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
 }
 </style>

@@ -4,7 +4,7 @@
       <h1>Welcome, {{ displayName }}!</h1>
       <p>Manage tasks and rewards for your children.</p>
     </header>
-    <section>
+    <section class="section-container">
       <h2>Create a Task</h2>
       <form @submit.prevent="createTask">
         <v-row>
@@ -39,23 +39,44 @@
             />
           </v-col>
         </v-row>
-        <v-col class="justify-center">
-          <button type="submit">Create Task</button>
-          <v-btn variant="text" size="small"> Advanced</v-btn>
-        </v-col>
+        <v-row>
+          <v-col class="justify-center">
+            <button type="submit">Create Task</button>
+          </v-col>
+          <v-col class="justify-center">
+            <v-btn class="default-button" variant="text" size="small">
+              Advanced</v-btn
+            >
+          </v-col>
+        </v-row>
       </form>
     </section>
-    <section>
-      <h2>Open Tasks</h2>
+    <section class="section-container" v-if="tasks.length > 0">
+      <v-row class="justify-start" justify="space-between"
+        ><h2>Open Tasks</h2>
+        <v-btn class="ma-2" variant="text" size="small" to="/">
+          <v-icon>mdi-refresh</v-icon>
+        </v-btn>
+      </v-row>
 
       <hr class="content-separator" />
-      <div v-if="tasks.length === 0">No tasks assigned</div>
+      <div v-if="tasks.length === 0">No tasks created</div>
       <div v-else>
-        <task-card
-          v-for="task in tasks"
-          :key="task.id"
-          :task="task"
-        ></task-card>
+        <TaskCard v-for="task in tasks" :key="task.id" :task="task" />
+      </div>
+    </section>
+    <section class="section-container" v-if="assignedTasks.length > 0">
+      <v-row class="justify-start" justify="space-between"
+        ><h2>Tasks Assigned To You</h2>
+        <v-btn class="ma-2" variant="text" size="small" to="/">
+          <v-icon>mdi-refresh</v-icon>
+        </v-btn>
+      </v-row>
+
+      <hr class="content-separator" />
+      <div v-if="assignedTasks.length === 0">No tasks assigned</div>
+      <div v-else>
+        <TaskCardAssigned v-for="task in assignedTasks" :key="assignedTasks.id" :task="task" />
       </div>
     </section>
   </div>
@@ -63,6 +84,8 @@
 
 <script>
 import DateSelector from "~/components/DateSelector.vue";
+import TaskCard from "~/components/TaskCard.vue";
+import TaskCardAssigned from "~/components/TaskCardAssigned.vue";
 
 export default {
   name: "Parent",
@@ -80,19 +103,22 @@ export default {
       task_description: "",
       reward_amount: "",
       tasks: [],
+      assignedTasks: [],
       reward_currency: "XRP",
       expiration_date: formattedDate,
       calculateOneWeekFromNow: oneWeekFromNow.toISOString(),
     };
   },
-
   created() {
     this.getTasks();
-  },
-  mounted() {
+    this.getAssignedTasks();
     this.fetchUserProfile();
   },
   methods: {
+    reloadPage() {
+      // Reload the current page or perform any other actions
+      location.reload();
+    },
     async fetchUserProfile() {
       try {
         const user_id = this.$fire.auth.currentUser.uid;
@@ -161,6 +187,33 @@ export default {
           reward_currency: doc.data().reward_currency,
           expiration_date: doc.data().expiration_date,
           assigned_to: doc.data().assigned_to_ids,
+          marked_completed: doc.data().marked_completed,
+          user_id: doc.data().user_id,
+        };
+        childTaskObj.push(newTask);
+      });
+
+      return { docs: docOutput };
+    },
+    async getAssignedTasks() {
+      const user_id = this.$fire.auth.currentUser.uid;
+      const docOutput = [];
+
+      const taskEvents = this.$fire.firestore
+        .collection("test_tasks")
+        .where("assigned_to_ids", "array-contains", user_id);
+      const snapshot = await taskEvents.get();
+      const childTaskObj = this.assignedTasks;
+      snapshot.forEach((doc) => {
+        console.log(doc.data());
+        const newTask = {
+          task_id: doc.data().task_id,
+          task_description: doc.data().task_description,
+          reward_amount: parseInt(doc.data().reward_amount),
+          reward_currency: doc.data().reward_currency,
+          expiration_date: doc.data().expiration_date,
+          marked_completed: doc.data().marked_completed,
+          assigned_to: doc.data().assigned_to_ids,
         };
         childTaskObj.push(newTask);
       });
@@ -171,7 +224,7 @@ export default {
       this.expiration_date = date;
     },
   },
-  components: { DateSelector },
+  components: { DateSelector, TaskCard, TaskCardAssigned },
 };
 </script>
 
@@ -196,6 +249,20 @@ input[type="number"] {
 }
 
 button[type="submit"] {
+  margin-top: 10px;
+  padding: 5px 10px;
+  background-color: #007bff;
+  color: #fff;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.section-container {
+  margin-top: 10px; /* Remove the default margin */
+}
+
+.default-button {
   margin-top: 10px;
   padding: 5px 10px;
   background-color: #007bff;
