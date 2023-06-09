@@ -61,7 +61,7 @@ async function linkChild(data) {
     const parentUID = data.parentUID;
     const childUID = data.childUID;
     const parentRef = collection(db, 'users', parentUID);
-    const childCollectionRef = collection(parentRef, 'children');
+    const childCollectionRef = collection(parentRef, 'linked');
     const childDocRef = doc(childCollectionRef, childUID);
 
     await setDoc(childDocRef, data);
