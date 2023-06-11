@@ -19,7 +19,7 @@
             <v-icon>{{ item.icon }}</v-icon>
           </v-list-item-action>
           <v-list-item-content>
-            <v-list-item-title>{{ item.title }}</v-list-item-title>
+            <v-list-item-title v-if="!isMobile">{{ item.title }}</v-list-item-title>
           </v-list-item-content>
         </v-list-item>
       </v-list>
@@ -92,6 +92,11 @@ export default {
       isSignedIn: false,
       walletNotConnected: true,
     };
+  },
+  computed: {
+    isMobile() {
+      return window.innerWidth <= 600; // Adjust the breakpoint as needed
+    },
   },
   created() {
     this.checkAuthState();

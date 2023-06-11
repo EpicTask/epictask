@@ -17,11 +17,12 @@
       </p>
       <div class="login-container">
         <div class="form-container">
-          <div class="input-row white-text">
+          <div class="input-row ">
             <input class="white-text" type="email" v-model="email" placeholder="Email" required />
           </div>
           <div class="input-row">
             <input
+            class="white-text"
               type="password"
               v-model="password"
               placeholder="Password"
@@ -130,6 +131,7 @@ export default {
         }
       } catch (error) {
         console.error(error);
+        this.loginFailed = true; // Set login failure status
       }
     },
     async register() {
@@ -201,6 +203,8 @@ export default {
         this.$router.push("/parent"); // that return from firebase
       } catch (e) {
         // handle the error
+        console.log(e);
+        this.signUpFailed = true;
       }
     },
   },
@@ -222,6 +226,9 @@ export default {
   align-items: center;
   justify-content: top;
   height: 50vh;
+}
+.white-text {
+  color: white;
 }
 
 .form-container {
