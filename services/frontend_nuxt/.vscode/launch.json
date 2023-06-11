@@ -23,7 +23,12 @@
                 "minikube": {}
             },
             "watch": true,
-            "externalPortForward": 3000
+            "externalPortForward": 3000,
+            "debug": {
+                "sourceFileMap": {
+                    "${workspaceFolder}": "/app"
+                }
+            }
         }
     ]
 }
