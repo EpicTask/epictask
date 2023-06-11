@@ -13,15 +13,17 @@ import {
 
 dotenv.config();
 const app = express();
-const origins = [
-  'http://localhost',
-  'http://localhost:8080',
-  'http://localhost:3000',
-];
+// const origins = [
+//   'http://localhost',
+//   'http://localhost:8080',
+//   'http://localhost:3000',
+//   'http://192.168.1.176:3000/',
+//   'https://task-coin-384722.uc.r.appspot.com/',
+// ];
 
 app.use(
   cors({
-    origin: origins,
+    origin: '*',
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
     allowedHeaders: ['Content-Type', 'Authorization'],

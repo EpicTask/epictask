@@ -15,15 +15,17 @@ from firestore_db import get_tasks
 
 # pylint: disable=C0103
 app = FastAPI()
-origins = [
-    "http://localhost",
-    "http://localhost:8080",
-    "http://localhost:3000",
-]
+# origins = [
+#     "http://localhost",
+#     "http://localhost:8080",
+#     "http://localhost:3000",
+#     "http://192.168.1.176:3000/",
+#     "https://task-coin-384722.uc.r.appspot.com",
+# ]
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=origins,
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
