@@ -40,6 +40,11 @@ export default {
     this.openModal();
   },
   methods: {
+    reloadPage() {
+      setTimeout(() => {
+        this.$router.push("/");
+      }, 2000); // 2000 milliseconds = 2 seconds
+    },
     async openModal() {
       const usersCollection = this.$fire.firestore.collection("users");
       const snapshot = await usersCollection.get();
@@ -69,6 +74,7 @@ export default {
             assignTask
           );
           console.log(result);
+          this.reloadPage();
         } catch (error) {
           console.log(error);
           this.closeModal();

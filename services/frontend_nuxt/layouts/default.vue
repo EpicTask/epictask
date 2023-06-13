@@ -94,10 +94,14 @@ export default {
     };
   },
   computed: {
-    isMobile() {
+  isMobile() {
+    if (process.client) {
       return window.innerWidth <= 600; // Adjust the breakpoint as needed
-    },
+    }
+    return false; // Default value for server-side rendering
   },
+},
+
   created() {
     this.checkAuthState();
     this.checkWalletConnection();

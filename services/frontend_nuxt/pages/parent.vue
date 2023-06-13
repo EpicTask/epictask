@@ -2,9 +2,11 @@
   <div class="parent">
     <header>
       <h1>Welcome, {{ displayName }}!</h1>
-      <p>Manage tasks and rewards for your children.</p>
+      <p v-if="!hasAssignedTasks">Manage tasks and rewards for your children.</p>
+      <p v-else>Manage your tasks.</p>
     </header>
-    <section class="section-container">
+
+    <section class="section-container" v-if="!hasAssignedTasks">
       <h2>Create a Task</h2>
       <form @submit.prevent="createTask">
         <v-row>
@@ -39,11 +41,11 @@
             />
           </v-col>
         </v-row>
-        <v-row>
-          <v-col class="justify-center">
+        <v-row class="justify-center">
+          <v-col cols="auto">
             <button type="submit">Create Task</button>
           </v-col>
-          <v-col class="justify-center">
+          <v-col cols="auto">
             <v-btn class="default-button" variant="text" size="small">
               Advanced</v-btn
             >
@@ -51,36 +53,47 @@
         </v-row>
       </form>
     </section>
-    <section class="section-container" v-if="tasks.length > 0">
-      <v-row class="justify-start" justify="space-between"
-        ><h2>Open Tasks</h2>
-        <v-btn class="ma-2" variant="text" size="small" to="/">
-          <v-icon>mdi-refresh</v-icon>
-        </v-btn>
-      </v-row>
 
-      <hr class="content-separator" />
-      <div v-if="tasks.length === 0">No tasks created</div>
-      <div v-else>
-        <TaskCard v-for="task in tasks" :key="task.id" :task="task" />
-      </div>
-    </section>
-    <section class="section-container" v-if="assignedTasks.length > 0">
-      <v-row class="justify-start" justify="space-between"
-        ><h2>Tasks Assigned To You</h2>
-        <v-btn class="ma-2" variant="text" size="small" to="/">
-          <v-icon>mdi-refresh</v-icon>
-        </v-btn>
-      </v-row>
+    <template v-if="hasTasks">
+      <section class="section-container">
+        <v-row class="justify-start ml-1" justify="space-between">
+          <h2>Open Tasks</h2>
+          <v-btn class="ma-2" variant="text" size="small" to="/">
+            <v-icon>mdi-refresh</v-icon>
+          </v-btn>
+        </v-row>
 
-      <hr class="content-separator" />
-      <div v-if="assignedTasks.length === 0">No tasks assigned</div>
-      <div v-else>
-        <TaskCardAssigned v-for="task in assignedTasks" :key="assignedTasks.id" :task="task" />
-      </div>
-    </section>
+        <hr class="content-separator" />
+        <div v-if="tasks.length === 0">No tasks created</div>
+        <div v-else>
+          <TaskCard v-for="task in tasks" :key="task.id" :task="task" />
+        </div>
+      </section>
+    </template>
+
+    <template v-if="hasAssignedTasks">
+      <section class="section-container">
+        <v-row class="justify-start ml-1" justify="space-between">
+          <h2>Tasks Assigned To You</h2>
+          <v-btn class="ma-2" variant="text" size="small" to="/">
+            <v-icon>mdi-refresh</v-icon>
+          </v-btn>
+        </v-row>
+
+        <hr class="content-separator" />
+        <div v-if="assignedTasks.length === 0">No tasks assigned</div>
+        <div v-else>
+          <TaskCardAssigned
+            v-for="task in assignedTasks"
+            :key="task.id"
+            :task="task"
+          />
+        </div>
+      </section>
+    </template>
   </div>
 </template>
+
 
 <script>
 import DateSelector from "~/components/DateSelector.vue";
@@ -114,10 +127,19 @@ export default {
     this.getAssignedTasks();
     this.fetchUserProfile();
   },
+  computed: {
+    hasTasks() {
+      return this.tasks.length > 0;
+    },
+    hasAssignedTasks() {
+      return this.assignedTasks.length > 0;
+    },
+  },
   methods: {
     reloadPage() {
-      // Reload the current page or perform any other actions
-      location.reload();
+      setTimeout(() => {
+        this.$router.push("/");
+      }, 2000); // 2000 milliseconds = 2 seconds
     },
     async fetchUserProfile() {
       try {
@@ -157,13 +179,43 @@ export default {
           newTask
         );
         console.log(result);
+        this.reloadPage();
       } catch (error) {
         console.log(error);
       }
     },
-    async completeTask(taskId) {
-      // Logic to mark a task as completed
-      this.tasks = this.tasks.filter((task) => task.task_id !== taskId);
+    completeTask(task, ownerId) {
+      const user_id = this.$fire.auth.currentUser.uid;
+      const user_ids = this.task.assigned_to;
+      let completeTaskData;
+
+      if (user_id === ownerId) {
+        completeTaskData = {
+          task_id: task.task_id,
+          completed_by_id: user_ids[0],
+          verified: true,
+          marked_completed: task.marked_completed,
+        };
+      } else {
+        completeTaskData = {
+          task_id: task.task_id,
+          completed_by_id: user_ids[0],
+          marked_completed:
+            task.marked_completed !== null ? !task.marked_completed : true,
+        };
+      }
+
+      try {
+        const baseUrl = "https://task-management-5wpxgn35iq-uc.a.run.app";
+        const result = this.$axios.post(
+          `${baseUrl}/TaskCompleted`,
+          completeTaskData
+        );
+        console.log(result);
+        this.reloadPage();
+      } catch (error) {
+        console.log(error);
+      }
     },
     logout() {
       // Logic to log out the parent user
@@ -259,7 +311,7 @@ button[type="submit"] {
 }
 
 .section-container {
-  margin-top: 10px; /* Remove the default margin */
+  margin-top: 30px;
 }
 
 .default-button {

@@ -5,17 +5,19 @@
       <p>Reward: {{ task.reward_amount }} {{ task.reward_currency }}</p>
       <p>Due Date: {{ formatDate(task.expiration_date) }}</p>
       <p>Assigned To: {{ assignedUser }}</p>
-      <p v-if="task.marked_completed">
-        Marked Completed
-      </p>
+      <p v-if="task.marked_completed">Marked Completed</p>
     </div>
     <div class="task-actions">
       <button class="item-button" @click="completeTask(task, task.user_id)">
         Completed
       </button>
       <!-- <button class="item-button" @click="editTask(task.task_id)">Edit</button> -->
-      <button class="item-button" @click="assignTask(task.task_id)">Assign</button>
-      <button class="item-button" @click="deleteTask(task.task_id)">Delete</button>
+      <button class="item-button" @click="assignTask(task.task_id)">
+        Assign
+      </button>
+      <button class="item-button" @click="deleteTask(task.task_id)">
+        Delete
+      </button>
     </div>
     <UserList
       v-if="showModal"
@@ -46,6 +48,11 @@ export default {
     this.loadAssignedUser();
   },
   methods: {
+    reloadPage() {
+      setTimeout(() => {
+        this.$router.push("/");
+      }, 2000); // 2000 milliseconds = 2 seconds
+    },
     formatDate(timestamp) {
       const date = new Date(timestamp * 1000);
       const options = { year: "numeric", month: "long", day: "numeric" };
@@ -61,8 +68,7 @@ export default {
           task_id: task.task_id,
           completed_by_id: user_ids[0],
           verified: true,
-          marked_completed:
-            task.marked_completed
+          marked_completed: task.marked_completed,
         };
       } else {
         completeTaskData = {
@@ -80,6 +86,7 @@ export default {
           completeTaskData
         );
         console.log(result);
+        this.reloadPage();
       } catch (error) {
         console.log(error);
       }
@@ -108,6 +115,7 @@ export default {
           deleteTaskData
         );
         console.log(result);
+        this.reloadPage();
       } catch (error) {
         console.log(error);
       }
