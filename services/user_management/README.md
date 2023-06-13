@@ -1,58 +1,42 @@
-# Cloud Run Hello World with Cloud Code
+# User Management Service
 
-"Hello World" is a [Cloud Run](https://cloud.google.com/run/docs) application that renders a simple webpage.
+The User Management service is a component of Epic Task that handles user registration, authentication, and authorization. It provides essential functionalities for managing user accounts and ensuring secure access to the Epic Task platform.
 
-For details on how to use this sample as a template in Cloud Code, read the documentation for Cloud Code for [VS Code](https://cloud.google.com/code/docs/vscode/quickstart-cloud-run?utm_source=ext&utm_medium=partner&utm_campaign=CDR_kri_gcp_cloudcodereadmes_012521&utm_content=-) or [IntelliJ](https://cloud.google.com/code/docs/intellij/quickstart-cloud-run?utm_source=ext&utm_medium=partner&utm_campaign=CDR_kri_gcp_cloudcodereadmes_012521&utm_content=-).
+## Features
 
-### Table of Contents
-* [Getting Started with VS Code](#getting-started-with-vs-code)
-* [Getting Started with IntelliJ](#getting-started-with-intellij)
-* [Sign up for User Research](#sign-up-for-user-research)
+- User Registration: Allow users to create an account by providing necessary information such as username, email, and password.
+- Authentication: Authenticate users by validating their credentials and granting access to protected resources.
+- Password Management: Enable users to change their passwords and implement password recovery mechanisms.
+- User Profile: Allow users to view and update their profile information.
+- Role-Based Authorization: Implement role-based access control to restrict certain functionalities based on user roles.
+- User Data Storage: Store user information securely in a database, ensuring data integrity and confidentiality.
 
----
-## Getting Started with VS Code
+## Getting Started
 
-### Run the app locally with the Cloud Run Emulator
-1. Click on the Cloud Code status bar and select 'Run on Cloud Run Emulator'.  
-![image](./img/status-bar.png)
+To use the User Management service, follow these steps:
 
-2. Use the Cloud Run Emulator dialog to specify your [builder option](https://cloud.google.com/code/docs/vscode/deploying-a-cloud-run-app#deploying_a_cloud_run_service). Cloud Code supports Docker, Jib, and Buildpacks. See the skaffold documentation on [builders](https://skaffold.dev/docs/pipeline-stages/builders/) for more information about build artifact types.  
-![image](./img/build-config.png)
+1. Clone the Epic Task repository from GitHub.
+2. Install the required dependencies and libraries specified in the project's documentation.
+3. Configure the User Management service according to your environment and project requirements.
+4. Integrate the User Management service into your Epic Task application or system.
+5. Implement authentication and authorization mechanisms to protect sensitive operations.
+6. Customize the service as needed, considering additional user-related functionalities or integrations.
+7. Thoroughly test the service to ensure it meets your requirements and functions correctly.
+8. Deploy the User Management service in your production environment, considering scalability, performance, and security aspects.
+9. Monitor and maintain the service to ensure its smooth operation and address any issues or bugs that may arise.
 
-3. Click ‘Run’. Cloud Code begins building your image.
+## API Reference
 
-4. View the build progress in the OUTPUT window. Once the build has finished, click on the URL in the OUTPUT window to view your live application.  
-![image](./img/cloud-run-url.png)
+The User Management service exposes a set of APIs that allow developers to interact with the service programmatically. Refer to the API documentation for detailed information on the available endpoints, request/response formats, and authentication requirements.
 
-5. To stop the application, click the stop icon on the Debug Toolbar.
+## Contributing
 
----
-## Getting Started with IntelliJ
+Contributions to the User Management service and Epic Task project are welcome. If you want to contribute, please follow the guidelines outlined in the project's CONTRIBUTING.md file. Adhere to the project's coding standards, write comprehensive tests, and submit well-documented pull requests.
 
-### Run the app locally with the Cloud Run Emulator
+## License
 
-#### Define run configuration
+The User Management service is released under the [MIT License](https://opensource.org/licenses/MIT). Make sure to review the LICENSE file for more information on the permitted use, modification, and distribution of the service.
 
-1. Click the Run/Debug configurations dropdown on the top taskbar and select 'Edit Configurations'.  
-![image](./img/edit-config.png)
+## Support
 
-2. Select 'Cloud Run: Run Locally' and specify your [builder option](https://cloud.google.com/code/docs/intellij/developing-a-cloud-run-app#defining_your_run_configuration). Cloud Code supports Docker, Jib, and Buildpacks. See the skaffold documentation on [builders](https://skaffold.dev/docs/pipeline-stages/builders/) for more information about build artifact types.  
-![image](./img/local-build-config.png)
-
-#### Run the application
-1. Click the Run/Debug configurations dropdown and select 'Cloud Run: Run Locally'. Click the run icon.  
-![image](./img/config-run-locally.png)
-
-2. View the build process in the output window. Once the build has finished, you will receive a notification from the Event Log. Click 'View' to access the local URLs for your deployed services.  
-![image](./img/local-success.png)
-
----
-## Sign up for User Research
-
-We want to hear your feedback!
-
-The Cloud Code team is inviting our user community to sign-up to participate in Google User Experience Research. 
-
-If you’re invited to join a study, you may try out a new product or tell us what you think about the products you use every day. At this time, Google is only sending invitations for upcoming remote studies. Once a study is complete, you’ll receive a token of thanks for your participation such as a gift card or some Google swag. 
-
-[Sign up using this link](https://google.qualtrics.com/jfe/form/SV_4Me7SiMewdvVYhL?reserved=1&utm_source=In-product&Q_Language=en&utm_medium=own_prd&utm_campaign=Q1&productTag=clou&campaignDate=January2021&referral_code=UXbT481079) and answer a few questions about yourself, as this will help our research team match you to studies that are a great fit.
+For any questions, issues, or support related to the User Management service, please refer to the project's support resources, such as the issue tracker or community forums.

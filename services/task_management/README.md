@@ -1,5 +1,5 @@
 # Task Management Service
-The Task Management Service is a component of Task Coin, providing functionalities related to task management and organization. It enables users to create, assign, update, and track tasks efficiently within the Task Coin ecosystem.
+The Task Management Service is a component of Epic Task, providing functionalities related to task management and organization. It enables users to create, assign, update, and track tasks efficiently within the Epic Task ecosystem.
 
 ## Features
 - Task Creation: Users can create new tasks by providing relevant details such as title, description, deadlines, and other necessary information.
@@ -13,10 +13,10 @@ The Task Management Service is a component of Task Coin, providing functionaliti
 ## Getting Started
 To use the Task Management Service, follow these steps:
 
-1. Clone the Task Coin repository from GitHub.
+1. Clone the Epic Task repository from GitHub.
 2. Install the required dependencies and libraries specified in the project's documentation.
 3. Configure the Task Management Service according to your environment and project requirements.
-4. Integrate the Task Management Service into your Task Coin application or system.
+4. Integrate the Task Management Service into your Epic Task application or system.
 5. Ensure proper authentication and authorization mechanisms are in place to protect sensitive task data.
 6. Customize the service according to your specific task management needs, such as adding additional 7. attributes or functionalities.
 8. Test the service thoroughly to ensure it meets your requirements and functions as expected.
@@ -27,7 +27,7 @@ To use the Task Management Service, follow these steps:
 The Task Management Service exposes a set of APIs that allow developers to interact with the service programmatically. Contact admin for detailed information on the available endpoints, request/response formats, and authentication requirements.
 
 ## Contributing
-Contributions to the Task Management Service and Task Coin project are welcome. If you want to contribute, please follow the guidelines outlined in the project's CONTRIBUTING.md file. Ensure that you adhere to the project's coding standards, write comprehensive tests, and submit well-documented pull requests.
+Contributions to the Task Management Service and Epic Task project are welcome. If you want to contribute, please follow the guidelines outlined in the project's CONTRIBUTING.md file. Ensure that you adhere to the project's coding standards, write comprehensive tests, and submit well-documented pull requests.
 
 ## License
 The Task Management Service is released under the MIT License. Make sure to review the LICENSE file for more information on the permitted use, modification, and distribution of the service.
