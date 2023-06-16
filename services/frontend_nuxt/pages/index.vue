@@ -17,12 +17,18 @@
       </p>
       <div class="login-container">
         <div class="form-container">
-          <div class="input-row ">
-            <input class="white-text" type="email" v-model="email" placeholder="Email" required />
+          <div class="input-row">
+            <input
+              class="white-text"
+              type="email"
+              v-model="email"
+              placeholder="Email"
+              required
+            />
           </div>
           <div class="input-row">
             <input
-            class="white-text"
+              class="white-text"
               type="password"
               v-model="password"
               placeholder="Password"
@@ -50,10 +56,14 @@
         </div>
       </div>
       <div v-if="loginFailed" class="error-message">
-        Login failed. Please try again.
+        Login failed. Invalid credentials. Please try again.
       </div>
-      <div v-if="signUpFailed" class="error-message">
-        Sign up failed. Please try again.
+      <div v-if="signUpFailed" class="error-message">Sign up failed.</div>
+      <div v-if="invalidEmail" class="error-message">
+        Invalid email address.
+      </div>
+      <div v-if="invalidPassword" class="error-message">
+        Password must be at least 6 characters.
       </div>
     </section>
   </div>
@@ -68,111 +78,93 @@ export default {
       password: "",
       loginFailed: false, // New variable to track login failure
       signUpFailed: false, // New variable to track registration failure
+      invalidEmail: false, // New variable to track invalid email
+      invalidPassword: false, // New variable to track invalid password
     };
   },
-  created(){
+  created() {
     try {
       const user_id = this.$fire.auth.currentUser.uid;
-      if (user_id){
+      if (user_id) {
         this.$router.push("/parent");
       }
     } catch (e) {}
   },
   methods: {
     async login() {
-      try {
-        const currentDate = new Date();
-        const formattedDate = currentDate.toISOString();
-        const baseUrl = this.$config.userUrl;
+      const isValidEmail = this.isValidEmail(this.email);
+      const isValidPassword = this.isValidPassword(this.password);
 
-        await this.$axios.post(`${baseUrl}/events`, {
-          event_id: "unique-event-id",
-          event_type: "userSignIn",
-          user_id: "",
-          timestamp: formattedDate,
-          additional_data: {
-            status: "pending",
-            timestamp: formattedDate,
-            social: false,
-          },
-        });
+      if (isValidEmail && isValidPassword) {
+        try {
+          const currentDate = new Date();
+          const formattedDate = currentDate.toISOString();
+          const baseUrl = this.$config.userUrl;
 
-        const user = await this.$fire.auth.signInWithEmailAndPassword(
-          this.email,
-          this.password
-        );
-        console.log(user.user.uid);
-        if (user && user.user.uid) {
-          await this.$axios.post(`${baseUrl}/events`, {
-            event_id: "unique-event-id",
-            event_type: "userSignIn",
-            user_id: user.user.uid,
-            timestamp: formattedDate,
-            additional_data: {
-              status: "success",
-              timestamp: formattedDate,
-              social: false,
-            },
-          });
-          this.$router.push("/parent");
-        } else {
           await this.$axios.post(`${baseUrl}/events`, {
             event_id: "unique-event-id",
             event_type: "userSignIn",
             user_id: "",
             timestamp: formattedDate,
             additional_data: {
-              status: "failed",
+              status: "pending",
               timestamp: formattedDate,
               social: false,
             },
           });
+
+          const user = await this.$fire.auth.signInWithEmailAndPassword(
+            this.email,
+            this.password
+          );
+
+          if (user && user.user.uid) {
+            await this.$axios.post(`${baseUrl}/events`, {
+              event_id: "unique-event-id",
+              event_type: "userSignIn",
+              user_id: user.user.uid,
+              timestamp: formattedDate,
+              additional_data: {
+                status: "success",
+                timestamp: formattedDate,
+                social: false,
+              },
+            });
+            this.$router.push("/parent");
+          } else {
+            await this.$axios.post(`${baseUrl}/events`, {
+              event_id: "unique-event-id",
+              event_type: "userSignIn",
+              user_id: "",
+              timestamp: formattedDate,
+              additional_data: {
+                status: "failed",
+                timestamp: formattedDate,
+                social: false,
+              },
+            });
+            this.loginFailed = true; // Set login failure status
+          }
+        } catch (error) {
+          console.error(error);
           this.loginFailed = true; // Set login failure status
         }
-      } catch (error) {
-        console.error(error);
-        this.loginFailed = true; // Set login failure status
+      } else {
+        this.invalidEmail = !isValidEmail;
+        this.invalidPassword = !isValidPassword;
       }
     },
+
     async register() {
-      try {
-        const currentDate = new Date();
-        const formattedDate = currentDate.toISOString();
-        const baseUrl = this.$config.userUrl;
+      const isValidEmail = this.isValidEmail(this.email);
+      const isValidPassword = this.isValidPassword(this.password);
 
-        await this.$axios.post(`${baseUrl}/events`, {
-          event_id: "unique-event-id",
-          event_type: "userRegistration",
-          user_id: "",
-          timestamp: formattedDate,
-          additional_data: {
-            email: this.email,
-            timestamp: formattedDate,
-            status: "pending",
-            social: false,
-          },
-        });
+      if (isValidEmail && isValidPassword) {
+        try {
+          const currentDate = new Date();
+          const formattedDate = currentDate.toISOString();
+          const baseUrl = this.$config.userUrl;
 
-        const user = await this.$fire.auth.createUserWithEmailAndPassword(
-          this.email,
-          this.password
-        );
-
-        if (user && user.user.uid) {
-          await this.$axios.post(`${baseUrl}/events`, {
-            event_id: "unique-event-id",
-            event_type: "userRegistration",
-            user_id: user.user.uid,
-            timestamp: formattedDate,
-            additional_data: {
-              email: this.email,
-              status: "success",
-              timestamp: formattedDate,
-              social: false,
-            },
-          });
-          this.$router.push("/parent");
-        } else {
           await this.$axios.post(`${baseUrl}/events`, {
             event_id: "unique-event-id",
             event_type: "userRegistration",
@@ -180,17 +172,71 @@ export default {
             timestamp: formattedDate,
             additional_data: {
               email: this.email,
-              status: "failed",
               timestamp: formattedDate,
+              status: "pending",
               social: false,
             },
           });
+
+          const user = await this.$fire.auth.createUserWithEmailAndPassword(
+            this.email,
+            this.password
+          );
+
+          if (user && user.user.uid) {
+            await this.$axios.post(`${baseUrl}/events`, {
+              event_id: "unique-event-id",
+              event_type: "userRegistration",
+              user_id: user.user.uid,
+              timestamp: formattedDate,
+              additional_data: {
+                email: this.email,
+                status: "success",
+                timestamp: formattedDate,
+                social: false,
+              },
+            });
+            this.$router.push("/parent");
+          } else {
+            await this.$axios.post(`${baseUrl}/events`, {
+              event_id: "unique-event-id",
+              event_type: "userRegistration",
+              user_id: "",
+              timestamp: formattedDate,
+              additional_data: {
+                email: this.email,
+                status: "failed",
+                timestamp: formattedDate,
+                social: false,
+              },
+            });
+          }
+          this.signUpFailed = true;
+        } catch (error) {
+          console.error(error);
         }
+      } else {
         this.signUpFailed = true;
-      } catch (error) {
-        console.error(error);
+        this.invalidEmail = !isValidEmail;
+        this.invalidPassword = !isValidPassword;
       }
     },
+
+    // Function to validate the email format
+    isValidEmail(email) {
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      return emailRegex.test(email);
+    },
+
+    // Function to validate the password criteria
+    isValidPassword(password) {
+      // Password should be at least 6 characters long
+      if (password.length < 6) {
+        return false;
+      }
+      return true;
+    },
+
     forgotPassword() {
       // Redirect or perform necessary actions for password reset
     },

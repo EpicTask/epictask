@@ -68,11 +68,11 @@ export default {
           title: "Create Task",
           to: "/create",
         },
-        {
-          icon: "mdi-check",
-          title: "Tasks",
-          to: "/tasks",
-        },
+        // {
+        //   icon: "mdi-check",
+        //   title: "Tasks",
+        //   to: "/tasks",
+        // },
         {
           icon: "mdi-gift",
           title: "Rewards",

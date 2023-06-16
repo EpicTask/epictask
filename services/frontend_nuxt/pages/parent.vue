@@ -2,7 +2,7 @@
   <div class="parent">
     <header>
       <h1>Welcome, {{ displayName }}!</h1>
-      <p v-if="!hasAssignedTasks">Manage tasks and rewards for your children.</p>
+      <p v-if="!hasAssignedTasks">Manage tasks and rewards.</p>
       <p v-else>Manage your tasks.</p>
     </header>
 
@@ -46,7 +46,7 @@
             <button type="submit">Create Task</button>
           </v-col>
           <v-col cols="auto">
-            <v-btn class="default-button" variant="text" size="small">
+            <v-btn class="default-button" variant="text" size="small" to="/create">
               Advanced</v-btn
             >
           </v-col>

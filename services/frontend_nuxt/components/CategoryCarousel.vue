@@ -1,6 +1,7 @@
 <template>
-    <v-row>
-      <v-col cols="14" sm="6" md="8" lg="12">
+  <v-row justify="center" align="center">
+    <v-col cols="12" sm="6" md="8" lg="12">
+      <div class="d-flex overflow-x-auto">
         <v-btn
           v-for="category in categories"
           :key="category.id"
@@ -10,10 +11,11 @@
         >
           {{ category.name }}
         </v-btn>
-      </v-col>
-    </v-row>
-  </template>
-  
+      </div>
+    </v-col>
+  </v-row>
+</template>
+
   
 
 <script>
@@ -25,10 +27,10 @@ export default {
         { id: 2, name: "Category 2" },
         { id: 3, name: "Category 3" },
         { id: 4, name: "Category 4" },
-        { id: 5, name: "Category 5" },
-        { id: 6, name: "Category 6" },
-        { id: 7, name: "Category 7" },
-        { id: 8, name: "Category 8" },
+        // { id: 5, name: "Category 5" },
+        // { id: 6, name: "Category 6" },
+        // { id: 7, name: "Category 7" },
+        // { id: 8, name: "Category 8" },
         // Add more categories as needed
       ],
     };
