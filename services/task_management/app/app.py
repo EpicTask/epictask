@@ -12,20 +12,21 @@ from firestore_db import create_task, update_task, delete_task, assign_task, com
 from schema import (TaskAssigned, TaskCreated, TaskCancelled, TaskCompleted,
                     TaskCommentAdded, TaskExpired, TaskRatingUpdate, TaskRewarded, TaskUpdated)
 from firestore_db import get_tasks
+from dotenv import load_dotenv, find_dotenv
 
-# pylint: disable=C0103
+load_dotenv(find_dotenv())
+
 app = FastAPI()
-# origins = [
-#     "http://localhost",
-#     "http://localhost:8080",
-#     "http://localhost:3000",
-#     "http://192.168.1.176:3000/",
-#     "https://task-coin-384722.uc.r.appspot.com",
-# ]
+baseUrl = os.environ.get("BASEURL")
+defaultUrl = os.environ.get("DEFAULT_URL")
+origins = [
+    baseUrl,
+    defaultUrl,
+]
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
