@@ -19,7 +19,9 @@
             <v-icon>{{ item.icon }}</v-icon>
           </v-list-item-action>
           <v-list-item-content>
-            <v-list-item-title v-if="!isMobile">{{ item.title }}</v-list-item-title>
+            <v-list-item-title v-if="!isMobile">{{
+              item.title
+            }}</v-list-item-title>
           </v-list-item-content>
         </v-list-item>
       </v-list>
@@ -29,12 +31,7 @@
 
       <v-toolbar-title>{{ title }}</v-toolbar-title>
       <v-spacer />
-      <v-btn
-        v-if="walletNotConnected"
-        text
-        class="ml-4"
-        @click="connectWallet"
-      >
+      <v-btn v-if="walletNotConnected" text class="ml-4" @click="connectWallet">
         Connect Wallet
       </v-btn>
       <v-btn v-if="isSignedIn" text class="ml-4" @click="signOut">
@@ -94,13 +91,13 @@ export default {
     };
   },
   computed: {
-  isMobile() {
-    if (process.client) {
-      return window.innerWidth <= 600; // Adjust the breakpoint as needed
-    }
-    return false; // Default value for server-side rendering
+    isMobile() {
+      if (process.client) {
+        return window.innerWidth <= 600; // Adjust the breakpoint as needed
+      }
+      return false; // Default value for server-side rendering
+    },
   },
-},
 
   created() {
     this.checkAuthState();
@@ -119,7 +116,7 @@ export default {
     async connectWallet() {
       try {
         const user_id = this.$fire.auth.currentUser.uid;
-        const baseUrl = "https://xrpl-5wpxgn35iq-uc.a.run.app";
+        const baseUrl = this.$config.xrplUrl;
         const { data } = await this.$axios.get(
           `${baseUrl}/xummSignInRequest/${user_id}`
         );
@@ -130,28 +127,34 @@ export default {
       }
     },
     async checkWalletConnection() {
-      try {
-        const user_id = this.$fire.auth.currentUser.uid;
-        const userDoc = this.$fire.firestore.collection("users").doc(user_id);
-        const snapshot = await userDoc.get();
+      const user = this.$fire.auth.currentUser;
+      if (user) {
+        try {
+          const user_id = this.$fire.auth.currentUser.uid;
+          const userDoc = this.$fire.firestore.collection("users").doc(user_id);
+          const snapshot = await userDoc.get();
 
-        if (snapshot.exists) {
-          const userToken = snapshot.data()?.userToken;
-          const isTokenValid =
-            userToken?.token_expiration &&
-            Date.now() < userToken.token_expiration;
+          if (snapshot.exists) {
+            const userToken = snapshot.data()?.userToken;
+            const isTokenValid =
+              userToken?.token_expiration &&
+              Date.now() < userToken.token_expiration;
 
-          this.walletNotConnected = isTokenValid;
+            this.walletNotConnected = isTokenValid;
+          }
+        } catch (error) {
+          console.error(
+            "Error occurred while checking wallet connection:",
+            error
+          );
         }
-      } catch (error) {
-        console.error("Error occurred while checking wallet connection:", error);
       }
     },
 
     async signOut() {
       try {
         const currentDate = new Date().toISOString();
-        const baseUrl = "https://user-management-5wpxgn35iq-uc.a.run.app";
+        const baseUrl = this.$config.userUrl;
         const user = this.$fire.auth.currentUser;
 
         await this.$axios.post(`${baseUrl}/events`, {

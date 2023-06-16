@@ -1,3 +1,6 @@
 services/frontend_nuxt3
 services/frontend_nuxt/nuxt.config.js
 git filter-branch --force --index-filter 'git rm --cached --ignore-unmatch services/frontend_nuxt/nuxt.config.js' --prune-empty --tag-name-filter cat -- --all
+services/frontend_nuxt/.env
+services/task_management/.env
+services/xrpl/.env

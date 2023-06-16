@@ -83,7 +83,7 @@ export default {
       try {
         const currentDate = new Date();
         const formattedDate = currentDate.toISOString();
-        const baseUrl = "https://user-management-5wpxgn35iq-uc.a.run.app";
+        const baseUrl = this.$config.userUrl;
 
         await this.$axios.post(`${baseUrl}/events`, {
           event_id: "unique-event-id",
@@ -138,7 +138,7 @@ export default {
       try {
         const currentDate = new Date();
         const formattedDate = currentDate.toISOString();
-        const baseUrl = "https://user-management-5wpxgn35iq-uc.a.run.app";
+        const baseUrl = this.$config.userUrl;
 
         await this.$axios.post(`${baseUrl}/events`, {
           event_id: "unique-event-id",
