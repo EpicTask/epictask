@@ -23,15 +23,17 @@ from websocket_handler import connection_manager
 from xrpl.asyncio.ledger import get_fee
 from xrpl.clients import JsonRpcClient, WebsocketClient
 from xrpl_models import PaymentRequest
+from dotenv import load_dotenv, find_dotenv
+
+load_dotenv(find_dotenv())
 
 app = FastAPI()
-# origins = [
-#     "http://localhost",
-#     "http://localhost:8080",
-#     "http://localhost:3000",
-#     "http://192.168.1.176:3000/",
-#     "https://task-coin-384722.uc.r.appspot.com/",
-# ]
+baseUrl = os.environ.get("BASEURL")
+defaultUrl = os.environ.get("DEFAULT_URL")
+origins = [
+    baseUrl,
+    defaultUrl,
+]
 
 app.add_middleware(
     CORSMiddleware,
@@ -242,7 +244,6 @@ async def subscribe(request: Request):
         return JSONResponse(result)
     except Exception as e:
         return JSONResponse({"error": str(e)})
-# http://localhost:8080/subscribe?accounts=rB4iz44nvW2yGDBYTkspVfyR2NMsR3NtfF
 
 
 @app.post('/unsubscribe')
