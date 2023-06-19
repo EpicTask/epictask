@@ -66,7 +66,7 @@ export default {
       }
 
       try {
-        const baseUrl = "https://task-management-5wpxgn35iq-uc.a.run.app";
+        const baseUrl = this.$config.taskUrl;
         const result = this.$axios.post(
           `${baseUrl}/TaskCompleted`,
           completeTaskData

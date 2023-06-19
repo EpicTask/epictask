@@ -68,7 +68,7 @@ export default {
       };
         try {
           this.closeModal();
-          const baseUrl = "https://task-management-5wpxgn35iq-uc.a.run.app";
+          const baseUrl = this.$config.taskUrl;
           const result = await this.$axios.post(
             `${baseUrl}/TaskAssigned`,
             assignTask

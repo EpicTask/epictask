@@ -46,7 +46,12 @@
             <button type="submit">Create Task</button>
           </v-col>
           <v-col cols="auto">
-            <v-btn class="default-button" variant="text" size="small" to="/create">
+            <v-btn
+              class="default-button"
+              variant="text"
+              size="small"
+              to="/create"
+            >
               Advanced</v-btn
             >
           </v-col>
@@ -93,7 +98,6 @@
     </template>
   </div>
 </template>
-
 
 <script>
 import DateSelector from "~/components/DateSelector.vue";
@@ -216,10 +220,6 @@ export default {
       } catch (error) {
         console.log(error);
       }
-    },
-    logout() {
-      // Logic to log out the parent user
-      // Redirect to login page or perform necessary actions
     },
     async getTasks() {
       const user_id = this.$fire.auth.currentUser.uid;
