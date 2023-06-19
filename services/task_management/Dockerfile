@@ -1,5 +1,5 @@
 # Python image to use.
-FROM python:3.10-alpine
+FROM python:3.10.12-bullseye
 
 # Set the working directory to /app
 WORKDIR /app
@@ -8,10 +8,10 @@ WORKDIR /app
 COPY requirements.txt .
 
 # Install any needed packages specified in requirements.txt
-RUN pip install --trusted-host pypi.python.org -r requirements.txt
+RUN pip3 install --no-cache-dir -r requirements.txt
 
 # Copy the rest of the working directory contents into the container at /app
-COPY app/ .
+COPY . .
 
 # Run app.py when the container launches
-ENTRYPOINT ["python", "app.py"]
+ENTRYPOINT ["python3", "app.py"]
