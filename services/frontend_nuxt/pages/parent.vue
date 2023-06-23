@@ -63,6 +63,7 @@
       <section class="section-container">
         <v-row class="justify-start ml-1" justify="space-between">
           <h2>Open Tasks</h2>
+
           <v-btn class="ma-2" variant="text" size="small" to="/">
             <v-icon>mdi-refresh</v-icon>
           </v-btn>
@@ -78,11 +79,31 @@
 
     <template v-if="hasAssignedTasks">
       <section class="section-container">
-        <v-row class="justify-start ml-1" justify="space-between">
-          <h2>Tasks Assigned To You</h2>
-          <v-btn class="ma-2" variant="text" size="small" to="/">
-            <v-icon>mdi-refresh</v-icon>
-          </v-btn>
+        <div class="mb-2">
+          <v-row class="justify-start ml-1">
+            <v-btn
+              class="ma-2"
+              variant="text"
+              size="small"
+              to="dashboard"
+            >
+              <v-icon
+                @mouseover="showDashboardText = true"
+                @mouseout="showDashboardText = false"
+              >
+                mdi-view-dashboard
+              </v-icon>
+              <span v-if="showDashboardText">Dashboard</span>
+            </v-btn>
+            <v-btn class="ma-2" variant="text" size="small" to="/">
+              <v-icon>mdi-refresh</v-icon>
+            </v-btn>
+          </v-row>
+        </div>
+        <v-row class="justify-start ml-1">
+          <div>
+            <h2>Tasks Assigned To You</h2>
+          </div>
         </v-row>
 
         <hr class="content-separator" />
@@ -106,6 +127,9 @@ import TaskCardAssigned from "~/components/TaskCardAssigned.vue";
 
 export default {
   name: "Parent",
+  // props: {
+  //   tasks: Array, // Assuming tasks is an array of task data
+  // },
   data() {
     const currentDate = new Date();
     const formattedDate = currentDate.toISOString();
@@ -124,6 +148,7 @@ export default {
       reward_currency: "XRP",
       expiration_date: formattedDate,
       calculateOneWeekFromNow: oneWeekFromNow.toISOString(),
+      showDashboardText: false,
     };
   },
   created() {
@@ -140,6 +165,7 @@ export default {
     },
   },
   methods: {
+
     reloadPage() {
       setTimeout(() => {
         this.$router.push("/");
@@ -177,7 +203,7 @@ export default {
         payment_method: "Pay directly",
       };
       try {
-        const baseUrl = this.$config.taskUrl;
+        const baseUrl = "http://127.0.0.1:8080";
         const result = await this.$axios.post(
           `${baseUrl}/TaskCreated`,
           newTask
@@ -211,7 +237,7 @@ export default {
 
       try {
         const baseUrl = this.$config.taskUrl;
-        const result = this.$axios.post(
+        const result = this.axios.post(
           `${baseUrl}/TaskCompleted`,
           completeTaskData
         );

@@ -27,7 +27,7 @@
             "watch": true,
             "debug": {
                 "sourceFileMap": {
-                    "${workspaceFolder}": "/app"
+                    "${workspaceFolder}": ""
                 }
             }
         }
