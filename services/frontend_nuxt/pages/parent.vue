@@ -203,7 +203,7 @@ export default {
         payment_method: "Pay directly",
       };
       try {
-        const baseUrl = "http://127.0.0.1:8080";
+        const baseUrl = this.$config.taskUrl;
         const result = await this.$axios.post(
           `${baseUrl}/TaskCreated`,
           newTask

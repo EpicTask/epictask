@@ -23,13 +23,13 @@ from websocket_handler import connection_manager
 from xrpl.asyncio.ledger import get_fee
 from xrpl.clients import JsonRpcClient, WebsocketClient
 from xrpl_models import PaymentRequest
-from dotenv import load_dotenv, find_dotenv
-
-load_dotenv(find_dotenv())
-
+from dotenv import load_dotenv
 app = FastAPI()
-baseUrl = os.environ.get("BASEURL")
-defaultUrl = os.environ.get("DEFAULT_URL")
+
+load_dotenv()
+
+baseUrl = os.getenv("BASEURL")
+defaultUrl = os.getenv("DEFAULT_URL")
 origins = [
     baseUrl,
     defaultUrl,
