@@ -31,11 +31,14 @@
 
       <v-toolbar-title>{{ title }}</v-toolbar-title>
       <v-spacer />
-      <v-btn v-if="walletNotConnected" text class="ml-4" @click="connectWallet">
+      <v-btn v-if="walletConnected" text class="ml-4" @click="connectWallet">
         Connect Wallet
       </v-btn>
       <v-btn v-if="isSignedIn" text class="ml-4" @click="signOut">
-        Sign Out
+        <template v-if="isMobile">
+          <v-icon>mdi-logout</v-icon>
+        </template>
+        <template v-else> Sign Out </template>
       </v-btn>
     </v-app-bar>
     <v-main>
@@ -87,7 +90,7 @@ export default {
       miniVariant: false,
       title: "Epic Task",
       isSignedIn: false,
-      walletNotConnected: true,
+      walletConnected: fa,
     };
   },
   computed: {
@@ -99,9 +102,8 @@ export default {
     },
   },
 
-  created() {
-    this.checkAuthState();
-    this.checkWalletConnection();
+  async created() {
+    await Promise.all([this.checkAuthState(), this.checkWalletConnection()]);
   },
   methods: {
     async checkAuthState() {
@@ -130,18 +132,22 @@ export default {
       const user = this.$fire.auth.currentUser;
       if (user) {
         try {
-          const user_id = this.$fire.auth.currentUser.uid;
+          const user_id = user.uid;
           const userDoc = this.$fire.firestore.collection("users").doc(user_id);
           const snapshot = await userDoc.get();
 
           if (snapshot.exists) {
             const userToken = snapshot.data()?.userToken;
-            const isTokenValid =
-              userToken?.token_expiration &&
-              Date.now() < userToken.token_expiration;
-
-            this.walletNotConnected = isTokenValid;
+            const tokenExpiration = userToken?.token_expiration;
+            console.log(userToken, tokenExpiration)
+            if (tokenExpiration) {
+              const isTokenValid = Date.now() < tokenExpiration * 1000;
+              this.walletConnected = isTokenValid;
+            } else {
+              this.walletConnected = false;
+            }
           }
+          console.log(this.walletConnected)
         } catch (error) {
           console.error(
             "Error occurred while checking wallet connection:",

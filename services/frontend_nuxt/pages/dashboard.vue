@@ -5,7 +5,7 @@
       <thead>
         <tr>
           <th>Number of Tasks</th>
-          <th>Total Earnings</th>
+          <th>Estimated Earnings</th>
           <th>
             Current Value<br />
             (USD)
@@ -64,6 +64,12 @@ export default {
     ]);
     this.calculateDashboardData();
     this.calculateValue();
+  },
+  mounted() {
+    this.$nextTick(() => {
+      this.$nuxt.$loading.start()
+      setTimeout(() => this.$nuxt.$loading.finish(), 500)
+    })
   },
   computed: {
     hasTasks() {
@@ -154,7 +160,6 @@ export default {
       const baseURL =
         "https://api.coingecko.com/api/v3/simple/price?ids=ripple&vs_currencies=usd";
       const response = await this.$axios.get(baseURL);
-      console.log(response);
       this.xrpToUSD = response.data.ripple.usd;
     },
     calculateValue() {

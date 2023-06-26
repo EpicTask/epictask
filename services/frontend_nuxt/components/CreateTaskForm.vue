@@ -126,15 +126,14 @@ export default {
         payment_method: this.payment_method,
         user_id: this.$fire.auth.currentUser.uid,
       };
-      console.log(newTask);
       // Process the form data or make an API call here
       try {
         const baseUrl = this.$config.taskUrl;
-        const result = await this.$axios.post(
+        await this.$axios.post(
           `${baseUrl}/TaskCreated`,
           newTask
         );
-        console.log(result);
+        this.$router.push("/")
       } catch (error) {
         console.log(error);
       }

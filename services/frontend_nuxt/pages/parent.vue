@@ -5,7 +5,29 @@
       <p v-if="!hasAssignedTasks">Manage tasks and rewards.</p>
       <p v-else>Manage your tasks.</p>
     </header>
-
+    <div class="mb-2">
+          
+          <v-row class="justify-end">
+         
+              <v-btn
+                class="ma-2"
+                variant="text"
+                size="small"
+                to="dashboard"
+              >
+                <v-icon
+                  @mouseover="showDashboardText = true"
+                  @mouseout="showDashboardText = false"
+                >
+                  mdi-view-dashboard
+                </v-icon>
+                <span v-if="showDashboardText">Dashboard</span>
+              </v-btn>
+        
+          </v-row>
+          
+        
+      </div>
     <section class="section-container" v-if="!hasAssignedTasks">
       <h2>Create a Task</h2>
       <form @submit.prevent="createTask">
@@ -58,7 +80,6 @@
         </v-row>
       </form>
     </section>
-
     <template v-if="hasTasks">
       <section class="section-container">
         <v-row class="justify-start ml-1" justify="space-between">
@@ -79,31 +100,13 @@
 
     <template v-if="hasAssignedTasks">
       <section class="section-container">
-        <div class="mb-2">
-          <v-row class="justify-start ml-1">
-            <v-btn
-              class="ma-2"
-              variant="text"
-              size="small"
-              to="dashboard"
-            >
-              <v-icon
-                @mouseover="showDashboardText = true"
-                @mouseout="showDashboardText = false"
-              >
-                mdi-view-dashboard
-              </v-icon>
-              <span v-if="showDashboardText">Dashboard</span>
-            </v-btn>
-            <v-btn class="ma-2" variant="text" size="small" to="/">
+        <v-row class="justify-start ml-1" justify="space-between">
+          
+            <h2>Tasks Assigned To You</h2>
+       
+          <v-btn class="ma-2" variant="text" size="small" to="/">
               <v-icon>mdi-refresh</v-icon>
             </v-btn>
-          </v-row>
-        </div>
-        <v-row class="justify-start ml-1">
-          <div>
-            <h2>Tasks Assigned To You</h2>
-          </div>
         </v-row>
 
         <hr class="content-separator" />
@@ -151,10 +154,19 @@ export default {
       showDashboardText: false,
     };
   },
-  created() {
-    this.getTasks();
-    this.getAssignedTasks();
-    this.fetchUserProfile();
+ async created() {
+    await Promise.all([
+      this.getTasks(),
+      this.getAssignedTasks(),
+      this.fetchUserProfile(),
+    
+    ]);
+  },
+  mounted() {
+    this.$nextTick(() => {
+      this.$nuxt.$loading.start()
+      setTimeout(() => this.$nuxt.$loading.finish(), 500)
+    })
   },
   computed: {
     hasTasks() {
