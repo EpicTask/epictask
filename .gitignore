@@ -4,3 +4,4 @@ git filter-branch --force --index-filter 'git rm --cached --ignore-unmatch servi
 services/frontend_nuxt/.env
 services/task_management/.env
 services/xrpl/.env
+services/frontend_mobile
