@@ -19,7 +19,6 @@ from google_secrets import get_secret
 from payments_xrpl import handle_payment_request, send_payment_request
 from starlette.responses import JSONResponse
 from subscription_xrpl import account_subscription_sync
-from websocket_handler import connection_manager
 from xrpl.asyncio.ledger import get_fee
 from xrpl.clients import JsonRpcClient, WebsocketClient
 from xrpl_models import PaymentRequest
@@ -265,25 +264,6 @@ async def unsubscribe(request: Request):
 async def process_payment(payment_request: PaymentRequest):
     response = await handle_payment_request(payment_request)
     return response
-
-
-# Websocket Logic
-async def handle_websocket_message(websocket: WebSocket, message: str):
-    data = json.loads(message)
-    payment_request = PaymentRequest(**data)
-    if payment_request.type == "payment_request":
-        await handle_payment_request(payment_request)
-
-
-@app.websocket("/ws")
-async def websocket_endpoint(websocket: WebSocket):
-    await connection_manager.connect(websocket)
-    try:
-        while True:
-            message = await websocket.receive_text()
-            await handle_websocket_message(websocket, message)
-    except WebSocketDisconnect:
-        connection_manager.disconnect(websocket)
 
 # Execute the application when the script is run
 if __name__ == "__main__":
