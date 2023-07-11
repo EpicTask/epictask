@@ -7,28 +7,50 @@ part of 'task_model.dart';
 // **************************************************************************
 
 _$_TaskModel _$$_TaskModelFromJson(Map<String, dynamic> json) => _$_TaskModel(
-      taskDescription: json['taskDescription'] as String,
-      rewardAmount: (json['rewardAmount'] as num).toDouble(),
-      rewardCurrency: json['rewardCurrency'] as String,
-      assignedUser: json['assignedUser'] as String?,
-      markedCompleted: json['markedCompleted'] as bool?,
-      userId: json['userId'] as String,
-      taskId: json['taskId'] as String,
-      expirationDate: _$JsonConverterFromJson<Timestamp, DateTime>(
-          json['expirationDate'], const TimestampConverter().fromJson),
+      assigned_to_ids: (json['assigned_to_ids'] as List<dynamic>?)
+          ?.map((e) => e as String?)
+          .toList(),
+      expiration_date: json['expiration_date'] as int,
+      marked_completed: json['marked_completed'] as bool?,
+      payment_method: json['payment_method'] as String,
+      project_id: json['project_id'] as String?,
+      project_name: json['project_name'] as String?,
+      rating: json['rating'] as int?,
+      requires_attachments: json['requires_attachments'] as bool?,
+      reward_amount: (json['reward_amount'] as num).toDouble(),
+      reward_currency: json['reward_currency'] as String,
+      rewarded: json['rewarded'] as bool,
+      task_description: json['task_description'] as String,
+      task_id: json['task_id'] as String,
+      task_title: json['task_title'] as String?,
+      terms_blob: json['terms_blob'] as String?,
+      terms_id: json['terms_id'] as String?,
+      user_id: json['user_id'] as String,
+      timestamp: _$JsonConverterFromJson<Timestamp, DateTime>(
+          json['timestamp'], const TimestampConverter().fromJson),
     );
 
 Map<String, dynamic> _$$_TaskModelToJson(_$_TaskModel instance) =>
     <String, dynamic>{
-      'taskDescription': instance.taskDescription,
-      'rewardAmount': instance.rewardAmount,
-      'rewardCurrency': instance.rewardCurrency,
-      'assignedUser': instance.assignedUser,
-      'markedCompleted': instance.markedCompleted,
-      'userId': instance.userId,
-      'taskId': instance.taskId,
-      'expirationDate': _$JsonConverterToJson<Timestamp, DateTime>(
-          instance.expirationDate, const TimestampConverter().toJson),
+      'assigned_to_ids': instance.assigned_to_ids,
+      'expiration_date': instance.expiration_date,
+      'marked_completed': instance.marked_completed,
+      'payment_method': instance.payment_method,
+      'project_id': instance.project_id,
+      'project_name': instance.project_name,
+      'rating': instance.rating,
+      'requires_attachments': instance.requires_attachments,
+      'reward_amount': instance.reward_amount,
+      'reward_currency': instance.reward_currency,
+      'rewarded': instance.rewarded,
+      'task_description': instance.task_description,
+      'task_id': instance.task_id,
+      'task_title': instance.task_title,
+      'terms_blob': instance.terms_blob,
+      'terms_id': instance.terms_id,
+      'user_id': instance.user_id,
+      'timestamp': _$JsonConverterToJson<Timestamp, DateTime>(
+          instance.timestamp, const TimestampConverter().toJson),
     };
 
 Value? _$JsonConverterFromJson<Json, Value>(

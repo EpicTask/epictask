@@ -1,3 +1,5 @@
+// ignore_for_file: non_constant_identifier_names
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 
@@ -33,14 +35,24 @@ class TimestampNullableConverter
 @freezed
 class TaskModel with _$TaskModel {
   const factory TaskModel({
-    required String taskDescription,
-    required double rewardAmount,
-    required String rewardCurrency,
-    String? assignedUser,
-    bool? markedCompleted,
-    required String userId,
-    required String taskId,
-    @TimestampConverter()  DateTime? expirationDate,
+    List<String?>? assigned_to_ids,
+    required int expiration_date,
+    bool? marked_completed,
+    required String payment_method,
+    String? project_id,
+    String? project_name,
+    int? rating,
+    bool? requires_attachments,
+    required double reward_amount,
+    required String reward_currency,
+    required bool rewarded,
+    required String task_description,
+    required String task_id,
+    String? task_title,
+    String? terms_blob,
+    String? terms_id,
+    required String user_id,
+    @TimestampConverter() DateTime? timestamp,
   }) = _TaskModel;
 
   factory TaskModel.fromJson(Map<String, Object?> json) =>
@@ -48,14 +60,24 @@ class TaskModel with _$TaskModel {
 
   factory TaskModel.defaultTask() {
     return TaskModel(
-      taskDescription: 'Default Task',
-      rewardAmount: 100.0,
-      rewardCurrency: 'XRP',
-      expirationDate: DateTime.now(),
-      assignedUser: 'James',
-      markedCompleted: false,
-      userId: '123456789',
-      taskId: '12345',
+      assigned_to_ids: [],
+      expiration_date: DateTime.now().add(const Duration(days: 7)).millisecondsSinceEpoch,
+      marked_completed: false,
+      payment_method: 'Pay Directly',
+      project_id: '1234',
+      project_name: '',
+      rating: 0,
+      requires_attachments: false,
+      reward_amount: 100.0,
+      reward_currency: 'XRP',
+      rewarded: false,
+      task_description: 'Default Task',
+      task_id: '12345',
+      task_title: '',
+      terms_blob: '',
+      terms_id: '',
+      user_id: '',
+      timestamp: DateTime.now(),
     );
   }
 }

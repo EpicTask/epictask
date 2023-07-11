@@ -2,6 +2,9 @@ import 'package:epictask/services/ui/text_styles.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
+import '../../models/task_model/task_model.dart';
+import 'logic/logic.dart';
+
 class TaskCard extends StatelessWidget {
   final TaskModel task;
 
@@ -15,55 +18,65 @@ class TaskCard extends StatelessWidget {
         padding: const EdgeInsets.all(8.0),
         margin: const EdgeInsets.symmetric(vertical: 8.0),
         decoration: BoxDecoration(
-          border: Border.all(color: Colors.grey,width: 4),
+          border: Border.all(color: Colors.grey, width: 4),
           borderRadius: BorderRadius.circular(8.0),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              task.taskDescription,
-              style: titleLarge(context)
-            ),
-            Text('Reward: ${task.rewardAmount} ${task.rewardCurrency}',
-              style: titleLarge(context)),
-            Text('Due Date: ${formatDate(task.expirationDate)}',
-              style: titleLarge(context)),
-            Text('Assigned To: ${task.assignedUser}',
-              style: titleLarge(context)),
-            if (task.markedCompleted)  Text('Marked Completed',
-              style: titleLarge(context)),
+            Text(task.task_description, style: titleLarge(context)),
+            Text('Reward: ${task.reward_amount} ${task.reward_currency}',
+                style: titleLarge(context)),
+            Text('Due Date: ${formatDate(DateTime.fromMillisecondsSinceEpoch(task.expiration_date))}',
+                style: titleLarge(context)),
+            if (task.assigned_to_ids?.isNotEmpty ?? false)
+              FutureBuilder<String>(
+                future: getUserDisplayName(task.assigned_to_ids!.first),
+                builder: (context, snapshot) {
+                  if(snapshot.hasData){
+                    String displayName = snapshot.data as String;
+                    return Text('Assigned To: $displayName',
+                      style: titleLarge(context));
+                  }
+                  return Text('Assigned To: Unknown User',
+                      style: titleLarge(context));
+                }
+              ),
+            if (task.marked_completed ?? false)
+              Text('Marked Completed', style: titleLarge(context)),
             Padding(
-              padding: const EdgeInsets.only(top:8.0),
+              padding: const EdgeInsets.only(top: 8.0),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: [
                   ElevatedButton(
-                    onPressed: () => completeTask(task, task.userId),
-                    child:  Text('Completed',style: titleMedium(context),),
+                    onPressed: () => completeTask(task, task.user_id),
+                    child: Text(
+                      'Completed',
+                      style: titleMedium(context),
+                    ),
                   ),
                   ElevatedButton(
-                    onPressed: () => assignTask(task.taskId),
-                    child:  Text('Assign',style: titleMedium(context)),
+                    onPressed: () => assignTask(task.task_id),
+                    child: Text('Assign', style: titleMedium(context)),
                   ),
                   ElevatedButton(
-                    onPressed: () => deleteTask(task.taskId),
-                    child:  Text('Delete',style: titleMedium(context)),
+                    onPressed: () => deleteTask(task.task_id),
+                    child: Text('Delete', style: titleMedium(context)),
                   ),
                 ],
               ),
             ),
-           
           ],
         ),
       ),
     );
   }
-  
+
   completeTask(TaskModel task, String userId) {}
-  
+
   assignTask(taskId) {}
-  
+
   deleteTask(taskId) {}
 }
 
@@ -80,49 +93,42 @@ class TaskCardAssigned extends StatelessWidget {
         padding: const EdgeInsets.all(8.0),
         margin: const EdgeInsets.symmetric(vertical: 8.0),
         decoration: BoxDecoration(
-          border: Border.all(color: Colors.grey,width: 2),
+          border: Border.all(color: Colors.grey, width: 2),
           borderRadius: BorderRadius.circular(8.0),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              task.taskDescription,
-              
+              task.task_description,
               style: titleLarge(context),
             ),
-            Text('Reward: ${task.rewardAmount} ${task.rewardCurrency}',
-              style: titleLarge(context)),
-            Text('Due Date: ${formatDate(task.expirationDate)}',
-              style: titleLarge(context)),
-            Text('Assigned To: ${task.assignedUser}',
-              style: titleLarge(context)),
-            if (task.markedCompleted)  Text('Marked Completed',
-              style: titleLarge(context)),
+            Text('Reward: ${task.reward_amount} ${task.reward_currency}',
+                style: titleLarge(context)),
+            Text('Due Date: ${formatDate(DateTime.fromMillisecondsSinceEpoch(task.expiration_date))}',
+                style: titleLarge(context)),
+            Text('Assigned To: Me', style: titleLarge(context)),
+            if (task.marked_completed ?? false)
+              Text('Marked Completed', style: titleLarge(context)),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
                 ElevatedButton(
-                  onPressed: () => completeTask(task, task.userId),
-                  child: Text('Completed',
-              style: titleMedium(context)),
+                  onPressed: () => completeTask(task, task.user_id),
+                  child: Text('Completed', style: titleMedium(context)),
                 ),
               ],
             ),
-            // const UserList(
-            //   // showModal: showModal,
-            //   // taskId: task.taskId,
-            //   // closeModal: () => showModal = false,
-            // ),
           ],
         ),
       ),
     );
   }
-    completeTask(TaskModel task, String userId) {}
-  
+
+  completeTask(TaskModel task, String userId) {}
+
   assignTask(taskId) {}
-  
+
   deleteTask(taskId) {}
 }
 
@@ -131,12 +137,12 @@ class UserList extends StatelessWidget {
   // final String taskId;
   // final Function closeModal;
 
-  const UserList(
-      {super.key,
-      // required this.showModal,
-      // required this.taskId,
-      // required this.closeModal
-      });
+  const UserList({
+    super.key,
+    // required this.showModal,
+    // required this.taskId,
+    // required this.closeModal
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -147,43 +153,8 @@ class UserList extends StatelessWidget {
 
 // Other necessary classes and functions
 
-class TaskModel {
-  final String taskDescription;
-  final double rewardAmount;
-  final String rewardCurrency;
-  final DateTime expirationDate;
-  final String assignedUser;
-  final bool markedCompleted;
-  final String userId;
-  final String taskId;
-
-  TaskModel({
-    required this.taskDescription,
-    required this.rewardAmount,
-    required this.rewardCurrency,
-    required this.expirationDate,
-    required this.assignedUser,
-    required this.markedCompleted,
-    required this.userId,
-    required this.taskId
-  });
-
-    factory TaskModel.defaultTask() {
-    return TaskModel(
-      taskDescription: 'Default Task',
-      rewardAmount: 100.0,
-      rewardCurrency: 'XRP',
-      expirationDate: DateTime.now(),
-      assignedUser: 'James',
-      markedCompleted: false,
-      userId: '123456789',
-      taskId: '12345',
-    );
-  }
-}
-
 String formatDate(DateTime date) {
-   if (date.year == DateTime.now().year &&
+  if (date.year == DateTime.now().year &&
       date.month == DateTime.now().month &&
       date.day == DateTime.now().day) {
     return 'Today';

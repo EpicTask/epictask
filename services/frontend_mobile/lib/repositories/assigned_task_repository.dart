@@ -10,12 +10,12 @@ import '../models/task_model/task_model.dart';
 /// Interface to our 'Task' Firebase collection.
 ///
 /// Relies on a remote NoSQL document-oriented database.
-class TaskRepository extends GenericBlocRepository<TaskModel> {
+class AssignedTaskRepository extends GenericBlocRepository<TaskModel> {
   String uid = FirebaseAuth.instance.currentUser!.uid;
   @override
   Stream<List<TaskModel>> data() {
     final Query<Object> taskCollection =
-        FirebaseFirestore.instance.collection('test_tasks').where('user_id', isEqualTo: uid);
+        FirebaseFirestore.instance.collection('test_tasks').where('assigned_to_ids', arrayContains: uid);
 
     // Get all tasks
     List<TaskModel> taskListFromSnapshot(QuerySnapshot<Object> snapshot) {
