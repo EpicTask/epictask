@@ -14,7 +14,7 @@ const _pubsub = new PubSub();
 const db = firestore();
 
 exports.pubsubRouter = onDocumentCreated(
-  "task_events/{eventId}",
+  "test_task_events/{eventId}",
   async (event) => {
     const snapshot = event.data;
     if (!snapshot) {
@@ -24,7 +24,7 @@ exports.pubsubRouter = onDocumentCreated(
     const data = snapshot.data();
     const eventType = data.event_type;
 
-    const jsonData = JSON.stringify(data);
+    const jsonData = JSON.stringify(data.additional_data);
 
     try {
       switch (eventType) {
