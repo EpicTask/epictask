@@ -5,13 +5,9 @@ import {PubSub} from "@google-cloud/pubsub";
 import axios from "axios";
 import {Buffer} from "buffer";
 import {onDocumentCreated} from "firebase-functions/v2/firestore";
-import {firestore} from "firebase-admin";
-import {FieldValue} from "firebase-admin/firestore";
-import * as functions from "firebase-functions";
 
 initializeApp();
 const _pubsub = new PubSub();
-const db = firestore();
 
 exports.pubsubRouter = onDocumentCreated(
   "task_events/{eventId}",
@@ -49,23 +45,23 @@ exports.pubsubRouter = onDocumentCreated(
       case "TaskRewarded":
         await publishMessage("TaskRewarded", jsonData);
         break;
-      case "TaskRatingUpdated":
-        await publishMessage("TaskRatingUpdated", jsonData);
+      case "TaskRatingUpdate":
+        await publishMessage("TaskRatingUpdate", jsonData);
         break;
       case "TaskCommentAdded":
         await publishMessage("TaskCommentAdded", jsonData);
         break;
-      case "UserRegistered":
-        await publishMessage("UserRegistered", jsonData);
+      case "userRegistration":
+        await publishMessage("userRegistration", jsonData);
         break;
-      case "UserUpdated":
-        await publishMessage("UserUpdated", jsonData);
+      case "user_updated":
+        await publishMessage("user_updated", jsonData);
         break;
-      case "UserVerified":
-        await publishMessage("UserVerified", jsonData);
+      case "user_verified":
+        await publishMessage("user_verified", jsonData);
         break;
-      case "RecommendationGenerated":
-        await publishMessage("RecommendationGenerated", jsonData);
+      case "recommendation_generated":
+        await publishMessage("recommendation_generated", jsonData);
         break;
       default:
         logger.info("Unknown event type:", eventType);
@@ -106,7 +102,8 @@ exports.handleTaskCreatedMessage = pubsub.onMessagePublished(
     try {
       const documentData = event.data.message.json;
       // Get the task management service URL from environment variable
-      const taskManagementUrl = process.env.TASKCREATED || "";
+      const taskManagementUrl = "https://task-management-5wpxgn35iq-uc.a.run.app/TaskCreated";
+      logger.info(`Task Management URL: ${taskManagementUrl}`);
 
       // Make an API call to the task management service
       const response = await axios.post(taskManagementUrl, documentData);
@@ -126,7 +123,7 @@ exports.handleTaskAssignedMessage = pubsub.onMessagePublished(
     try {
       const documentData = event.data.message.json;
       // Get the task management service URL from environment variable
-      const taskManagementUrl = process.env.TASKASSIGNED || "";
+      const taskManagementUrl = "https://task-management-5wpxgn35iq-uc.a.run.app/TaskAssigned";
 
       // Make an API call to the task management service
       const response = await axios.post(taskManagementUrl, documentData);
@@ -146,7 +143,7 @@ exports.handleTaskUpdatedMessage = pubsub.onMessagePublished(
     try {
       const documentData = event.data.message.json;
       // Get the task management service URL from environment variable
-      const taskManagementUrl = process.env.TASKUPDATED || "";
+      const taskManagementUrl = "https://task-management-5wpxgn35iq-uc.a.run.app/TaskUpdated";
 
       // Make an API call to the task management service
       const response = await axios.post(taskManagementUrl, documentData);
@@ -166,7 +163,7 @@ exports.handleTaskCompletedMessage = pubsub.onMessagePublished(
     try {
       const documentData = event.data.message.json;
       // Get the task management service URL from environment variable
-      const taskManagementUrl = process.env.TASKCOMPLETED || "";
+      const taskManagementUrl = "https://task-management-5wpxgn35iq-uc.a.run.app/TaskCompleted";
 
       // Make an API call to the task management service
       const response = await axios.post(taskManagementUrl, documentData);
@@ -186,7 +183,7 @@ exports.handleTaskCancelledMessage = pubsub.onMessagePublished(
     try {
       const documentData = event.data.message.json;
       // Get the task management service URL from environment variable
-      const taskManagementUrl = process.env.TASKCANCELLED || "";
+      const taskManagementUrl = "https://task-management-5wpxgn35iq-uc.a.run.app/TaskCancelled";
 
       // Make an API call to the task management service
       const response = await axios.post(taskManagementUrl, documentData);
@@ -206,7 +203,7 @@ exports.handleTaskExpiredMessage = pubsub.onMessagePublished(
     try {
       const documentData = event.data.message.json;
       // Get the task management service URL from environment variable
-      const taskManagementUrl = process.env.TASKEXPIRED || "";
+      const taskManagementUrl = "https://task-management-5wpxgn35iq-uc.a.run.app/TaskExpired";
 
       // Make an API call to the task management service
       const response = await axios.post(taskManagementUrl, documentData);
@@ -226,7 +223,7 @@ exports.handleTaskRewardedMessage = pubsub.onMessagePublished(
     try {
       const documentData = event.data.message.json;
       // Get the task management service URL from environment variable
-      const taskManagementUrl = process.env.TASKREWARDED || "";
+      const taskManagementUrl = "https://task-management-5wpxgn35iq-uc.a.run.app/TaskRewarded";
 
       // Make an API call to the task management service
       const response = await axios.post(taskManagementUrl, documentData);
@@ -246,7 +243,7 @@ exports.handleTaskRatingUpdatedMessage = pubsub.onMessagePublished(
     try {
       const documentData = event.data.message.json;
       // Get the task management service URL from environment variable
-      const taskManagementUrl = process.env.TASKRATINGUPDATED || "";
+      const taskManagementUrl = "https://task-management-5wpxgn35iq-uc.a.run.app/TaskRatingUpdated";
 
       // Make an API call to the task management service
       const response = await axios.post(taskManagementUrl, documentData);
@@ -266,7 +263,7 @@ exports.handleTaskCommentAddedMessage = pubsub.onMessagePublished(
     try {
       const documentData = event.data.message.json;
       // Get the task management service URL from environment variable
-      const taskManagementUrl = process.env.TASKCOMMENTADDED || "";
+      const taskManagementUrl = "https://task-management-5wpxgn35iq-uc.a.run.app/TaskCommentAdded";
 
       // Make an API call to the task management service
       const response = await axios.post(taskManagementUrl, documentData);
@@ -286,7 +283,7 @@ exports.handleUserRegisteredMessage = pubsub.onMessagePublished(
     try {
       const documentData = event.data.message.json;
       // Get the task management service URL from environment variable
-      const taskManagementUrl = process.env.USERREGISTERED || "";
+      const taskManagementUrl = "https://task-management-5wpxgn35iq-uc.a.run.app/UserRegistered";
 
       // Make an API call to the task management service
       const response = await axios.post(taskManagementUrl, documentData);
@@ -306,7 +303,7 @@ exports.handleUserUpdatedMessage = pubsub.onMessagePublished(
     try {
       const documentData = event.data.message.json;
       // Get the task management service URL from environment variable
-      const taskManagementUrl = process.env.USERUPDATED || "";
+      const taskManagementUrl = "https://task-management-5wpxgn35iq-uc.a.run.app/UserUpdated";
 
       // Make an API call to the task management service
       const response = await axios.post(taskManagementUrl, documentData);
@@ -326,7 +323,7 @@ exports.handleUserVerifiedMessage = pubsub.onMessagePublished(
     try {
       const documentData = event.data.message.json;
       // Get the task management service URL from environment variable
-      const taskManagementUrl = process.env.USERVERIFIED || "";
+      const taskManagementUrl = "https://task-management-5wpxgn35iq-uc.a.run.app/UserVerified";
 
       // Make an API call to the task management service
       const response = await axios.post(taskManagementUrl, documentData);
@@ -346,7 +343,7 @@ exports.handleRecommendationGeneratedMessage = pubsub.onMessagePublished(
     try {
       const documentData = event.data.message.json;
       // Get the task management service URL from environment variable
-      const taskManagementUrl = process.env.RECOMMENDATIONGENERATED || "";
+      const taskManagementUrl = "https://task-management-5wpxgn35iq-uc.a.run.app/RecommendationGenerated";
 
       // Make an API call to the task management service
       const response = await axios.post(taskManagementUrl, documentData);
@@ -360,165 +357,4 @@ exports.handleRecommendationGeneratedMessage = pubsub.onMessagePublished(
   }
 );
 
-exports.newUserCreated = functions.auth.user().onCreate((user) => {
-  const email = user.email; // The email of the user.
-  const displayName = user.displayName;
-  const imageUrl = user.photoURL;
-  const uid = user.uid;
-
-  db.collection("users").doc(uid).set({
-    email: email,
-    displayName: displayName,
-    imageUrl: imageUrl,
-    dateCreated: FieldValue.serverTimestamp(),
-    uid: uid,
-  });
-});
-
-exports.updateXummUserToken = onDocumentCreated(
-  "test_xumm_callbacks/{doc}",
-  async (event) => {
-    try {
-      const snapshot = event.data;
-      if (!snapshot) {
-        console.log("No data associated with webhook callback event");
-        return;
-      }
-      const data = snapshot.data();
-      const uid = data.custom_meta.blob;
-      const userToken = data.userToken;
-      console.log(userToken);
-      if (uid) {
-        await db.collection("users").doc(uid).update({userToken: userToken});
-      }
-    } catch (error) {
-      console.error("Error occurred while updating Xumm User Token:", error);
-      // Handle the error here, log the error, or perform any necessary actions
-    }
-  }
-);
-
-exports.createXRPPaymentRequest = onDocumentCreated(
-  "test_task_events/{doc}",
-  async (event) => {
-    try {
-      const snapshot = event.data;
-      if (!snapshot) {
-        console.log("No data associated with webhook callback event");
-        return;
-      }
-      const taskEventDocData = snapshot.data();
-
-      if (taskEventDocData && taskEventDocData.additional_data.verified) {
-        const taskDocRef = db
-          .collection("test_tasks")
-          .doc(taskEventDocData.task_id);
-        const taskDocSnapshot = await taskDocRef.get();
-        const taskDocData = taskDocSnapshot.data();
-
-        const userId = taskDocData?.user_id;
-        const rewardAmount = taskDocData?.reward_amount;
-        const paymentMethod = taskDocData?.payment_method;
-        const rewardCurrency = taskDocData?.reward_currency;
-
-        if (!userId || !rewardAmount || !paymentMethod || !rewardCurrency) {
-          throw new Error("Missing required fields in task document");
-        }
-
-        if (!taskEventDocData.additional_data.completed_by_id) {
-          throw new Error("No user id found");
-        }
-
-        const assignedToId = taskEventDocData.additional_data.completed_by_id;
-        const usersCollectionRef = db.collection("users");
-        const userQuerySnapshot = await usersCollectionRef
-          .where("uid", "in", [assignedToId, userId])
-          .get();
-        const usersData: { [key: string]: any } = {};
-        userQuerySnapshot.forEach((userDoc) => {
-          const userData = userDoc.data();
-          usersData[userData.uid] = {
-            publicAddress: userData.publicAddress,
-            userToken: userData.userToken.user_token,
-          };
-        });
-        const rewardJsonMap = {
-          amount: rewardAmount,
-          source: usersData[userId].publicAddress,
-          destination: usersData[assignedToId].publicAddress,
-          user_token: usersData[userId].userToken,
-          task_id: taskEventDocData.task_id,
-        };
-
-        // Use the rewardJsonMap as needed for further processing
-        console.log(rewardJsonMap);
-        const xrplUrl = "https://xrpl-5wpxgn35iq-uc.a.run.app/payment_request/";
-        const response = await axios.post(xrplUrl, rewardJsonMap);
-
-        return response; // Modify the return statement if necessary
-      } else {
-        console.log("Task not verified");
-        return null;
-      }
-    } catch (error) {
-      console.error("Error creating XRP payment request:", error);
-      return null;
-    }
-  }
-);
-
-exports.deleteTaskAfterSuccessfulPayment = onDocumentCreated(
-  "test_xumm_callbacks/{doc}",
-  async (event) => {
-    try {
-      const snapshot = event.data;
-      if (!snapshot) {
-        console.log("No data associated with webhook callback event");
-        return;
-      }
-      const taskEventDocData = snapshot.data();
-
-      // Check if the task_id exists in the test_tasks collection
-      const taskSnapshot = await db
-        .collection("test_tasks")
-        .doc(taskEventDocData.custom_meta.blob.task_id)
-        .get();
-
-      if (taskSnapshot.exists) {
-        const taskData = taskSnapshot.data();
-        const returnURLSigned = taskEventDocData.payloadResponse?.signed;
-
-        if (returnURLSigned && returnURLSigned === true) {
-          // Save the contents of the task_id document
-          await db
-            .collection("test_paid_tasks")
-            .doc(taskEventDocData.custom_meta.blob.task_id)
-            .set(taskData!);
-
-          // Delete the original document in test_tasks
-          await db
-            .collection("test_tasks")
-            .doc(taskEventDocData.custom_meta.blob.task_id)
-            .delete();
-
-          console.log(
-            "Task saved to test_paid_tasks and deleted from test_tasks"
-          );
-        } else {
-          console.log(
-            "return_url.signed is not true, skipping document deletion"
-          );
-        }
-      } else {
-        console.log("Task does not exist in test_tasks");
-      }
-      return null;
-    } catch (error) {
-      console.error("Error deleting task:", error);
-      return null;
-    }
-  }
-);
-
-// firebase deploy --only functions:updateXummUserToken
 // npm run lint -- --fix

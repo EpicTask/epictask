@@ -1,0 +1,16 @@
+{
+  "configurations": [
+    {
+      "name": "Deploy Cloud Function",
+      "type": "cloudcode.cloudfunctions",
+      "request": "launch",
+      "functionName": "handleTaskCreatedMessage",
+      "region": "us-central1",
+      "gen": "GEN_2",
+      "revision": "handletaskcreatedmessage-00007-jid",
+      "entryPoint": "handleTaskCreatedMessage",
+      "runtime": "nodejs18",
+      "testInput": ""
+    }
+  ]
+}
