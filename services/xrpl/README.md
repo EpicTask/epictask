@@ -5,7 +5,7 @@ The XRPL Service is a component of Epic Task that integrates with the XRP Ledger
 ## Features
 
 - Transaction Management: The service enables the creation, submission, and tracking of transactions on the XRP Ledger.
-- Wallet Integration: Users can connect their XRP wallets to the Epic Task platform, allowing seamless access and management of their XRP holdings.
+- Wallet Integration: Users can connect their XUMM/XRP wallets to the Epic Task platform, allowing seamless Push transactions.
 - Payment Processing: The service facilitates the processing of XRP payments, including sending, receiving, and verifying transactions.
 - Escrow Management: Users can utilize the Escrow functionality of the XRPL to lock funds until specific conditions are met, ensuring secure task-related transactions.
 - Account Balances: The service provides real-time retrieval and tracking of XRP account balances for users.
