@@ -8,10 +8,11 @@ from fastapi import FastAPI, Request
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
 from starlette.middleware.cors import CORSMiddleware
-from firestore_db import create_task, update_task, delete_task, assign_task, completed_task, get_tasks
+from firestore_db import create_task, update_task, delete_task, assign_task, completed_task, get_tasks, write_event_to_firestore
 from schema import (TaskAssigned, TaskCreated, TaskCancelled, TaskCompleted,
-                    TaskCommentAdded, TaskExpired, TaskRatingUpdate, TaskRewarded, TaskUpdated)
+                    TaskCommentAdded, TaskEvent, TaskExpired, TaskRatingUpdate, TaskRewarded, TaskUpdated)
 from dotenv import load_dotenv
+
 app = FastAPI()
 
 load_dotenv()
@@ -43,6 +44,15 @@ async def hello(request: Request):
     revision = os.environ.get('K_REVISION', 'Unknown revision')
 
     return templates.TemplateResponse("index.html", {"request": request, "message": message, "Service": service, "Revision": revision})
+
+# Create Task Event
+@app.post('/TaskEvent')
+async def task_func(request: TaskEvent):
+    try:
+        response = write_event_to_firestore(request)
+        return {"message": response}
+    except Exception as e:
+        return {"error": str(e)}
 
 
 @app.post('/TaskCreated')

@@ -29,7 +29,7 @@ def create_task(response):
             'task_id': doc_id,
             'timestamp': firestore.SERVER_TIMESTAMP
         })
-        write_event_to_firestore('TaskCreated', doc_id, data)
+
         # Return the custom document ID
         return doc_id
 
@@ -53,7 +53,7 @@ def update_task(event_type, response):
 
         # Update the document with the generated ID
         doc_ref.update(data)
-        write_event_to_firestore(event_type, doc_id, data)
+
         # Return the custom document ID
         return doc_id
 
@@ -83,7 +83,7 @@ def assign_task(event_type, response):
         doc_ref.update({
             "assigned_to_ids": firestore.ArrayUnion([assigned_to_id])
         })
-        write_event_to_firestore(event_type, doc_id, data)
+
         # Return the custom document ID
         return doc_id
 
@@ -105,7 +105,6 @@ def delete_task(event_type, response):
        # Delete document
         collection_ref.document(doc_id).delete()
 
-        write_event_to_firestore(event_type, doc_id, data)
         return doc_id
 
     except Exception as e:
@@ -135,7 +134,6 @@ def completed_task(event_type, response):
         if data["verified"] is None or data["verified"] is False:
             doc_ref.update({"marked_completed": data["marked_completed"]})
 
-        write_event_to_firestore(event_type, doc_id, data)
         # Return the custom document ID
         return doc_id
 
@@ -177,7 +175,7 @@ def write_comment(event_type, response):
         doc_ref.update({
             'timestamp': firestore.SERVER_TIMESTAMP
         })
-        write_event_to_firestore(event_type, doc_id, data)
+
         # Return the custom document ID
         return doc_id
 
@@ -187,30 +185,26 @@ def write_comment(event_type, response):
         return None
 
 
-def write_event_to_firestore(event_type, task_id, response):
+def write_event_to_firestore(response):
     try:
         # Create a reference to the "test_task_events" collection
         collection_ref = db.collection('test_task_events')
 
+        # Convert the TaskEvent object to a JSON string
+        data = response.dict()
+ 
         # Generate a custom document ID
         doc_ref = collection_ref.document()
 
-        # Get the generated document ID
-        doc_id = doc_ref.id
-
         # Update the document with the generated ID
-        doc_ref.set({
-            'event_id': doc_id,
-            'event_type': event_type,
-            'task_id': task_id,
-            # 'user_id': response["user_id"] if response["user_id"] is not None else None,
-            'timestamp': firestore.SERVER_TIMESTAMP,
-            'status': "success",
-            'additional_data': response
-        })
+        doc_ref.set(data)
 
+        doc_ref.update({
+            'event_id': doc_ref.id,
+            'timestamp': firestore.SERVER_TIMESTAMP
+        })
         # Return the custom document ID
-        return doc_id
+        return doc_ref.id
 
     except Exception as e:
         # Handle any errors that occur during the Firestore operation
