@@ -2,11 +2,11 @@ pragma solidity ^0.8.0;
 
 import { XrpToken } from "@flare-foundation/xrp-token";
 
-This smart contract allows users to create tasks and have them completed by other users. 
+This test smart contract allows users to create tasks and have them completed by other users. 
 The tasks are stored in an escrow account until they are completed. When the task is completed, 
 the smart contract pays the worker the agreed-upon amount, adjusted for changes in the price of XRP.
 
-Here is an example of how to use this smart contract:
+Example on how to use this smart contract:
 
 User A creates a task and specifies the amount of XRP they are willing to pay for it.
 User B accepts the task.
