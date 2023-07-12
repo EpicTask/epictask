@@ -28,7 +28,7 @@ class _HomeScreenState extends State<HomeScreen> {
     // const FeedScreen(),
     const HomeWidget(),
      CreateTaskWidget(),
-    const Dashboard(),
+    const DashboardWidget(),
   ];
 
   void _onItemTapped(int index) {
