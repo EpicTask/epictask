@@ -1,8 +1,18 @@
 import * as dotenv from 'dotenv';
 import express, {json} from 'express';
 import cors from 'cors';
-import {createChildUID, linkChild, saveUserEvent} from './fb_functions.js';
-import {handleIncomingEvent} from './user_event_handler.js';
+import {
+  authenticateUser,
+  connectWallet,
+  createChildUID,
+  deletedUserAccount,
+  forgotPassword,
+  linkChild,
+  profileUpdate,
+  saveUserEvent,
+  saveUserInteraction,
+  verifyUser,
+} from './fb_functions.js';
 import {UserEvent, getSchema, linkChildSchema} from './schema.js';
 import {
   createUserWithPassword,
@@ -66,15 +76,108 @@ app.post('/events/', async (req, res) => {
 
     // Save the user event to Firestore
     saveUserEvent(eventType, userEvent);
-    try {
-      handleIncomingEvent(eventType, userEvent);
-    } catch (error) {
-      console.error(error);
-    }
     res.status(201).json('Successful created UserEvent');
   } catch (error) {
     console.error(error);
     res.status(500).json({error: 'Failed to create UserEvent'});
+  }
+});
+
+// Registered user.
+app.post('/userRegister', async (req, res) => {
+  res.status(201).json({message: 'Successful user register'});
+});
+
+// User signed in successfully
+app.post('/signIn', async (req, res) => {
+  res.status(201).json({message: 'Successful user sign in'});
+});
+
+// User wallet connected
+app.post('/walletConnected', async (req, res) => {
+  try {
+    const result = await connectWallet();
+    res.status(201).json({message: 'Successful wallet connection:', result});
+  } catch (error) {
+    console.log;
+    'Error: ', error;
+    res.status(500).json({error: 'Failed to sign user out.'});
+  }
+});
+
+// User forgot password
+app.post('/forgotPassword', async (req, res) => {
+  try {
+    const result = await forgotPassword();
+    res.status(201).json({message: 'Successful:', result});
+  } catch (error) {
+    console.log;
+    'Error: ', error;
+    res.status(500).json({error: 'Failed.'});
+  }
+});
+
+// User Authenticated
+app.post('/authenticate', async (req, res) => {
+  try {
+    const result = await authenticateUser();
+    res.status(201).json({message: 'Successful', result});
+  } catch (error) {
+    console.log;
+    'Error: ', error;
+    res.status(500).json({error: 'Failed.'});
+  }
+});
+
+// User updated profile
+app.post('/profileUpdate', async (req, res) => {
+  try {
+    const result = await profileUpdate();
+    res.status(201).json({message: 'Successful profile update:', result});
+  } catch (error) {
+    console.log;
+    'Error: ', error;
+    res.status(500).json({error: 'Failed to update profile.'});
+  }
+});
+
+// User deleted account
+app.post('/deleteAccount', async (req, res) => {
+  try {
+    const result = await deletedUserAccount();
+    res
+      .status(201)
+      .json({message: 'Successful user account deletion:', result});
+  } catch (error) {
+    console.log;
+    'Error: ', error;
+    res.status(500).json({error: 'Failed to delete account.'});
+  }
+});
+
+// User interaction
+app.post('/userInteraction', async (req, res) => {
+  try {
+    const result = await saveUserInteraction();
+    res
+      .status(201)
+      .json({message: 'Successful user interaction saved:', result});
+  } catch (error) {
+    console.log;
+    'Error: ', error;
+    res.status(500).json({error: 'Failed to save user interaction:'});
+  }
+});
+
+//User verified
+app.post('/userVerified', async (req, res) => {
+  try {
+    const result = await verifyUser();
+    res.status(201).json({message: 'Successful user verification:', result});
+  } catch (error) {
+    console.log;
+    'Error: ', error;
+    res.status(500).json({error: 'Failed to verify user.'});
   }
 });
 
@@ -119,7 +222,7 @@ app.post('/loginWithPassword', async (req, res) => {
 });
 
 // Create child UID
-app.post('/createChildUID', async (req, res) => {
+app.post('/createChildAccount', async (req, res) => {
   try {
     const response = req.body;
     const parentUID = response.parentUID;

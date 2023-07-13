@@ -33,6 +33,19 @@ async function saveUserEvent(eventType, eventData) {
   }
 }
 
+// Save user interaction
+async function saveUserInteraction(response) {
+  try {
+    await addDoc(ref, response);
+
+    console.log('Interaction saved successfully');
+    return true;
+  } catch (error) {
+    console.error('Failed to save interaction:', error);
+    return false;
+  }
+}
+
 async function profileUpdate(eventData) {
   try {
     // Save the update to Firestore
@@ -45,6 +58,35 @@ async function profileUpdate(eventData) {
   }
 }
 
+// User Authenticated
+async function authenticateUser(response) {
+  console.log('Authenticated' + response);
+  return 'Successful';
+}
+
+// Delete user account
+async function deletedUserAccount(response) {
+  console.log('Deleted account' + response);
+  return 'Successful';
+}
+
+// Verify User
+async function verifyUser(response) {
+  console.log('User Verified' + response);
+  return 'Successful';
+}
+
+// Connect Wallet
+async function connectWallet(response) {
+  console.log('Wallet Connected' + response);
+  return 'Successful';
+}
+
+// Forgot password
+async function forgotPassword(response) {
+  console.log('Password Reset' + response);
+  return 'Successful';
+}
 async function createChildUID(parentUID) {
   try {
     const parentRef = collection(db, 'users', parentUID);
@@ -71,4 +113,15 @@ async function linkChild(data) {
   }
 }
 
-export {saveUserEvent, profileUpdate, createChildUID, linkChild};
+export {
+  saveUserEvent,
+  profileUpdate,
+  createChildUID,
+  linkChild,
+  saveUserInteraction,
+  authenticateUser,
+  deletedUserAccount,
+  verifyUser,
+  connectWallet,
+  forgotPassword,
+};
