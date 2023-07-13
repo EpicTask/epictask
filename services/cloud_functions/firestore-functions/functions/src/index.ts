@@ -78,6 +78,62 @@ exports.pubsubRouter = onDocumentCreated(
   }
 );
 
+// PubSub Router for user events.
+exports.pubsubUserEventRouter = onDocumentCreated(
+  "test_user_events/{eventId}",
+  async (event) => {
+    const snapshot = event.data;
+    if (!snapshot) {
+      logger.info("No data associated with the event");
+      return;
+    }
+    const data = snapshot.data();
+    const eventType = data.event_type;
+
+    const jsonData = JSON.stringify(data.additional_data);
+
+    try {
+      switch (eventType) {
+      case "userRegistration":
+        await publishMessage("userRegistration", jsonData);
+        break;
+      case "userSignIn":
+        await publishMessage("userSignIn", jsonData);
+        break;
+      case "userWalletConnected":
+        await publishMessage("userWalletConnected", jsonData);
+        break;
+      case "userForgotPassword":
+        await publishMessage("userForgotPassword", jsonData);
+        break;
+      case "userAuthentication":
+        await publishMessage("userAuthentication", jsonData);
+        break;
+      case "userProfileUpdate":
+        await publishMessage("userProfileUpdate", jsonData);
+        break;
+      case "userAccountDeletion":
+        await publishMessage("userAccountDeletion", jsonData);
+        break;
+      case "userInteraction":
+        await publishMessage("userInteraction", jsonData);
+        break;
+      case "UserRegistered":
+        await publishMessage("UserRegistered", jsonData);
+        break;
+      case "UserVerified":
+        await publishMessage("UserVerified", jsonData);
+        break;
+      default:
+        logger.info("Unknown event type:", eventType);
+        break;
+      }
+    } catch (error) {
+      logger.error("Message publishing error:", error);
+      // Handle the error during message publishing
+    }
+  }
+);
 /**
  * Asynchronously publishes a message to a topic.
  * @function
@@ -286,10 +342,10 @@ exports.handleUserRegisteredMessage = pubsub.onMessagePublished(
     try {
       const documentData = event.data.message.json;
       // Get the task management service URL from environment variable
-      const taskManagementUrl = process.env.USERREGISTERED || "";
+      const userManagementUrl = process.env.USERREGISTERED || "";
 
       // Make an API call to the task management service
-      const response = await axios.post(taskManagementUrl, documentData);
+      const response = await axios.post(userManagementUrl, documentData);
 
       logger.info("API response:", response.data);
       // Handle the API response or perform any additional actions
@@ -300,16 +356,136 @@ exports.handleUserRegisteredMessage = pubsub.onMessagePublished(
   }
 );
 
-exports.handleUserUpdatedMessage = pubsub.onMessagePublished(
-  "UserUpdated",
+exports.handleUserSignInMessage = pubsub.onMessagePublished(
+  "UserSignIn",
   async (event) => {
     try {
       const documentData = event.data.message.json;
       // Get the task management service URL from environment variable
-      const taskManagementUrl = process.env.USERUPDATED || "";
+      const userManagementUrl = process.env.USERSIGNIN || "";
 
       // Make an API call to the task management service
-      const response = await axios.post(taskManagementUrl, documentData);
+      const response = await axios.post(userManagementUrl, documentData);
+
+      logger.info("API response:", response.data);
+      // Handle the API response or perform any additional actions
+    } catch (error) {
+      logger.error("API call error:", error);
+      // Handle the API call error
+    }
+  }
+);
+
+exports.handleUserWalletConnectedMessage = pubsub.onMessagePublished(
+  "UserWalletConnected",
+  async (event) => {
+    try {
+      const documentData = event.data.message.json;
+      // Get the task management service URL from environment variable
+      const userManagementUrl = process.env.USERWALLETCONNECTED || "";
+
+      // Make an API call to the task management service
+      const response = await axios.post(userManagementUrl, documentData);
+
+      logger.info("API response:", response.data);
+      // Handle the API response or perform any additional actions
+    } catch (error) {
+      logger.error("API call error:", error);
+      // Handle the API call error
+    }
+  }
+);
+
+exports.handleUserForgotPasswordMessage = pubsub.onMessagePublished(
+  "UserForgotPassword",
+  async (event) => {
+    try {
+      const documentData = event.data.message.json;
+      // Get the task management service URL from environment variable
+      const userManagementUrl = process.env.USERFORGOTPASSWORD || "";
+
+      // Make an API call to the task management service
+      const response = await axios.post(userManagementUrl, documentData);
+
+      logger.info("API response:", response.data);
+      // Handle the API response or perform any additional actions
+    } catch (error) {
+      logger.error("API call error:", error);
+      // Handle the API call error
+    }
+  }
+);
+
+exports.handleUserAuthenticationMessage = pubsub.onMessagePublished(
+  "UserAuthentication",
+  async (event) => {
+    try {
+      const documentData = event.data.message.json;
+      // Get the task management service URL from environment variable
+      const userManagementUrl = process.env.USERAUTHENTICATION || "";
+
+      // Make an API call to the task management service
+      const response = await axios.post(userManagementUrl, documentData);
+
+      logger.info("API response:", response.data);
+      // Handle the API response or perform any additional actions
+    } catch (error) {
+      logger.error("API call error:", error);
+      // Handle the API call error
+    }
+  }
+);
+
+exports.handleUserSignInMessage = pubsub.onMessagePublished(
+  "UserProfileUpdate",
+  async (event) => {
+    try {
+      const documentData = event.data.message.json;
+      // Get the task management service URL from environment variable
+      const userManagementUrl = process.env.USERPROFILEUPDATE || "";
+
+      // Make an API call to the task management service
+      const response = await axios.post(userManagementUrl, documentData);
+
+      logger.info("API response:", response.data);
+      // Handle the API response or perform any additional actions
+    } catch (error) {
+      logger.error("API call error:", error);
+      // Handle the API call error
+    }
+  }
+);
+
+exports.handleUserAccountDeletionMessage = pubsub.onMessagePublished(
+  "UserAccountDeletion",
+  async (event) => {
+    try {
+      const documentData = event.data.message.json;
+      // Get the task management service URL from environment variable
+      const userManagementUrl = process.env.USERACCOUNTDELETION || "";
+
+      // Make an API call to the task management service
+      const response = await axios.post(userManagementUrl, documentData);
+
+      logger.info("API response:", response.data);
+      // Handle the API response or perform any additional actions
+    } catch (error) {
+      logger.error("API call error:", error);
+      // Handle the API call error
+    }
+  }
+);
+
+exports.handleUserInteractionMessage = pubsub.onMessagePublished(
+  "UserInteraction",
+  async (event) => {
+    try {
+      const documentData = event.data.message.json;
+      // Get the task management service URL from environment variable
+      const userManagementUrl = process.env.USERINTERACTION || "";
+
+      // Make an API call to the task management service
+      const response = await axios.post(userManagementUrl, documentData);
 
       logger.info("API response:", response.data);
       // Handle the API response or perform any additional actions
@@ -326,10 +502,10 @@ exports.handleUserVerifiedMessage = pubsub.onMessagePublished(
     try {
       const documentData = event.data.message.json;
       // Get the task management service URL from environment variable
-      const taskManagementUrl = process.env.USERVERIFIED || "";
+      const userManagementUrl = process.env.USERVERIFIED || "";
 
       // Make an API call to the task management service
-      const response = await axios.post(taskManagementUrl, documentData);
+      const response = await axios.post(userManagementUrl, documentData);
 
       logger.info("API response:", response.data);
       // Handle the API response or perform any additional actions
