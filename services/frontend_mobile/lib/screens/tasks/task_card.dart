@@ -1,8 +1,13 @@
+import 'package:epictask/models/user_model/user_model.dart';
+import 'package:epictask/repositories/all_users_repository.dart';
 import 'package:epictask/services/ui/text_styles.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
 
+import '../../bloc/generics/generic_bloc.dart';
 import '../../models/task_model/task_model.dart';
+import '../users/all_users_modal.dart';
 import 'logic/logic.dart';
 
 class TaskCard extends StatelessWidget {
@@ -27,21 +32,21 @@ class TaskCard extends StatelessWidget {
             Text(task.task_description, style: titleLarge(context)),
             Text('Reward: ${task.reward_amount} ${task.reward_currency}',
                 style: titleLarge(context)),
-            Text('Due Date: ${formatDate(DateTime.fromMillisecondsSinceEpoch(task.expiration_date))}',
+            Text(
+                'Due Date: ${formatDate(DateTime.fromMillisecondsSinceEpoch(task.expiration_date))}',
                 style: titleLarge(context)),
             if (task.assigned_to_ids?.isNotEmpty ?? false)
               FutureBuilder<String>(
-                future: getUserDisplayName(task.assigned_to_ids!.first),
-                builder: (context, snapshot) {
-                  if(snapshot.hasData){
-                    String displayName = snapshot.data as String;
-                    return Text('Assigned To: $displayName',
-                      style: titleLarge(context));
-                  }
-                  return Text('Assigned To: Unknown User',
-                      style: titleLarge(context));
-                }
-              ),
+                  future: getUserDisplayName(task.assigned_to_ids!.first),
+                  builder: (context, snapshot) {
+                    if (snapshot.hasData) {
+                      String displayName = snapshot.data as String;
+                      return Text('Assigned To: $displayName',
+                          style: titleLarge(context));
+                    }
+                    return Text('Assigned To: Unknown User',
+                        style: titleLarge(context));
+                  }),
             if (task.marked_completed ?? false)
               Text('Marked Completed', style: titleLarge(context)),
             Padding(
@@ -50,16 +55,16 @@ class TaskCard extends StatelessWidget {
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: [
                   ElevatedButton(
-                    onPressed: () => completeTask(task, task.user_id),
+                    onPressed: () => completeTask(task),
                     child: Text(
                       'Completed',
                       style: titleMedium(context),
                     ),
                   ),
-                  ElevatedButton(
-                    onPressed: () => assignTask(task.task_id),
-                    child: Text('Assign', style: titleMedium(context)),
-                  ),
+                  AllUserPage(
+                          task: task,
+                        ),
+                      
                   ElevatedButton(
                     onPressed: () => deleteTask(task.task_id),
                     child: Text('Delete', style: titleMedium(context)),
@@ -72,12 +77,6 @@ class TaskCard extends StatelessWidget {
       ),
     );
   }
-
-  completeTask(TaskModel task, String userId) {}
-
-  assignTask(taskId) {}
-
-  deleteTask(taskId) {}
 }
 
 class TaskCardAssigned extends StatelessWidget {
@@ -105,7 +104,8 @@ class TaskCardAssigned extends StatelessWidget {
             ),
             Text('Reward: ${task.reward_amount} ${task.reward_currency}',
                 style: titleLarge(context)),
-            Text('Due Date: ${formatDate(DateTime.fromMillisecondsSinceEpoch(task.expiration_date))}',
+            Text(
+                'Due Date: ${formatDate(DateTime.fromMillisecondsSinceEpoch(task.expiration_date))}',
                 style: titleLarge(context)),
             Text('Assigned To: Me', style: titleLarge(context)),
             if (task.marked_completed ?? false)

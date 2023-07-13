@@ -1,3 +1,5 @@
+import 'package:epictask/models/task_model/task_model.dart';
+import 'package:epictask/services/functions/firebase_functions.dart';
 import 'package:epictask/services/ui/text_styles.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -25,7 +27,7 @@ class _CreateTaskWidgetState extends State<CreateTaskWidget> {
 
   final TextEditingController rewardAmountController = TextEditingController();
 
-  final bool requiresAttachments = false;
+  bool requiresAttachments = false;
 
   String paymentMethodType = 'Pay Directly';
 
@@ -38,37 +40,30 @@ class _CreateTaskWidgetState extends State<CreateTaskWidget> {
       child: BlocConsumer<TaskFormBloc, TaskFormState>(
         listener: (context, state) {
           if (state is TaskFormSubmittedSuccess) {
-            // Form submitted successfully, perform any necessary action
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
-                  content: Text('Form submitted successfully',
-                      style: titleMedium(context))),
+                content: Text('Form submitted successfully', style: titleMedium(context)),
+              ),
             );
           } else if (state is TaskFormSubmittedFailure) {
-            // Form submission failed, display an error message
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
-                  content: Text('Form submission failed: ${state.error}',
-                      style: titleMedium(context))),
+                content: Text('Form submission failed: ${state.error}', style: titleMedium(context)),
+              ),
             );
           }
         },
         builder: (context, state) {
           final bloc = BlocProvider.of<TaskFormBloc>(context);
 
-          return Form(
-            key: _formKey,
-            child: Column(
-              children: [
-                Padding(
-                  padding: const EdgeInsets.all(8.0),
-                  child: TextFormField(
+          return SingleChildScrollView(
+            child: Form(
+              key: _formKey,
+              child: Column(
+                children: [
+                  buildFormField(
                     controller: taskTitleController,
-                    decoration: InputDecoration(
-                        enabledBorder: const OutlineInputBorder(
-                            borderSide: BorderSide(color: Colors.blueAccent)),
-                        labelText: 'Task Title',
-                        labelStyle: titleLarge(context)),
+                    label: 'Task Title',
                     validator: (value) {
                       if (value == null || value.isEmpty) {
                         return 'Please enter a task title';
@@ -76,17 +71,9 @@ class _CreateTaskWidgetState extends State<CreateTaskWidget> {
                       return null;
                     },
                   ),
-                ),
-                Padding(
-                  padding: const EdgeInsets.all(8.0),
-                  child: TextFormField(
+                  buildFormField(
                     controller: taskDescriptionController,
-                    decoration: InputDecoration(
-                        enabledBorder: const OutlineInputBorder(
-                            borderSide: BorderSide(color: Colors.blueAccent)),
-                        // border: const OutlineInputBorder(borderSide: BorderSide(color: Colors.blueAccent)),
-                        labelText: 'Task Description',
-                        labelStyle: titleLarge(context)),
+                    label: 'Task Description',
                     validator: (value) {
                       if (value == null || value.isEmpty) {
                         return 'Please enter a task description';
@@ -94,27 +81,13 @@ class _CreateTaskWidgetState extends State<CreateTaskWidget> {
                       return null;
                     },
                   ),
-                ),
-                Padding(
-                  padding: const EdgeInsets.all(8.0),
-                  child: TextFormField(
+                  buildFormField(
                     controller: projectNameController,
-                    decoration: InputDecoration(
-                        enabledBorder: const OutlineInputBorder(
-                            borderSide: BorderSide(color: Colors.blueAccent)),
-                        labelText: 'Project Name',
-                        labelStyle: titleLarge(context)),
+                    label: 'Project Name',
                   ),
-                ),
-                Padding(
-                  padding: const EdgeInsets.all(8.0),
-                  child: TextFormField(
+                  buildFormField(
                     controller: termsBlobController,
-                    decoration: InputDecoration(
-                        enabledBorder: const OutlineInputBorder(
-                            borderSide: BorderSide(color: Colors.blueAccent)),
-                        labelText: 'Conditions',
-                        labelStyle: titleLarge(context)),
+                    label: 'Conditions',
                     validator: (value) {
                       if (value == null || value.isEmpty) {
                         return 'Please enter conditions';
@@ -122,17 +95,10 @@ class _CreateTaskWidgetState extends State<CreateTaskWidget> {
                       return null;
                     },
                   ),
-                ),
-                Padding(
-                  padding: const EdgeInsets.all(8.0),
-                  child: TextFormField(
+                  buildFormField(
                     controller: rewardAmountController,
-                    keyboardType: TextInputType.number,
-                    decoration: InputDecoration(
-                        enabledBorder: const OutlineInputBorder(
-                            borderSide: BorderSide(color: Colors.blueAccent)),
-                        labelText: 'Reward Amount',
-                        labelStyle: titleLarge(context)),
+                    label: 'Reward Amount',
+                    keyboardType: const TextInputType.numberWithOptions(decimal: true),
                     validator: (value) {
                       if (value == null || value.isEmpty) {
                         return 'Please enter a reward amount';
@@ -140,107 +106,144 @@ class _CreateTaskWidgetState extends State<CreateTaskWidget> {
                       return null;
                     },
                   ),
-                ),
-                Padding(
-                  padding: const EdgeInsets.all(8.0),
-                  child: DropdownButton<bool>(
-                    value: requiresAttachments,
-                    onChanged: (newValue) {
-                      setState(() {
-                        requiresAttachments == newValue;
-                      });
-                    },
-                    items: const <DropdownMenuItem<bool>>[
-                      DropdownMenuItem<bool>(
-                        value: true,
-                        child: Text('Yes'),
-                      ),
-                      DropdownMenuItem<bool>(
-                        value: false,
-                        child: Text('No'),
-                      ),
-                    ],
+                  Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          'Require Attachments:',
+                          style: titleLarge(context),
+                        ),
+                        DropdownButton<bool>(
+                          value: requiresAttachments,
+                          style: titleLarge(context),
+                          onChanged: (newValue) {
+                            setState(() {
+                              requiresAttachments = newValue!;
+                            });
+                          },
+                          items: const <DropdownMenuItem<bool>>[
+                            DropdownMenuItem<bool>(
+                              value: true,
+                              child: Text('Yes'),
+                            ),
+                            DropdownMenuItem<bool>(
+                              value: false,
+                              child: Text('No'),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
                   ),
-                ),
-                Padding(
-                  padding: const EdgeInsets.all(8.0),
-                  child: DropdownButton<String>(
-                    value:
-                        paymentMethodType, // Set the value to the selectedValue variable
-                    onChanged: (newValue) {
-                      setState(() {
-                        paymentMethodType =
-                            newValue!; // Update the selectedValue variable
-                      });
-                    },
-                    items: const <DropdownMenuItem<String>>[
-                      DropdownMenuItem<String>(
-                        value: 'Pay Directly',
-                        child: Text('Pay Directly'),
-                      ),
-                      DropdownMenuItem<String>(
-                        value: 'Escrow',
-                        child: Text('Escrow'),
-                      ),
-                    ],
+                  Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        buildDropdownButton<String>(
+                          value: paymentMethodType,
+                          onChanged: (newValue) {
+                            setState(() {
+                              paymentMethodType = newValue!;
+                            });
+                          },
+                          items: const <DropdownMenuItem<String>>[
+                            DropdownMenuItem<String>(
+                              value: 'Pay Directly',
+                              child: Text('Pay Directly'),
+                            ),
+                            DropdownMenuItem<String>(
+                              value: 'Escrow',
+                              child: Text('Escrow'),
+                            ),
+                          ],
+                        ),
+                        buildDropdownButton<String>(
+                          value: rewardCurrencyType,
+                          onChanged: (newValue) {
+                            setState(() {
+                              rewardCurrencyType = newValue!;
+                            });
+                          },
+                          items: const <DropdownMenuItem<String>>[
+                            DropdownMenuItem<String>(
+                              value: 'XRP',
+                              child: Text('XRP'),
+                            ),
+                            DropdownMenuItem<String>(
+                              value: 'eTask',
+                              child: Text('eTask'),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
                   ),
-                ),
-                Padding(
-                  padding: const EdgeInsets.all(8.0),
-                  child: DropdownButton<String>(
-                    value:
-                        rewardCurrencyType, // Set the value to the selectedValue variable
-                    onChanged: (newValue) {
-                      setState(() {
-                        rewardCurrencyType =
-                            newValue!; // Update the selectedValue variable
-                      });
+                  ElevatedButton(
+                    onPressed: () {
+                      if (_formKey.currentState!.validate()) {
+                        final task = TaskModel.defaultTask().copyWith(
+                          task_description: taskDescriptionController.text,
+                          project_name: projectNameController.text,
+                          terms_blob: termsBlobController.text,
+                          reward_amount: double.parse(rewardAmountController.text),
+                          reward_currency: rewardCurrencyType,
+                          payment_method: paymentMethodType,
+                          user_id: currentUserID
+                        );
+          
+                        final event = TaskFormSubmitted(task: task);
+                        bloc.add(event);
+                      }
                     },
-                    items: const <DropdownMenuItem<String>>[
-                      DropdownMenuItem<String>(
-                        value: 'Pay Directly',
-                        child: Text('Pay Directly'),
-                      ),
-                      DropdownMenuItem<String>(
-                        value: 'Escrow',
-                        child: Text('Escrow'),
-                      ),
-                    ],
+                    child: Text('Submit', style: titleLarge(context)),
                   ),
-                ),
-                ElevatedButton(
-                  onPressed: () {
-                    if (_formKey.currentState!.validate()) {
-                      final taskTitle = taskTitleController.text;
-                      final taskDescription = taskDescriptionController.text;
-                      final projectName = projectNameController.text;
-                      final termsBlob = termsBlobController.text;
-                      final rewardAmount =
-                          double.parse(rewardAmountController.text);
-                      final rewardCurrency = rewardCurrencyType;
-                      final paymentMethod = paymentMethodType;
-
-                      final event = TaskFormSubmitted(
-                        taskTitle: taskTitle,
-                        taskDescription: taskDescription,
-                        projectName: projectName,
-                        requiresAttachments: requiresAttachments,
-                        termsBlob: termsBlob,
-                        rewardAmount: rewardAmount,
-                        rewardCurrency: rewardCurrency,
-                        paymentMethod: paymentMethod,
-                      );
-
-                      bloc.add(event);
-                    }
-                  },
-                  child: Text('Submit', style: titleLarge(context)),
-                ),
-              ],
+                ],
+              ),
             ),
           );
         },
       ),
+    );
+  }
+
+  Widget buildFormField({
+    required TextEditingController controller,
+    required String label,
+    TextInputType keyboardType = TextInputType.text,
+    String? Function(String?)? validator,
+    TextCapitalization? rule,
+  }) {
+    return Padding(
+      padding: const EdgeInsets.all(8.0),
+      child: TextFormField(
+        controller: controller,
+        textCapitalization: rule ?? TextCapitalization.sentences,
+        keyboardType: keyboardType,
+        decoration: InputDecoration(
+          enabledBorder: const OutlineInputBorder(
+            borderSide: BorderSide(color: Colors.blueAccent),
+          ),
+          labelText: label,
+          labelStyle: titleLarge(context),
+        ),
+        validator: validator,
+      ),
+    );
+  }
+
+  DropdownButton<T> buildDropdownButton<T>({
+    required T value,
+    required void Function(T?) onChanged,
+    required List<DropdownMenuItem<T>> items,
+  }) {
+    return DropdownButton<T>(
+      value: value,
+      onChanged: onChanged,
+      items: items,
+      style: titleLarge(context),
     );
   }
 }

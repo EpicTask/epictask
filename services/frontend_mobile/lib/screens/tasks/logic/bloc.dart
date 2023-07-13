@@ -1,39 +1,18 @@
 // Event for submitting the form
 import 'package:bloc/bloc.dart';
+import 'package:epictask/models/task_event_model/task_event.dart';
+import 'package:epictask/models/task_model/task_model.dart';
+import 'package:epictask/services/functions/firebase_functions.dart';
 import 'package:equatable/equatable.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 class TaskFormSubmitted extends Equatable {
-  final String taskTitle;
-  final String taskDescription;
-  final String projectName;
-  final bool requiresAttachments;
-  final String termsBlob;
-  final double rewardAmount;
-  final String rewardCurrency;
-  final String paymentMethod;
+  final TaskModel task;
 
-  const TaskFormSubmitted({
-    required this.taskTitle,
-    required this.taskDescription,
-    required this.projectName,
-    required this.requiresAttachments,
-    required this.termsBlob,
-    required this.rewardAmount,
-    required this.rewardCurrency,
-    required this.paymentMethod,
-  });
+  const TaskFormSubmitted({required this.task});
 
   @override
-  List<Object?> get props => [
-        taskTitle,
-        taskDescription,
-        projectName,
-        requiresAttachments,
-        termsBlob,
-        rewardAmount,
-        rewardCurrency,
-        paymentMethod,
-      ];
+  List<Object?> get props => [task];
 }
 
 // State for the form
@@ -59,23 +38,22 @@ class TaskFormSubmittedFailure extends TaskFormState {
   List<Object?> get props => [error];
 }
 
-// Bloc for managing the form state and data
+// Bloc for managing the create task form state and data
 class TaskFormBloc extends Bloc<TaskFormSubmitted, TaskFormState> {
-  TaskFormBloc() : super(TaskFormInitial());
-
-  @override
-  Stream<TaskFormState> mapEventToState(TaskFormSubmitted event) async* {
-    if (event is TaskFormSubmitted) {
-      yield TaskFormSubmitting();
-
+  TaskFormBloc() : super(TaskFormInitial()) {
+    on<TaskFormSubmitted>(
+        (TaskFormSubmitted event, Emitter<TaskFormState> emit) async {
       try {
-        // Process the form data or make an API call here
-        await Future.delayed(Duration(seconds: 2)); // Simulating API call
+        final TaskEvent taskEvent = TaskEvent.defaultEvent().copyWith(
+            additional_data: event.task.toJson(),
+            event_type: 'TaskCreated',
+            user_id: currentUserID);
+        FirestoreDatabase().writeTaskEvent(taskEvent);
 
-        yield TaskFormSubmittedSuccess();
+        emit(TaskFormSubmittedSuccess());
       } catch (e) {
-        yield TaskFormSubmittedFailure(e.toString());
+        emit(TaskFormSubmittedFailure(e.toString()));
       }
-    }
+    });
   }
 }

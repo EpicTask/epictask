@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
 import '../root/root_page.dart';
@@ -14,7 +13,7 @@ final GoRouter router = GoRouter(
       builder: (BuildContext context, GoRouterState state) {
         return const RootPage();
       },
-      routes: <RouteBase>[
+      routes: const <RouteBase>[
     
       ],
     ),

@@ -70,6 +70,7 @@ dependencies:
   shared_preferences: ^2.2.0
   flutter_tts: ^3.6.3
   mockito: ^5.4.0
+  flutter_spinkit: ^5.2.0
 
   
 dev_dependencies:

@@ -7,11 +7,10 @@ part of 'user_model.dart';
 // **************************************************************************
 
 _$_UserModel _$$_UserModelFromJson(Map<String, dynamic> json) => _$_UserModel(
-      displayName: json['displayName'] as String,
-      email: json['email'] as String,
-      photoURL: json['photoURL'] as String,
+      displayName: json['displayName'] as String?,
+      email: json['email'] as String?,
+      photoURL: json['photoURL'] as String?,
       uid: json['uid'] as String,
-      paid: json['paid'] as bool,
       dateCreated: _$JsonConverterFromJson<Timestamp, DateTime>(
           json['dateCreated'], const TimestampConverter().fromJson),
     );
@@ -22,7 +21,6 @@ Map<String, dynamic> _$$_UserModelToJson(_$_UserModel instance) =>
       'email': instance.email,
       'photoURL': instance.photoURL,
       'uid': instance.uid,
-      'paid': instance.paid,
       'dateCreated': _$JsonConverterToJson<Timestamp, DateTime>(
           instance.dateCreated, const TimestampConverter().toJson),
     };

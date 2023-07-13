@@ -32,11 +32,10 @@ class TimestampNullableConverter implements JsonConverter<DateTime?, Timestamp?>
 @freezed
 class UserModel with _$UserModel {
   const factory UserModel({
-    required String displayName,
-    required String email,
-    required String photoURL,
+     String? displayName,
+     String? email,
+     String? photoURL,
     required String uid,
-    required bool paid,
     @TimestampConverter() DateTime?  dateCreated,
   }) = _UserModel;
 
@@ -46,9 +45,8 @@ class UserModel with _$UserModel {
 
 UserModel defaultUserModel = UserModel(
     displayName: 'displayName',
-    email: 'user.user.com',
+    email: 'user@user.com',
     photoURL: 'photoURL',
     uid: 'uid',
-    paid: false,
     dateCreated: DateTime.now());
     

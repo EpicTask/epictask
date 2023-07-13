@@ -7,124 +7,138 @@ part of 'task_event.dart';
 // **************************************************************************
 
 _$_TaskEvent _$$_TaskEventFromJson(Map<String, dynamic> json) => _$_TaskEvent(
-      eventId: json['eventId'] as String,
-      eventType: json['eventType'] as String,
-      timestamp: json['timestamp'] as String,
-      taskId: json['taskId'] as String,
-      userId: json['userId'] as String,
-      status: json['status'] as String,
-      additionalData: json['additionalData'] as Map<String, dynamic>?,
+      event_id: json['event_id'] as String?,
+      event_type: json['event_type'] as String,
+      timestamp: _$JsonConverterFromJson<Timestamp, DateTime>(
+          json['timestamp'], const TimestampConverter().fromJson),
+      task_id: json['task_id'] as String?,
+      user_id: json['user_id'] as String,
+      status: json['status'] as String?,
+      additional_data: json['additional_data'] as Map<String, dynamic>?,
     );
 
 Map<String, dynamic> _$$_TaskEventToJson(_$_TaskEvent instance) =>
     <String, dynamic>{
-      'eventId': instance.eventId,
-      'eventType': instance.eventType,
-      'timestamp': instance.timestamp,
-      'taskId': instance.taskId,
-      'userId': instance.userId,
+      'event_id': instance.event_id,
+      'event_type': instance.event_type,
+      'timestamp': _$JsonConverterToJson<Timestamp, DateTime>(
+          instance.timestamp, const TimestampConverter().toJson),
+      'task_id': instance.task_id,
+      'user_id': instance.user_id,
       'status': instance.status,
-      'additionalData': instance.additionalData,
+      'additional_data': instance.additional_data,
     };
+
+Value? _$JsonConverterFromJson<Json, Value>(
+  Object? json,
+  Value? Function(Json json) fromJson,
+) =>
+    json == null ? null : fromJson(json as Json);
+
+Json? _$JsonConverterToJson<Json, Value>(
+  Value? value,
+  Json? Function(Value value) toJson,
+) =>
+    value == null ? null : toJson(value);
 
 _$_TaskAssigned _$$_TaskAssignedFromJson(Map<String, dynamic> json) =>
     _$_TaskAssigned(
-      taskId: json['taskId'] as String,
-      assignedToId: json['assignedToId'] as String,
+      task_id: json['task_id'] as String,
+      assigned_to_ids: json['assigned_to_ids'] as String,
     );
 
 Map<String, dynamic> _$$_TaskAssignedToJson(_$_TaskAssigned instance) =>
     <String, dynamic>{
-      'taskId': instance.taskId,
-      'assignedToId': instance.assignedToId,
+      'task_id': instance.task_id,
+      'assigned_to_ids': instance.assigned_to_ids,
     };
 
 _$_TaskCancelled _$$_TaskCancelledFromJson(Map<String, dynamic> json) =>
     _$_TaskCancelled(
-      taskId: json['taskId'] as String,
+      task_id: json['task_id'] as String,
     );
 
 Map<String, dynamic> _$$_TaskCancelledToJson(_$_TaskCancelled instance) =>
     <String, dynamic>{
-      'taskId': instance.taskId,
+      'task_id': instance.task_id,
     };
 
 _$_TaskCommentAdded _$$_TaskCommentAddedFromJson(Map<String, dynamic> json) =>
     _$_TaskCommentAdded(
-      taskId: json['taskId'] as String,
-      userId: json['userId'] as String,
+      task_id: json['task_id'] as String,
+      user_id: json['user_id'] as String,
       comment: json['comment'] as String,
     );
 
 Map<String, dynamic> _$$_TaskCommentAddedToJson(_$_TaskCommentAdded instance) =>
     <String, dynamic>{
-      'taskId': instance.taskId,
-      'userId': instance.userId,
+      'task_id': instance.task_id,
+      'user_id': instance.user_id,
       'comment': instance.comment,
     };
 
 _$_TaskCompleted _$$_TaskCompletedFromJson(Map<String, dynamic> json) =>
     _$_TaskCompleted(
-      taskId: json['taskId'] as String,
-      completedById: json['completedById'] as String,
+      task_id: json['task_id'] as String,
+      completed_by_id: json['completed_by_id'] as String,
       attachments: (json['attachments'] as List<dynamic>?)
           ?.map((e) => e as String)
           .toList(),
-      markedCompleted: json['markedCompleted'] as bool?,
+      marked_completed: json['marked_completed'] as bool?,
       verified: json['verified'] as bool?,
     );
 
 Map<String, dynamic> _$$_TaskCompletedToJson(_$_TaskCompleted instance) =>
     <String, dynamic>{
-      'taskId': instance.taskId,
-      'completedById': instance.completedById,
+      'task_id': instance.task_id,
+      'completed_by_id': instance.completed_by_id,
       'attachments': instance.attachments,
-      'markedCompleted': instance.markedCompleted,
+      'marked_completed': instance.marked_completed,
       'verified': instance.verified,
     };
 
 _$_TaskExpired _$$_TaskExpiredFromJson(Map<String, dynamic> json) =>
     _$_TaskExpired(
-      taskId: json['taskId'] as String,
+      task_id: json['task_id'] as String,
     );
 
 Map<String, dynamic> _$$_TaskExpiredToJson(_$_TaskExpired instance) =>
     <String, dynamic>{
-      'taskId': instance.taskId,
+      'task_id': instance.task_id,
     };
 
 _$_TaskRatingUpdate _$$_TaskRatingUpdateFromJson(Map<String, dynamic> json) =>
     _$_TaskRatingUpdate(
-      taskId: json['taskId'] as String,
-      userId: json['userId'] as String,
+      task_id: json['task_id'] as String,
+      user_id: json['user_id'] as String,
     );
 
 Map<String, dynamic> _$$_TaskRatingUpdateToJson(_$_TaskRatingUpdate instance) =>
     <String, dynamic>{
-      'taskId': instance.taskId,
-      'userId': instance.userId,
+      'task_id': instance.task_id,
+      'user_id': instance.user_id,
     };
 
 _$_TaskRewarded _$$_TaskRewardedFromJson(Map<String, dynamic> json) =>
     _$_TaskRewarded(
-      taskId: json['taskId'] as String,
-      userId: json['userId'] as String,
+      task_id: json['task_id'] as String,
+      user_id: json['user_id'] as String,
     );
 
 Map<String, dynamic> _$$_TaskRewardedToJson(_$_TaskRewarded instance) =>
     <String, dynamic>{
-      'taskId': instance.taskId,
-      'userId': instance.userId,
+      'task_id': instance.task_id,
+      'user_id': instance.user_id,
     };
 
 _$_TaskUpdated _$$_TaskUpdatedFromJson(Map<String, dynamic> json) =>
     _$_TaskUpdated(
-      taskId: json['taskId'] as String,
-      updatedFields: json['updatedFields'] as Map<String, dynamic>,
+      task_id: json['task_id'] as String,
+      updated_fields: json['updated_fields'] as Map<String, dynamic>,
     );
 
 Map<String, dynamic> _$$_TaskUpdatedToJson(_$_TaskUpdated instance) =>
     <String, dynamic>{
-      'taskId': instance.taskId,
-      'updatedFields': instance.updatedFields,
+      'task_id': instance.task_id,
+      'updated_fields': instance.updated_fields,
     };

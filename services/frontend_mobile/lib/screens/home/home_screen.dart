@@ -3,7 +3,6 @@ import 'package:epictask/repositories/task_repository.dart';
 import 'package:epictask/screens/home/components/assigned_tasks.dart';
 import 'package:epictask/screens/home/components/open_tasks.dart';
 import 'package:epictask/screens/tasks/create_task.dart';
-import 'package:epictask/screens/tasks/task_card.dart';
 import 'package:epictask/screens/menu/menu_drawer.dart';
 import 'package:epictask/services/service_config/service_config.dart';
 import 'package:epictask/services/ui/text_styles.dart';
@@ -27,7 +26,7 @@ class _HomeScreenState extends State<HomeScreen> {
   final List<Widget> _widgetOptions = <Widget>[
     // const FeedScreen(),
     const HomeWidget(),
-     CreateTaskWidget(),
+     const CreateTaskWidget(),
     const DashboardWidget(),
   ];
 

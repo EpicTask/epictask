@@ -105,11 +105,11 @@ class _LoginFormState extends State<LoginForm> {
   void _showLoggingInSnackBar(BuildContext context) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Row(
+        content: const Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: <Widget>[
             Text('Logging in'),
-            const CircularProgressIndicator(
+            CircularProgressIndicator(
               valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
             )
           ],
@@ -121,15 +121,15 @@ class _LoginFormState extends State<LoginForm> {
 
   void _showLoginFailedSnackBar(BuildContext context) {
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
+      const SnackBar(
         content: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: <Widget>[
             Text('Login failed!'),
-            const Icon(Icons.error),
+            Icon(Icons.error),
           ],
         ),
-        backgroundColor: const Color(0xffffae88),
+        backgroundColor: Color(0xffffae88),
       ),
     );
   }
@@ -150,8 +150,8 @@ class _LoginFormState extends State<LoginForm> {
     return TextFormField(
       key: const Key('email'),
       controller: _emailController,
-      decoration: InputDecoration(
-        icon: const Icon(Icons.email),
+      decoration: const InputDecoration(
+        icon: Icon(Icons.email),
         labelText: 'email',
       ),
       keyboardType: TextInputType.emailAddress,
@@ -170,8 +170,8 @@ class _LoginFormState extends State<LoginForm> {
     return TextFormField(
       key: const Key('password'),
       controller: _passwordController,
-      decoration: InputDecoration(
-        icon: const Icon(Icons.lock),
+      decoration: const InputDecoration(
+        icon: Icon(Icons.lock),
         labelText: 'Password',
       ),
       obscureText: true,
@@ -296,7 +296,7 @@ class _LoginFormState extends State<LoginForm> {
       child: Padding(
         padding: const EdgeInsets.fromLTRB(8, 8, 8.0, 16),
         child: TextButton(
-          child: Text('Forgot Password'),
+          child: const Text('Forgot Password'),
           onPressed: () {
   
           },

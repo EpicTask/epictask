@@ -7,7 +7,6 @@ import '../../bloc/authentication_bloc/authentication_event.dart';
 import '../../bloc/authentication_bloc/authentication_state.dart';
 import '../../repositories/user_repository.dart';
 import '../../screens/home/home_screen.dart';
-import '../../screens/tasks/task_card.dart';
 import '../../screens/login/login_screen.dart';
 import '../../services/service_config/service_config.dart';
 
