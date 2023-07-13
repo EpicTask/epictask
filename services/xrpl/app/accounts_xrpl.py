@@ -46,7 +46,7 @@ async def connectWallet(uid: str):
         return f"Error creating subscription: {e}"
 
 
-# Define a function that retrieves and returns the balance for a given address
+# Retrieves and returns the balance for a given address
 async def get_account_balance(address: str) -> int:
     balance = await get_balance(address=address, client=client)
     return balance
@@ -60,10 +60,9 @@ async def get_transaction_async(tx_hash: str):
     return await ledger.get_transaction_from_hash(tx_hash, client)
 
 
-# Retrieves account information for ledger, takes an address as parameter
+# Retrieves account information from ledger, takes address as parameter
 async def get_account_info_async(address: str):
     return await get_account_info(address=address, client=client)
-# Define a synchronous function that also takes an address as parameter
 
 
 def lookup_escrow(account: str):

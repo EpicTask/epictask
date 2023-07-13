@@ -108,8 +108,6 @@ async def account_exists(address: str):
         return JSONResponse({"error": str(e)})
 
 # Payment test
-
-
 @app.get('/paymentTest')
 async def test_payment(request: Request):
     try:
@@ -137,8 +135,6 @@ async def transaction_fee():
         return JSONResponse({"error": str(e)})
 
 # Verify a transaction
-
-
 @app.get('/verify_transaction/{tx_hash}')
 async def verify_transaction(tx_hash: str):
     if not tx_hash:
@@ -187,8 +183,6 @@ def lookup_escrow_sync(account: str):
     return escrow_info
 
 # Cancel Escrow
-
-
 @app.get('/cancel_escrow_xumm/{owner}')
 async def cancel_escrow_xumm(owner: str):
     if not owner:
@@ -209,8 +203,6 @@ async def cancel_escrow_xumm(owner: str):
     return JSONResponse(payload.to_dict())
 
 # Finish Escrow
-
-
 @app.get('/finish_escrow_xumm/{owner}')
 async def finish_escrow_xumm(owner: str):
     if not owner:

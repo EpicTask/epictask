@@ -43,7 +43,6 @@ async def send_payment_request(payment_request: PaymentRequest):
     }
 
     # Create the payment request with the XUMM SDK
-
     try:
         subscription = sdk.payload.create(xumm_payload)
         write_response_to_firestore(subscription.to_dict(), "payment_request")

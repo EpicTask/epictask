@@ -48,7 +48,7 @@ async function getOpenaiClient() {
 http("generateContract", async (req, res) => {
   try {
     const openai = await getOpenaiClient();
-    const taskCreated = req.body; // Assuming the taskCreated data is sent in the request body
+    const taskCreated = req.body; 
     const taskCreatorName = "User 1";
     const taskAssigneeName = "User 2";
 

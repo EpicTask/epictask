@@ -341,10 +341,10 @@ exports.handleUserRegisteredMessage = pubsub.onMessagePublished(
   async (event) => {
     try {
       const documentData = event.data.message.json;
-      // Get the task management service URL from environment variable
+      // Get the user management service URL from environment variable
       const userManagementUrl = process.env.USERREGISTERED || "";
 
-      // Make an API call to the task management service
+      // Make an API call to the user management service
       const response = await axios.post(userManagementUrl, documentData);
 
       logger.info("API response:", response.data);
@@ -361,10 +361,10 @@ exports.handleUserSignInMessage = pubsub.onMessagePublished(
   async (event) => {
     try {
       const documentData = event.data.message.json;
-      // Get the task management service URL from environment variable
+      // Get the user management service URL from environment variable
       const userManagementUrl = process.env.USERSIGNIN || "";
 
-      // Make an API call to the task management service
+      // Make an API call to the user management service
       const response = await axios.post(userManagementUrl, documentData);
 
       logger.info("API response:", response.data);
@@ -381,10 +381,10 @@ exports.handleUserWalletConnectedMessage = pubsub.onMessagePublished(
   async (event) => {
     try {
       const documentData = event.data.message.json;
-      // Get the task management service URL from environment variable
+      // Get the user management service URL from environment variable
       const userManagementUrl = process.env.USERWALLETCONNECTED || "";
 
-      // Make an API call to the task management service
+      // Make an API call to the user management service
       const response = await axios.post(userManagementUrl, documentData);
 
       logger.info("API response:", response.data);
@@ -401,10 +401,10 @@ exports.handleUserForgotPasswordMessage = pubsub.onMessagePublished(
   async (event) => {
     try {
       const documentData = event.data.message.json;
-      // Get the task management service URL from environment variable
+      // Get the user management service URL from environment variable
       const userManagementUrl = process.env.USERFORGOTPASSWORD || "";
 
-      // Make an API call to the task management service
+      // Make an API call to the user management service
       const response = await axios.post(userManagementUrl, documentData);
 
       logger.info("API response:", response.data);
@@ -421,10 +421,10 @@ exports.handleUserAuthenticationMessage = pubsub.onMessagePublished(
   async (event) => {
     try {
       const documentData = event.data.message.json;
-      // Get the task management service URL from environment variable
+      // Get the user management service URL from environment variable
       const userManagementUrl = process.env.USERAUTHENTICATION || "";
 
-      // Make an API call to the task management service
+      // Make an API call to the user management service
       const response = await axios.post(userManagementUrl, documentData);
 
       logger.info("API response:", response.data);
@@ -441,10 +441,10 @@ exports.handleUserSignInMessage = pubsub.onMessagePublished(
   async (event) => {
     try {
       const documentData = event.data.message.json;
-      // Get the task management service URL from environment variable
+      // Get the user management service URL from environment variable
       const userManagementUrl = process.env.USERPROFILEUPDATE || "";
 
-      // Make an API call to the task management service
+      // Make an API call to the user management service
       const response = await axios.post(userManagementUrl, documentData);
 
       logger.info("API response:", response.data);
@@ -461,10 +461,10 @@ exports.handleUserAccountDeletionMessage = pubsub.onMessagePublished(
   async (event) => {
     try {
       const documentData = event.data.message.json;
-      // Get the task management service URL from environment variable
+      // Get the user management service URL from environment variable
       const userManagementUrl = process.env.USERACCOUNTDELETION || "";
 
-      // Make an API call to the task management service
+      // Make an API call to the user management service
       const response = await axios.post(userManagementUrl, documentData);
 
       logger.info("API response:", response.data);
@@ -481,10 +481,10 @@ exports.handleUserInteractionMessage = pubsub.onMessagePublished(
   async (event) => {
     try {
       const documentData = event.data.message.json;
-      // Get the task management service URL from environment variable
+      // Get the user management service URL from environment variable
       const userManagementUrl = process.env.USERINTERACTION || "";
 
-      // Make an API call to the task management service
+      // Make an API call to the user management service
       const response = await axios.post(userManagementUrl, documentData);
 
       logger.info("API response:", response.data);
@@ -501,7 +501,7 @@ exports.handleUserVerifiedMessage = pubsub.onMessagePublished(
   async (event) => {
     try {
       const documentData = event.data.message.json;
-      // Get the task management service URL from environment variable
+      // Get the user management service URL from environment variable
       const userManagementUrl = process.env.USERVERIFIED || "";
 
       // Make an API call to the task management service
@@ -626,12 +626,11 @@ exports.createXRPPaymentRequest = onDocumentCreated(
           task_id: taskEventDocData.task_id,
         };
 
-        // Use the rewardJsonMap as needed for further processing
         console.log(rewardJsonMap);
         const xrplUrl = "https://xrpl-5wpxgn35iq-uc.a.run.app/payment_request/";
         const response = await axios.post(xrplUrl, rewardJsonMap);
 
-        return response; // Modify the return statement if necessary
+        return response; 
       } else {
         console.log("Task not verified");
         return null;
@@ -665,7 +664,7 @@ exports.deleteTaskAfterSuccessfulPayment = onDocumentCreated(
         const returnURLSigned = taskEventDocData.payloadResponse?.signed;
 
         if (returnURLSigned && returnURLSigned === true) {
-          // Save the contents of the task_id document
+          // Save the contents of the task_id document to new collection
           await db
             .collection("test_paid_tasks")
             .doc(taskEventDocData.custom_meta.blob.task_id)

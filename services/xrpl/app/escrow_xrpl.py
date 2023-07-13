@@ -28,8 +28,6 @@ async def submit_escrow_async(wallet: Wallet, destination: str, amount: int, fin
     return await send_reliable_submission(escrow, wallet, client)
 
 # Submit escrow after creation
-
-
 def submit_escrow_sync(wallet: Wallet, destination: str, amount: int, finish_after: int):
     loop = asyncio.new_event_loop()
     asyncio.set_event_loop(loop)
