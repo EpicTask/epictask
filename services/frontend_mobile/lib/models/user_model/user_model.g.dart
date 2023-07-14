@@ -9,7 +9,7 @@ part of 'user_model.dart';
 _$_UserModel _$$_UserModelFromJson(Map<String, dynamic> json) => _$_UserModel(
       displayName: json['displayName'] as String?,
       email: json['email'] as String?,
-      photoURL: json['photoURL'] as String?,
+      imageUrl: json['imageUrl'] as String?,
       uid: json['uid'] as String,
       dateCreated: _$JsonConverterFromJson<Timestamp, DateTime>(
           json['dateCreated'], const TimestampConverter().fromJson),
@@ -19,7 +19,7 @@ Map<String, dynamic> _$$_UserModelToJson(_$_UserModel instance) =>
     <String, dynamic>{
       'displayName': instance.displayName,
       'email': instance.email,
-      'photoURL': instance.photoURL,
+      'imageUrl': instance.imageUrl,
       'uid': instance.uid,
       'dateCreated': _$JsonConverterToJson<Timestamp, DateTime>(
           instance.dateCreated, const TimestampConverter().toJson),
@@ -36,3 +36,21 @@ Json? _$JsonConverterToJson<Json, Value>(
   Json? Function(Value value) toJson,
 ) =>
     value == null ? null : toJson(value);
+
+_$_CurrentUserModel _$$_CurrentUserModelFromJson(Map<String, dynamic> json) =>
+    _$_CurrentUserModel(
+      displayName: json['displayName'] as String?,
+      email: json['email'] as String?,
+      imageUrl: json['imageUrl'] as String?,
+      publicAddress: json['publicAddress'] as String?,
+      uid: json['uid'] as String,
+    );
+
+Map<String, dynamic> _$$_CurrentUserModelToJson(_$_CurrentUserModel instance) =>
+    <String, dynamic>{
+      'displayName': instance.displayName,
+      'email': instance.email,
+      'imageUrl': instance.imageUrl,
+      'publicAddress': instance.publicAddress,
+      'uid': instance.uid,
+    };

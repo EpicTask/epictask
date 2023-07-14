@@ -41,7 +41,7 @@ class _AssignedTasksWidgetState extends State<AssignedTasksWidget> {
             final List<TaskModel> taskData = state.data as List<TaskModel>;
             return Column(
               children: List.generate(
-                  taskData.length, (index) => TaskCard(task: taskData[index])),
+                  taskData.length, (index) => TaskCardAssigned(task: taskData[index])),
             );
           } else {
             print('No data');

@@ -22,7 +22,7 @@ UserModel _$UserModelFromJson(Map<String, dynamic> json) {
 mixin _$UserModel {
   String? get displayName => throw _privateConstructorUsedError;
   String? get email => throw _privateConstructorUsedError;
-  String? get photoURL => throw _privateConstructorUsedError;
+  String? get imageUrl => throw _privateConstructorUsedError;
   String get uid => throw _privateConstructorUsedError;
   @TimestampConverter()
   DateTime? get dateCreated => throw _privateConstructorUsedError;
@@ -41,7 +41,7 @@ abstract class $UserModelCopyWith<$Res> {
   $Res call(
       {String? displayName,
       String? email,
-      String? photoURL,
+      String? imageUrl,
       String uid,
       @TimestampConverter() DateTime? dateCreated});
 }
@@ -61,7 +61,7 @@ class _$UserModelCopyWithImpl<$Res, $Val extends UserModel>
   $Res call({
     Object? displayName = freezed,
     Object? email = freezed,
-    Object? photoURL = freezed,
+    Object? imageUrl = freezed,
     Object? uid = null,
     Object? dateCreated = freezed,
   }) {
@@ -74,9 +74,9 @@ class _$UserModelCopyWithImpl<$Res, $Val extends UserModel>
           ? _value.email
           : email // ignore: cast_nullable_to_non_nullable
               as String?,
-      photoURL: freezed == photoURL
-          ? _value.photoURL
-          : photoURL // ignore: cast_nullable_to_non_nullable
+      imageUrl: freezed == imageUrl
+          ? _value.imageUrl
+          : imageUrl // ignore: cast_nullable_to_non_nullable
               as String?,
       uid: null == uid
           ? _value.uid
@@ -100,7 +100,7 @@ abstract class _$$_UserModelCopyWith<$Res> implements $UserModelCopyWith<$Res> {
   $Res call(
       {String? displayName,
       String? email,
-      String? photoURL,
+      String? imageUrl,
       String uid,
       @TimestampConverter() DateTime? dateCreated});
 }
@@ -118,7 +118,7 @@ class __$$_UserModelCopyWithImpl<$Res>
   $Res call({
     Object? displayName = freezed,
     Object? email = freezed,
-    Object? photoURL = freezed,
+    Object? imageUrl = freezed,
     Object? uid = null,
     Object? dateCreated = freezed,
   }) {
@@ -131,9 +131,9 @@ class __$$_UserModelCopyWithImpl<$Res>
           ? _value.email
           : email // ignore: cast_nullable_to_non_nullable
               as String?,
-      photoURL: freezed == photoURL
-          ? _value.photoURL
-          : photoURL // ignore: cast_nullable_to_non_nullable
+      imageUrl: freezed == imageUrl
+          ? _value.imageUrl
+          : imageUrl // ignore: cast_nullable_to_non_nullable
               as String?,
       uid: null == uid
           ? _value.uid
@@ -153,7 +153,7 @@ class _$_UserModel implements _UserModel {
   const _$_UserModel(
       {this.displayName,
       this.email,
-      this.photoURL,
+      this.imageUrl,
       required this.uid,
       @TimestampConverter() this.dateCreated});
 
@@ -165,7 +165,7 @@ class _$_UserModel implements _UserModel {
   @override
   final String? email;
   @override
-  final String? photoURL;
+  final String? imageUrl;
   @override
   final String uid;
   @override
@@ -174,7 +174,7 @@ class _$_UserModel implements _UserModel {
 
   @override
   String toString() {
-    return 'UserModel(displayName: $displayName, email: $email, photoURL: $photoURL, uid: $uid, dateCreated: $dateCreated)';
+    return 'UserModel(displayName: $displayName, email: $email, imageUrl: $imageUrl, uid: $uid, dateCreated: $dateCreated)';
   }
 
   @override
@@ -185,8 +185,8 @@ class _$_UserModel implements _UserModel {
             (identical(other.displayName, displayName) ||
                 other.displayName == displayName) &&
             (identical(other.email, email) || other.email == email) &&
-            (identical(other.photoURL, photoURL) ||
-                other.photoURL == photoURL) &&
+            (identical(other.imageUrl, imageUrl) ||
+                other.imageUrl == imageUrl) &&
             (identical(other.uid, uid) || other.uid == uid) &&
             (identical(other.dateCreated, dateCreated) ||
                 other.dateCreated == dateCreated));
@@ -195,7 +195,7 @@ class _$_UserModel implements _UserModel {
   @JsonKey(ignore: true)
   @override
   int get hashCode =>
-      Object.hash(runtimeType, displayName, email, photoURL, uid, dateCreated);
+      Object.hash(runtimeType, displayName, email, imageUrl, uid, dateCreated);
 
   @JsonKey(ignore: true)
   @override
@@ -215,7 +215,7 @@ abstract class _UserModel implements UserModel {
   const factory _UserModel(
       {final String? displayName,
       final String? email,
-      final String? photoURL,
+      final String? imageUrl,
       required final String uid,
       @TimestampConverter() final DateTime? dateCreated}) = _$_UserModel;
 
@@ -227,7 +227,7 @@ abstract class _UserModel implements UserModel {
   @override
   String? get email;
   @override
-  String? get photoURL;
+  String? get imageUrl;
   @override
   String get uid;
   @override
@@ -236,5 +236,229 @@ abstract class _UserModel implements UserModel {
   @override
   @JsonKey(ignore: true)
   _$$_UserModelCopyWith<_$_UserModel> get copyWith =>
+      throw _privateConstructorUsedError;
+}
+
+CurrentUserModel _$CurrentUserModelFromJson(Map<String, dynamic> json) {
+  return _CurrentUserModel.fromJson(json);
+}
+
+/// @nodoc
+mixin _$CurrentUserModel {
+  String? get displayName => throw _privateConstructorUsedError;
+  String? get email => throw _privateConstructorUsedError;
+  String? get imageUrl => throw _privateConstructorUsedError;
+  String? get publicAddress => throw _privateConstructorUsedError;
+  String get uid => throw _privateConstructorUsedError;
+
+  Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
+  @JsonKey(ignore: true)
+  $CurrentUserModelCopyWith<CurrentUserModel> get copyWith =>
+      throw _privateConstructorUsedError;
+}
+
+/// @nodoc
+abstract class $CurrentUserModelCopyWith<$Res> {
+  factory $CurrentUserModelCopyWith(
+          CurrentUserModel value, $Res Function(CurrentUserModel) then) =
+      _$CurrentUserModelCopyWithImpl<$Res, CurrentUserModel>;
+  @useResult
+  $Res call(
+      {String? displayName,
+      String? email,
+      String? imageUrl,
+      String? publicAddress,
+      String uid});
+}
+
+/// @nodoc
+class _$CurrentUserModelCopyWithImpl<$Res, $Val extends CurrentUserModel>
+    implements $CurrentUserModelCopyWith<$Res> {
+  _$CurrentUserModelCopyWithImpl(this._value, this._then);
+
+  // ignore: unused_field
+  final $Val _value;
+  // ignore: unused_field
+  final $Res Function($Val) _then;
+
+  @pragma('vm:prefer-inline')
+  @override
+  $Res call({
+    Object? displayName = freezed,
+    Object? email = freezed,
+    Object? imageUrl = freezed,
+    Object? publicAddress = freezed,
+    Object? uid = null,
+  }) {
+    return _then(_value.copyWith(
+      displayName: freezed == displayName
+          ? _value.displayName
+          : displayName // ignore: cast_nullable_to_non_nullable
+              as String?,
+      email: freezed == email
+          ? _value.email
+          : email // ignore: cast_nullable_to_non_nullable
+              as String?,
+      imageUrl: freezed == imageUrl
+          ? _value.imageUrl
+          : imageUrl // ignore: cast_nullable_to_non_nullable
+              as String?,
+      publicAddress: freezed == publicAddress
+          ? _value.publicAddress
+          : publicAddress // ignore: cast_nullable_to_non_nullable
+              as String?,
+      uid: null == uid
+          ? _value.uid
+          : uid // ignore: cast_nullable_to_non_nullable
+              as String,
+    ) as $Val);
+  }
+}
+
+/// @nodoc
+abstract class _$$_CurrentUserModelCopyWith<$Res>
+    implements $CurrentUserModelCopyWith<$Res> {
+  factory _$$_CurrentUserModelCopyWith(
+          _$_CurrentUserModel value, $Res Function(_$_CurrentUserModel) then) =
+      __$$_CurrentUserModelCopyWithImpl<$Res>;
+  @override
+  @useResult
+  $Res call(
+      {String? displayName,
+      String? email,
+      String? imageUrl,
+      String? publicAddress,
+      String uid});
+}
+
+/// @nodoc
+class __$$_CurrentUserModelCopyWithImpl<$Res>
+    extends _$CurrentUserModelCopyWithImpl<$Res, _$_CurrentUserModel>
+    implements _$$_CurrentUserModelCopyWith<$Res> {
+  __$$_CurrentUserModelCopyWithImpl(
+      _$_CurrentUserModel _value, $Res Function(_$_CurrentUserModel) _then)
+      : super(_value, _then);
+
+  @pragma('vm:prefer-inline')
+  @override
+  $Res call({
+    Object? displayName = freezed,
+    Object? email = freezed,
+    Object? imageUrl = freezed,
+    Object? publicAddress = freezed,
+    Object? uid = null,
+  }) {
+    return _then(_$_CurrentUserModel(
+      displayName: freezed == displayName
+          ? _value.displayName
+          : displayName // ignore: cast_nullable_to_non_nullable
+              as String?,
+      email: freezed == email
+          ? _value.email
+          : email // ignore: cast_nullable_to_non_nullable
+              as String?,
+      imageUrl: freezed == imageUrl
+          ? _value.imageUrl
+          : imageUrl // ignore: cast_nullable_to_non_nullable
+              as String?,
+      publicAddress: freezed == publicAddress
+          ? _value.publicAddress
+          : publicAddress // ignore: cast_nullable_to_non_nullable
+              as String?,
+      uid: null == uid
+          ? _value.uid
+          : uid // ignore: cast_nullable_to_non_nullable
+              as String,
+    ));
+  }
+}
+
+/// @nodoc
+@JsonSerializable()
+class _$_CurrentUserModel implements _CurrentUserModel {
+  const _$_CurrentUserModel(
+      {this.displayName,
+      this.email,
+      this.imageUrl,
+      this.publicAddress,
+      required this.uid});
+
+  factory _$_CurrentUserModel.fromJson(Map<String, dynamic> json) =>
+      _$$_CurrentUserModelFromJson(json);
+
+  @override
+  final String? displayName;
+  @override
+  final String? email;
+  @override
+  final String? imageUrl;
+  @override
+  final String? publicAddress;
+  @override
+  final String uid;
+
+  @override
+  String toString() {
+    return 'CurrentUserModel(displayName: $displayName, email: $email, imageUrl: $imageUrl, publicAddress: $publicAddress, uid: $uid)';
+  }
+
+  @override
+  bool operator ==(dynamic other) {
+    return identical(this, other) ||
+        (other.runtimeType == runtimeType &&
+            other is _$_CurrentUserModel &&
+            (identical(other.displayName, displayName) ||
+                other.displayName == displayName) &&
+            (identical(other.email, email) || other.email == email) &&
+            (identical(other.imageUrl, imageUrl) ||
+                other.imageUrl == imageUrl) &&
+            (identical(other.publicAddress, publicAddress) ||
+                other.publicAddress == publicAddress) &&
+            (identical(other.uid, uid) || other.uid == uid));
+  }
+
+  @JsonKey(ignore: true)
+  @override
+  int get hashCode => Object.hash(
+      runtimeType, displayName, email, imageUrl, publicAddress, uid);
+
+  @JsonKey(ignore: true)
+  @override
+  @pragma('vm:prefer-inline')
+  _$$_CurrentUserModelCopyWith<_$_CurrentUserModel> get copyWith =>
+      __$$_CurrentUserModelCopyWithImpl<_$_CurrentUserModel>(this, _$identity);
+
+  @override
+  Map<String, dynamic> toJson() {
+    return _$$_CurrentUserModelToJson(
+      this,
+    );
+  }
+}
+
+abstract class _CurrentUserModel implements CurrentUserModel {
+  const factory _CurrentUserModel(
+      {final String? displayName,
+      final String? email,
+      final String? imageUrl,
+      final String? publicAddress,
+      required final String uid}) = _$_CurrentUserModel;
+
+  factory _CurrentUserModel.fromJson(Map<String, dynamic> json) =
+      _$_CurrentUserModel.fromJson;
+
+  @override
+  String? get displayName;
+  @override
+  String? get email;
+  @override
+  String? get imageUrl;
+  @override
+  String? get publicAddress;
+  @override
+  String get uid;
+  @override
+  @JsonKey(ignore: true)
+  _$$_CurrentUserModelCopyWith<_$_CurrentUserModel> get copyWith =>
       throw _privateConstructorUsedError;
 }

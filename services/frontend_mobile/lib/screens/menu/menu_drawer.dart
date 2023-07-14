@@ -1,5 +1,6 @@
 // import 'dart:io' show Platform;
 
+import 'package:epictask/services/navigation/navigation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 // import 'package:sizer/sizer.dart';
@@ -61,7 +62,8 @@ class MenuDrawer extends StatelessWidget {
             leading: const Icon(Icons.person, color: Colors.blueAccent),
             title: Text('Profile', style: titleMedium(context)),
             onTap: () {
-              // navigationService.navigateTo(SettingsRoute);
+              router.pop();
+              router.goNamed('profile');
             },
           ),
           ListTile(

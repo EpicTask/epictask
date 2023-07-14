@@ -34,7 +34,7 @@ class UserModel with _$UserModel {
   const factory UserModel({
      String? displayName,
      String? email,
-     String? photoURL,
+     String? imageUrl,
     required String uid,
     @TimestampConverter() DateTime?  dateCreated,
   }) = _UserModel;
@@ -46,7 +46,27 @@ class UserModel with _$UserModel {
 UserModel defaultUserModel = UserModel(
     displayName: 'displayName',
     email: 'user@user.com',
-    photoURL: 'photoURL',
+    imageUrl: 'photoURL',
     uid: 'uid',
     dateCreated: DateTime.now());
     
+@freezed
+class CurrentUserModel with _$CurrentUserModel {
+  const factory CurrentUserModel({
+     String? displayName,
+     String? email,
+     String? imageUrl,
+     String? publicAddress,
+    required String uid,
+  }) = _CurrentUserModel;
+
+  factory CurrentUserModel.fromJson(Map<String, Object?> json) =>
+      _$CurrentUserModelFromJson(json);
+}
+
+CurrentUserModel defaultUserModel2 = const CurrentUserModel(
+    displayName: 'displayName',
+    email: 'user@user.com',
+    imageUrl: 'photoURL',
+    uid: 'uid',
+    publicAddress: 'address');

@@ -1,3 +1,4 @@
+import 'package:epictask/screens/profile/profile.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
@@ -13,8 +14,14 @@ final GoRouter router = GoRouter(
       builder: (BuildContext context, GoRouterState state) {
         return const RootPage();
       },
-      routes: const <RouteBase>[
-    
+      routes:  <RouteBase>[
+            GoRoute(
+          name: 'profile',
+          path: 'profile',
+          builder: (BuildContext context, GoRouterState state) {
+            return const ProfilePage();
+          },
+        ),
       ],
     ),
   ],

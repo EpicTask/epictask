@@ -23,7 +23,7 @@ Future<String> getUserDisplayName(String? uid) async {
     final TaskCompleted event = TaskCompleted(completed_by_id: task.assigned_to_ids?.first ?? '',task_id: task.task_id, marked_completed: true);
     final TaskEvent taskEvent = TaskEvent.defaultEvent().copyWith(
         additional_data: event.toJson(),
-        event_type: 'TaskCreated',
+        event_type: 'TaskCompleted',
         user_id: currentUserID);
     FirestoreDatabase().writeTaskEvent(taskEvent);
   }
