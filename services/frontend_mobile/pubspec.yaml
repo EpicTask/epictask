@@ -71,6 +71,7 @@ dependencies:
   flutter_tts: ^3.6.3
   mockito: ^5.4.0
   flutter_spinkit: ^5.2.0
+  easy_search_bar: ^2.5.0
 
   
 dev_dependencies:

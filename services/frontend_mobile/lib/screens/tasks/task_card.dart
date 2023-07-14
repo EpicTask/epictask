@@ -1,11 +1,6 @@
-import 'package:epictask/models/user_model/user_model.dart';
-import 'package:epictask/repositories/all_users_repository.dart';
 import 'package:epictask/services/ui/text_styles.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:intl/intl.dart';
 
-import '../../bloc/generics/generic_bloc.dart';
 import '../../models/task_model/task_model.dart';
 import '../users/all_users_modal.dart';
 import 'logic/logic.dart';
@@ -33,7 +28,7 @@ class TaskCard extends StatelessWidget {
             Text('Reward: ${task.reward_amount} ${task.reward_currency}',
                 style: titleLarge(context)),
             Text(
-                'Due Date: ${formatDate(DateTime.fromMillisecondsSinceEpoch(task.expiration_date))}',
+                'Due Date: ${formatDate(DateTime.fromMillisecondsSinceEpoch(task.expiration_date*1000))}',
                 style: titleLarge(context)),
             if (task.assigned_to_ids?.isNotEmpty ?? false)
               FutureBuilder<String>(
@@ -105,7 +100,7 @@ class TaskCardAssigned extends StatelessWidget {
             Text('Reward: ${task.reward_amount} ${task.reward_currency}',
                 style: titleLarge(context)),
             Text(
-                'Due Date: ${formatDate(DateTime.fromMillisecondsSinceEpoch(task.expiration_date))}',
+                'Due Date: ${formatDate(DateTime.fromMillisecondsSinceEpoch(task.expiration_date *1000))}',
                 style: titleLarge(context)),
             Text('Assigned To: Me', style: titleLarge(context)),
             if (task.marked_completed ?? false)
@@ -114,7 +109,7 @@ class TaskCardAssigned extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
                 ElevatedButton(
-                  onPressed: () => completeTask(task, task.user_id),
+                  onPressed: () => completeTask(task),
                   child: Text('Completed', style: titleMedium(context)),
                 ),
               ],
@@ -123,46 +118,5 @@ class TaskCardAssigned extends StatelessWidget {
         ),
       ),
     );
-  }
-
-  completeTask(TaskModel task, String userId) {}
-
-  assignTask(taskId) {}
-
-  deleteTask(taskId) {}
-}
-
-class UserList extends StatelessWidget {
-  // final bool showModal;
-  // final String taskId;
-  // final Function closeModal;
-
-  const UserList({
-    super.key,
-    // required this.showModal,
-    // required this.taskId,
-    // required this.closeModal
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    // Implement your UserList widget logic and UI here
-    return const Placeholder();
-  }
-}
-
-// Other necessary classes and functions
-
-String formatDate(DateTime date) {
-  if (date.year == DateTime.now().year &&
-      date.month == DateTime.now().month &&
-      date.day == DateTime.now().day) {
-    return 'Today';
-  } else if (date.year == DateTime.now().year &&
-      date.month == DateTime.now().month &&
-      date.day == DateTime.now().day + 1) {
-    return 'Tomorrow';
-  } else {
-    return DateFormat('MM/dd/yyyy').format(date);
   }
 }

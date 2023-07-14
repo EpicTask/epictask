@@ -6,6 +6,7 @@ import 'package:epictask/services/ui/text_styles.dart';
 import 'package:flutter/material.dart';
 
 import '../../services/service_config/service_config.dart';
+import '../tasks/logic/logic.dart';
 
 class DashboardWidget extends StatelessWidget {
   const DashboardWidget({

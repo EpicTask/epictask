@@ -6,18 +6,24 @@ import 'package:flutter/foundation.dart';
 
 import '../bloc/generics/generic_bloc.dart';
 import '../models/task_model/task_model.dart';
+import '../screens/home/home_screen.dart';
+
+
 
 /// Interface to our 'Task' Firebase collection.
-///
-/// Relies on a remote NoSQL document-oriented database.
 class TaskRepository extends GenericBlocRepository<TaskModel> {
   String uid = FirebaseAuth.instance.currentUser!.uid;
-  @override
-  Stream<List<TaskModel>> data() {
-    final Query<Object> taskCollection =
-        FirebaseFirestore.instance.collection('test_tasks').where('user_id', isEqualTo: uid);
 
-    // Get all tasks
+  @override
+  Stream<List<TaskModel>> data({int? lastDocumentInt}) {
+    final CollectionReference ref =
+        FirebaseFirestore.instance.collection('test_tasks');
+    final Query<Object> taskCollection = ref
+        .where('user_id', isEqualTo: uid)
+        .orderBy('expiration_date', descending: true)
+        .limit(paginator.value) as Query<Object>;
+
+    // Get tasks with pagination
     List<TaskModel> taskListFromSnapshot(QuerySnapshot<Object> snapshot) {
       try {
         final List<TaskModel> taskList =
@@ -27,13 +33,12 @@ class TaskRepository extends GenericBlocRepository<TaskModel> {
         return taskList;
       } catch (e) {
         if (kDebugMode) {
-          print('Error retrieving stream of all tasks: $e');
+          print('Error retrieving stream of tasks with pagination: $e');
         }
         return <TaskModel>[];
       }
     }
 
-    // get all users
     return taskCollection.snapshots().map(taskListFromSnapshot);
   }
 }

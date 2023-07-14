@@ -1,3 +1,4 @@
+import 'package:easy_search_bar/easy_search_bar.dart';
 import 'package:epictask/models/task_model/task_model.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -9,6 +10,7 @@ import '../../models/user_model/user_model.dart';
 import '../../repositories/all_users_repository.dart';
 import '../../services/service_config/service_config.dart';
 import '../../services/ui/text_styles.dart';
+import '../search/search_bar.dart';
 import 'components/loading_widget.dart';
 
 class AllUserPage extends StatelessWidget {
@@ -21,7 +23,8 @@ class AllUserPage extends StatelessWidget {
     return ElevatedButton(
       onPressed: () {
         showModalBottomSheet(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
           context: context,
           builder: (BuildContext context) {
             return BlocProvider<GenericBloc<UserModel, AllUserRepository>>(
@@ -29,7 +32,7 @@ class AllUserPage extends StatelessWidget {
                     GenericBloc<UserModel, AllUserRepository>(
                       repository: AllUserRepository(),
                     ),
-                child: const UserModalSheet());
+                child:  UserModalSheet(task: task,));
           },
         );
       },
@@ -39,7 +42,9 @@ class AllUserPage extends StatelessWidget {
 }
 
 class UserModalSheet extends StatefulWidget {
-  const UserModalSheet({super.key});
+  const UserModalSheet({super.key, required this.task});
+
+  final TaskModel task;
 
   @override
   State<UserModalSheet> createState() => _UserModalSheetState();
@@ -62,7 +67,7 @@ class _UserModalSheetState extends State<UserModalSheet> {
   }
 
   @override
-   Widget build(BuildContext context) {
+  Widget build(BuildContext context) {
     return BlocBuilder<GenericBloc<UserModel, AllUserRepository>, GenericState>(
       // bloc: blocCurrent,
       builder: (BuildContext context, GenericState state) {
@@ -74,12 +79,9 @@ class _UserModalSheetState extends State<UserModalSheet> {
             height: SizeConfig.screenHeight * 0.75,
             child: Column(
               children: <Widget>[
-                 SearchBar(
-                  hintText: 'Search',
-                  textStyle: MaterialStatePropertyAll<TextStyle>(titleMedium(context)!),
+                CustomSearchBar(
+                  users: allUsersList,
                 ),
-                
-                
               ],
             ),
           );
