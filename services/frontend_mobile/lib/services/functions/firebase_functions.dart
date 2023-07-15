@@ -16,6 +16,7 @@ class FirestoreDatabase {
     await ref.set(userEvent.toJson());
     await ref.update(<String, dynamic>{
         'timestamp': FieldValue.serverTimestamp(),
+        'event_id':ref.id,
       });
   }
 

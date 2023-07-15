@@ -6,6 +6,7 @@ import 'package:flutter/foundation.dart';
 
 import '../bloc/generics/generic_bloc.dart';
 import '../models/task_model/task_model.dart';
+import '../screens/home/home_screen.dart';
 
 /// Interface to our 'Task' Firebase collection.
 ///
@@ -14,8 +15,12 @@ class AssignedTaskRepository extends GenericBlocRepository<TaskModel> {
   String uid = FirebaseAuth.instance.currentUser!.uid;
   @override
   Stream<List<TaskModel>> data() {
-    final Query<Object> taskCollection =
-        FirebaseFirestore.instance.collection('test_tasks').where('assigned_to_ids', arrayContains: uid);
+        final CollectionReference ref =
+        FirebaseFirestore.instance.collection('test_tasks');
+    final Query<Object> taskCollection =ref
+        .where('assigned_to_ids', arrayContains: uid)
+        .orderBy('expiration_date', descending: true)
+        .limit(paginator2.value) as Query<Object>;
 
     // Get all tasks
     List<TaskModel> taskListFromSnapshot(QuerySnapshot<Object> snapshot) {

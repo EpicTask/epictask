@@ -1,5 +1,6 @@
 import 'package:epictask/bloc/generics/generics_event.dart';
 import 'package:epictask/repositories/task_repository.dart';
+import 'package:epictask/screens/home/components/shimmer_widget.dart';
 import 'package:epictask/screens/tasks/task_card.dart';
 import 'package:epictask/services/ui/text_styles.dart';
 import 'package:flutter/foundation.dart';
@@ -65,10 +66,16 @@ class _OpenTasksWidgetState extends State<OpenTasksWidget> {
     return BlocBuilder<GenericBloc<TaskModel, TaskRepository>, GenericState>(
         bloc: bloc,
         builder: (BuildContext context, GenericState state) {
+          if (state is LoadingState) {
+            return FutureBuilder<void>(
+              future: Future.delayed(const Duration(seconds: 5)),
+              builder: (context, snapshot) {
+                return const TaskCardShimmer();
+              },
+            );
+          }
           if (state is HasDataState) {
-            print('Has data');
             final List<TaskModel> taskData = state.data as List<TaskModel>;
-            print(taskData.length);
             return SingleChildScrollView(
               child: SizedBox(
                 height: SizeConfig.screenHeight * .8,
@@ -88,8 +95,7 @@ class _OpenTasksWidgetState extends State<OpenTasksWidget> {
               ),
             );
           } else {
-            print('No data');
-            return Container();
+            return const TaskCardShimmer();
           }
         });
   }

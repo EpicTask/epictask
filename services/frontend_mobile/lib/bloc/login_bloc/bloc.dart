@@ -1,7 +1,9 @@
+import 'package:epictask/models/user_event_model/user_event.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../repositories/user_repository.dart';
+import '../../services/functions/firebase_functions.dart';
 import '../../services/utils/validators.dart';
 import 'event.dart';
 import 'state.dart';
@@ -25,10 +27,26 @@ class LoginBloc extends Bloc<LoginEvent, LoginState> {
             await _userRepository?.signInWithCredentials(
                 email: event.email!, password: event.password!);
         if (firebaseUser!.user!.uid.isNotEmpty) {
+          UserSignInEvent data = const UserSignInEvent(
+            status: 'Success',
+            social: false,
+          );
+          UserEvent newEvent = UserEvent(
+              eventType: 'userSignIn',
+              userId: currentUserID,
+              additionalData: data.toJson());
+          FirestoreDatabase().writeUserEvent(newEvent);
           emit(LoginState.success());
         }
         // AuthenticationSuccess(firebaseUser.user);
       } catch (_) {
+        UserSignInEvent data = const UserSignInEvent(
+            status: 'Success', social: false,);
+        UserEvent newEvent = UserEvent(
+            eventType: 'userSignIn',
+            userId: currentUserID,
+            additionalData: data.toJson());
+        FirestoreDatabase().writeUserEvent(newEvent);
         emit(LoginState.failure());
         print('Failed to login: $_');
       }
@@ -39,9 +57,23 @@ class LoginBloc extends Bloc<LoginEvent, LoginState> {
       try {
         final UserCredential? user = await _userRepository?.signInWithApple();
         if (user!.user!.uid.isNotEmpty) {
+          UserSignInEvent data = const UserSignInEvent(
+              status: 'Success', social: true, socialType: 'apple');
+          UserEvent newEvent = UserEvent(
+              eventType: 'userSignIn',
+              userId: currentUserID,
+              additionalData: data.toJson());
+          FirestoreDatabase().writeUserEvent(newEvent);
           emit(LoginState.success());
         }
       } catch (_) {
+        UserSignInEvent data = const UserSignInEvent(
+            status: 'Failed', social: true, socialType: 'apple');
+        UserEvent newEvent = UserEvent(
+            eventType: 'userSignIn',
+            userId: currentUserID,
+            additionalData: data.toJson());
+        FirestoreDatabase().writeUserEvent(newEvent);
         emit(LoginState.failure());
       }
     });
@@ -51,9 +83,23 @@ class LoginBloc extends Bloc<LoginEvent, LoginState> {
       try {
         final UserCredential? user = await _userRepository?.signInWithGoogle();
         if (user!.user!.uid.isNotEmpty) {
+          UserSignInEvent data = const UserSignInEvent(
+              status: 'Success', social: true, socialType: 'google');
+          UserEvent newEvent = UserEvent(
+              eventType: 'userSignIn',
+              userId: currentUserID,
+              additionalData: data.toJson());
+          FirestoreDatabase().writeUserEvent(newEvent);
           emit(LoginState.success());
         }
       } catch (_) {
+        UserSignInEvent data = const UserSignInEvent(
+            status: 'Failed', social: true, socialType: 'google');
+        UserEvent newEvent = UserEvent(
+            eventType: 'userSignIn',
+            userId: currentUserID,
+            additionalData: data.toJson());
+        FirestoreDatabase().writeUserEvent(newEvent);
         emit(LoginState.failure());
       }
     });

@@ -17,7 +17,7 @@ import '../../models/task_model/task_model.dart';
 import '../dashboard/dashboard.dart';
 
 ValueNotifier<int> paginator = ValueNotifier<int>(10);
-
+ValueNotifier<int> paginator2 = ValueNotifier<int>(10);
 class HomeScreen extends StatefulWidget {
   const HomeScreen({Key? key}) : super(key: key);
 

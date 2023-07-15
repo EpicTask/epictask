@@ -1,5 +1,6 @@
 // import 'dart:io' show Platform;
 
+import 'package:epictask/models/user_event_model/user_event.dart';
 import 'package:epictask/services/navigation/navigation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -7,6 +8,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../bloc/authentication_bloc/authentication_bloc.dart';
 import '../../bloc/authentication_bloc/authentication_event.dart';
+import '../../services/functions/firebase_functions.dart';
 import '../../services/service_config/service_config.dart';
 import '../../services/ui/text_styles.dart';
 
@@ -44,10 +46,19 @@ class MenuDrawer extends StatelessWidget {
             },
           ),
           ListTile(
-            leading: const Icon(Icons.create, color: Colors.blueAccent),
-            title: Text('Create Task', style: titleMedium(context)),
+            leading: const Icon(Icons.wallet, color: Colors.blueAccent),
+            title: Text('Connect Wallet', style: titleMedium(context)),
             onTap: () {
-              // navigationService.navigateTo(HelpPageRoute);
+              //TODO:Create a screen for connect wallet. User can choose the type of wallet to connect.
+              UserWalletConnectedEvent connect = UserWalletConnectedEvent(
+                  status: 'Connecting',
+                  userId: currentUserID,
+                  walletType: 'XUMM');
+              UserEvent newEvent = UserEvent(
+                  eventType: 'userWalletConnected',
+                  userId: currentUserID,
+                  additionalData: connect.toJson());
+              FirestoreDatabase().writeUserEvent(newEvent);
             },
           ),
           ListTile(

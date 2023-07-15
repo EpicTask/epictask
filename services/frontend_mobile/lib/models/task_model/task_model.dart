@@ -61,10 +61,10 @@ class TaskModel with _$TaskModel {
   factory TaskModel.defaultTask() {
     return TaskModel(
       assigned_to_ids: [],
-      expiration_date: DateTime.now().add(const Duration(days: 7)).millisecondsSinceEpoch,
+      expiration_date: Timestamp.now().seconds,
       marked_completed: false,
       payment_method: 'Pay Directly',
-      project_id: '1234',
+      project_id: '',
       project_name: '',
       rating: 0,
       requires_attachments: false,

@@ -60,7 +60,8 @@ class UserWalletConnectedEvent with _$UserWalletConnectedEvent {
   const factory UserWalletConnectedEvent({
     required String status,
     @TimestampConverter() DateTime?  timestamp,
-    required bool walletType,
+    required String userId,
+    required String walletType,
   }) = _UserWalletConnectedEvent;
 
   factory UserWalletConnectedEvent.fromJson(Map<String, Object?> json) =>
@@ -125,7 +126,7 @@ class UserInteractionEvent with _$UserInteractionEvent {
 @freezed
 class UserEvent with _$UserEvent {
   const factory UserEvent({
-    required String eventId,
+    String? eventId,
     required String eventType,
     required String userId,
     @TimestampConverter() DateTime?  timestamp,

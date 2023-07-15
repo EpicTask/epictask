@@ -64,7 +64,8 @@ _$_UserWalletConnectedEvent _$$_UserWalletConnectedEventFromJson(
       status: json['status'] as String,
       timestamp: _$JsonConverterFromJson<Timestamp, DateTime>(
           json['timestamp'], const TimestampConverter().fromJson),
-      walletType: json['walletType'] as bool,
+      userId: json['userId'] as String,
+      walletType: json['walletType'] as String,
     );
 
 Map<String, dynamic> _$$_UserWalletConnectedEventToJson(
@@ -73,6 +74,7 @@ Map<String, dynamic> _$$_UserWalletConnectedEventToJson(
       'status': instance.status,
       'timestamp': _$JsonConverterToJson<Timestamp, DateTime>(
           instance.timestamp, const TimestampConverter().toJson),
+      'userId': instance.userId,
       'walletType': instance.walletType,
     };
 
@@ -149,7 +151,7 @@ Map<String, dynamic> _$$_UserInteractionEventToJson(
     };
 
 _$_UserEvent _$$_UserEventFromJson(Map<String, dynamic> json) => _$_UserEvent(
-      eventId: json['eventId'] as String,
+      eventId: json['eventId'] as String?,
       eventType: json['eventType'] as String,
       userId: json['userId'] as String,
       timestamp: _$JsonConverterFromJson<Timestamp, DateTime>(

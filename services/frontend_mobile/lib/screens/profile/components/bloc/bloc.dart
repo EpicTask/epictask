@@ -1,4 +1,5 @@
 import 'package:bloc/bloc.dart';
+import 'package:epictask/models/user_event_model/user_event.dart';
 import 'package:epictask/models/user_model/user_model.dart';
 import 'package:epictask/screens/profile/logic/logic.dart';
 import 'package:epictask/services/functions/firebase_functions.dart';
@@ -22,22 +23,37 @@ class ProfileBloc extends Bloc<ProfileEvent, ProfileState> {
     });
     on<UpdateDisplayName>((UpdateDisplayName event, emit) {
       try {
-        updateProfile('displayName', event.updatedDisplayName);
+        UserProfileUpdateEvent updates = UserProfileUpdateEvent(
+            userId: currentUserID,
+            fields: {'displayName': event.updatedDisplayName});
+        UserEvent newEvent = UserEvent(
+            eventType: 'userProfileUpdate',
+            userId: currentUserID,
+            additionalData: updates.toJson());
+        FirestoreDatabase().writeUserEvent(newEvent);
+
         emit(ProfileUpdated());
       } catch (e) {
         emit(ProfileError(e.toString()));
-                if (kDebugMode) {
+        if (kDebugMode) {
           print(e);
         }
       }
     });
     on<UpdatePublicAddress>((UpdatePublicAddress event, emit) {
       try {
-        updateProfile('publicAddress', event.updatedPublicAddress);
+        UserProfileUpdateEvent updates = UserProfileUpdateEvent(
+            userId: currentUserID,
+            fields: {'publicAddress': event.updatedPublicAddress});
+        UserEvent newEvent = UserEvent(
+            eventType: 'userProfileUpdate',
+            userId: currentUserID,
+            additionalData: updates.toJson());
+        FirestoreDatabase().writeUserEvent(newEvent);
         emit(ProfileUpdated());
       } catch (e) {
         emit(ProfileError(e.toString()));
-                if (kDebugMode) {
+        if (kDebugMode) {
           print(e);
         }
       }
@@ -48,7 +64,7 @@ class ProfileBloc extends Bloc<ProfileEvent, ProfileState> {
         emit(ProfileUpdated());
       } catch (e) {
         emit(ProfileError(e.toString()));
-                if (kDebugMode) {
+        if (kDebugMode) {
           print(e);
         }
       }
