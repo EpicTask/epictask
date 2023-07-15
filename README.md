@@ -26,7 +26,7 @@ Secure and Reliable: The XRPL provides a secure and reliable environment for tas
 The Epic Task application follows a microservices architecture to achieve modularity, scalability, and maintainability. It consists of the following key components:
 
 1. Frontend:
-   - The frontend is built using a modern JavaScript framework (e.g., Vue.js, Nuxt) to provide a responsive and interactive user interface.
+   - The frontend is built using Flutter/Dart to provide a responsive and interactive user interface.
    - It communicates with the backend services through well-defined APIs.
 
 2. Backend Services:
@@ -41,13 +41,14 @@ The Epic Task application follows a microservices architecture to achieve modula
    - Pub/Sub Messaging: Utilizes pub/sub messaging systems for asynchronous communication between services.
 
 ## Communication and Data Flow
-The Epic Task application follows a request-response model for communication between the frontend and backend services. The frontend interacts with the backend services through RESTful APIs. 
+The Epic Task application uses event-driven model for communication between the frontend and backend services. The frontend interacts with the backend services through PubSub messages. 
 
 The data flow within the application typically involves the following steps:
 
 1. User interacts with the frontend UI to perform actions such as creating tasks, assigning tasks, or verifying transactions.
-2. The frontend sends HTTP requests to the corresponding backend service endpoints.
-3. Backend services process the requests, perform necessary operations, and interact with external services if required.
+2. The frontend writes these events to Firestore database.
+3. PubSub subscribers handle events and publish messages to corresponding backend services.
+3. Backend services process the messages, perform necessary operations, and interact with external services if required.
 4. Backend services respond with the appropriate HTTP responses containing the requested data or status updates.
 5. The frontend receives the responses and updates the UI accordingly, providing real-time feedback to the user.
 
