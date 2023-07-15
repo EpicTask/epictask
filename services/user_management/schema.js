@@ -19,7 +19,8 @@ const eventSchemas = {
   userWalletConnected: new Schema({
     status: {type: String, required: true},
     timestamp: {type: Date, default: Date.now},
-    wallet_type: {type: Boolean, required: true},
+    user_id: {type: String, required: true},
+    wallet_type: {type: String, required: true},
   }),
   userForgotPassword: new Schema({
     email: {type: String, required: true},
