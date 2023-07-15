@@ -55,6 +55,7 @@ class TaskCompleted(BaseModel):
     attachments: List[str] = None
     marked_completed: bool = None
     verified: bool = None
+    verification_method: str = None
 
 
 class TaskExpired(BaseModel):
@@ -74,3 +75,7 @@ class TaskRewarded(BaseModel):
 class TaskUpdated(BaseModel):
     task_id: str
     updated_fields: dict
+
+class TaskVerified(BaseModel):
+    verified: bool
+    verification_method: str
