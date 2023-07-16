@@ -1606,3 +1606,180 @@ abstract class _TaskUpdated implements TaskUpdated {
   _$$_TaskUpdatedCopyWith<_$_TaskUpdated> get copyWith =>
       throw _privateConstructorUsedError;
 }
+
+TaskVerified _$TaskVerifiedFromJson(Map<String, dynamic> json) {
+  return _TaskVerified.fromJson(json);
+}
+
+/// @nodoc
+mixin _$TaskVerified {
+  String get task_id => throw _privateConstructorUsedError;
+  bool get verified => throw _privateConstructorUsedError;
+  String get verification_method => throw _privateConstructorUsedError;
+
+  Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
+  @JsonKey(ignore: true)
+  $TaskVerifiedCopyWith<TaskVerified> get copyWith =>
+      throw _privateConstructorUsedError;
+}
+
+/// @nodoc
+abstract class $TaskVerifiedCopyWith<$Res> {
+  factory $TaskVerifiedCopyWith(
+          TaskVerified value, $Res Function(TaskVerified) then) =
+      _$TaskVerifiedCopyWithImpl<$Res, TaskVerified>;
+  @useResult
+  $Res call({String task_id, bool verified, String verification_method});
+}
+
+/// @nodoc
+class _$TaskVerifiedCopyWithImpl<$Res, $Val extends TaskVerified>
+    implements $TaskVerifiedCopyWith<$Res> {
+  _$TaskVerifiedCopyWithImpl(this._value, this._then);
+
+  // ignore: unused_field
+  final $Val _value;
+  // ignore: unused_field
+  final $Res Function($Val) _then;
+
+  @pragma('vm:prefer-inline')
+  @override
+  $Res call({
+    Object? task_id = null,
+    Object? verified = null,
+    Object? verification_method = null,
+  }) {
+    return _then(_value.copyWith(
+      task_id: null == task_id
+          ? _value.task_id
+          : task_id // ignore: cast_nullable_to_non_nullable
+              as String,
+      verified: null == verified
+          ? _value.verified
+          : verified // ignore: cast_nullable_to_non_nullable
+              as bool,
+      verification_method: null == verification_method
+          ? _value.verification_method
+          : verification_method // ignore: cast_nullable_to_non_nullable
+              as String,
+    ) as $Val);
+  }
+}
+
+/// @nodoc
+abstract class _$$_TaskVerifiedCopyWith<$Res>
+    implements $TaskVerifiedCopyWith<$Res> {
+  factory _$$_TaskVerifiedCopyWith(
+          _$_TaskVerified value, $Res Function(_$_TaskVerified) then) =
+      __$$_TaskVerifiedCopyWithImpl<$Res>;
+  @override
+  @useResult
+  $Res call({String task_id, bool verified, String verification_method});
+}
+
+/// @nodoc
+class __$$_TaskVerifiedCopyWithImpl<$Res>
+    extends _$TaskVerifiedCopyWithImpl<$Res, _$_TaskVerified>
+    implements _$$_TaskVerifiedCopyWith<$Res> {
+  __$$_TaskVerifiedCopyWithImpl(
+      _$_TaskVerified _value, $Res Function(_$_TaskVerified) _then)
+      : super(_value, _then);
+
+  @pragma('vm:prefer-inline')
+  @override
+  $Res call({
+    Object? task_id = null,
+    Object? verified = null,
+    Object? verification_method = null,
+  }) {
+    return _then(_$_TaskVerified(
+      task_id: null == task_id
+          ? _value.task_id
+          : task_id // ignore: cast_nullable_to_non_nullable
+              as String,
+      verified: null == verified
+          ? _value.verified
+          : verified // ignore: cast_nullable_to_non_nullable
+              as bool,
+      verification_method: null == verification_method
+          ? _value.verification_method
+          : verification_method // ignore: cast_nullable_to_non_nullable
+              as String,
+    ));
+  }
+}
+
+/// @nodoc
+@JsonSerializable()
+class _$_TaskVerified implements _TaskVerified {
+  const _$_TaskVerified(
+      {required this.task_id,
+      required this.verified,
+      required this.verification_method});
+
+  factory _$_TaskVerified.fromJson(Map<String, dynamic> json) =>
+      _$$_TaskVerifiedFromJson(json);
+
+  @override
+  final String task_id;
+  @override
+  final bool verified;
+  @override
+  final String verification_method;
+
+  @override
+  String toString() {
+    return 'TaskVerified(task_id: $task_id, verified: $verified, verification_method: $verification_method)';
+  }
+
+  @override
+  bool operator ==(dynamic other) {
+    return identical(this, other) ||
+        (other.runtimeType == runtimeType &&
+            other is _$_TaskVerified &&
+            (identical(other.task_id, task_id) || other.task_id == task_id) &&
+            (identical(other.verified, verified) ||
+                other.verified == verified) &&
+            (identical(other.verification_method, verification_method) ||
+                other.verification_method == verification_method));
+  }
+
+  @JsonKey(ignore: true)
+  @override
+  int get hashCode =>
+      Object.hash(runtimeType, task_id, verified, verification_method);
+
+  @JsonKey(ignore: true)
+  @override
+  @pragma('vm:prefer-inline')
+  _$$_TaskVerifiedCopyWith<_$_TaskVerified> get copyWith =>
+      __$$_TaskVerifiedCopyWithImpl<_$_TaskVerified>(this, _$identity);
+
+  @override
+  Map<String, dynamic> toJson() {
+    return _$$_TaskVerifiedToJson(
+      this,
+    );
+  }
+}
+
+abstract class _TaskVerified implements TaskVerified {
+  const factory _TaskVerified(
+      {required final String task_id,
+      required final bool verified,
+      required final String verification_method}) = _$_TaskVerified;
+
+  factory _TaskVerified.fromJson(Map<String, dynamic> json) =
+      _$_TaskVerified.fromJson;
+
+  @override
+  String get task_id;
+  @override
+  bool get verified;
+  @override
+  String get verification_method;
+  @override
+  @JsonKey(ignore: true)
+  _$$_TaskVerifiedCopyWith<_$_TaskVerified> get copyWith =>
+      throw _privateConstructorUsedError;
+}

@@ -139,3 +139,15 @@ class TaskUpdated with _$TaskUpdated {
   factory TaskUpdated.fromJson(Map<String, Object?> json) =>
       _$TaskUpdatedFromJson(json);
 }
+
+@freezed
+class TaskVerified with _$TaskVerified {
+  const factory TaskVerified({
+    required String task_id,
+    required bool verified,
+    required String verification_method,
+  }) = _TaskVerified;
+
+  factory TaskVerified.fromJson(Map<String, Object?> json) =>
+      _$TaskVerifiedFromJson(json);
+}

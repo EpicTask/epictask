@@ -142,3 +142,17 @@ Map<String, dynamic> _$$_TaskUpdatedToJson(_$_TaskUpdated instance) =>
       'task_id': instance.task_id,
       'updated_fields': instance.updated_fields,
     };
+
+_$_TaskVerified _$$_TaskVerifiedFromJson(Map<String, dynamic> json) =>
+    _$_TaskVerified(
+      task_id: json['task_id'] as String,
+      verified: json['verified'] as bool,
+      verification_method: json['verification_method'] as String,
+    );
+
+Map<String, dynamic> _$$_TaskVerifiedToJson(_$_TaskVerified instance) =>
+    <String, dynamic>{
+      'task_id': instance.task_id,
+      'verified': instance.verified,
+      'verification_method': instance.verification_method,
+    };

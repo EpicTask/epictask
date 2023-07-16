@@ -1,3 +1,4 @@
+import 'package:epictask/services/functions/firebase_functions.dart';
 import 'package:epictask/services/ui/text_styles.dart';
 import 'package:flutter/material.dart';
 
@@ -49,6 +50,13 @@ class TaskCard extends StatelessWidget {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: [
+                 (task.user_id == currentUserID) ? ElevatedButton(
+                    onPressed: () => completeTaskAndInitiatePayment(task),
+                    child: Text(
+                      'Pay',
+                      style: titleMedium(context),
+                    ),
+                  ):
                   ElevatedButton(
                     onPressed: () => completeTask(task),
                     child: Text(

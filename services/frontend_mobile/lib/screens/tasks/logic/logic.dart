@@ -34,6 +34,19 @@ completeTask(
   FirestoreDatabase().writeTaskEvent(taskEvent);
 }
 
+completeTaskAndInitiatePayment(
+  TaskModel task,
+) {
+  final TaskVerified event = TaskVerified(
+      task_id: task.task_id, verified: true, verification_method: 'user');
+  final TaskEvent taskEvent = TaskEvent.defaultEvent().copyWith(
+      additional_data: event.toJson(),
+      event_type: 'TaskCompleted',
+      task_id: task.task_id,
+      user_id: currentUserID);
+  FirestoreDatabase().writeTaskEvent(taskEvent);
+}
+
 assignTask(taskId) {
   final TaskAssigned event =
       TaskAssigned(task_id: taskId, assigned_to_ids: currentUserID);

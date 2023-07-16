@@ -21,6 +21,7 @@ TaskModel _$TaskModelFromJson(Map<String, dynamic> json) {
 /// @nodoc
 mixin _$TaskModel {
   List<String?>? get assigned_to_ids => throw _privateConstructorUsedError;
+  bool? get auto_verify => throw _privateConstructorUsedError;
   int get expiration_date => throw _privateConstructorUsedError;
   bool? get marked_completed => throw _privateConstructorUsedError;
   String get payment_method => throw _privateConstructorUsedError;
@@ -53,6 +54,7 @@ abstract class $TaskModelCopyWith<$Res> {
   @useResult
   $Res call(
       {List<String?>? assigned_to_ids,
+      bool? auto_verify,
       int expiration_date,
       bool? marked_completed,
       String payment_method,
@@ -86,6 +88,7 @@ class _$TaskModelCopyWithImpl<$Res, $Val extends TaskModel>
   @override
   $Res call({
     Object? assigned_to_ids = freezed,
+    Object? auto_verify = freezed,
     Object? expiration_date = null,
     Object? marked_completed = freezed,
     Object? payment_method = null,
@@ -109,6 +112,10 @@ class _$TaskModelCopyWithImpl<$Res, $Val extends TaskModel>
           ? _value.assigned_to_ids
           : assigned_to_ids // ignore: cast_nullable_to_non_nullable
               as List<String?>?,
+      auto_verify: freezed == auto_verify
+          ? _value.auto_verify
+          : auto_verify // ignore: cast_nullable_to_non_nullable
+              as bool?,
       expiration_date: null == expiration_date
           ? _value.expiration_date
           : expiration_date // ignore: cast_nullable_to_non_nullable
@@ -190,6 +197,7 @@ abstract class _$$_TaskModelCopyWith<$Res> implements $TaskModelCopyWith<$Res> {
   @useResult
   $Res call(
       {List<String?>? assigned_to_ids,
+      bool? auto_verify,
       int expiration_date,
       bool? marked_completed,
       String payment_method,
@@ -221,6 +229,7 @@ class __$$_TaskModelCopyWithImpl<$Res>
   @override
   $Res call({
     Object? assigned_to_ids = freezed,
+    Object? auto_verify = freezed,
     Object? expiration_date = null,
     Object? marked_completed = freezed,
     Object? payment_method = null,
@@ -244,6 +253,10 @@ class __$$_TaskModelCopyWithImpl<$Res>
           ? _value._assigned_to_ids
           : assigned_to_ids // ignore: cast_nullable_to_non_nullable
               as List<String?>?,
+      auto_verify: freezed == auto_verify
+          ? _value.auto_verify
+          : auto_verify // ignore: cast_nullable_to_non_nullable
+              as bool?,
       expiration_date: null == expiration_date
           ? _value.expiration_date
           : expiration_date // ignore: cast_nullable_to_non_nullable
@@ -321,6 +334,7 @@ class __$$_TaskModelCopyWithImpl<$Res>
 class _$_TaskModel implements _TaskModel {
   const _$_TaskModel(
       {final List<String?>? assigned_to_ids,
+      this.auto_verify,
       required this.expiration_date,
       this.marked_completed,
       required this.payment_method,
@@ -353,6 +367,8 @@ class _$_TaskModel implements _TaskModel {
     return EqualUnmodifiableListView(value);
   }
 
+  @override
+  final bool? auto_verify;
   @override
   final int expiration_date;
   @override
@@ -391,7 +407,7 @@ class _$_TaskModel implements _TaskModel {
 
   @override
   String toString() {
-    return 'TaskModel(assigned_to_ids: $assigned_to_ids, expiration_date: $expiration_date, marked_completed: $marked_completed, payment_method: $payment_method, project_id: $project_id, project_name: $project_name, rating: $rating, requires_attachments: $requires_attachments, reward_amount: $reward_amount, reward_currency: $reward_currency, rewarded: $rewarded, task_description: $task_description, task_id: $task_id, task_title: $task_title, terms_blob: $terms_blob, terms_id: $terms_id, user_id: $user_id, timestamp: $timestamp)';
+    return 'TaskModel(assigned_to_ids: $assigned_to_ids, auto_verify: $auto_verify, expiration_date: $expiration_date, marked_completed: $marked_completed, payment_method: $payment_method, project_id: $project_id, project_name: $project_name, rating: $rating, requires_attachments: $requires_attachments, reward_amount: $reward_amount, reward_currency: $reward_currency, rewarded: $rewarded, task_description: $task_description, task_id: $task_id, task_title: $task_title, terms_blob: $terms_blob, terms_id: $terms_id, user_id: $user_id, timestamp: $timestamp)';
   }
 
   @override
@@ -401,6 +417,8 @@ class _$_TaskModel implements _TaskModel {
             other is _$_TaskModel &&
             const DeepCollectionEquality()
                 .equals(other._assigned_to_ids, _assigned_to_ids) &&
+            (identical(other.auto_verify, auto_verify) ||
+                other.auto_verify == auto_verify) &&
             (identical(other.expiration_date, expiration_date) ||
                 other.expiration_date == expiration_date) &&
             (identical(other.marked_completed, marked_completed) ||
@@ -436,26 +454,28 @@ class _$_TaskModel implements _TaskModel {
 
   @JsonKey(ignore: true)
   @override
-  int get hashCode => Object.hash(
-      runtimeType,
-      const DeepCollectionEquality().hash(_assigned_to_ids),
-      expiration_date,
-      marked_completed,
-      payment_method,
-      project_id,
-      project_name,
-      rating,
-      requires_attachments,
-      reward_amount,
-      reward_currency,
-      rewarded,
-      task_description,
-      task_id,
-      task_title,
-      terms_blob,
-      terms_id,
-      user_id,
-      timestamp);
+  int get hashCode => Object.hashAll([
+        runtimeType,
+        const DeepCollectionEquality().hash(_assigned_to_ids),
+        auto_verify,
+        expiration_date,
+        marked_completed,
+        payment_method,
+        project_id,
+        project_name,
+        rating,
+        requires_attachments,
+        reward_amount,
+        reward_currency,
+        rewarded,
+        task_description,
+        task_id,
+        task_title,
+        terms_blob,
+        terms_id,
+        user_id,
+        timestamp
+      ]);
 
   @JsonKey(ignore: true)
   @override
@@ -474,6 +494,7 @@ class _$_TaskModel implements _TaskModel {
 abstract class _TaskModel implements TaskModel {
   const factory _TaskModel(
       {final List<String?>? assigned_to_ids,
+      final bool? auto_verify,
       required final int expiration_date,
       final bool? marked_completed,
       required final String payment_method,
@@ -497,6 +518,8 @@ abstract class _TaskModel implements TaskModel {
 
   @override
   List<String?>? get assigned_to_ids;
+  @override
+  bool? get auto_verify;
   @override
   int get expiration_date;
   @override

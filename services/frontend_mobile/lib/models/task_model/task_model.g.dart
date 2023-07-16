@@ -10,6 +10,7 @@ _$_TaskModel _$$_TaskModelFromJson(Map<String, dynamic> json) => _$_TaskModel(
       assigned_to_ids: (json['assigned_to_ids'] as List<dynamic>?)
           ?.map((e) => e as String?)
           .toList(),
+      auto_verify: json['auto_verify'] as bool?,
       expiration_date: json['expiration_date'] as int,
       marked_completed: json['marked_completed'] as bool?,
       payment_method: json['payment_method'] as String,
@@ -33,6 +34,7 @@ _$_TaskModel _$$_TaskModelFromJson(Map<String, dynamic> json) => _$_TaskModel(
 Map<String, dynamic> _$$_TaskModelToJson(_$_TaskModel instance) =>
     <String, dynamic>{
       'assigned_to_ids': instance.assigned_to_ids,
+      'auto_verify': instance.auto_verify,
       'expiration_date': instance.expiration_date,
       'marked_completed': instance.marked_completed,
       'payment_method': instance.payment_method,

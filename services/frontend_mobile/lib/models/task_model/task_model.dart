@@ -36,6 +36,7 @@ class TimestampNullableConverter
 class TaskModel with _$TaskModel {
   const factory TaskModel({
     List<String?>? assigned_to_ids,
+    bool? auto_verify,
     required int expiration_date,
     bool? marked_completed,
     required String payment_method,
