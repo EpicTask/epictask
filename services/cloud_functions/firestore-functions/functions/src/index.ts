@@ -43,6 +43,9 @@ exports.pubsubRouter = onDocumentCreated(
       case "TaskCancelled":
         await publishMessage("TaskCancelled", jsonData);
         break;
+      case "TaskCommentAdded":
+        await publishMessage("TaskCommentAdded", jsonData);
+        break;
       case "TaskExpired":
         await publishMessage("TaskExpired", jsonData);
         break;
@@ -52,17 +55,8 @@ exports.pubsubRouter = onDocumentCreated(
       case "TaskRatingUpdated":
         await publishMessage("TaskRatingUpdated", jsonData);
         break;
-      case "TaskCommentAdded":
-        await publishMessage("TaskCommentAdded", jsonData);
-        break;
-      case "UserRegistered":
-        await publishMessage("UserRegistered", jsonData);
-        break;
-      case "UserUpdated":
-        await publishMessage("UserUpdated", jsonData);
-        break;
-      case "UserVerified":
-        await publishMessage("UserVerified", jsonData);
+      case "TaskVerified":
+        await publishMessage("TaskVerified", jsonData);
         break;
       case "RecommendationGenerated":
         await publishMessage("RecommendationGenerated", jsonData);
@@ -323,6 +317,26 @@ exports.handleTaskCommentAddedMessage = pubsub.onMessagePublished(
       const documentData = event.data.message.json;
       // Get the task management service URL from environment variable
       const taskManagementUrl = process.env.TASKCOMMENTADDED || "";
+
+      // Make an API call to the task management service
+      const response = await axios.post(taskManagementUrl, documentData);
+
+      logger.info("API response:", response.data);
+      // Handle the API response or perform any additional actions
+    } catch (error) {
+      logger.error("API call error:", error);
+      // Handle the API call error
+    }
+  }
+);
+
+exports.handleTaskVerifiedMessage = pubsub.onMessagePublished(
+  "TaskVerified",
+  async (event) => {
+    try {
+      const documentData = event.data.message.json;
+      // Get the task management service URL from environment variable
+      const taskManagementUrl = process.env.TASKVERIFIED || "";
 
       // Make an API call to the task management service
       const response = await axios.post(taskManagementUrl, documentData);
@@ -627,7 +641,7 @@ exports.createXRPPaymentRequest = onDocumentCreated(
         };
 
         console.log(rewardJsonMap);
-        const xrplUrl = "https://xrpl-5wpxgn35iq-uc.a.run.app/payment_request/";
+        const xrplUrl = process.env.PAYMENTREQUEST || "";
         const response = await axios.post(xrplUrl, rewardJsonMap);
 
         return response; 
