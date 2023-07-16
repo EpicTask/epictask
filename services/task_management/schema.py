@@ -32,6 +32,7 @@ class TaskCreated(BaseModel):
     assigned_to_ids: List[str] = None
     rewarded: bool = None
     marked_completed: bool = None
+    auto_verify: bool = None
 
 
 class TaskAssigned(BaseModel):
@@ -77,5 +78,6 @@ class TaskUpdated(BaseModel):
     updated_fields: dict
 
 class TaskVerified(BaseModel):
+    task_id: str
     verified: bool
-    verification_method: str
+    verification_method: str # user or verifi

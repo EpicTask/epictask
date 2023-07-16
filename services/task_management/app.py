@@ -143,6 +143,14 @@ async def task_func(request: TaskUpdated):
     except Exception as e:
         return {"error": str(e)}
 
+@app.post('/TaskVerified')
+async def task_func(request: TaskUpdated):
+    try:
+        event_type = 'TaskVerified'
+        response = await update_task(event_type, request)
+        return {"message": response}
+    except Exception as e:
+        return {"error": str(e)}
 
 @app.get("/tasks")
 async def get_all_tasks(user_id: str):
