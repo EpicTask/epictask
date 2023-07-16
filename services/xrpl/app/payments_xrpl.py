@@ -4,7 +4,7 @@ from firestore_db import write_response_to_firestore
 from xrpl_models import PaymentRequest
 import xumm
 from google_secrets import get_secret
-from websocket_handler import connection_manager
+
 from starlette.responses import JSONResponse
 from xrpl.clients import JsonRpcClient
 from xrpl.utils import xrp_to_drops
@@ -45,9 +45,8 @@ async def send_payment_request(payment_request: PaymentRequest):
     # Create the payment request with the XUMM SDK
     try:
         subscription = sdk.payload.create(xumm_payload)
-        write_response_to_firestore(subscription.to_dict(), "payment_request")
+        write_response_to_firestore(subscription.to_dict(), "payment_request", payment_request.task_id)
         response = json.dumps(subscription.to_dict(), indent=4, sort_keys=True)
-        await connection_manager.send_update(response)
         # url = '{}'.format(subscription.next.always)
         return response
     except Exception as e:
@@ -87,10 +86,8 @@ async def send_payment_request_no_user_token(payment_request: PaymentRequest):
     try:
         # Create the payment request with the XUMM SDK
         create_payload = sdk.payload.create(xumm_payload)
-        print(create_payload.uuid)
         response = json.dumps(create_payload.to_dict(),
                               indent=4, sort_keys=True)
-        await connection_manager.send_update(response)
 
     except Exception as e:
         return f"Error: {e}"
@@ -98,6 +95,7 @@ async def send_payment_request_no_user_token(payment_request: PaymentRequest):
         # start the websocket subscription on this payload and listen for changes
     try:
         subscription = await sdk.payload.subscribe(create_payload.uuid, callback_func)
+        write_response_to_firestore(subscription.to_dict(), "payment_request", payment_request.task_id)
         # wait for the payload to resolve
         print("Subscribe to payload")
         resolve_data = await subscription.resolved()

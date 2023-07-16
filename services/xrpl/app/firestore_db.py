@@ -2,7 +2,7 @@ import json
 from google.cloud import firestore
 import datetime
 
-def write_response_to_firestore(response, function):
+def write_response_to_firestore(response, function, task_id = None):
     try:
         # Initialize Firestore client
         db = firestore.Client()
@@ -23,6 +23,7 @@ def write_response_to_firestore(response, function):
         doc_ref.update({
             'doc_id': doc_id,
             "function":function,
+            "task_id":task_id,
             'timestamp': firestore.SERVER_TIMESTAMP
         })
 
