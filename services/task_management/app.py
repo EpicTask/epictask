@@ -11,19 +11,15 @@ from starlette.middleware.cors import CORSMiddleware
 from firestore_db import create_task, update_task, delete_task, assign_task, completed_task, get_tasks, write_event_to_firestore
 from schema import (TaskAssigned, TaskCreated, TaskCancelled, TaskCompleted,
                     TaskCommentAdded, TaskEvent, TaskExpired, TaskRatingUpdate, TaskRewarded, TaskUpdated, TaskVerified)
-from dotenv import load_dotenv
 
 app = FastAPI()
 
-load_dotenv()
-
-baseUrl = os.getenv("BASEURL")
-defaultUrl = os.getenv("DEFAULT_URL")
+baseUrl = os.getenv("_BASEURL")
+defaultUrl = os.getenv("_DEFAULT_URL")
 origins = [
     baseUrl,
     defaultUrl,
 ]
-print(baseUrl, defaultUrl)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=origins,
@@ -37,13 +33,9 @@ templates = Jinja2Templates(directory="templates")
 @app.get('/', response_class=HTMLResponse)
 async def hello(request: Request):
     """Return a friendly HTTP greeting."""
-    message = "It's running!"
-    print(baseUrl, defaultUrl)
-    """Get Cloud Run environment variables."""
-    service = os.environ.get('K_SERVICE', 'Unknown service')
-    revision = os.environ.get('K_REVISION', 'Unknown revision')
+    message = "This service is running!"
 
-    return templates.TemplateResponse("/index.html", {"request": request, "message": message, "Service": service, "Revision": revision})
+    return templates.TemplateResponse("/index.html", {"request": request, "message": message})
 
 # Create Task Event
 @app.post('/TaskEvent')
