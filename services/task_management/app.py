@@ -10,7 +10,7 @@ from fastapi.templating import Jinja2Templates
 from starlette.middleware.cors import CORSMiddleware
 from firestore_db import create_task, update_task, delete_task, assign_task, completed_task, get_tasks, write_event_to_firestore
 from schema import (TaskAssigned, TaskCreated, TaskCancelled, TaskCompleted,
-                    TaskCommentAdded, TaskEvent, TaskExpired, TaskRatingUpdate, TaskRewarded, TaskUpdated)
+                    TaskCommentAdded, TaskEvent, TaskExpired, TaskRatingUpdate, TaskRewarded, TaskUpdated, TaskVerified)
 from dotenv import load_dotenv
 
 app = FastAPI()
@@ -43,7 +43,7 @@ async def hello(request: Request):
     service = os.environ.get('K_SERVICE', 'Unknown service')
     revision = os.environ.get('K_REVISION', 'Unknown revision')
 
-    return templates.TemplateResponse("index.html", {"request": request, "message": message, "Service": service, "Revision": revision})
+    return templates.TemplateResponse("/index.html", {"request": request, "message": message, "Service": service, "Revision": revision})
 
 # Create Task Event
 @app.post('/TaskEvent')
@@ -78,7 +78,7 @@ def task_func(request: TaskAssigned):
 async def task_func(request: TaskCancelled):
     try:
         event_type = 'TaskCancelled'
-        response = await delete_task(event_type, request)
+        response = delete_task(event_type, request)
         return {"message": response}
     except Exception as e:
         return {"error": str(e)}
@@ -88,7 +88,7 @@ async def task_func(request: TaskCancelled):
 async def task_func(request: TaskCommentAdded):
     try:
         event_type = 'TaskCommentAdded'
-        response = await update_task(event_type, request)
+        response = update_task(event_type, request)
         return {"message": response}
     except Exception as e:
         return {"error": str(e)}
@@ -108,7 +108,7 @@ async def task_func(request: TaskCompleted):
 async def task_func(request: TaskExpired):
     try:
         event_type = 'TaskExpired'
-        response = await update_task(event_type, request)
+        response = update_task(event_type, request)
         return {"message": response}
     except Exception as e:
         return {"error": str(e)}
@@ -118,7 +118,7 @@ async def task_func(request: TaskExpired):
 async def task_func(request: TaskRatingUpdate):
     try:
         event_type = 'TaskRatingUpdate'
-        response = await update_task(event_type, request)
+        response = update_task(event_type, request)
         return {"message": response}
     except Exception as e:
         return {"error": str(e)}
@@ -128,7 +128,7 @@ async def task_func(request: TaskRatingUpdate):
 async def task_func(request: TaskRewarded):
     try:
         event_type = 'TaskRewarded'
-        response = await update_task(event_type, request)
+        response = update_task(event_type, request)
         return {"message": response}
     except Exception as e:
         return {"error": str(e)}
@@ -138,16 +138,16 @@ async def task_func(request: TaskRewarded):
 async def task_func(request: TaskUpdated):
     try:
         event_type = 'TaskUpdated'
-        response = await update_task(event_type, request)
+        response = update_task(event_type, request)
         return {"message": response}
     except Exception as e:
         return {"error": str(e)}
 
 @app.post('/TaskVerified')
-async def task_func(request: TaskUpdated):
+async def task_func(request: TaskVerified):
     try:
         event_type = 'TaskVerified'
-        response = await update_task(event_type, request)
+        response = update_task(event_type, request)
         return {"message": response}
     except Exception as e:
         return {"error": str(e)}
