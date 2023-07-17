@@ -27,7 +27,7 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-templates = Jinja2Templates(directory="templates")
+templates = Jinja2Templates(directory="app/templates")
 
 
 @app.get('/', response_class=HTMLResponse)
@@ -35,7 +35,7 @@ async def hello(request: Request):
     """Return a friendly HTTP greeting."""
     message = "This service is running!"
 
-    return templates.TemplateResponse("/index.html", {"request": request, "message": message})
+    return templates.TemplateResponse("index.html", {"request": request, "message": message})
 
 # Create Task Event
 @app.post('/TaskEvent')
