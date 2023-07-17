@@ -30,7 +30,7 @@ The Epic Task application follows a microservices architecture to achieve modula
    - It communicates with the backend services through well-defined APIs.
 
 2. Backend Services:
-   - User Management Service: Handles user authentication, registration, and profile management. (Javascript)
+   - User Management Service: Handles user authentication, registration, and profile management. (Nodejs)
    - Task Management Service: Manages the creation, assignment, and tracking of tasks. (Python)
    - Verification Service: Provides transaction verification and AI-based verification if applicable. (Nodejs)
    - Contract Generator Service: Generates simplified contracts that outline the terms of tasks. (Nodejs)
@@ -41,14 +41,14 @@ The Epic Task application follows a microservices architecture to achieve modula
    - Pub/Sub Messaging: Utilizes pub/sub messaging systems for asynchronous communication between services.
 
 ## Communication and Data Flow
-The Epic Task application uses event-driven model for communication between the frontend and backend services. The frontend interacts with the backend services through PubSub messages. 
+The Epic Task application uses event-driven model for communication between the frontend and backend services. The backend services interacts through PubSub messages. 
 
 The data flow within the application typically involves the following steps:
 
 1. User interacts with the frontend UI to perform actions such as creating tasks, assigning tasks, or verifying transactions.
 2. The frontend writes these events to Firestore database.
 3. PubSub subscribers handle events and publish messages to corresponding backend services.
-3. Backend services process the messages, perform necessary operations, and interact with external services if required.
+3. Backend services process the messages, perform necessary operations, and interact with external services through pubsub if required.
 4. Backend services respond with the appropriate HTTP responses containing the requested data or status updates.
 5. The frontend receives the responses and updates the UI accordingly, providing real-time feedback to the user.
 
