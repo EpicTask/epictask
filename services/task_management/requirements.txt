@@ -4,4 +4,7 @@ ptvsd==4.3.2 # Required for debugging.
 uvicorn==0.22.0
 Jinja2==3.1.2
 google-cloud-firestore==2.11.1
-python-dotenv==1.0.0
+python-dotenv==0.21.0
+pytest==7.4.0
+pytest-asyncio==0.21.1
+httpx==.0.24.1
