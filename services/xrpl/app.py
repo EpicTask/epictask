@@ -27,8 +27,8 @@ app = FastAPI()
 
 load_dotenv()
 
-baseUrl = os.getenv("BASEURL")
-defaultUrl = os.getenv("DEFAULT_URL")
+baseUrl = os.getenv("_BASEURL")
+defaultUrl = os.getenv("_DEFAULT_URL")
 origins = [
     baseUrl,
     defaultUrl,
@@ -42,7 +42,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-templates = Jinja2Templates(directory="templates")
+templates = Jinja2Templates(directory="app/templates")
 
 api_key = get_secret('xumm-key')
 api_secret = get_secret('xumm-secret')

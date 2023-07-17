@@ -11,7 +11,7 @@ COPY requirements.txt .
 RUN pip3 install --no-cache-dir -r requirements.txt
 
 # Copy the rest of the working directory contents into the container at /app
-COPY . .
+COPY app/ .
 
 # Run app.py when the container launches
 ENTRYPOINT ["python3", "app.py"]

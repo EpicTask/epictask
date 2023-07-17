@@ -3,9 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>WebSocket Events</title>
+    <title>XRPL Service</title>
 <body>
-    <h1>WebSocket Events</h1>
+  <h1>This service is running</h1>
+    <h2>WebSocket Events</h2>
     <ul id="events-list"></ul>
 
     <script>
@@ -14,17 +15,6 @@
 
         socket.addEventListener("open", (event) => {
           console.log("WebSocket connected:", event);
-
-          // Send a payment request over the WebSocket connection
-          // socket.send(
-          //   JSON.stringify({
-          //     type: "payment_request",
-          //     amount: 10000,
-          //     source: "rB4iz44nvW2yGDBYTkspVfyR2NMsR3NtfF",
-          //     destination: "rpaxHGQVgQSXF1HaKGRpLKm6X7eh26v6eV",
-          //     note: "Payment for invoice #123",
-          //   })
-          // );
         });
 
         socket.addEventListener("message", (event) => {
