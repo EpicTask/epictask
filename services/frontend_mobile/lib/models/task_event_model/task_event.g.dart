@@ -44,13 +44,13 @@ Json? _$JsonConverterToJson<Json, Value>(
 _$_TaskAssigned _$$_TaskAssignedFromJson(Map<String, dynamic> json) =>
     _$_TaskAssigned(
       task_id: json['task_id'] as String,
-      assigned_to_ids: json['assigned_to_ids'] as String,
+      assigned_to_id: json['assigned_to_id'] as String,
     );
 
 Map<String, dynamic> _$$_TaskAssignedToJson(_$_TaskAssigned instance) =>
     <String, dynamic>{
       'task_id': instance.task_id,
-      'assigned_to_ids': instance.assigned_to_ids,
+      'assigned_to_id': instance.assigned_to_id,
     };
 
 _$_TaskCancelled _$$_TaskCancelledFromJson(Map<String, dynamic> json) =>

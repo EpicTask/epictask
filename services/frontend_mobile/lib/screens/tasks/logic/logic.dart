@@ -47,12 +47,13 @@ completeTaskAndInitiatePayment(
   FirestoreDatabase().writeTaskEvent(taskEvent);
 }
 
-assignTask(taskId) {
+assignTask(String taskId, String uid) {
   final TaskAssigned event =
-      TaskAssigned(task_id: taskId, assigned_to_ids: currentUserID);
+      TaskAssigned(task_id: taskId, assigned_to_id: uid);
   final TaskEvent taskEvent = TaskEvent.defaultEvent().copyWith(
       additional_data: event.toJson(),
       event_type: 'TaskAssigned',
+      task_id: taskId,
       user_id: currentUserID);
   FirestoreDatabase().writeTaskEvent(taskEvent);
 }

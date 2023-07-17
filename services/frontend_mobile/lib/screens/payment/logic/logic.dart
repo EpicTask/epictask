@@ -1,5 +1,4 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:epictask/models/user_model/user_model.dart';
 
 Stream<String?> payloadUrl(String task_id) {
   DocumentReference ref =

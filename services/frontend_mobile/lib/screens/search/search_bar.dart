@@ -1,4 +1,7 @@
+import 'package:epictask/models/task_model/task_model.dart';
 import 'package:epictask/models/user_model/user_model.dart';
+import 'package:epictask/screens/tasks/logic/logic.dart';
+import 'package:epictask/services/navigation/navigation.dart';
 import 'package:epictask/services/ui/text_styles.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -9,9 +12,11 @@ class CustomSearchBar extends StatefulWidget {
   const CustomSearchBar({
     super.key,
     required this.users,
+    required this.task_id,
   });
 
   final List<UserModel> users;
+  final String task_id;
   @override
   CustomSearchBarState createState() => CustomSearchBarState();
 }
@@ -114,7 +119,8 @@ class CustomSearchBarState extends State<CustomSearchBar> {
                   return ListTile(
                     title: Text(result.displayName ?? ''),
                     onTap: () {
-                      setState(() {});
+                      assignTask(widget.task_id, result.uid);
+                      router.pop();
                     },
                   );
                 },

@@ -1,4 +1,5 @@
 import 'package:epictask/services/functions/firebase_functions.dart';
+import 'package:epictask/services/navigation/navigation.dart';
 import 'package:epictask/services/ui/text_styles.dart';
 import 'package:flutter/material.dart';
 
@@ -29,7 +30,7 @@ class TaskCard extends StatelessWidget {
             Text('Reward: ${task.reward_amount} ${task.reward_currency}',
                 style: titleLarge(context)),
             Text(
-                'Due Date: ${formatDate(DateTime.fromMillisecondsSinceEpoch(task.expiration_date*1000))}',
+                'Due Date: ${formatDate(DateTime.fromMillisecondsSinceEpoch(task.expiration_date * 1000))}',
                 style: titleLarge(context)),
             if (task.assigned_to_ids?.isNotEmpty ?? false)
               FutureBuilder<String>(
@@ -50,24 +51,20 @@ class TaskCard extends StatelessWidget {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: [
-                 (task.user_id == currentUserID) ? ElevatedButton(
-                    onPressed: () => completeTaskAndInitiatePayment(task),
-                    child: Text(
-                      'Pay',
-                      style: titleMedium(context),
-                    ),
-                  ):
-                  ElevatedButton(
-                    onPressed: () => completeTask(task),
-                    child: Text(
-                      'Completed',
-                      style: titleMedium(context),
-                    ),
-                  ),
-                  AllUserPage(
-                          task: task,
+                   ElevatedButton(
+                          onPressed: () {
+                            completeTaskAndInitiatePayment(task);
+                            router.goNamed('payment', extra: task.task_id);
+                          },
+                          child: Text(
+                            'Pay',
+                            style: titleMedium(context),
+                          ),
                         ),
                       
+                  AllUserPage(
+                    task: task,
+                  ),
                   ElevatedButton(
                     onPressed: () => deleteTask(task.task_id),
                     child: Text('Delete', style: titleMedium(context)),
@@ -108,7 +105,7 @@ class TaskCardAssigned extends StatelessWidget {
             Text('Reward: ${task.reward_amount} ${task.reward_currency}',
                 style: titleLarge(context)),
             Text(
-                'Due Date: ${formatDate(DateTime.fromMillisecondsSinceEpoch(task.expiration_date *1000))}',
+                'Due Date: ${formatDate(DateTime.fromMillisecondsSinceEpoch(task.expiration_date * 1000))}',
                 style: titleLarge(context)),
             Text('Assigned To: Me', style: titleLarge(context)),
             if (task.marked_completed ?? false)
@@ -117,9 +114,12 @@ class TaskCardAssigned extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
                 ElevatedButton(
-                  onPressed: () => completeTask(task),
-                  child: Text('Completed', style: titleMedium(context)),
-                ),
+                          onPressed: () => completeTask(task),
+                          child: Text(
+                            'Completed',
+                            style: titleMedium(context),
+                          ),
+                        ),
               ],
             ),
           ],

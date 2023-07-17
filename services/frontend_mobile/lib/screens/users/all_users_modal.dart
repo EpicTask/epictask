@@ -81,6 +81,7 @@ class _UserModalSheetState extends State<UserModalSheet> {
               children: <Widget>[
                 CustomSearchBar(
                   users: allUsersList,
+                  task_id: widget.task.task_id,
                 ),
               ],
             ),

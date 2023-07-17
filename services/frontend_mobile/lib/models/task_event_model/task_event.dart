@@ -54,7 +54,7 @@ class TaskEvent with _$TaskEvent {
 class TaskAssigned with _$TaskAssigned {
   const factory TaskAssigned({
     required String task_id,
-    required String assigned_to_ids,
+    required String assigned_to_id,
   }) = _TaskAssigned;
 
   factory TaskAssigned.fromJson(Map<String, Object?> json) =>

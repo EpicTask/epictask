@@ -303,7 +303,7 @@ TaskAssigned _$TaskAssignedFromJson(Map<String, dynamic> json) {
 /// @nodoc
 mixin _$TaskAssigned {
   String get task_id => throw _privateConstructorUsedError;
-  String get assigned_to_ids => throw _privateConstructorUsedError;
+  String get assigned_to_id => throw _privateConstructorUsedError;
 
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
   @JsonKey(ignore: true)
@@ -317,7 +317,7 @@ abstract class $TaskAssignedCopyWith<$Res> {
           TaskAssigned value, $Res Function(TaskAssigned) then) =
       _$TaskAssignedCopyWithImpl<$Res, TaskAssigned>;
   @useResult
-  $Res call({String task_id, String assigned_to_ids});
+  $Res call({String task_id, String assigned_to_id});
 }
 
 /// @nodoc
@@ -334,16 +334,16 @@ class _$TaskAssignedCopyWithImpl<$Res, $Val extends TaskAssigned>
   @override
   $Res call({
     Object? task_id = null,
-    Object? assigned_to_ids = null,
+    Object? assigned_to_id = null,
   }) {
     return _then(_value.copyWith(
       task_id: null == task_id
           ? _value.task_id
           : task_id // ignore: cast_nullable_to_non_nullable
               as String,
-      assigned_to_ids: null == assigned_to_ids
-          ? _value.assigned_to_ids
-          : assigned_to_ids // ignore: cast_nullable_to_non_nullable
+      assigned_to_id: null == assigned_to_id
+          ? _value.assigned_to_id
+          : assigned_to_id // ignore: cast_nullable_to_non_nullable
               as String,
     ) as $Val);
   }
@@ -357,7 +357,7 @@ abstract class _$$_TaskAssignedCopyWith<$Res>
       __$$_TaskAssignedCopyWithImpl<$Res>;
   @override
   @useResult
-  $Res call({String task_id, String assigned_to_ids});
+  $Res call({String task_id, String assigned_to_id});
 }
 
 /// @nodoc
@@ -372,16 +372,16 @@ class __$$_TaskAssignedCopyWithImpl<$Res>
   @override
   $Res call({
     Object? task_id = null,
-    Object? assigned_to_ids = null,
+    Object? assigned_to_id = null,
   }) {
     return _then(_$_TaskAssigned(
       task_id: null == task_id
           ? _value.task_id
           : task_id // ignore: cast_nullable_to_non_nullable
               as String,
-      assigned_to_ids: null == assigned_to_ids
-          ? _value.assigned_to_ids
-          : assigned_to_ids // ignore: cast_nullable_to_non_nullable
+      assigned_to_id: null == assigned_to_id
+          ? _value.assigned_to_id
+          : assigned_to_id // ignore: cast_nullable_to_non_nullable
               as String,
     ));
   }
@@ -390,7 +390,7 @@ class __$$_TaskAssignedCopyWithImpl<$Res>
 /// @nodoc
 @JsonSerializable()
 class _$_TaskAssigned implements _TaskAssigned {
-  const _$_TaskAssigned({required this.task_id, required this.assigned_to_ids});
+  const _$_TaskAssigned({required this.task_id, required this.assigned_to_id});
 
   factory _$_TaskAssigned.fromJson(Map<String, dynamic> json) =>
       _$$_TaskAssignedFromJson(json);
@@ -398,11 +398,11 @@ class _$_TaskAssigned implements _TaskAssigned {
   @override
   final String task_id;
   @override
-  final String assigned_to_ids;
+  final String assigned_to_id;
 
   @override
   String toString() {
-    return 'TaskAssigned(task_id: $task_id, assigned_to_ids: $assigned_to_ids)';
+    return 'TaskAssigned(task_id: $task_id, assigned_to_id: $assigned_to_id)';
   }
 
   @override
@@ -411,13 +411,13 @@ class _$_TaskAssigned implements _TaskAssigned {
         (other.runtimeType == runtimeType &&
             other is _$_TaskAssigned &&
             (identical(other.task_id, task_id) || other.task_id == task_id) &&
-            (identical(other.assigned_to_ids, assigned_to_ids) ||
-                other.assigned_to_ids == assigned_to_ids));
+            (identical(other.assigned_to_id, assigned_to_id) ||
+                other.assigned_to_id == assigned_to_id));
   }
 
   @JsonKey(ignore: true)
   @override
-  int get hashCode => Object.hash(runtimeType, task_id, assigned_to_ids);
+  int get hashCode => Object.hash(runtimeType, task_id, assigned_to_id);
 
   @JsonKey(ignore: true)
   @override
@@ -436,7 +436,7 @@ class _$_TaskAssigned implements _TaskAssigned {
 abstract class _TaskAssigned implements TaskAssigned {
   const factory _TaskAssigned(
       {required final String task_id,
-      required final String assigned_to_ids}) = _$_TaskAssigned;
+      required final String assigned_to_id}) = _$_TaskAssigned;
 
   factory _TaskAssigned.fromJson(Map<String, dynamic> json) =
       _$_TaskAssigned.fromJson;
@@ -444,7 +444,7 @@ abstract class _TaskAssigned implements TaskAssigned {
   @override
   String get task_id;
   @override
-  String get assigned_to_ids;
+  String get assigned_to_id;
   @override
   @JsonKey(ignore: true)
   _$$_TaskAssignedCopyWith<_$_TaskAssigned> get copyWith =>
