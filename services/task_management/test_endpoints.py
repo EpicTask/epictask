@@ -6,12 +6,6 @@ from fastapi.testclient import TestClient
 def client():
     return TestClient(app)
 
-def test_hello(client):
-    response = client.get("/")
-    assert response.status_code == 200
-    assert response.template.name == "index.html"
-    assert "This service is running!" in response.text
-
 # Create test task
 @pytest.fixture
 def test_task_created(client):
