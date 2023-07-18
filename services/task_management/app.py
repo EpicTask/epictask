@@ -53,7 +53,7 @@ async def task_func(request: TaskEvent):
 async def task_func(request: TaskCreated):
     try:
         response = create_task(request)
-        return {"message": response}
+        return response
     except Exception as e:
         return {"error": str(e)}
 
