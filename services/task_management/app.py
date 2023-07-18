@@ -11,6 +11,7 @@ from starlette.middleware.cors import CORSMiddleware
 from firestore_db import create_task, update_task, delete_task, assign_task, completed_task, get_tasks, write_event_to_firestore
 from schema import (TaskAssigned, TaskCreated, TaskCancelled, TaskCompleted,
                     TaskCommentAdded, TaskEvent, TaskExpired, TaskRatingUpdate, TaskRewarded, TaskUpdated, TaskVerified)
+from services.task_management.firestore_db import update_leaderboard
 
 app = FastAPI()
 
@@ -144,6 +145,14 @@ async def task_func(request: TaskVerified):
     except Exception as e:
         return {"error": str(e)}
 
+@app.post('/UpdateLeaderboard')
+async def task_func(request: TaskCreated):
+    try:
+        response = update_leaderboard(request)
+        print("message: {response}")
+    except Exception as e:
+        print("error: {e.message}")
+    
 @app.get("/tasks")
 async def get_all_tasks(user_id: str):
     try:

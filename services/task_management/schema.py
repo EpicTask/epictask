@@ -12,8 +12,6 @@ class TaskEvent(BaseModel):
     additional_data: Optional[dict]
 
 # Corresponding models that would go into additional_data depending on event type.
-
-
 class TaskCreated(BaseModel):
     task_title: str = None
     task_description: str
@@ -21,7 +19,7 @@ class TaskCreated(BaseModel):
     expiration_date: int
     reward_amount: float
     reward_currency: str
-    payment_method: str  # Pay directly or Escrow, Tokens
+    payment_method: str  # Pay directly or Escrow
     user_id: str
     project_id: str = None
     project_name: str = None
@@ -81,3 +79,10 @@ class TaskVerified(BaseModel):
     task_id: str
     verified: bool
     verification_method: str # user or verifi
+
+# Leaderboard entry schema
+class LeaderboardEntry(BaseModel):
+    user_id: str
+    tasks_completed: int
+    xrp_earned: float
+    eTask_earned: float
