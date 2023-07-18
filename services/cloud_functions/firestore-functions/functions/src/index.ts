@@ -644,7 +644,7 @@ exports.createXRPPaymentRequest = onDocumentCreated(
         const xrplUrl = process.env.PAYMENTREQUEST || "";
         const response = await axios.post(xrplUrl, rewardJsonMap);
 
-        return response; 
+        return response;
       } else {
         console.log("Task not verified");
         return null;
@@ -657,6 +657,7 @@ exports.createXRPPaymentRequest = onDocumentCreated(
 );
 
 exports.deleteTaskAfterSuccessfulPayment = onDocumentCreated(
+  // TODO: update collection for production
   "test_xumm_callbacks/{doc}",
   async (event) => {
     try {
@@ -683,6 +684,10 @@ exports.deleteTaskAfterSuccessfulPayment = onDocumentCreated(
             .collection("test_paid_tasks")
             .doc(taskEventDocData.custom_meta.blob.task_id)
             .set(taskData!);
+          db
+            .collection("test_paid_tasks")
+            .doc(taskEventDocData.custom_meta.blob.task_id)
+            .update({"rewarded": true}!);
 
           // Delete the original document in test_tasks
           await db
@@ -704,6 +709,29 @@ exports.deleteTaskAfterSuccessfulPayment = onDocumentCreated(
       return null;
     } catch (error) {
       console.error("Error deleting task:", error);
+      return null;
+    }
+  }
+);
+
+exports.updateLeaderboard = onDocumentCreated(
+  // TODO: update collection for production
+  "test_paid_tasks/{doc}",
+  async (event) => {
+    try {
+      const snapshot = event.data;
+      if (!snapshot) {
+        console.log("No data associated with test paid task");
+        return;
+      }
+      const paidTaskData = snapshot;
+
+      const taskManagementUrl = process.env.UPDATELEADERBOARD || "";
+      // Make an API call to the task management service
+      axios.post(taskManagementUrl, paidTaskData);
+      return null;
+    } catch (error) {
+      console.error("Error updating leaderboard:", error);
       return null;
     }
   }
