@@ -152,9 +152,9 @@ async def task_func(request: TaskVerified):
 async def task_func(request: TaskCreated):
     try:
         response = update_leaderboard(request)
-        print("message: {response}")
+        return {"message": response}
     except Exception as e:
-        print("error: {e.message}")
+        return {"error": str(e)}
 
 
 @app.get("/tasks")

@@ -216,7 +216,7 @@ def write_event_to_firestore(response):
 
 def update_leaderboard(response):
     # Get the paid task document data
-    task_data = TaskCreated(**response)
+    task_data = response
 
     # Increment the task count for the user in the leaderboard
     leaderboard_ref = db.collection('test_leaderboard').document(task_data.user_id)
