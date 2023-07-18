@@ -16,7 +16,7 @@ def test_hello(client):
 @pytest.fixture
 def test_task_created(client):
     payload = {
-        "task_title": "Task 1",
+        "task_title": "Test Task 1",
         "task_description": "Description of Task 1",
         "task_id": "12345",
         "expiration_date": 1678924800,
