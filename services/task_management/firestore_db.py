@@ -215,42 +215,47 @@ def write_event_to_firestore(response):
 
 
 def update_leaderboard(response):
-    # Get the paid task document data
-    task_data = response
+    try:
+        # Get the paid task document data
+        task_data = response
 
-    # Increment the task count for the user in the leaderboard
-    leaderboard_ref = db.collection('test_leaderboard').document(task_data.user_id)
-    leaderboard_entry = leaderboard_ref.get()
+        # Increment the task count for the user in the leaderboard
+        leaderboard_ref = db.collection('test_leaderboard').document(task_data.user_id)
+        leaderboard_entry = leaderboard_ref.get()
 
-    if leaderboard_entry.exists:
-        # Update existing entry
-        current_tasks_completed = leaderboard_entry.get('tasks_completed')
-        tasks_completed = current_tasks_completed + 1
-        if (task_data.reward_currency == 'XRP'):
-            xrp_earned = task_data.reward_amount
-        elif (task_data.reward_currency == 'eTask'):
-            eTask_earned = task_data.reward_amount
-        leaderboard_ref.update({
-            'tasks_completed': tasks_completed,
-            'eTask_earned': eTask_earned,
-            'xrp_earned': xrp_earned,
-            'lastUpdated': firestore.SERVER_TIMESTAMP
+        if leaderboard_entry.exists:
+            # Update existing entry
+            current_tasks_completed = leaderboard_entry.get("tasks_completed")
+            tasks_completed = current_tasks_completed + 1
+            if task_data.reward_currency == 'XRP':
+                xrp_earned = task_data.reward_amount + leaderboard_entry.get("xrp_earned")
+                eTask_earned = leaderboard_entry.get("eTask_earned")
+            elif task_data.reward_currency == 'eTask':
+                eTask_earned = task_data.reward_amount + leaderboard_entry.get("eTask_earned")
+                xrp_earned = leaderboard_entry.get("xrp_earned")
+            leaderboard_ref.update({
+                'tasks_completed': tasks_completed,
+                'eTask_earned': eTask_earned,
+                'xrp_earned': xrp_earned,
+                'lastUpdated': firestore.SERVER_TIMESTAMP
             })
-    else:
-        # Create new entry
-        if (task_data.reward_currency == 'XRP'):
-            xrp_earned = task_data.reward_amount
-            eTask_earned = 0.0
-        elif(task_data.reward_currency == 'eTask'):
-            eTask_earned = task_data.reward_amount
-            xrp_earned = 0.0
-        leaderboard_entry_data = LeaderboardEntry(
-            user_id=task_data.user_id,
-            tasks_completed=1,
-            xrp_earned=xrp_earned,
-            eTask_earned=eTask_earned
-        )
-        leaderboard_ref.set(leaderboard_entry_data.dict())
-        leaderboard_ref.update({'lastUpdated': firestore.SERVER_TIMESTAMP})
+        else:
+            # Create new entry
+            if task_data.reward_currency == 'XRP':
+                xrp_earned = task_data.reward_amount
+                eTask_earned = 0.0
+            elif task_data.reward_currency == 'eTask':
+                eTask_earned = task_data.reward_amount
+                xrp_earned = 0.0
+            leaderboard_entry_data = LeaderboardEntry(
+                user_id=task_data.user_id,
+                tasks_completed=1,
+                xrp_earned=xrp_earned,
+                eTask_earned=eTask_earned
+            )
+            leaderboard_ref.set(leaderboard_entry_data.dict())
+            leaderboard_ref.update({'lastUpdated': firestore.SERVER_TIMESTAMP})
 
-    print(f"Leaderboard updated for user {task_data.user_id}")
+        return f"Leaderboard updated for user {task_data.user_id}"
+    except Exception as e:
+        return f"Error updating leaderboard: {str(e)}"
