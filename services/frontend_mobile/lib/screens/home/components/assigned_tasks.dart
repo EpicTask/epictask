@@ -89,7 +89,7 @@ class _AssignedTasksWidgetState extends State<AssignedTasksWidget> {
                         height: SizeConfig.screenHeight * .2,
                       );
                     } else {
-                      return TaskCard(task: taskData[index]);
+                      return TaskCardAssigned(task: taskData[index]);
                     }
                   },
                 ),
