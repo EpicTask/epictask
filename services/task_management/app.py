@@ -8,10 +8,9 @@ from fastapi import FastAPI, Request
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
 from starlette.middleware.cors import CORSMiddleware
-from firestore_db import create_task, update_task, delete_task, assign_task, completed_task, get_tasks, write_event_to_firestore
+from firestore_db import create_task, update_task, delete_task, assign_task, completed_task, get_tasks, write_event_to_firestore, update_leaderboard
 from schema import (TaskAssigned, TaskCreated, TaskCancelled, TaskCompleted,
                     TaskCommentAdded, TaskEvent, TaskExpired, TaskRatingUpdate, TaskRewarded, TaskUpdated, TaskVerified)
-from services.task_management.firestore_db import update_leaderboard
 
 app = FastAPI()
 
@@ -39,6 +38,8 @@ async def hello(request: Request):
     return templates.TemplateResponse("index.html", {"request": request, "message": message})
 
 # Create Task Event
+
+
 @app.post('/TaskEvent')
 async def task_func(request: TaskEvent):
     try:
@@ -136,6 +137,7 @@ async def task_func(request: TaskUpdated):
     except Exception as e:
         return {"error": str(e)}
 
+
 @app.post('/TaskVerified')
 async def task_func(request: TaskVerified):
     try:
@@ -145,6 +147,7 @@ async def task_func(request: TaskVerified):
     except Exception as e:
         return {"error": str(e)}
 
+
 @app.post('/UpdateLeaderboard')
 async def task_func(request: TaskCreated):
     try:
@@ -152,7 +155,8 @@ async def task_func(request: TaskCreated):
         print("message: {response}")
     except Exception as e:
         print("error: {e.message}")
-    
+
+
 @app.get("/tasks")
 async def get_all_tasks(user_id: str):
     try:

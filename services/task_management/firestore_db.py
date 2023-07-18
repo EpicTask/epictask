@@ -219,7 +219,7 @@ def update_leaderboard(response):
     task_data = TaskCreated(**response)
 
     # Increment the task count for the user in the leaderboard
-    leaderboard_ref = db.collection('leaderboard').document(task_data.user_id)
+    leaderboard_ref = db.collection('test_leaderboard').document(task_data.user_id)
     leaderboard_entry = leaderboard_ref.get()
 
     if leaderboard_entry.exists:
