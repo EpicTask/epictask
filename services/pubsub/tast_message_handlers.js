@@ -4,7 +4,7 @@ import axios from 'axios';
 function handleTaskCreatedMessage(message) {
   const documentData = JSON.parse(message.data.toString());
   // Get the task management service URL from environment variable
-  const taskManagementUrl = process.env.TASKCREATED || '';
+  const taskManagementUrl = process.env._TASKCREATED || '';
 
   // Make an API call to the task management service
   axios
@@ -23,7 +23,7 @@ function handleTaskCreatedMessage(message) {
 function handleTaskAssignedMessage(message) {
   const documentData = JSON.parse(message.data.toString());
   // Get the task management service URL from environment variable
-  const taskManagementUrl = process.env.TASKASSIGNED || '';
+  const taskManagementUrl = process.env._TASKASSIGNED || '';
 
   // Make an API call to the task management service
   axios
@@ -44,7 +44,7 @@ function handleTaskUpdatedMessage(message) {
   const documentData = JSON.parse(message.data.toString());
   console.log(documentData);
   // Get the task management service URL from environment variable
-  const taskManagementUrl = process.env.TASKUPDATED || '';
+  const taskManagementUrl = process.env._TASKUPDATED || '';
 
   // Make an API call to the task management service
   axios
@@ -64,7 +64,7 @@ function handleTaskUpdatedMessage(message) {
 function handleTaskCompletedMessage(message) {
   const documentData = JSON.parse(message.data.toString());
   // Get the task management service URL from environment variable
-  const taskManagementUrl = process.env.TASKCOMPLETED || '';
+  const taskManagementUrl = process.env._TASKCOMPLETED || '';
 
   // Make an API call to the task management service
   axios
@@ -84,7 +84,7 @@ function handleTaskCompletedMessage(message) {
 function handleTaskCancelledMessage(message) {
   const documentData = JSON.parse(message.data.toString());
   // Get the task management service URL from environment variable
-  const taskManagementUrl = process.env.TASKCANCELLED || '';
+  const taskManagementUrl = process.env._TASKCANCELLED || '';
 
   // Make an API call to the task management service
   axios
@@ -104,7 +104,7 @@ function handleTaskCancelledMessage(message) {
 function handleTaskCommentAddedMessage(message) {
   const documentData = JSON.parse(message.data.toString());
   // Get the task management service URL from environment variable
-  const taskManagementUrl = process.env.TASKCOMMENTADDED || '';
+  const taskManagementUrl = process.env._TASKCOMMENTADDED || '';
 
   // Make an API call to the task management service
   axios
@@ -124,7 +124,7 @@ function handleTaskCommentAddedMessage(message) {
 function handleTaskExpiredMessage(message) {
   const documentData = JSON.parse(message.data.toString());
   // Get the task management service URL from environment variable
-  const taskManagementUrl = process.env.TASKEXPIRED || '';
+  const taskManagementUrl = process.env._TASKEXPIRED || '';
 
   // Make an API call to the task management service
   axios
@@ -144,7 +144,7 @@ function handleTaskExpiredMessage(message) {
 function handleTaskRewardedMessage(message) {
   const documentData = JSON.parse(message.data.toString());
   // Get the task management service URL from environment variable
-  const taskManagementUrl = process.env.TASKREWARDED || '';
+  const taskManagementUrl = process.env._TASKREWARDED || '';
 
   // Make an API call to the task management service
   axios
@@ -164,7 +164,7 @@ function handleTaskRewardedMessage(message) {
 function handleTaskRatingUpdateMessage(message) {
   const documentData = JSON.parse(message.data.toString());
   // Get the task management service URL from environment variable
-  const taskManagementUrl = process.env.TASKRATINGUPDATE || '';
+  const taskManagementUrl = process.env._TASKRATINGUPDATE || '';
 
   // Make an API call to the task management service
   axios
@@ -184,7 +184,7 @@ function handleTaskRatingUpdateMessage(message) {
 function handleTaskVerifiedMessage(message) {
   const documentData = JSON.parse(message.data.toString());
   // Get the task management service URL from environment variable
-  const taskManagementUrl = process.env.TASKVERIFIED || '';
+  const taskManagementUrl = process.env._TASKVERIFIED || '';
 
   // Make an API call to the task management service
   axios
@@ -204,7 +204,7 @@ function handleTaskVerifiedMessage(message) {
 function handleRecommendationGeneratedMessage(message) {
   const documentData = JSON.parse(message.data.toString());
   // Get the task management service URL from environment variable
-  const taskManagementUrl = process.env.RECOMMENDATIONGENERATED || '';
+  const taskManagementUrl = process.env._RECOMMENDATIONGENERATED || '';
 
   // Make an API call to the task management service
   axios

@@ -4,7 +4,7 @@ import axios from 'axios';
 function handleUserSignInMessage(message) {
   const documentData = JSON.parse(message.data.toString());
   // Get the task management service URL from environment variable
-  const userManagementUrl = process.env.USERSIGNIN || '';
+  const userManagementUrl = process.env._USERSIGNIN || '';
 
   // Make an API call to the task management service
   axios
@@ -24,7 +24,7 @@ function handleUserSignInMessage(message) {
 function handleUserForgotPasswordMessage(message) {
   const documentData = JSON.parse(message.data.toString());
   // Get the task management service URL from environment variable
-  const userManagementUrl = process.env.USERFORGOTPASSWORD || '';
+  const userManagementUrl = process.env._USERFORGOTPASSWORD || '';
 
   // Make an API call to the task management service
   axios
@@ -44,7 +44,7 @@ function handleUserForgotPasswordMessage(message) {
 function handleUserWalletConnectedMessage(message) {
   const documentData = JSON.parse(message.data.toString());
   // Get the task management service URL from environment variable
-  const userManagementUrl = process.env.USERWALLETCONNECTED || '';
+  const userManagementUrl = process.env._USERWALLETCONNECTED || '';
 
   // Make an API call to the task management service
   axios
@@ -64,7 +64,7 @@ function handleUserWalletConnectedMessage(message) {
 function handleUserAuthenticationMessage(message) {
   const documentData = JSON.parse(message.data.toString());
   // Get the task management service URL from environment variable
-  const userManagementUrl = process.env.USERAUTHENTICATION || '';
+  const userManagementUrl = process.env._USERAUTHENTICATION || '';
 
   // Make an API call to the task management service
   axios
@@ -84,7 +84,7 @@ function handleUserAuthenticationMessage(message) {
 function handleUserProfileUpdateMessage(message) {
   const documentData = JSON.parse(message.data.toString());
   // Get the task management service URL from environment variable
-  const userManagementUrl = process.env.USERPROFILEUPDATE || '';
+  const userManagementUrl = process.env._USERPROFILEUPDATE || '';
 
   // Make an API call to the task management service
   axios
@@ -104,7 +104,7 @@ function handleUserProfileUpdateMessage(message) {
 function handleUserAccountDeletionMessage(message) {
   const documentData = JSON.parse(message.data.toString());
   // Get the task management service URL from environment variable
-  const userManagementUrl = process.env.USERACCOUNTDELETION || '';
+  const userManagementUrl = process.env._USERACCOUNTDELETION || '';
 
   // Make an API call to the task management service
   axios
@@ -124,7 +124,7 @@ function handleUserAccountDeletionMessage(message) {
 function handleUserInteractionMessage(message) {
   const documentData = JSON.parse(message.data.toString());
   // Get the task management service URL from environment variable
-  const userManagementUrl = process.env.USERINTERACTION || '';
+  const userManagementUrl = process.env._USERINTERACTION || '';
 
   // Make an API call to the task management service
   axios
@@ -144,7 +144,7 @@ function handleUserInteractionMessage(message) {
 function handleUserVerifiedMessage(message) {
   const documentData = JSON.parse(message.data.toString());
   // Get the task management service URL from environment variable
-  const userManagementUrl = process.env.USERVERIFIED || '';
+  const userManagementUrl = process.env._USERVERIFIED || '';
 
   // Make an API call to the task management service
   axios
@@ -164,7 +164,7 @@ function handleUserVerifiedMessage(message) {
 function handleUserRegisteredMessage(message) {
   const documentData = JSON.parse(message.data.toString());
   // Get the task management service URL from environment variable
-  const userManagementUrl = process.env.USERREGISTERED || '';
+  const userManagementUrl = process.env._USERREGISTERED || '';
 
   // Make an API call to the task management service
   axios
