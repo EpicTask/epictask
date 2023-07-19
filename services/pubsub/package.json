@@ -1,0 +1,36 @@
+{
+  "name": "pubsub",
+  "version": "0.0.1",
+  "description": "PubSub service for EpicTask",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "start": "node index.js",
+    "lint": "eslint **.js",
+    "fix": "eslint --fix *.js",
+    "test": "mocha test/*.test.js --check-leaks --timeout 5000"
+  },
+  "author": "Randy Nolden",
+  "license": "0BSD",
+  "engines": {
+    "node": ">=16"
+  },
+  "dependencies": {
+    "@google-cloud/pubsub": "3.7.1",
+    "axios": "^1.4.0",
+    "cors": "^2.8.5",
+    "dotenv": "^16.3.1",
+    "express": "^4.17.1",
+    "handlebars": "^4.7.4"
+  },
+  "devDependencies": {
+    "eslint": "8.29.0",
+    "eslint-config-prettier": "8.5.0",
+    "eslint-plugin-node": "11.1.0",
+    "eslint-plugin-prettier": "4.2.1",
+    "eslint-plugin-promise": "6.1.1",
+    "gaxios": "5.0.2",
+    "mocha": "10.1.0",
+    "prettier": "2.8.1"
+  }
+}
