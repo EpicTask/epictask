@@ -23,7 +23,7 @@ app.get('/', async (req, res) => {
 app.post('/event', async (req, res) => {
   try {
     const response = req.body;
-    const data = eventHandler(response);
+    const data = eventHandler(JSON.stringify(response));
     res.status(201).json({message: data});
   } catch (error) {
     console.log('Error: ', error);
