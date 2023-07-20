@@ -8,7 +8,8 @@
     "start": "node index.js",
     "lint": "eslint **.js",
     "fix": "eslint --fix *.js",
-    "test": "mocha test/*.test.js --check-leaks --timeout 5000"
+    "test": "mocha test/*.test.js --check-leaks --timeout 5000",
+    "create-env": "printenv > .env"
   },
   "author": "Randy Nolden",
   "license": "0BSD",
