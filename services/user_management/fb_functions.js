@@ -46,7 +46,7 @@ async function saveUserInteraction(response) {
 
 async function profileUpdate(eventData) {
   try {
-    const userRef = collection(db, 'users', eventData.user_id);
+    const userRef = doc(db, 'users', eventData.user_id);
     // Save the update to Firestore
     await updateDoc(userRef, eventData.fields);
     console.log('Event saved successfully');
