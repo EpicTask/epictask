@@ -2,9 +2,7 @@ import express, {json} from 'express';
 import {eventHandler} from './event_handler.js';
 // import * as dotenv from 'dotenv';
 import cors from 'cors';
-// import {PubSub} from '@google-cloud/pubsub';
 
-// const _pubsub = new PubSub({projectId: 'task-coin-384722'});
 // dotenv.config();
 const app = express();
 
