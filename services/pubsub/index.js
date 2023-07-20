@@ -23,7 +23,6 @@ app.get('/', async (req, res) => {
 app.post('/event', async (req, res) => {
   try {
     const response = req.body;
-    console.log(process.env.TASKCREATED);
     const data = eventHandler(response);
     res.status(201).json({message: data});
   } catch (error) {
