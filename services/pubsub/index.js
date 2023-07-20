@@ -1,9 +1,9 @@
 import express, {json} from 'express';
 import {eventHandler} from './event_handler.js';
-// import * as dotenv from 'dotenv';
+import * as dotenv from 'dotenv';
 import cors from 'cors';
 
-// dotenv.config();
+dotenv.config();
 const app = express();
 
 app.use(
@@ -23,6 +23,7 @@ app.get('/', async (req, res) => {
 app.post('/event', async (req, res) => {
   try {
     const response = req.body;
+    console.log(process.env.TASKCREATED);
     const data = eventHandler(response);
     res.status(201).json({message: data});
   } catch (error) {
