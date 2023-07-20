@@ -1,6 +1,6 @@
 import express, {json} from 'express';
 import bodyParser from 'body-parser';
-// import {eventHandler} from './event_handler.js';
+import {eventHandler} from './event_handler.js';
 import * as dotenv from 'dotenv';
 import cors from 'cors';
 
@@ -24,9 +24,9 @@ app.get('/', async (req, res) => {
 app.post('/event', async (req, res) => {
   try {
     const response = req.body;
-    console.log(response);
-    // const data = eventHandler(response);
-    res.status(201).json({message: response});
+    // console.log(response);
+    const data = eventHandler(response);
+    res.status(201).json({message: data});
   } catch (error) {
     console.log('Error: ', error);
     res.status(500).json({error: 'Failed to direct event'});
