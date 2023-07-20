@@ -121,23 +121,9 @@ async function publishMessage(topicName, jsonData) {
         console.error(`Error: ${err.message}, Message ID: ${messageId}`);
       }
     };
-
     topic.publishMessage({data}, callback);
   } catch (error) {
-    if (error.code === 404) {
-      // Topic not found, create it
-      const createdTopic = _pubsub.createTopic(topicName);
-      createdTopic
-        .then(() => {
-          // Topic created, publish the message again
-          publishMessage(topicName, jsonData);
-        })
-        .catch((error) => {
-          console.error('An error occurred while creating topic:', error);
-        });
-    } else {
-      console.error('An error occurred while publishing message:', error);
-    }
+    console.error('An error occurred while publishing message:', error);
   }
 }
 
@@ -182,7 +168,6 @@ subscribeToTopic('UserVerified', handleUserVerifiedMessage);
 subscribeToTopic('UserRegistered', handleUserRegisteredMessage);
 
 // Keep the program running to receive messages
-setInterval(() => {}, 1000);
 
 export {eventHandler};
 
