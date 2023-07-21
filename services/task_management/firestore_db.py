@@ -64,6 +64,30 @@ def update_task(event_type, response):
         print(f"Error writing to Firestore: {e}")
         return None
 
+def update_task_fields(event_type, response):
+    try:
+        # Create a reference to the "test_task_events" collection
+        collection_ref = db.collection('test_tasks')
+
+        # Convert the TaskEvent object to a JSON string
+        data = response.dict()
+
+        doc_id = data["task_id"]
+        # Generate a custom document ID
+        doc_ref = collection_ref.document(doc_id)
+
+        fields = data["fields"]
+        # Update the document with the generated ID
+        doc_ref.update(fields)
+
+        # Return the custom document ID
+        return doc_id
+
+    except Exception as e:
+        # Handle any errors that occur during the Firestore operation
+        print(f"Error writing to Firestore: {e}")
+        return None
+
 
 def assign_task(event_type, response):
     try:
@@ -219,8 +243,12 @@ def update_leaderboard(response):
         # Get the paid task document data
         task_data = response
 
+        # Get the first value from assigned_to_ids array
+        assigned_to_id = task_data.assigned_to_ids[0]
+
         # Increment the task count for the user in the leaderboard
-        leaderboard_ref = db.collection('test_leaderboard').document(task_data.user_id)
+        leaderboard_ref = db.collection('test_leaderboard').document(assigned_to_id)
+
         leaderboard_entry = leaderboard_ref.get()
 
         if leaderboard_entry.exists:
