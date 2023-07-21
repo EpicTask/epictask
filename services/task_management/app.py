@@ -8,7 +8,7 @@ from fastapi import FastAPI, Request
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
 from starlette.middleware.cors import CORSMiddleware
-from firestore_db import create_task, update_task, delete_task, assign_task, completed_task, get_tasks, write_event_to_firestore, update_leaderboard
+from firestore_db import create_task, update_task, update_task_fields, delete_task, assign_task, completed_task, get_tasks, write_event_to_firestore, update_leaderboard
 from schema import (TaskAssigned, TaskCreated, TaskCancelled, TaskCompleted,
                     TaskCommentAdded, TaskEvent, TaskExpired, TaskRatingUpdate, TaskRewarded, TaskUpdated, TaskVerified)
 
@@ -132,7 +132,7 @@ async def task_func(request: TaskRewarded):
 async def task_func(request: TaskUpdated):
     try:
         event_type = 'TaskUpdated'
-        response = update_task(event_type, request)
+        response = update_task_fields(event_type, request)
         return {"message": response}
     except Exception as e:
         return {"error": str(e)}
