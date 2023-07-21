@@ -7,7 +7,7 @@ import '../bloc/generics/generic_bloc.dart';
 import '../models/leaderboard_model/leaderboard_model.dart';
 import '../screens/home/home_screen.dart';
 
-/// Interface to our 'Leaderboard' Firebase collection.
+/// Interface to our Leaderboard Firebase collection.
 class LeaderboardRepository extends GenericBlocRepository<LeaderboardModel> {
   @override
   Stream<List<LeaderboardModel>> data() {
@@ -24,7 +24,6 @@ class LeaderboardRepository extends GenericBlocRepository<LeaderboardModel> {
             snapshot.docs.map((QueryDocumentSnapshot<Object> doc) {
           return LeaderboardModel.fromJson(doc.data() as Map<String, dynamic>);
         }).toList();
-        print(leaderList);
         return leaderList;
       } catch (e) {
         if (kDebugMode) {

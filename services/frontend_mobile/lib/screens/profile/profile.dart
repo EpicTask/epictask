@@ -11,6 +11,7 @@ import 'components/bloc/bloc.dart';
 import 'components/bloc/event.dart';
 import 'components/bloc/state.dart';
 
+// Profile Page
 class ProfilePage extends StatelessWidget {
   const ProfilePage({Key? key}) : super(key: key);
 
@@ -113,8 +114,7 @@ class ProfilePage extends StatelessWidget {
                       child: TextField(
                         enabled: false,
                         decoration: const InputDecoration(
-                          hintText:
-                              '*************', 
+                          hintText: '*************',
                         ),
                         style: titleLarge(context),
                         obscureText: true,

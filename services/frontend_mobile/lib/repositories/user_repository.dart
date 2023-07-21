@@ -7,12 +7,9 @@ import 'package:flutter/foundation.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 
-// import '../../services/firebase_functions/cloud_functions.dart';
-
 class UserRepository {
   UserRepository() : _firebaseAuth = FirebaseAuth.instance;
   final FirebaseAuth _firebaseAuth;
- 
 
   Future<List<dynamic>> signOut() async {
     return Future.wait([_firebaseAuth.signOut()]);
@@ -107,7 +104,7 @@ class UserRepository {
   }
 
   Future<UserCredential?> signInWithGoogle() async {
-     final GoogleSignIn googleSignIn = GoogleSignIn();
+    final GoogleSignIn googleSignIn = GoogleSignIn();
     try {
       final GoogleSignInAccount? googleSignInAccount =
           await googleSignIn.signIn();

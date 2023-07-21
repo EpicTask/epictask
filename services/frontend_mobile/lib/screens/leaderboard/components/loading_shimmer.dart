@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 
 import '../../../services/service_config/service_config.dart';
 
+// Shimmer widget
 Widget loadingShimmer() {
   return ListView.builder(
       itemCount: 10,

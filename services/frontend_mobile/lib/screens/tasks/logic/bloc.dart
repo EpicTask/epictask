@@ -1,13 +1,10 @@
 // Event for submitting the form
-import 'dart:io';
-import 'package:flutter/foundation.dart';
 
 import 'package:bloc/bloc.dart';
 import 'package:epictask/models/task_event_model/task_event.dart';
 import 'package:epictask/models/task_model/task_model.dart';
 import 'package:epictask/services/functions/firebase_functions.dart';
 import 'package:equatable/equatable.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 
 class TaskFormSubmitted extends Equatable {
   final TaskModel task;

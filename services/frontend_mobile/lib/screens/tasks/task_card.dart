@@ -1,6 +1,5 @@
 import 'dart:async';
 
-import 'package:epictask/services/functions/firebase_functions.dart';
 import 'package:epictask/services/navigation/navigation.dart';
 import 'package:epictask/services/service_config/service_config.dart';
 import 'package:epictask/services/ui/text_styles.dart';
@@ -10,6 +9,7 @@ import '../../models/task_model/task_model.dart';
 import '../users/all_users_modal.dart';
 import 'logic/logic.dart';
 
+// UI Cards for Open Tasks and Assigned Tasks
 class TaskCard extends StatelessWidget {
   final TaskModel task;
 
@@ -63,9 +63,8 @@ class TaskCard extends StatelessWidget {
                   ElevatedButton(
                     onPressed: () {
                       completeTaskAndInitiatePayment(task);
-                      Timer(Duration(seconds: 3), () {
+                      Timer(const Duration(seconds: 3), () {
                         router.goNamed('payment', extra: task.task_id);
-                        
                       });
                       router.goNamed('loading');
                     },

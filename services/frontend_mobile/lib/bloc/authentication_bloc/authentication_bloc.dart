@@ -1,14 +1,11 @@
-import 'package:epictask/services/functions/firebase_functions.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-
-
-
 
 import '../../repositories/user_repository.dart';
 import 'authentication_event.dart';
 import 'authentication_state.dart';
 
+// Authentication Bloc
 class AuthenticationBloc
     extends Bloc<AuthenticationEvent, AuthenticationState> {
   AuthenticationBloc({required UserRepository userRepository})
@@ -39,7 +36,7 @@ class AuthenticationBloc
     on<AuthenticationLoggedOut>((AuthenticationLoggedOut event,
         Emitter<AuthenticationState> emit) async {
       _userRepository.signOut();
-      
+
       emit(AuthenticationFailure());
     });
   }

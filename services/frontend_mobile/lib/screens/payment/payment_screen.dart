@@ -1,4 +1,4 @@
-import 'dart:async';
+// ignore_for_file: non_constant_identifier_names
 
 import 'package:epictask/screens/payment/logic/logic.dart';
 import 'package:epictask/screens/users/components/loading_widget.dart';
@@ -8,6 +8,7 @@ import 'package:epictask/services/ui/text_styles.dart';
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+// Payment Screen
 class PaymentScreen extends StatelessWidget {
   const PaymentScreen({super.key, required this.task_id});
 
@@ -15,7 +16,6 @@ class PaymentScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    print(task_id);
     return StreamBuilder<List<String?>>(
       stream: payloadUrl(task_id),
       builder: (context, snapshot) {
@@ -46,8 +46,8 @@ class PaymentScreen extends StatelessWidget {
                   onPressed: () {
                     // Launch the URL in data['next']['always']
                     if (url != null) {
-                      final Uri _url = Uri.parse(url);
-                      launchUrl(_url);
+                      final Uri url0 = Uri.parse(url);
+                      launchUrl(url0);
                     }
                   },
                   child: const Text("Didn't receive notification?"),
@@ -56,8 +56,8 @@ class PaymentScreen extends StatelessWidget {
             );
           } else {
             // Automatically launch the URL
-            final Uri _url = Uri.parse(url!);
-            launchUrl(_url);
+            final Uri url0 = Uri.parse(url!);
+            launchUrl(url0);
 
             return const Loading(); // Return the Loading widget while the URL is launching
           }

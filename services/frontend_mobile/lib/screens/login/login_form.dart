@@ -19,10 +19,10 @@ class LoginForm extends StatefulWidget {
   const LoginForm({Key? key}) : super(key: key);
 
   @override
-  _LoginFormState createState() => _LoginFormState();
+  LoginFormState createState() => LoginFormState();
 }
 
-class _LoginFormState extends State<LoginForm> {
+class LoginFormState extends State<LoginForm> {
   late TextEditingController _emailController;
   late TextEditingController _passwordController;
   late LoginBloc _loginBloc;
@@ -88,20 +88,20 @@ class _LoginFormState extends State<LoginForm> {
     _loginBloc.add(LoginWithGooglePressed());
   }
 
-  void _showSnackBar(BuildContext context, String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: <Widget>[
-            Text(message),
-            const Icon(Icons.error),
-          ],
-        ),
-        backgroundColor: Colors.blueGrey[200],
-      ),
-    );
-  }
+  // void _showSnackBar(BuildContext context, String message) {
+  //   ScaffoldMessenger.of(context).showSnackBar(
+  //     SnackBar(
+  //       content: Row(
+  //         mainAxisAlignment: MainAxisAlignment.spaceBetween,
+  //         children: <Widget>[
+  //           Text(message),
+  //           const Icon(Icons.error),
+  //         ],
+  //       ),
+  //       backgroundColor: Colors.blueGrey[200],
+  //     ),
+  //   );
+  // }
 
   void _showLoggingInSnackBar(BuildContext context) {
     ScaffoldMessenger.of(context).showSnackBar(
@@ -256,7 +256,7 @@ class _LoginFormState extends State<LoginForm> {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: <Widget>[
             const Image(
-              image: AssetImage(google_logo),
+              image: AssetImage(googleLogo),
               height: 20.0,
             ),
             Text(

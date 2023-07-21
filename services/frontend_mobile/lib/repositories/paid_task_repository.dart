@@ -8,9 +8,7 @@ import '../bloc/generics/generic_bloc.dart';
 import '../models/task_model/task_model.dart';
 import '../screens/home/home_screen.dart';
 
-
-
-/// Interface to our 'Task' Firebase collection.
+/// Interface to our Paid Tasks Firebase collection.
 class PaidTaskRepository extends GenericBlocRepository<TaskModel> {
   String uid = FirebaseAuth.instance.currentUser!.uid;
 

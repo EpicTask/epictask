@@ -1,5 +1,6 @@
 import 'package:epictask/models/user_event_model/user_event.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../repositories/user_repository.dart';
@@ -50,7 +51,9 @@ class LoginBloc extends Bloc<LoginEvent, LoginState> {
             additional_data: data.toJson());
         FirestoreDatabase().writeUserEvent(newEvent);
         emit(LoginState.failure());
-        print('Failed to login: $_');
+        if (kDebugMode) {
+          print('Failed to login: $_');
+        }
       }
     });
     on<LoginWithApplePressed>(

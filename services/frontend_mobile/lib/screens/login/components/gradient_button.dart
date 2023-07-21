@@ -1,10 +1,14 @@
 import 'package:flutter/material.dart';
 
-
+// UI Widget for Login Screen Buttons
 class GradientButton extends StatelessWidget {
-
   const GradientButton(
-      {super.key, this.width, this.height, this.onPressed, this.text, this.icon});
+      {super.key,
+      this.width,
+      this.height,
+      this.onPressed,
+      this.text,
+      this.icon});
   final double? width;
   final double? height;
   final Function()? onPressed;
@@ -19,7 +23,10 @@ class GradientButton extends StatelessWidget {
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(80),
         gradient: const LinearGradient(
-          colors: <Color>[Colors.blueAccent, Colors.white,],
+          colors: <Color>[
+            Colors.blueAccent,
+            Colors.white,
+          ],
           // colors: [Colors.greenAccent, Color(0xff8f93ea)],
         ),
       ),

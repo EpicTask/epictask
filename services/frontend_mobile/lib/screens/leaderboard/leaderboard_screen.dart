@@ -13,6 +13,7 @@ import '../../services/ui/text_styles.dart';
 import '../home/home_screen.dart';
 import 'components/loading_shimmer.dart';
 
+// Leaderboard Screen
 class LeaderboardScreen extends StatelessWidget {
   const LeaderboardScreen({super.key});
 
@@ -99,11 +100,11 @@ class LeaderboardScreenStateState extends State<LeaderboardScreenState> {
                   Padding(
                     padding: const EdgeInsets.all(8.0),
                     child: Text(
-                            'Leaderboard',
-                            style: headlineMedium(context),
-                          ),
+                      'Leaderboard',
+                      style: headlineMedium(context),
+                    ),
                   ),
-                  Container(height: 2,color:Colors.blueAccent),
+                  Container(height: 2, color: Colors.blueAccent),
                   Expanded(
                     child: ListView.builder(
                       controller: _scrollController,
@@ -140,8 +141,8 @@ class LeaderboardScreenStateState extends State<LeaderboardScreenState> {
                                 leading: const CircleAvatar(
                                   backgroundColor: Colors.amber,
                                 ),
-                                title:
-                                    Text('User: ${entry.user_id.substring(0, 5)}'),
+                                title: Text(
+                                    'User: ${entry.user_id.substring(0, 5)}'),
                                 subtitle: Text(
                                   '${entry.tasks_completed} Completed • ${entry.xrp_earned} XRP Earned • ${entry.eTask_earned} ETask Earned',
                                   style: titleMedium(context),

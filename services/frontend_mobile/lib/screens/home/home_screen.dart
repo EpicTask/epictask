@@ -20,6 +20,8 @@ import '../dashboard/dashboard.dart';
 ValueNotifier<int> paginator = ValueNotifier<int>(10);
 ValueNotifier<int> paginator2 = ValueNotifier<int>(10);
 ValueNotifier<int> paginator3 = ValueNotifier<int>(10);
+
+// Home
 class HomeScreen extends StatefulWidget {
   const HomeScreen({Key? key}) : super(key: key);
 
@@ -64,7 +66,6 @@ class _HomeScreenState extends State<HomeScreen> {
           items: const <Widget>[
             Icon(
               Icons.home,
-              
             ),
             Icon(Icons.add),
             Icon(Icons.dashboard),
@@ -89,7 +90,7 @@ class HomeWidget extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Padding(
-            padding: EdgeInsets.all(8.0),
+            padding: const EdgeInsets.all(8.0),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [

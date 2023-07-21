@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 
 import '../../../services/service_config/service_config.dart';
 
+// Shimmer effect for task cards
 class TaskCardShimmer extends StatelessWidget {
   const TaskCardShimmer({super.key});
 

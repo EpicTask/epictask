@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
+// Handles XUMM payment signing urls
 // ignore: non_constant_identifier_names
 Stream<List<String?>> payloadUrl(String task_id) {
   if (task_id.isEmpty) {
@@ -27,7 +28,10 @@ Stream<List<String?>> payloadUrl(String task_id) {
         return ['Push Notification Not Sent!', nextAlways];
       }
     } else {
-      return ['Document does not exist!','']; // Handle case when the document doesn't exist
+      return [
+        'Document does not exist!',
+        ''
+      ]; // Handle case when the document doesn't exist
     }
   });
 }

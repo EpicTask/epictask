@@ -12,6 +12,7 @@ import '../../../models/task_model/task_model.dart';
 import '../../../services/service_config/service_config.dart';
 import '../home_screen.dart';
 
+// Open Tasks Widget
 class OpenTasksWidget extends StatefulWidget {
   const OpenTasksWidget({super.key});
 
@@ -78,7 +79,9 @@ class _OpenTasksWidgetState extends State<OpenTasksWidget> {
             return SingleChildScrollView(
               child: SizedBox(
                 height: SizeConfig.screenHeight * .8,
-                width: (kIsWeb) ? SizeConfig.screenWidth*.75 : SizeConfig.screenWidth,
+                width: (kIsWeb)
+                    ? SizeConfig.screenWidth * .75
+                    : SizeConfig.screenWidth,
                 child: ListView.builder(
                   controller: _scrollController,
                   itemCount: taskData.length + 1,
@@ -86,7 +89,6 @@ class _OpenTasksWidgetState extends State<OpenTasksWidget> {
                     if (index == taskData.length) {
                       return SizedBox(
                         height: SizeConfig.screenHeight * .2,
-                        
                       );
                     } else {
                       return TaskCard(task: taskData[index]);

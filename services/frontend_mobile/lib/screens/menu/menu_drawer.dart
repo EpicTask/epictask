@@ -9,6 +9,7 @@ import '../../services/functions/firebase_functions.dart';
 import '../../services/service_config/service_config.dart';
 import '../../services/ui/text_styles.dart';
 
+// Menu Drawer
 class MenuDrawer extends StatelessWidget {
   const MenuDrawer({Key? key}) : super(key: key);
 
