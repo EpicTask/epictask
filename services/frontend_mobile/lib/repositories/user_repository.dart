@@ -3,7 +3,7 @@
 import 'dart:io';
 
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:firebase_crashlytics/firebase_crashlytics.dart';
+import 'package:flutter/foundation.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 
@@ -12,8 +12,7 @@ import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 class UserRepository {
   UserRepository() : _firebaseAuth = FirebaseAuth.instance;
   final FirebaseAuth _firebaseAuth;
-  final GoogleSignIn googleSignIn = GoogleSignIn();
-  final crashlytics = FirebaseCrashlytics.instance;
+ 
 
   Future<List<dynamic>> signOut() async {
     return Future.wait([_firebaseAuth.signOut()]);
@@ -29,7 +28,7 @@ class UserRepository {
     return _firebaseAuth.signInWithEmailAndPassword(
         email: email, password: password);
   }
-  
+
 // Reset Password
   Future<bool> resetPassword(String email) async {
     try {
@@ -39,7 +38,9 @@ class UserRepository {
         return true;
       }
     } catch (e) {
-      crashlytics.log('Error resetting password: $e');
+      if (kDebugMode) {
+        print('Error resetting password: $e');
+      }
     }
     return false;
   }
@@ -61,7 +62,7 @@ class UserRepository {
     return _firebaseAuth.currentUser?.uid;
   }
 
-  void deleteUser(){
+  void deleteUser() {
     _firebaseAuth.currentUser?.delete();
   }
 
@@ -75,7 +76,9 @@ class UserRepository {
       final result = await _firebaseAuth.signInAnonymously();
       return result;
     } catch (e) {
-      crashlytics.log('Error signing in anonymously: $e');
+      if (kDebugMode) {
+        print('Error signing in anonymously: $e');
+      }
       return null;
     }
   }
@@ -96,18 +99,20 @@ class UserRepository {
 
       return await _firebaseAuth.signInWithCredential(credential);
     } catch (e) {
-      crashlytics.log('Error in Apple sign in: $e');
+      if (kDebugMode) {
+        print('Error in Apple sign in: $e');
+      }
       return null;
     }
   }
 
   Future<UserCredential?> signInWithGoogle() async {
+     final GoogleSignIn googleSignIn = GoogleSignIn();
     try {
       final GoogleSignInAccount? googleSignInAccount =
           await googleSignIn.signIn();
       final GoogleSignInAuthentication? googleSignInAuthentication =
           await googleSignInAccount?.authentication;
-
       final AuthCredential credential = GoogleAuthProvider.credential(
         accessToken: googleSignInAuthentication?.accessToken,
         idToken: googleSignInAuthentication?.idToken,
@@ -125,7 +130,9 @@ class UserRepository {
 
       return authResult;
     } catch (e) {
-      crashlytics.log('Error in Google sign in: $e');
+      if (kDebugMode) {
+        print('Error in Google sign in: $e');
+      }
       return null;
     }
   }

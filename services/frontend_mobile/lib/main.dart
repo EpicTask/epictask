@@ -12,22 +12,18 @@ void main() async {
   await projectInitializer();
   final UserRepository userRepository = UserRepository();
   runApp(BlocProvider<AuthenticationBloc>(
-    create: (BuildContext context) =>
-        AuthenticationBloc(userRepository: userRepository),
+    create: (_) => AuthenticationBloc(userRepository: userRepository),
     child: const MyApp(),
   ));
 }
 
 class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+  const MyApp({Key? key}) : super(key: key);
 
-  // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
     return MaterialApp.router(
-      builder: (BuildContext context, Widget? widget) {
-        return responsiveWrapperBuilder(context, widget!);
-      },
+      builder: (_, widget) => responsiveWrapperBuilder(context, widget!),
       theme: themeDataBuilderDark(),
       routerConfig: router,
       debugShowCheckedModeBanner: false,

@@ -24,15 +24,15 @@ class ProfileBloc extends Bloc<ProfileEvent, ProfileState> {
     on<UpdateDisplayName>((UpdateDisplayName event, emit) {
       try {
         UserProfileUpdateEvent updates = UserProfileUpdateEvent(
-            userId: currentUserID,
+            user_id: currentUserID,
             fields: {'displayName': event.updatedDisplayName});
         UserEvent newEvent = UserEvent(
-            eventType: 'userProfileUpdate',
-            userId: currentUserID,
-            additionalData: updates.toJson());
+            event_type: 'UserProfileUpdate',
+            user_id: currentUserID,
+            additional_data: updates.toJson());
         FirestoreDatabase().writeUserEvent(newEvent);
 
-        emit(ProfileUpdated());
+        emit(ProfileInitial());
       } catch (e) {
         emit(ProfileError(e.toString()));
         if (kDebugMode) {
@@ -43,14 +43,14 @@ class ProfileBloc extends Bloc<ProfileEvent, ProfileState> {
     on<UpdatePublicAddress>((UpdatePublicAddress event, emit) {
       try {
         UserProfileUpdateEvent updates = UserProfileUpdateEvent(
-            userId: currentUserID,
+            user_id: currentUserID,
             fields: {'publicAddress': event.updatedPublicAddress});
         UserEvent newEvent = UserEvent(
-            eventType: 'userProfileUpdate',
-            userId: currentUserID,
-            additionalData: updates.toJson());
+            event_type: 'UserProfileUpdate',
+            user_id: currentUserID,
+            additional_data: updates.toJson());
         FirestoreDatabase().writeUserEvent(newEvent);
-        emit(ProfileUpdated());
+        emit(ProfileInitial());
       } catch (e) {
         emit(ProfileError(e.toString()));
         if (kDebugMode) {

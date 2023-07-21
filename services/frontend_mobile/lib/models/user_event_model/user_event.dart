@@ -47,7 +47,7 @@ class UserSignInEvent with _$UserSignInEvent {
   const factory UserSignInEvent({
     required String status,
     required bool social,
-    String? socialType,
+    String? social_type,
     @TimestampConverter() DateTime?  timestamp,
   }) = _UserSignInEvent;
 
@@ -60,8 +60,8 @@ class UserWalletConnectedEvent with _$UserWalletConnectedEvent {
   const factory UserWalletConnectedEvent({
     required String status,
     @TimestampConverter() DateTime?  timestamp,
-    required String userId,
-    required String walletType,
+    required String user_id,
+    required String wallet_type,
   }) = _UserWalletConnectedEvent;
 
   factory UserWalletConnectedEvent.fromJson(Map<String, Object?> json) =>
@@ -93,7 +93,7 @@ class UserAuthenticationEvent with _$UserAuthenticationEvent {
 @freezed
 class UserProfileUpdateEvent with _$UserProfileUpdateEvent {
   const factory UserProfileUpdateEvent({
-    required String userId,
+    required String user_id,
     required Map<String, String> fields,
   }) = _UserProfileUpdateEvent;
 
@@ -104,7 +104,7 @@ class UserProfileUpdateEvent with _$UserProfileUpdateEvent {
 @freezed
 class UserAccountDeletionEvent with _$UserAccountDeletionEvent {
   const factory UserAccountDeletionEvent({
-    required String userId,
+    required String user_id,
     String? reason,
   }) = _UserAccountDeletionEvent;
 
@@ -115,7 +115,7 @@ class UserAccountDeletionEvent with _$UserAccountDeletionEvent {
 @freezed
 class UserInteractionEvent with _$UserInteractionEvent {
   const factory UserInteractionEvent({
-    required String userId,
+    required String user_id,
     required String interaction,
   }) = _UserInteractionEvent;
 
@@ -126,11 +126,11 @@ class UserInteractionEvent with _$UserInteractionEvent {
 @freezed
 class UserEvent with _$UserEvent {
   const factory UserEvent({
-    String? eventId,
-    required String eventType,
-    required String userId,
+    String? event_id,
+    required String event_type,
+    required String user_id,
     @TimestampConverter() DateTime?  timestamp,
-    Map<String, Object?>? additionalData,
+    Map<String, Object?>? additional_data,
   }) = _UserEvent;
 
   factory UserEvent.fromJson(Map<String, Object?> json) =>

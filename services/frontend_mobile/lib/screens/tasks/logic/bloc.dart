@@ -1,4 +1,7 @@
 // Event for submitting the form
+import 'dart:io';
+import 'package:flutter/foundation.dart';
+
 import 'package:bloc/bloc.dart';
 import 'package:epictask/models/task_event_model/task_event.dart';
 import 'package:epictask/models/task_model/task_model.dart';
@@ -49,7 +52,6 @@ class TaskFormBloc extends Bloc<TaskFormSubmitted, TaskFormState> {
             event_type: 'TaskCreated',
             user_id: currentUserID);
         FirestoreDatabase().writeTaskEvent(taskEvent);
-
         emit(TaskFormSubmittedSuccess());
       } catch (e) {
         emit(TaskFormSubmittedFailure(e.toString()));

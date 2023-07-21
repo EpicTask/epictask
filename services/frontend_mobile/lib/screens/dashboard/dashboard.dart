@@ -28,8 +28,9 @@ class DashboardWidget extends StatelessWidget {
                 children: [
                   Text(
                     'Dashboard',
-                    style: headlineSmall(context),
+                    style: headlineMedium(context),
                   ),
+                  Container(height: 2,color:Colors.blueAccent),
                   const SizedBox(height: 16),
                   SizedBox(
                     height: SizeConfig.screenHeight * .15,

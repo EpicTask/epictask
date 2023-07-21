@@ -771,6 +771,7 @@ mixin _$TaskCompleted {
   List<String>? get attachments => throw _privateConstructorUsedError;
   bool? get marked_completed => throw _privateConstructorUsedError;
   bool? get verified => throw _privateConstructorUsedError;
+  String? get verification_method => throw _privateConstructorUsedError;
 
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
   @JsonKey(ignore: true)
@@ -789,7 +790,8 @@ abstract class $TaskCompletedCopyWith<$Res> {
       String completed_by_id,
       List<String>? attachments,
       bool? marked_completed,
-      bool? verified});
+      bool? verified,
+      String? verification_method});
 }
 
 /// @nodoc
@@ -810,6 +812,7 @@ class _$TaskCompletedCopyWithImpl<$Res, $Val extends TaskCompleted>
     Object? attachments = freezed,
     Object? marked_completed = freezed,
     Object? verified = freezed,
+    Object? verification_method = freezed,
   }) {
     return _then(_value.copyWith(
       task_id: null == task_id
@@ -832,6 +835,10 @@ class _$TaskCompletedCopyWithImpl<$Res, $Val extends TaskCompleted>
           ? _value.verified
           : verified // ignore: cast_nullable_to_non_nullable
               as bool?,
+      verification_method: freezed == verification_method
+          ? _value.verification_method
+          : verification_method // ignore: cast_nullable_to_non_nullable
+              as String?,
     ) as $Val);
   }
 }
@@ -849,7 +856,8 @@ abstract class _$$_TaskCompletedCopyWith<$Res>
       String completed_by_id,
       List<String>? attachments,
       bool? marked_completed,
-      bool? verified});
+      bool? verified,
+      String? verification_method});
 }
 
 /// @nodoc
@@ -868,6 +876,7 @@ class __$$_TaskCompletedCopyWithImpl<$Res>
     Object? attachments = freezed,
     Object? marked_completed = freezed,
     Object? verified = freezed,
+    Object? verification_method = freezed,
   }) {
     return _then(_$_TaskCompleted(
       task_id: null == task_id
@@ -890,6 +899,10 @@ class __$$_TaskCompletedCopyWithImpl<$Res>
           ? _value.verified
           : verified // ignore: cast_nullable_to_non_nullable
               as bool?,
+      verification_method: freezed == verification_method
+          ? _value.verification_method
+          : verification_method // ignore: cast_nullable_to_non_nullable
+              as String?,
     ));
   }
 }
@@ -902,7 +915,8 @@ class _$_TaskCompleted implements _TaskCompleted {
       required this.completed_by_id,
       final List<String>? attachments,
       this.marked_completed,
-      this.verified})
+      this.verified,
+      this.verification_method})
       : _attachments = attachments;
 
   factory _$_TaskCompleted.fromJson(Map<String, dynamic> json) =>
@@ -926,10 +940,12 @@ class _$_TaskCompleted implements _TaskCompleted {
   final bool? marked_completed;
   @override
   final bool? verified;
+  @override
+  final String? verification_method;
 
   @override
   String toString() {
-    return 'TaskCompleted(task_id: $task_id, completed_by_id: $completed_by_id, attachments: $attachments, marked_completed: $marked_completed, verified: $verified)';
+    return 'TaskCompleted(task_id: $task_id, completed_by_id: $completed_by_id, attachments: $attachments, marked_completed: $marked_completed, verified: $verified, verification_method: $verification_method)';
   }
 
   @override
@@ -945,7 +961,9 @@ class _$_TaskCompleted implements _TaskCompleted {
             (identical(other.marked_completed, marked_completed) ||
                 other.marked_completed == marked_completed) &&
             (identical(other.verified, verified) ||
-                other.verified == verified));
+                other.verified == verified) &&
+            (identical(other.verification_method, verification_method) ||
+                other.verification_method == verification_method));
   }
 
   @JsonKey(ignore: true)
@@ -956,7 +974,8 @@ class _$_TaskCompleted implements _TaskCompleted {
       completed_by_id,
       const DeepCollectionEquality().hash(_attachments),
       marked_completed,
-      verified);
+      verified,
+      verification_method);
 
   @JsonKey(ignore: true)
   @override
@@ -978,7 +997,8 @@ abstract class _TaskCompleted implements TaskCompleted {
       required final String completed_by_id,
       final List<String>? attachments,
       final bool? marked_completed,
-      final bool? verified}) = _$_TaskCompleted;
+      final bool? verified,
+      final String? verification_method}) = _$_TaskCompleted;
 
   factory _TaskCompleted.fromJson(Map<String, dynamic> json) =
       _$_TaskCompleted.fromJson;
@@ -993,6 +1013,8 @@ abstract class _TaskCompleted implements TaskCompleted {
   bool? get marked_completed;
   @override
   bool? get verified;
+  @override
+  String? get verification_method;
   @override
   @JsonKey(ignore: true)
   _$$_TaskCompletedCopyWith<_$_TaskCompleted> get copyWith =>

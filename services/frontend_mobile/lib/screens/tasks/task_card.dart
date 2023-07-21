@@ -1,5 +1,8 @@
+import 'dart:async';
+
 import 'package:epictask/services/functions/firebase_functions.dart';
 import 'package:epictask/services/navigation/navigation.dart';
+import 'package:epictask/services/service_config/service_config.dart';
 import 'package:epictask/services/ui/text_styles.dart';
 import 'package:flutter/material.dart';
 
@@ -46,22 +49,31 @@ class TaskCard extends StatelessWidget {
                   }),
             if (task.marked_completed ?? false)
               Text('Marked Completed', style: titleLarge(context)),
+            SizedBox(
+              height: SizeConfig.screenHeight * .025,
+            ),
+            if (task.terms_blob?.isNotEmpty ?? false)
+              Text('Conditions:', style: titleLarge(context)),
+            Text(task.terms_blob ?? '', style: titleLarge(context)),
             Padding(
-              padding: const EdgeInsets.only(top: 8.0),
+              padding: const EdgeInsets.all(8.0),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: [
-                   ElevatedButton(
-                          onPressed: () {
-                            completeTaskAndInitiatePayment(task);
-                            router.goNamed('payment', extra: task.task_id);
-                          },
-                          child: Text(
-                            'Pay',
-                            style: titleMedium(context),
-                          ),
-                        ),
-                      
+                  ElevatedButton(
+                    onPressed: () {
+                      completeTaskAndInitiatePayment(task);
+                      Timer(Duration(seconds: 3), () {
+                        router.goNamed('payment', extra: task.task_id);
+                        
+                      });
+                      router.goNamed('loading');
+                    },
+                    child: Text(
+                      'Pay',
+                      style: titleMedium(context),
+                    ),
+                  ),
                   AllUserPage(
                     task: task,
                   ),
@@ -110,17 +122,26 @@ class TaskCardAssigned extends StatelessWidget {
             Text('Assigned To: Me', style: titleLarge(context)),
             if (task.marked_completed ?? false)
               Text('Marked Completed', style: titleLarge(context)),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: [
-                ElevatedButton(
-                          onPressed: () => completeTask(task),
-                          child: Text(
-                            'Completed',
-                            style: titleMedium(context),
-                          ),
-                        ),
-              ],
+            SizedBox(
+              height: SizeConfig.screenHeight * .025,
+            ),
+            if (task.terms_blob?.isNotEmpty ?? false)
+              Text('Conditions:', style: titleLarge(context)),
+            Text(task.terms_blob ?? '', style: titleLarge(context)),
+            Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: [
+                  ElevatedButton(
+                    onPressed: () => completeTask(task),
+                    child: Text(
+                      'Completed',
+                      style: titleMedium(context),
+                    ),
+                  ),
+                ],
+              ),
             ),
           ],
         ),

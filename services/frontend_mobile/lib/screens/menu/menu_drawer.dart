@@ -1,10 +1,7 @@
-// import 'dart:io' show Platform;
-
-import 'package:epictask/models/user_event_model/user_event.dart';
 import 'package:epictask/services/navigation/navigation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-// import 'package:sizer/sizer.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../bloc/authentication_bloc/authentication_bloc.dart';
 import '../../bloc/authentication_bloc/authentication_event.dart';
@@ -48,17 +45,11 @@ class MenuDrawer extends StatelessWidget {
           ListTile(
             leading: const Icon(Icons.wallet, color: Colors.blueAccent),
             title: Text('Connect Wallet', style: titleMedium(context)),
-            onTap: () {
-              //TODO:Create a screen for connect wallet. User can choose the type of wallet to connect.
-              UserWalletConnectedEvent connect = UserWalletConnectedEvent(
-                  status: 'Connecting',
-                  userId: currentUserID,
-                  walletType: 'XUMM');
-              UserEvent newEvent = UserEvent(
-                  eventType: 'userWalletConnected',
-                  userId: currentUserID,
-                  additionalData: connect.toJson());
-              FirestoreDatabase().writeUserEvent(newEvent);
+            onTap: () async {
+              String xrplUrl =
+                  'https://xrpl-5wpxgn35iq-uc.a.run.app/xummSignInRequest/$currentUserID';
+              final response = await dio.get(xrplUrl);
+              launchUrl(Uri.parse(response.data));
             },
           ),
           ListTile(
@@ -81,7 +72,6 @@ class MenuDrawer extends StatelessWidget {
             leading: const Icon(Icons.exit_to_app, color: Colors.blueAccent),
             title: Text('Logout', style: titleMedium(context)),
             onTap: () {
-              // locator.reset();
               BlocProvider.of<AuthenticationBloc>(context)
                   .add(AuthenticationLoggedOut());
             },

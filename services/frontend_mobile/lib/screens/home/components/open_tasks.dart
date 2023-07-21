@@ -2,7 +2,6 @@ import 'package:epictask/bloc/generics/generics_event.dart';
 import 'package:epictask/repositories/task_repository.dart';
 import 'package:epictask/screens/home/components/shimmer_widget.dart';
 import 'package:epictask/screens/tasks/task_card.dart';
-import 'package:epictask/services/ui/text_styles.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -79,6 +78,7 @@ class _OpenTasksWidgetState extends State<OpenTasksWidget> {
             return SingleChildScrollView(
               child: SizedBox(
                 height: SizeConfig.screenHeight * .8,
+                width: (kIsWeb) ? SizeConfig.screenWidth*.75 : SizeConfig.screenWidth,
                 child: ListView.builder(
                   controller: _scrollController,
                   itemCount: taskData.length + 1,
@@ -86,6 +86,7 @@ class _OpenTasksWidgetState extends State<OpenTasksWidget> {
                     if (index == taskData.length) {
                       return SizedBox(
                         height: SizeConfig.screenHeight * .2,
+                        
                       );
                     } else {
                       return TaskCard(task: taskData[index]);

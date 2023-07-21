@@ -1,6 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
-
 import '../../../models/task_event_model/task_event.dart';
 import '../../../models/task_model/task_model.dart';
 import '../../../services/functions/firebase_functions.dart';
@@ -16,6 +15,21 @@ Future<String> getUserDisplayName(String? uid) async {
     }
   }
   return '';
+}
+
+Stream<String> getUserDisplayNameStream(String? uid) async* {
+  if (uid?.isNotEmpty ?? false) {
+    var snapshot = await FirebaseFirestore.instance.collection('users').doc(uid).get();
+    if (snapshot.exists) {
+      dynamic data = snapshot.data();
+      String? displayName = data['displayName'] as String?;
+      yield displayName ?? '';
+    } else {
+      yield '';
+    }
+  } else {
+    yield '';
+  }
 }
 
 completeTask(
@@ -37,8 +51,12 @@ completeTask(
 completeTaskAndInitiatePayment(
   TaskModel task,
 ) {
-  final TaskVerified event = TaskVerified(
-      task_id: task.task_id, verified: true, verification_method: 'user');
+  final TaskCompleted event = TaskCompleted(
+      completed_by_id: task.assigned_to_ids?.first ?? '',
+      task_id: task.task_id,
+      marked_completed:true,
+      verified: true,
+      verification_method: 'user');
   final TaskEvent taskEvent = TaskEvent.defaultEvent().copyWith(
       additional_data: event.toJson(),
       event_type: 'TaskCompleted',
@@ -48,8 +66,7 @@ completeTaskAndInitiatePayment(
 }
 
 assignTask(String taskId, String uid) {
-  final TaskAssigned event =
-      TaskAssigned(task_id: taskId, assigned_to_id: uid);
+  final TaskAssigned event = TaskAssigned(task_id: taskId, assigned_to_id: uid);
   final TaskEvent taskEvent = TaskEvent.defaultEvent().copyWith(
       additional_data: event.toJson(),
       event_type: 'TaskAssigned',
@@ -63,6 +80,8 @@ deleteTask(taskId) {
   final TaskEvent taskEvent = TaskEvent.defaultEvent().copyWith(
       additional_data: event.toJson(),
       event_type: 'TaskCancelled',
+      status: 'Pending',
+      task_id: taskId,
       user_id: currentUserID);
   FirestoreDatabase().writeTaskEvent(taskEvent);
 }
@@ -79,4 +98,8 @@ String formatDate(DateTime date) {
   } else {
     return DateFormat('MM/dd/yyyy').format(date);
   }
+}
+
+int timestampToSeconds(DateTime date) {
+  return date.millisecondsSinceEpoch ~/ Duration.millisecondsPerSecond;
 }

@@ -59,7 +59,7 @@ class LoginScreen extends StatelessWidget {
                       ),
                       child: Text(
                         'Epic Task',
-                        style: headlineLarge(context),
+                        style: headlineLarge(context)?.copyWith(color: Colors.black),
                         textScaleFactor: 1.5,
                         textAlign: TextAlign.center,
                       ),
