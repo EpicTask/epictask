@@ -276,7 +276,7 @@ def update_leaderboard(response):
                 eTask_earned = task_data.reward_amount
                 xrp_earned = 0.0
             leaderboard_entry_data = LeaderboardEntry(
-                user_id=task_data.user_id,
+                user_id=assigned_to_id,
                 tasks_completed=1,
                 xrp_earned=xrp_earned,
                 eTask_earned=eTask_earned
@@ -284,6 +284,6 @@ def update_leaderboard(response):
             leaderboard_ref.set(leaderboard_entry_data.dict())
             leaderboard_ref.update({'lastUpdated': firestore.SERVER_TIMESTAMP})
 
-        return f"Leaderboard updated for user {task_data.user_id}"
+        return f"Leaderboard updated for user {assigned_to_id}"
     except Exception as e:
         return f"Error updating leaderboard: {str(e)}"

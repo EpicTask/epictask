@@ -16,13 +16,13 @@ app = FastAPI()
 
 baseUrl = os.getenv("_BASEURL")
 defaultUrl = os.getenv("_DEFAULT_URL")
-origins = [
-    baseUrl,
-    defaultUrl,
-]
+# origins = [
+#     baseUrl,
+#     defaultUrl,
+# ]
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=origins,
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
