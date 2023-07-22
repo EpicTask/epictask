@@ -1,6 +1,7 @@
 import 'package:epictask/models/task_model/task_model.dart';
 import 'package:epictask/screens/dashboard/components/item_card.dart';
 import 'package:epictask/screens/dashboard/logic/logic.dart';
+import 'package:epictask/screens/users/components/loading_widget.dart';
 import 'package:epictask/services/ui/text_styles.dart';
 import 'package:flutter/material.dart';
 
@@ -108,7 +109,7 @@ class DashboardWidget extends StatelessWidget {
                 ],
               );
             } else {
-              return const Placeholder();
+              return const Loading();
             }
           },
         ),

@@ -5,6 +5,7 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../../bloc/authentication_bloc/authentication_bloc.dart';
 import '../../bloc/authentication_bloc/authentication_event.dart';
+import '../../services/constants.dart';
 import '../../services/functions/firebase_functions.dart';
 import '../../services/service_config/service_config.dart';
 import '../../services/ui/text_styles.dart';
@@ -28,7 +29,7 @@ class MenuDrawer extends StatelessWidget {
               Align(
                 child: CircleAvatar(
                   radius: SizeConfig.screenWidth / 4.0,
-                  backgroundImage: const NetworkImage(''),
+                  backgroundImage: const AssetImage(epicTaskLogo),
                 ),
               ),
             ],
@@ -40,15 +41,14 @@ class MenuDrawer extends StatelessWidget {
             ),
             title: Text('Home', style: titleMedium(context)),
             onTap: () {
-              // navigationService.navigateTo(UsersRoute);
+              router.pop();
             },
           ),
           ListTile(
             leading: const Icon(Icons.wallet, color: Colors.blueAccent),
             title: Text('Connect Wallet', style: titleMedium(context)),
             onTap: () async {
-              String xrplUrl =
-                  'https://xrpl-5wpxgn35iq-uc.a.run.app/xummSignInRequest/$currentUserID';
+              String xrplUrl = '$xummSignIn/$currentUserID';
               final response = await dio.get(xrplUrl);
               launchUrl(Uri.parse(response.data));
             },
@@ -58,7 +58,7 @@ class MenuDrawer extends StatelessWidget {
                 const Icon(Icons.monetization_on, color: Colors.blueAccent),
             title: Text('Rewards', style: titleMedium(context)),
             onTap: () {
-              // navigationService.navigateTo(SettingsRoute);
+              // Navigate to rewards Screen
             },
           ),
           ListTile(
@@ -77,26 +77,8 @@ class MenuDrawer extends StatelessWidget {
                   .add(AuthenticationLoggedOut());
             },
           ),
-          // Align(
-          //   alignment: Alignment.bottomCenter,
-          //   child: currentVersion(context),
-          // )
         ],
       )),
     );
   }
-
-  // Widget currentVersion(BuildContext context) {
-  //   return FutureBuilder<String>(
-  //     future: DatabaseService().getVersion(),
-  //     builder: (BuildContext context, AsyncSnapshot<String> data) {
-  //       if (data.hasData) {
-  //         final String version = data.data!;
-  //         return Text(version, style: titleMedium(context));
-  //       } else {
-  //         return const Text('');
-  //       }
-  //     },
-  //   );
-  // }
 }

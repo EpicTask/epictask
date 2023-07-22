@@ -1,3 +1,5 @@
+import 'package:epictask/models/user_event_model/user_event.dart';
+import 'package:epictask/services/functions/firebase_functions.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -18,6 +20,9 @@ class AuthenticationBloc
         try {
           final User? firebaseUser = _userRepository.getUser();
           if (firebaseUser != null) {
+            UserEvent event =
+                UserEvent(event_type: 'UserSignIn', user_id: currentUserID);
+            FirestoreDatabase().writeUserEvent(event);
             emit(AuthenticationSuccess(firebaseUser));
           }
         } catch (e) {
@@ -36,7 +41,9 @@ class AuthenticationBloc
     on<AuthenticationLoggedOut>((AuthenticationLoggedOut event,
         Emitter<AuthenticationState> emit) async {
       _userRepository.signOut();
-
+            // UserEvent event =
+            //     UserEvent(event_type: 'UserSignIn', user_id: currentUserID);
+            // FirestoreDatabase().writeUserEvent(event);
       emit(AuthenticationFailure());
     });
   }

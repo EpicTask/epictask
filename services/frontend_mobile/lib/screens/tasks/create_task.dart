@@ -2,6 +2,7 @@ import 'package:epictask/models/task_model/task_model.dart';
 import 'package:epictask/screens/tasks/components/calendar_widget.dart';
 import 'package:epictask/screens/tasks/logic/logic.dart';
 import 'package:epictask/services/functions/firebase_functions.dart';
+import 'package:epictask/services/navigation/navigation.dart';
 import 'package:epictask/services/service_config/service_config.dart';
 import 'package:epictask/services/ui/text_styles.dart';
 import 'package:flutter/foundation.dart';
@@ -256,9 +257,10 @@ class _CreateTaskWidgetState extends State<CreateTaskWidget> {
                                 reward_currency: rewardCurrencyType,
                                 payment_method: paymentMethodType,
                                 user_id: currentUserID);
-
+          
                             final event = TaskFormSubmitted(task: task);
                             bloc.add(event);
+                            router.pop();
                           }
                         },
                         child: Text('Submit', style: titleLarge(context)),

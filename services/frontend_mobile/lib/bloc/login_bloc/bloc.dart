@@ -108,6 +108,18 @@ class LoginBloc extends Bloc<LoginEvent, LoginState> {
         emit(LoginState.failure());
       }
     });
+        on<LoginAnonymousPressed>(
+        (LoginAnonymousPressed event, Emitter<LoginState> emit) async {
+      emit(LoginState.loading());
+      try {
+        final UserCredential? user = await _userRepository?.signInAnonymous();
+        if (user!.user!.uid.isNotEmpty) {
+          emit(LoginState.success());
+        }
+      } catch (_) {
+        emit(LoginState.failure());
+      }
+    });
   }
   final UserRepository? _userRepository;
 }

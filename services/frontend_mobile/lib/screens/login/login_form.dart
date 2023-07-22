@@ -88,6 +88,10 @@ class LoginFormState extends State<LoginForm> {
     _loginBloc.add(LoginWithGooglePressed());
   }
 
+  void _onPressedAnonymousSignIn() {
+    _loginBloc.add(LoginAnonymousPressed());
+  }
+
   // void _showSnackBar(BuildContext context, String message) {
   //   ScaffoldMessenger.of(context).showSnackBar(
   //     SnackBar(
@@ -149,11 +153,10 @@ class LoginFormState extends State<LoginForm> {
 
   Widget buildEmailFormField(BuildContext context, LoginState state) {
     return TextFormField(
-      
       key: const Key('email'),
       style: titleLarge(context)?.copyWith(color: Colors.black),
       controller: _emailController,
-      decoration:  InputDecoration(
+      decoration: InputDecoration(
         icon: const Icon(Icons.email),
         labelText: 'Email',
         labelStyle: titleLarge(context)?.copyWith(color: Colors.black),
@@ -173,7 +176,7 @@ class LoginFormState extends State<LoginForm> {
       key: const Key('password'),
       style: titleLarge(context)?.copyWith(color: Colors.black),
       controller: _passwordController,
-      decoration:  InputDecoration(
+      decoration: InputDecoration(
         icon: const Icon(Icons.lock),
         labelText: 'Password',
         labelStyle: titleLarge(context)?.copyWith(color: Colors.black),
@@ -209,6 +212,7 @@ class LoginFormState extends State<LoginForm> {
                   buildForgotPasswordButton(context),
                   const SizedBox(height: 15),
                   if (!kIsWeb) buildSignInButtons(context, state),
+                  buildAnonymousLoginButton(context, state),
                 ],
               );
             },
@@ -226,6 +230,25 @@ class LoginFormState extends State<LoginForm> {
           const SizedBox(height: 30),
           buildAppleLoginButton(context, state),
         ],
+      ),
+    );
+  }
+
+  Widget buildAnonymousLoginButton(context, state) {
+    return Align(
+      alignment: Alignment.bottomCenter,
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(8, 8, 8.0, 16),
+        child: TextButton(
+          child: Text(
+            'SignUp as guest.',
+            style: titleLarge(context)
+                ?.copyWith(color: Colors.blue, fontStyle: FontStyle.italic),
+          ),
+          onPressed: () {
+            _onPressedAnonymousSignIn();
+          },
+        ),
       ),
     );
   }

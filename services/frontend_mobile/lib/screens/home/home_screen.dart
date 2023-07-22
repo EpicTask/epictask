@@ -33,7 +33,6 @@ class _HomeScreenState extends State<HomeScreen> {
   int _selectedIndex = 0;
   final List<Widget> _widgetOptions = <Widget>[
     const HomeWidget(),
-    const CreateTaskWidget(),
     const DashboardWidget(),
     const LeaderboardScreen()
   ];
@@ -67,7 +66,6 @@ class _HomeScreenState extends State<HomeScreen> {
             Icon(
               Icons.home,
             ),
-            Icon(Icons.add),
             Icon(Icons.dashboard),
             Icon(Icons.auto_awesome_sharp)
           ],
@@ -91,29 +89,51 @@ class HomeWidget extends StatelessWidget {
         children: [
           Padding(
             padding: const EdgeInsets.all(8.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              crossAxisAlignment: CrossAxisAlignment.end,
               children: [
-                StreamBuilder<Object>(
-                    stream: getUserDisplayNameStream(currentUserID),
-                    builder: (context, snapshot) {
-                      if (snapshot.hasData) {
-                        String displayName = snapshot.data as String;
-                        return Text(
-                          "Welcome, $displayName!",
-                          style: headlineSmall(context),
-                        );
-                      } else {
-                        return Text(
-                          "Welcome! ",
-                          style: headlineSmall(context),
-                        );
-                      }
-                    }),
-                Text(
-                  "Manage your tasks.",
-                  style: titleMedium(context),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    StreamBuilder<Object>(
+                        stream: getUserDisplayNameStream(currentUserID),
+                        builder: (context, snapshot) {
+                          if (snapshot.hasData) {
+                            String displayName = snapshot.data as String;
+                            return Text(
+                              "Welcome, $displayName!",
+                              style: headlineSmall(context),
+                            );
+                          } else {
+                            return Text(
+                              "Welcome! ",
+                              style: headlineSmall(context),
+                            );
+                          }
+                        }),
+                    Text(
+                      "Manage your tasks.",
+                      style: titleMedium(context),
+                    ),
+                  ],
                 ),
+                Padding(
+                  padding: const EdgeInsets.only(left:16.0),
+                  child: IconButton(
+                      onPressed: () {
+                        showModalBottomSheet(
+                          isScrollControlled: true,
+                          shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(20)),
+                          context: context,
+                          builder: (BuildContext context) {
+                            return SizedBox(height: SizeConfig.screenHeight*.8, child: const CreateTaskWidget());
+                          },
+                        );
+                      },
+                      icon: const Icon(Icons.add,color: Colors.blueAccent,size: 32,)),
+                )
               ],
             ),
           ),

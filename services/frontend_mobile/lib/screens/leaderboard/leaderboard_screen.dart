@@ -1,4 +1,5 @@
 import 'package:epictask/screens/tasks/logic/logic.dart';
+import 'package:epictask/screens/users/components/loading_widget.dart';
 import 'package:epictask/services/service_config/service_config.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -137,20 +138,7 @@ class LeaderboardScreenStateState extends State<LeaderboardScreenState> {
                                   },
                                 );
                               }
-                              return ListTile(
-                                leading: const CircleAvatar(
-                                  backgroundColor: Colors.amber,
-                                ),
-                                title: Text(
-                                    'User: ${entry.user_id.substring(0, 5)}'),
-                                subtitle: Text(
-                                  '${entry.tasks_completed} Completed • ${entry.xrp_earned} XRP Earned • ${entry.eTask_earned} ETask Earned',
-                                  style: titleMedium(context),
-                                ),
-                                onTap: () {
-                                  // Handle tapping on a leaderboard entry if needed
-                                },
-                              );
+                              return Container(height: SizeConfig.screenHeight,);
                             });
                       },
                     ),
