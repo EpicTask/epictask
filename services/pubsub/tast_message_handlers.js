@@ -17,6 +17,7 @@ function handleTaskCreatedMessage(message) {
       console.error('API call error:', error);
       // Handle the API call error
     });
+  console.log('TaskCreated message received:', message.data.toString());
 }
 
 // Function to handle TaskAssigned messages
@@ -221,6 +222,7 @@ function handleRecommendationGeneratedMessage(message) {
     'RecommendationGenerated message received:',
     message.data.toString()
   );
+  console.log('Reccommendation message received:', message.data.toString());
 }
 
 export {

@@ -1,0 +1,481 @@
+swagger: "2.0"
+info:
+  title: Task Management Service
+  description: API documentation for the Task Management Service
+  version: 1.0.0
+host: api-gateway-v1-3vfu5pwe8eq6a.apigateway.task-coin-384722.cloud.goog
+schemes:
+  - https
+basePath: /v1
+produces:
+  - application/json
+security:
+  - api_key: []
+x-google-backend:
+  address: >-
+    https://task-management-5wpxgn35iq-uc.a.run.app
+x-google-management:
+  metrics:
+    - name: request_count
+      metricKind: CUMULATIVE
+      valueType: INT64
+      labels:
+        - key: method
+          description: The HTTP method of the request.
+        - key: status
+          description: The HTTP status code of the response.
+    - name: response_size
+      metricKind: DELTA
+      valueType: INT64
+      labels:
+        - key: method
+          description: The HTTP method of the request.
+        - key: status
+          description: The HTTP status code of the response.
+    - name: latency
+      metricKind: DELTA
+      valueType: DISTRIBUTION
+      labels:
+        - key: method
+          description: The HTTP method of the request.
+        - key: status
+          description: The HTTP status code of the response.
+    - name: request_validation_count
+      metricKind: CUMULATIVE
+      valueType: INT64
+      labels:
+        - key: method
+          description: The HTTP method of the request.
+        - key: status
+          description: The HTTP status code of the response.
+    - name: request_error_count
+      metricKind: CUMULATIVE
+      valueType: INT64
+      labels:
+        - key: method
+          description: The HTTP method of the request.
+        - key: status
+          description: The HTTP status code of the response.
+    - name: response_validation_count
+      metricKind: CUMULATIVE
+      valueType: INT64
+      labels:
+        - key: method
+          description: The HTTP method of the request.
+        - key: status
+          description: The HTTP status code of the response.
+  quota:
+    limits:
+      - name: requests-per-minute
+        metric: request_count
+        unit: "1/min/{project}"
+        values:
+          STANDARD: 100
+paths:
+  /TaskEvent:
+    post:
+      summary: Write Task Event to Firestore
+      operationId: writeTaskEvent
+      consumes:
+        - application/json
+      produces:
+        - application/json
+      parameters:
+        - in: body
+          name: taskEvent
+          description: The TaskEvent object
+          required: true
+          schema:
+            $ref: "#/definitions/TaskEvent"
+      responses:
+        "200":
+          description: Successful response
+  /TaskCreated:
+    post:
+      summary: Create Task
+      operationId: createTask
+      consumes:
+        - application/json
+      produces:
+        - application/json
+      parameters:
+        - in: body
+          name: taskCreated
+          description: The TaskCreated object
+          required: true
+          schema:
+            $ref: "#/definitions/TaskCreated"
+      responses:
+        "200":
+          description: Successful response
+  /TaskAssigned:
+    post:
+      summary: Assign Task
+      operationId: assignTask
+      consumes:
+        - application/json
+      produces:
+        - application/json
+      parameters:
+        - in: body
+          name: taskAssigned
+          description: The TaskAssigned object
+          required: true
+          schema:
+            $ref: "#/definitions/TaskAssigned"
+      responses:
+        "200":
+          description: Successful response
+  /TaskCancelled:
+    post:
+      summary: Cancel Task
+      operationId: cancelTask
+      consumes:
+        - application/json
+      produces:
+        - application/json
+      parameters:
+        - in: body
+          name: taskCancelled
+          description: The TaskCancelled object
+          required: true
+          schema:
+            $ref: "#/definitions/TaskCancelled"
+      responses:
+        "200":
+          description: Successful response
+  /TaskCommentAdded:
+    post:
+      summary: Add Comment to Task
+      operationId: addCommentToTask
+      consumes:
+        - application/json
+      produces:
+        - application/json
+      parameters:
+        - in: body
+          name: taskCommentAdded
+          description: The TaskCommentAdded object
+          required: true
+          schema:
+            $ref: "#/definitions/TaskCommentAdded"
+      responses:
+        "200":
+          description: Successful response
+  /TaskCompleted:
+    post:
+      summary: Complete Task
+      operationId: completeTask
+      consumes:
+        - application/json
+      produces:
+        - application/json
+      parameters:
+        - in: body
+          name: taskCompleted
+          description: The TaskCompleted object
+          required: true
+          schema:
+            $ref: "#/definitions/TaskCompleted"
+      responses:
+        "200":
+          description: Successful response
+  /TaskExpired:
+    post:
+      summary: Expire Task
+      operationId: expireTask
+      consumes:
+        - application/json
+      produces:
+        - application/json
+      parameters:
+        - in: body
+          name: taskExpired
+          description: The TaskExpired object
+          required: true
+          schema:
+            $ref: "#/definitions/TaskExpired"
+      responses:
+        "200":
+          description: Successful response
+  /TaskRatingUpdate:
+    post:
+      summary: Update Task Rating
+      operationId: updateTaskRating
+      consumes:
+        - application/json
+      produces:
+        - application/json
+      parameters:
+        - in: body
+          name: taskRatingUpdate
+          description: The TaskRatingUpdate object
+          required: true
+          schema:
+            $ref: "#/definitions/TaskRatingUpdate"
+      responses:
+        "200":
+          description: Successful response
+  /TaskRewarded:
+    post:
+      summary: Reward Task
+      operationId: rewardTask
+      consumes:
+        - application/json
+      produces:
+        - application/json
+      parameters:
+        - in: body
+          name: taskRewarded
+          description: The TaskRewarded object
+          required: true
+          schema:
+            $ref: "#/definitions/TaskRewarded"
+      responses:
+        "200":
+          description: Successful response
+  /TaskUpdated:
+    post:
+      summary: Update Task Fields
+      operationId: updateTaskFields
+      consumes:
+        - application/json
+      produces:
+        - application/json
+      parameters:
+        - in: body
+          name: taskUpdated
+          description: The TaskUpdated object
+          required: true
+          schema:
+            $ref: "#/definitions/TaskUpdated"
+      responses:
+        "200":
+          description: Successful response
+  /TaskVerified:
+    post:
+      summary: Verify Task
+      operationId: verifyTask
+      consumes:
+        - application/json
+      produces:
+        - application/json
+      parameters:
+        - in: body
+          name: taskVerified
+          description: The TaskVerified object
+          required: true
+          schema:
+            $ref: "#/definitions/TaskVerified"
+      responses:
+        "200":
+          description: Successful response
+  /UpdateLeaderboard:
+    post:
+      summary: Update Leaderboard
+      operationId: updateLeaderboard
+      consumes:
+        - application/json
+      produces:
+        - application/json
+      parameters:
+        - in: body
+          name: taskCreated
+          description: The TaskCreated object
+          required: true
+          schema:
+            $ref: "#/definitions/TaskCreated"
+      responses:
+        "200":
+          description: Successful response
+  /tasks:
+    get:
+      summary: Get All Tasks
+      operationId: getAllTasks
+      consumes:
+        - application/json
+      produces:
+        - application/json
+      parameters:
+        - in: query
+          name: user_id
+          description: User ID
+          required: true
+          type: string
+      responses:
+        "200":
+          description: Successful response
+definitions:
+  TaskEvent:
+    type: object
+    properties:
+      event_id:
+        type: string
+      event_type:
+        type: string
+      timestamp:
+        type: string
+      task_id:
+        type: string
+      user_id:
+        type: string
+      status:
+        type: string
+      additional_data:
+        type: object
+        properties:
+          task_created:
+            $ref: "#/definitions/TaskCreated"
+          task_assigned:
+            $ref: "#/definitions/TaskAssigned"
+          task_cancelled:
+            $ref: "#/definitions/TaskCancelled"
+          task_comment_added:
+            $ref: "#/definitions/TaskCommentAdded"
+          task_completed:
+            $ref: "#/definitions/TaskCompleted"
+          task_expired:
+            $ref: "#/definitions/TaskExpired"
+          task_rating_update:
+            $ref: "#/definitions/TaskRatingUpdate"
+          task_rewarded:
+            $ref: "#/definitions/TaskRewarded"
+          task_updated:
+            $ref: "#/definitions/TaskUpdated"
+          task_verified:
+            $ref: "#/definitions/TaskVerified"
+  TaskCreated:
+    type: object
+    properties:
+      task_title:
+        type: string
+      task_description:
+        type: string
+      task_id:
+        type: string
+      expiration_date:
+        type: integer
+      reward_amount:
+        type: number
+      reward_currency:
+        type: string
+      payment_method:
+        type: string
+      user_id:
+        type: string
+      project_id:
+        type: string
+      project_name:
+        type: string
+      requires_attachments:
+        type: boolean
+      terms_blob:
+        type: string
+      terms_id:
+        type: string
+      rating:
+        type: integer
+      assigned_to_ids:
+        type: array
+        items:
+          type: string
+      rewarded:
+        type: boolean
+      marked_completed:
+        type: boolean
+      auto_verify:
+        type: boolean
+
+  TaskAssigned:
+    type: object
+    properties:
+      task_id:
+        type: string
+      assigned_to_id:
+        type: string
+
+  TaskCancelled:
+    type: object
+    properties:
+      task_id:
+        type: string
+
+  TaskCommentAdded:
+    type: object
+    properties:
+      task_id:
+        type: string
+      user_id:
+        type: string
+      comment:
+        type: string
+
+  TaskCompleted:
+    type: object
+    properties:
+      task_id:
+        type: string
+      completed_by_id:
+        type: string
+      attachments:
+        type: array
+        items:
+          type: string
+      marked_completed:
+        type: boolean
+      verified:
+        type: boolean
+      verification_method:
+        type: string
+
+  TaskExpired:
+    type: object
+    properties:
+      task_id:
+        type: string
+
+  TaskRatingUpdate:
+    type: object
+    properties:
+      task_id:
+        type: string
+      user_id:
+        type: string
+
+  TaskRewarded:
+    type: object
+    properties:
+      task_id:
+        type: string
+      user_id:
+        type: string
+
+  TaskUpdated:
+    type: object
+    properties:
+      task_id:
+        type: string
+      updated_fields:
+        type: object
+
+  TaskVerified:
+    type: object
+    properties:
+      task_id:
+        type: string
+      verified:
+        type: boolean
+      verification_method:
+        type: string
+
+  LeaderboardEntry:
+    type: object
+    properties:
+      user_id:
+        type: string
+      tasks_completed:
+        type: integer
+      xrp_earned:
+        type: number
+      eTask_earned:
+        type: number
