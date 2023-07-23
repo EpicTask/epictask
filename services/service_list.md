@@ -8,6 +8,7 @@ Description: Controls all functionality related to the xrp ledger and wallet int
 
 ### 2. Verification
 Description: Ensures transaction completion and provides AI-powered verification when applicable.
+Verifi has the potential to serve as a business in of itself. XRP payments can be utilized to monetized users that submit models to handle specific use cases. This can be facilitated through hooks/smart contracts.
 
 ### 3. Task Management
 Description: Manages tasks, assignments, and progress tracking.
