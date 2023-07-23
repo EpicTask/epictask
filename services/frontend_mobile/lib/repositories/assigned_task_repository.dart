@@ -8,16 +8,14 @@ import '../bloc/generics/generic_bloc.dart';
 import '../models/task_model/task_model.dart';
 import '../screens/home/home_screen.dart';
 
-/// Interface to our 'Task' Firebase collection.
-///
-/// Relies on a remote NoSQL document-oriented database.
+// Get all tasks assigned to current user.
 class AssignedTaskRepository extends GenericBlocRepository<TaskModel> {
   String uid = FirebaseAuth.instance.currentUser!.uid;
   @override
   Stream<List<TaskModel>> data() {
-        final CollectionReference ref =
+    final CollectionReference ref =
         FirebaseFirestore.instance.collection('test_tasks');
-    final Query<Object> taskCollection =ref
+    final Query<Object> taskCollection = ref
         .where('assigned_to_ids', arrayContains: uid)
         .orderBy('expiration_date', descending: true)
         .limit(paginator2.value) as Query<Object>;

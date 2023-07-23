@@ -1,5 +1,6 @@
 import 'package:epictask/models/user_event_model/user_event.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../repositories/user_repository.dart';
@@ -32,23 +33,27 @@ class LoginBloc extends Bloc<LoginEvent, LoginState> {
             social: false,
           );
           UserEvent newEvent = UserEvent(
-              eventType: 'userSignIn',
-              userId: currentUserID,
-              additionalData: data.toJson());
+              event_type: 'userSignIn',
+              user_id: currentUserID,
+              additional_data: data.toJson());
           FirestoreDatabase().writeUserEvent(newEvent);
           emit(LoginState.success());
         }
         // AuthenticationSuccess(firebaseUser.user);
       } catch (_) {
         UserSignInEvent data = const UserSignInEvent(
-            status: 'Success', social: false,);
+          status: 'Success',
+          social: false,
+        );
         UserEvent newEvent = UserEvent(
-            eventType: 'userSignIn',
-            userId: currentUserID,
-            additionalData: data.toJson());
+            event_type: 'userSignIn',
+            user_id: currentUserID,
+            additional_data: data.toJson());
         FirestoreDatabase().writeUserEvent(newEvent);
         emit(LoginState.failure());
-        print('Failed to login: $_');
+        if (kDebugMode) {
+          print('Failed to login: $_');
+        }
       }
     });
     on<LoginWithApplePressed>(
@@ -58,21 +63,21 @@ class LoginBloc extends Bloc<LoginEvent, LoginState> {
         final UserCredential? user = await _userRepository?.signInWithApple();
         if (user!.user!.uid.isNotEmpty) {
           UserSignInEvent data = const UserSignInEvent(
-              status: 'Success', social: true, socialType: 'apple');
+              status: 'Success', social: true, social_type: 'apple');
           UserEvent newEvent = UserEvent(
-              eventType: 'userSignIn',
-              userId: currentUserID,
-              additionalData: data.toJson());
+              event_type: 'userSignIn',
+              user_id: currentUserID,
+              additional_data: data.toJson());
           FirestoreDatabase().writeUserEvent(newEvent);
           emit(LoginState.success());
         }
       } catch (_) {
         UserSignInEvent data = const UserSignInEvent(
-            status: 'Failed', social: true, socialType: 'apple');
+            status: 'Failed', social: true, social_type: 'apple');
         UserEvent newEvent = UserEvent(
-            eventType: 'userSignIn',
-            userId: currentUserID,
-            additionalData: data.toJson());
+            event_type: 'userSignIn',
+            user_id: currentUserID,
+            additional_data: data.toJson());
         FirestoreDatabase().writeUserEvent(newEvent);
         emit(LoginState.failure());
       }
@@ -84,22 +89,34 @@ class LoginBloc extends Bloc<LoginEvent, LoginState> {
         final UserCredential? user = await _userRepository?.signInWithGoogle();
         if (user!.user!.uid.isNotEmpty) {
           UserSignInEvent data = const UserSignInEvent(
-              status: 'Success', social: true, socialType: 'google');
+              status: 'Success', social: true, social_type: 'google');
           UserEvent newEvent = UserEvent(
-              eventType: 'userSignIn',
-              userId: currentUserID,
-              additionalData: data.toJson());
+              event_type: 'userSignIn',
+              user_id: currentUserID,
+              additional_data: data.toJson());
           FirestoreDatabase().writeUserEvent(newEvent);
           emit(LoginState.success());
         }
       } catch (_) {
         UserSignInEvent data = const UserSignInEvent(
-            status: 'Failed', social: true, socialType: 'google');
+            status: 'Failed', social: true, social_type: 'google');
         UserEvent newEvent = UserEvent(
-            eventType: 'userSignIn',
-            userId: currentUserID,
-            additionalData: data.toJson());
+            event_type: 'userSignIn',
+            user_id: currentUserID,
+            additional_data: data.toJson());
         FirestoreDatabase().writeUserEvent(newEvent);
+        emit(LoginState.failure());
+      }
+    });
+        on<LoginAnonymousPressed>(
+        (LoginAnonymousPressed event, Emitter<LoginState> emit) async {
+      emit(LoginState.loading());
+      try {
+        final UserCredential? user = await _userRepository?.signInAnonymous();
+        if (user!.user!.uid.isNotEmpty) {
+          emit(LoginState.success());
+        }
+      } catch (_) {
         emit(LoginState.failure());
       }
     });

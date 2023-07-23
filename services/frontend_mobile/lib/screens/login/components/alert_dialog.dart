@@ -4,6 +4,7 @@ import '../../../repositories/user_repository.dart';
 import '../../../services/constants.dart';
 import '../../../services/navigation/navigation.dart';
 
+// Alert dialogs for Login Screen
 Future<dynamic> resetPasswordAlertDialog(BuildContext context) {
   final TextEditingController emailController = TextEditingController();
   final GlobalKey<FormState> formKey = GlobalKey<FormState>();

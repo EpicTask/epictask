@@ -252,7 +252,7 @@ async def unsubscribe(request: Request):
 
 
 # Make a payment request
-@app.post('/payment_request/')
+@app.post('/payment_request')
 async def process_payment(payment_request: PaymentRequest):
     response = await handle_payment_request(payment_request)
     return response

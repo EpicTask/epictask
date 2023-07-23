@@ -1,5 +1,7 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 
+// ignore_for_file: non_constant_identifier_names
+
 part of 'task_event.dart';
 
 // **************************************************************************
@@ -86,6 +88,7 @@ _$_TaskCompleted _$$_TaskCompletedFromJson(Map<String, dynamic> json) =>
           .toList(),
       marked_completed: json['marked_completed'] as bool?,
       verified: json['verified'] as bool?,
+      verification_method: json['verification_method'] as String?,
     );
 
 Map<String, dynamic> _$$_TaskCompletedToJson(_$_TaskCompleted instance) =>
@@ -95,6 +98,7 @@ Map<String, dynamic> _$$_TaskCompletedToJson(_$_TaskCompleted instance) =>
       'attachments': instance.attachments,
       'marked_completed': instance.marked_completed,
       'verified': instance.verified,
+      'verification_method': instance.verification_method,
     };
 
 _$_TaskExpired _$$_TaskExpiredFromJson(Map<String, dynamic> json) =>

@@ -1,4 +1,5 @@
-import 'package:epictask/models/task_model/task_model.dart';
+// ignore_for_file: non_constant_identifier_names
+
 import 'package:epictask/models/user_model/user_model.dart';
 import 'package:epictask/screens/tasks/logic/logic.dart';
 import 'package:epictask/services/navigation/navigation.dart';
@@ -8,6 +9,7 @@ import 'package:flutter/material.dart';
 
 import '../../services/service_config/service_config.dart';
 
+// Search Bar to assign tasks
 class CustomSearchBar extends StatefulWidget {
   const CustomSearchBar({
     super.key,

@@ -252,7 +252,7 @@ UserSignInEvent _$UserSignInEventFromJson(Map<String, dynamic> json) {
 mixin _$UserSignInEvent {
   String get status => throw _privateConstructorUsedError;
   bool get social => throw _privateConstructorUsedError;
-  String? get socialType => throw _privateConstructorUsedError;
+  String? get social_type => throw _privateConstructorUsedError;
   @TimestampConverter()
   DateTime? get timestamp => throw _privateConstructorUsedError;
 
@@ -271,7 +271,7 @@ abstract class $UserSignInEventCopyWith<$Res> {
   $Res call(
       {String status,
       bool social,
-      String? socialType,
+      String? social_type,
       @TimestampConverter() DateTime? timestamp});
 }
 
@@ -290,7 +290,7 @@ class _$UserSignInEventCopyWithImpl<$Res, $Val extends UserSignInEvent>
   $Res call({
     Object? status = null,
     Object? social = null,
-    Object? socialType = freezed,
+    Object? social_type = freezed,
     Object? timestamp = freezed,
   }) {
     return _then(_value.copyWith(
@@ -302,9 +302,9 @@ class _$UserSignInEventCopyWithImpl<$Res, $Val extends UserSignInEvent>
           ? _value.social
           : social // ignore: cast_nullable_to_non_nullable
               as bool,
-      socialType: freezed == socialType
-          ? _value.socialType
-          : socialType // ignore: cast_nullable_to_non_nullable
+      social_type: freezed == social_type
+          ? _value.social_type
+          : social_type // ignore: cast_nullable_to_non_nullable
               as String?,
       timestamp: freezed == timestamp
           ? _value.timestamp
@@ -325,7 +325,7 @@ abstract class _$$_UserSignInEventCopyWith<$Res>
   $Res call(
       {String status,
       bool social,
-      String? socialType,
+      String? social_type,
       @TimestampConverter() DateTime? timestamp});
 }
 
@@ -342,7 +342,7 @@ class __$$_UserSignInEventCopyWithImpl<$Res>
   $Res call({
     Object? status = null,
     Object? social = null,
-    Object? socialType = freezed,
+    Object? social_type = freezed,
     Object? timestamp = freezed,
   }) {
     return _then(_$_UserSignInEvent(
@@ -354,9 +354,9 @@ class __$$_UserSignInEventCopyWithImpl<$Res>
           ? _value.social
           : social // ignore: cast_nullable_to_non_nullable
               as bool,
-      socialType: freezed == socialType
-          ? _value.socialType
-          : socialType // ignore: cast_nullable_to_non_nullable
+      social_type: freezed == social_type
+          ? _value.social_type
+          : social_type // ignore: cast_nullable_to_non_nullable
               as String?,
       timestamp: freezed == timestamp
           ? _value.timestamp
@@ -372,7 +372,7 @@ class _$_UserSignInEvent implements _UserSignInEvent {
   const _$_UserSignInEvent(
       {required this.status,
       required this.social,
-      this.socialType,
+      this.social_type,
       @TimestampConverter() this.timestamp});
 
   factory _$_UserSignInEvent.fromJson(Map<String, dynamic> json) =>
@@ -383,14 +383,14 @@ class _$_UserSignInEvent implements _UserSignInEvent {
   @override
   final bool social;
   @override
-  final String? socialType;
+  final String? social_type;
   @override
   @TimestampConverter()
   final DateTime? timestamp;
 
   @override
   String toString() {
-    return 'UserSignInEvent(status: $status, social: $social, socialType: $socialType, timestamp: $timestamp)';
+    return 'UserSignInEvent(status: $status, social: $social, social_type: $social_type, timestamp: $timestamp)';
   }
 
   @override
@@ -400,8 +400,8 @@ class _$_UserSignInEvent implements _UserSignInEvent {
             other is _$_UserSignInEvent &&
             (identical(other.status, status) || other.status == status) &&
             (identical(other.social, social) || other.social == social) &&
-            (identical(other.socialType, socialType) ||
-                other.socialType == socialType) &&
+            (identical(other.social_type, social_type) ||
+                other.social_type == social_type) &&
             (identical(other.timestamp, timestamp) ||
                 other.timestamp == timestamp));
   }
@@ -409,7 +409,7 @@ class _$_UserSignInEvent implements _UserSignInEvent {
   @JsonKey(ignore: true)
   @override
   int get hashCode =>
-      Object.hash(runtimeType, status, social, socialType, timestamp);
+      Object.hash(runtimeType, status, social, social_type, timestamp);
 
   @JsonKey(ignore: true)
   @override
@@ -429,7 +429,7 @@ abstract class _UserSignInEvent implements UserSignInEvent {
   const factory _UserSignInEvent(
       {required final String status,
       required final bool social,
-      final String? socialType,
+      final String? social_type,
       @TimestampConverter() final DateTime? timestamp}) = _$_UserSignInEvent;
 
   factory _UserSignInEvent.fromJson(Map<String, dynamic> json) =
@@ -440,7 +440,7 @@ abstract class _UserSignInEvent implements UserSignInEvent {
   @override
   bool get social;
   @override
-  String? get socialType;
+  String? get social_type;
   @override
   @TimestampConverter()
   DateTime? get timestamp;
@@ -460,8 +460,8 @@ mixin _$UserWalletConnectedEvent {
   String get status => throw _privateConstructorUsedError;
   @TimestampConverter()
   DateTime? get timestamp => throw _privateConstructorUsedError;
-  String get userId => throw _privateConstructorUsedError;
-  String get walletType => throw _privateConstructorUsedError;
+  String get user_id => throw _privateConstructorUsedError;
+  String get wallet_type => throw _privateConstructorUsedError;
 
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
   @JsonKey(ignore: true)
@@ -478,8 +478,8 @@ abstract class $UserWalletConnectedEventCopyWith<$Res> {
   $Res call(
       {String status,
       @TimestampConverter() DateTime? timestamp,
-      String userId,
-      String walletType});
+      String user_id,
+      String wallet_type});
 }
 
 /// @nodoc
@@ -498,8 +498,8 @@ class _$UserWalletConnectedEventCopyWithImpl<$Res,
   $Res call({
     Object? status = null,
     Object? timestamp = freezed,
-    Object? userId = null,
-    Object? walletType = null,
+    Object? user_id = null,
+    Object? wallet_type = null,
   }) {
     return _then(_value.copyWith(
       status: null == status
@@ -510,13 +510,13 @@ class _$UserWalletConnectedEventCopyWithImpl<$Res,
           ? _value.timestamp
           : timestamp // ignore: cast_nullable_to_non_nullable
               as DateTime?,
-      userId: null == userId
-          ? _value.userId
-          : userId // ignore: cast_nullable_to_non_nullable
+      user_id: null == user_id
+          ? _value.user_id
+          : user_id // ignore: cast_nullable_to_non_nullable
               as String,
-      walletType: null == walletType
-          ? _value.walletType
-          : walletType // ignore: cast_nullable_to_non_nullable
+      wallet_type: null == wallet_type
+          ? _value.wallet_type
+          : wallet_type // ignore: cast_nullable_to_non_nullable
               as String,
     ) as $Val);
   }
@@ -534,8 +534,8 @@ abstract class _$$_UserWalletConnectedEventCopyWith<$Res>
   $Res call(
       {String status,
       @TimestampConverter() DateTime? timestamp,
-      String userId,
-      String walletType});
+      String user_id,
+      String wallet_type});
 }
 
 /// @nodoc
@@ -552,8 +552,8 @@ class __$$_UserWalletConnectedEventCopyWithImpl<$Res>
   $Res call({
     Object? status = null,
     Object? timestamp = freezed,
-    Object? userId = null,
-    Object? walletType = null,
+    Object? user_id = null,
+    Object? wallet_type = null,
   }) {
     return _then(_$_UserWalletConnectedEvent(
       status: null == status
@@ -564,13 +564,13 @@ class __$$_UserWalletConnectedEventCopyWithImpl<$Res>
           ? _value.timestamp
           : timestamp // ignore: cast_nullable_to_non_nullable
               as DateTime?,
-      userId: null == userId
-          ? _value.userId
-          : userId // ignore: cast_nullable_to_non_nullable
+      user_id: null == user_id
+          ? _value.user_id
+          : user_id // ignore: cast_nullable_to_non_nullable
               as String,
-      walletType: null == walletType
-          ? _value.walletType
-          : walletType // ignore: cast_nullable_to_non_nullable
+      wallet_type: null == wallet_type
+          ? _value.wallet_type
+          : wallet_type // ignore: cast_nullable_to_non_nullable
               as String,
     ));
   }
@@ -582,8 +582,8 @@ class _$_UserWalletConnectedEvent implements _UserWalletConnectedEvent {
   const _$_UserWalletConnectedEvent(
       {required this.status,
       @TimestampConverter() this.timestamp,
-      required this.userId,
-      required this.walletType});
+      required this.user_id,
+      required this.wallet_type});
 
   factory _$_UserWalletConnectedEvent.fromJson(Map<String, dynamic> json) =>
       _$$_UserWalletConnectedEventFromJson(json);
@@ -594,13 +594,13 @@ class _$_UserWalletConnectedEvent implements _UserWalletConnectedEvent {
   @TimestampConverter()
   final DateTime? timestamp;
   @override
-  final String userId;
+  final String user_id;
   @override
-  final String walletType;
+  final String wallet_type;
 
   @override
   String toString() {
-    return 'UserWalletConnectedEvent(status: $status, timestamp: $timestamp, userId: $userId, walletType: $walletType)';
+    return 'UserWalletConnectedEvent(status: $status, timestamp: $timestamp, user_id: $user_id, wallet_type: $wallet_type)';
   }
 
   @override
@@ -611,15 +611,15 @@ class _$_UserWalletConnectedEvent implements _UserWalletConnectedEvent {
             (identical(other.status, status) || other.status == status) &&
             (identical(other.timestamp, timestamp) ||
                 other.timestamp == timestamp) &&
-            (identical(other.userId, userId) || other.userId == userId) &&
-            (identical(other.walletType, walletType) ||
-                other.walletType == walletType));
+            (identical(other.user_id, user_id) || other.user_id == user_id) &&
+            (identical(other.wallet_type, wallet_type) ||
+                other.wallet_type == wallet_type));
   }
 
   @JsonKey(ignore: true)
   @override
   int get hashCode =>
-      Object.hash(runtimeType, status, timestamp, userId, walletType);
+      Object.hash(runtimeType, status, timestamp, user_id, wallet_type);
 
   @JsonKey(ignore: true)
   @override
@@ -640,8 +640,8 @@ abstract class _UserWalletConnectedEvent implements UserWalletConnectedEvent {
   const factory _UserWalletConnectedEvent(
       {required final String status,
       @TimestampConverter() final DateTime? timestamp,
-      required final String userId,
-      required final String walletType}) = _$_UserWalletConnectedEvent;
+      required final String user_id,
+      required final String wallet_type}) = _$_UserWalletConnectedEvent;
 
   factory _UserWalletConnectedEvent.fromJson(Map<String, dynamic> json) =
       _$_UserWalletConnectedEvent.fromJson;
@@ -652,9 +652,9 @@ abstract class _UserWalletConnectedEvent implements UserWalletConnectedEvent {
   @TimestampConverter()
   DateTime? get timestamp;
   @override
-  String get userId;
+  String get user_id;
   @override
-  String get walletType;
+  String get wallet_type;
   @override
   @JsonKey(ignore: true)
   _$$_UserWalletConnectedEventCopyWith<_$_UserWalletConnectedEvent>
@@ -997,7 +997,7 @@ UserProfileUpdateEvent _$UserProfileUpdateEventFromJson(
 
 /// @nodoc
 mixin _$UserProfileUpdateEvent {
-  String get userId => throw _privateConstructorUsedError;
+  String get user_id => throw _privateConstructorUsedError;
   Map<String, String> get fields => throw _privateConstructorUsedError;
 
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
@@ -1012,7 +1012,7 @@ abstract class $UserProfileUpdateEventCopyWith<$Res> {
           $Res Function(UserProfileUpdateEvent) then) =
       _$UserProfileUpdateEventCopyWithImpl<$Res, UserProfileUpdateEvent>;
   @useResult
-  $Res call({String userId, Map<String, String> fields});
+  $Res call({String user_id, Map<String, String> fields});
 }
 
 /// @nodoc
@@ -1029,13 +1029,13 @@ class _$UserProfileUpdateEventCopyWithImpl<$Res,
   @pragma('vm:prefer-inline')
   @override
   $Res call({
-    Object? userId = null,
+    Object? user_id = null,
     Object? fields = null,
   }) {
     return _then(_value.copyWith(
-      userId: null == userId
-          ? _value.userId
-          : userId // ignore: cast_nullable_to_non_nullable
+      user_id: null == user_id
+          ? _value.user_id
+          : user_id // ignore: cast_nullable_to_non_nullable
               as String,
       fields: null == fields
           ? _value.fields
@@ -1053,7 +1053,7 @@ abstract class _$$_UserProfileUpdateEventCopyWith<$Res>
       __$$_UserProfileUpdateEventCopyWithImpl<$Res>;
   @override
   @useResult
-  $Res call({String userId, Map<String, String> fields});
+  $Res call({String user_id, Map<String, String> fields});
 }
 
 /// @nodoc
@@ -1068,13 +1068,13 @@ class __$$_UserProfileUpdateEventCopyWithImpl<$Res>
   @pragma('vm:prefer-inline')
   @override
   $Res call({
-    Object? userId = null,
+    Object? user_id = null,
     Object? fields = null,
   }) {
     return _then(_$_UserProfileUpdateEvent(
-      userId: null == userId
-          ? _value.userId
-          : userId // ignore: cast_nullable_to_non_nullable
+      user_id: null == user_id
+          ? _value.user_id
+          : user_id // ignore: cast_nullable_to_non_nullable
               as String,
       fields: null == fields
           ? _value._fields
@@ -1088,14 +1088,14 @@ class __$$_UserProfileUpdateEventCopyWithImpl<$Res>
 @JsonSerializable()
 class _$_UserProfileUpdateEvent implements _UserProfileUpdateEvent {
   const _$_UserProfileUpdateEvent(
-      {required this.userId, required final Map<String, String> fields})
+      {required this.user_id, required final Map<String, String> fields})
       : _fields = fields;
 
   factory _$_UserProfileUpdateEvent.fromJson(Map<String, dynamic> json) =>
       _$$_UserProfileUpdateEventFromJson(json);
 
   @override
-  final String userId;
+  final String user_id;
   final Map<String, String> _fields;
   @override
   Map<String, String> get fields {
@@ -1106,7 +1106,7 @@ class _$_UserProfileUpdateEvent implements _UserProfileUpdateEvent {
 
   @override
   String toString() {
-    return 'UserProfileUpdateEvent(userId: $userId, fields: $fields)';
+    return 'UserProfileUpdateEvent(user_id: $user_id, fields: $fields)';
   }
 
   @override
@@ -1114,14 +1114,14 @@ class _$_UserProfileUpdateEvent implements _UserProfileUpdateEvent {
     return identical(this, other) ||
         (other.runtimeType == runtimeType &&
             other is _$_UserProfileUpdateEvent &&
-            (identical(other.userId, userId) || other.userId == userId) &&
+            (identical(other.user_id, user_id) || other.user_id == user_id) &&
             const DeepCollectionEquality().equals(other._fields, _fields));
   }
 
   @JsonKey(ignore: true)
   @override
   int get hashCode => Object.hash(
-      runtimeType, userId, const DeepCollectionEquality().hash(_fields));
+      runtimeType, user_id, const DeepCollectionEquality().hash(_fields));
 
   @JsonKey(ignore: true)
   @override
@@ -1140,14 +1140,14 @@ class _$_UserProfileUpdateEvent implements _UserProfileUpdateEvent {
 
 abstract class _UserProfileUpdateEvent implements UserProfileUpdateEvent {
   const factory _UserProfileUpdateEvent(
-      {required final String userId,
+      {required final String user_id,
       required final Map<String, String> fields}) = _$_UserProfileUpdateEvent;
 
   factory _UserProfileUpdateEvent.fromJson(Map<String, dynamic> json) =
       _$_UserProfileUpdateEvent.fromJson;
 
   @override
-  String get userId;
+  String get user_id;
   @override
   Map<String, String> get fields;
   @override
@@ -1163,7 +1163,7 @@ UserAccountDeletionEvent _$UserAccountDeletionEventFromJson(
 
 /// @nodoc
 mixin _$UserAccountDeletionEvent {
-  String get userId => throw _privateConstructorUsedError;
+  String get user_id => throw _privateConstructorUsedError;
   String? get reason => throw _privateConstructorUsedError;
 
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
@@ -1178,7 +1178,7 @@ abstract class $UserAccountDeletionEventCopyWith<$Res> {
           $Res Function(UserAccountDeletionEvent) then) =
       _$UserAccountDeletionEventCopyWithImpl<$Res, UserAccountDeletionEvent>;
   @useResult
-  $Res call({String userId, String? reason});
+  $Res call({String user_id, String? reason});
 }
 
 /// @nodoc
@@ -1195,13 +1195,13 @@ class _$UserAccountDeletionEventCopyWithImpl<$Res,
   @pragma('vm:prefer-inline')
   @override
   $Res call({
-    Object? userId = null,
+    Object? user_id = null,
     Object? reason = freezed,
   }) {
     return _then(_value.copyWith(
-      userId: null == userId
-          ? _value.userId
-          : userId // ignore: cast_nullable_to_non_nullable
+      user_id: null == user_id
+          ? _value.user_id
+          : user_id // ignore: cast_nullable_to_non_nullable
               as String,
       reason: freezed == reason
           ? _value.reason
@@ -1220,7 +1220,7 @@ abstract class _$$_UserAccountDeletionEventCopyWith<$Res>
       __$$_UserAccountDeletionEventCopyWithImpl<$Res>;
   @override
   @useResult
-  $Res call({String userId, String? reason});
+  $Res call({String user_id, String? reason});
 }
 
 /// @nodoc
@@ -1235,13 +1235,13 @@ class __$$_UserAccountDeletionEventCopyWithImpl<$Res>
   @pragma('vm:prefer-inline')
   @override
   $Res call({
-    Object? userId = null,
+    Object? user_id = null,
     Object? reason = freezed,
   }) {
     return _then(_$_UserAccountDeletionEvent(
-      userId: null == userId
-          ? _value.userId
-          : userId // ignore: cast_nullable_to_non_nullable
+      user_id: null == user_id
+          ? _value.user_id
+          : user_id // ignore: cast_nullable_to_non_nullable
               as String,
       reason: freezed == reason
           ? _value.reason
@@ -1254,19 +1254,19 @@ class __$$_UserAccountDeletionEventCopyWithImpl<$Res>
 /// @nodoc
 @JsonSerializable()
 class _$_UserAccountDeletionEvent implements _UserAccountDeletionEvent {
-  const _$_UserAccountDeletionEvent({required this.userId, this.reason});
+  const _$_UserAccountDeletionEvent({required this.user_id, this.reason});
 
   factory _$_UserAccountDeletionEvent.fromJson(Map<String, dynamic> json) =>
       _$$_UserAccountDeletionEventFromJson(json);
 
   @override
-  final String userId;
+  final String user_id;
   @override
   final String? reason;
 
   @override
   String toString() {
-    return 'UserAccountDeletionEvent(userId: $userId, reason: $reason)';
+    return 'UserAccountDeletionEvent(user_id: $user_id, reason: $reason)';
   }
 
   @override
@@ -1274,13 +1274,13 @@ class _$_UserAccountDeletionEvent implements _UserAccountDeletionEvent {
     return identical(this, other) ||
         (other.runtimeType == runtimeType &&
             other is _$_UserAccountDeletionEvent &&
-            (identical(other.userId, userId) || other.userId == userId) &&
+            (identical(other.user_id, user_id) || other.user_id == user_id) &&
             (identical(other.reason, reason) || other.reason == reason));
   }
 
   @JsonKey(ignore: true)
   @override
-  int get hashCode => Object.hash(runtimeType, userId, reason);
+  int get hashCode => Object.hash(runtimeType, user_id, reason);
 
   @JsonKey(ignore: true)
   @override
@@ -1299,14 +1299,14 @@ class _$_UserAccountDeletionEvent implements _UserAccountDeletionEvent {
 
 abstract class _UserAccountDeletionEvent implements UserAccountDeletionEvent {
   const factory _UserAccountDeletionEvent(
-      {required final String userId,
+      {required final String user_id,
       final String? reason}) = _$_UserAccountDeletionEvent;
 
   factory _UserAccountDeletionEvent.fromJson(Map<String, dynamic> json) =
       _$_UserAccountDeletionEvent.fromJson;
 
   @override
-  String get userId;
+  String get user_id;
   @override
   String? get reason;
   @override
@@ -1321,7 +1321,7 @@ UserInteractionEvent _$UserInteractionEventFromJson(Map<String, dynamic> json) {
 
 /// @nodoc
 mixin _$UserInteractionEvent {
-  String get userId => throw _privateConstructorUsedError;
+  String get user_id => throw _privateConstructorUsedError;
   String get interaction => throw _privateConstructorUsedError;
 
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
@@ -1336,7 +1336,7 @@ abstract class $UserInteractionEventCopyWith<$Res> {
           $Res Function(UserInteractionEvent) then) =
       _$UserInteractionEventCopyWithImpl<$Res, UserInteractionEvent>;
   @useResult
-  $Res call({String userId, String interaction});
+  $Res call({String user_id, String interaction});
 }
 
 /// @nodoc
@@ -1353,13 +1353,13 @@ class _$UserInteractionEventCopyWithImpl<$Res,
   @pragma('vm:prefer-inline')
   @override
   $Res call({
-    Object? userId = null,
+    Object? user_id = null,
     Object? interaction = null,
   }) {
     return _then(_value.copyWith(
-      userId: null == userId
-          ? _value.userId
-          : userId // ignore: cast_nullable_to_non_nullable
+      user_id: null == user_id
+          ? _value.user_id
+          : user_id // ignore: cast_nullable_to_non_nullable
               as String,
       interaction: null == interaction
           ? _value.interaction
@@ -1377,7 +1377,7 @@ abstract class _$$_UserInteractionEventCopyWith<$Res>
       __$$_UserInteractionEventCopyWithImpl<$Res>;
   @override
   @useResult
-  $Res call({String userId, String interaction});
+  $Res call({String user_id, String interaction});
 }
 
 /// @nodoc
@@ -1391,13 +1391,13 @@ class __$$_UserInteractionEventCopyWithImpl<$Res>
   @pragma('vm:prefer-inline')
   @override
   $Res call({
-    Object? userId = null,
+    Object? user_id = null,
     Object? interaction = null,
   }) {
     return _then(_$_UserInteractionEvent(
-      userId: null == userId
-          ? _value.userId
-          : userId // ignore: cast_nullable_to_non_nullable
+      user_id: null == user_id
+          ? _value.user_id
+          : user_id // ignore: cast_nullable_to_non_nullable
               as String,
       interaction: null == interaction
           ? _value.interaction
@@ -1411,19 +1411,19 @@ class __$$_UserInteractionEventCopyWithImpl<$Res>
 @JsonSerializable()
 class _$_UserInteractionEvent implements _UserInteractionEvent {
   const _$_UserInteractionEvent(
-      {required this.userId, required this.interaction});
+      {required this.user_id, required this.interaction});
 
   factory _$_UserInteractionEvent.fromJson(Map<String, dynamic> json) =>
       _$$_UserInteractionEventFromJson(json);
 
   @override
-  final String userId;
+  final String user_id;
   @override
   final String interaction;
 
   @override
   String toString() {
-    return 'UserInteractionEvent(userId: $userId, interaction: $interaction)';
+    return 'UserInteractionEvent(user_id: $user_id, interaction: $interaction)';
   }
 
   @override
@@ -1431,14 +1431,14 @@ class _$_UserInteractionEvent implements _UserInteractionEvent {
     return identical(this, other) ||
         (other.runtimeType == runtimeType &&
             other is _$_UserInteractionEvent &&
-            (identical(other.userId, userId) || other.userId == userId) &&
+            (identical(other.user_id, user_id) || other.user_id == user_id) &&
             (identical(other.interaction, interaction) ||
                 other.interaction == interaction));
   }
 
   @JsonKey(ignore: true)
   @override
-  int get hashCode => Object.hash(runtimeType, userId, interaction);
+  int get hashCode => Object.hash(runtimeType, user_id, interaction);
 
   @JsonKey(ignore: true)
   @override
@@ -1457,14 +1457,14 @@ class _$_UserInteractionEvent implements _UserInteractionEvent {
 
 abstract class _UserInteractionEvent implements UserInteractionEvent {
   const factory _UserInteractionEvent(
-      {required final String userId,
+      {required final String user_id,
       required final String interaction}) = _$_UserInteractionEvent;
 
   factory _UserInteractionEvent.fromJson(Map<String, dynamic> json) =
       _$_UserInteractionEvent.fromJson;
 
   @override
-  String get userId;
+  String get user_id;
   @override
   String get interaction;
   @override
@@ -1479,12 +1479,12 @@ UserEvent _$UserEventFromJson(Map<String, dynamic> json) {
 
 /// @nodoc
 mixin _$UserEvent {
-  String? get eventId => throw _privateConstructorUsedError;
-  String get eventType => throw _privateConstructorUsedError;
-  String get userId => throw _privateConstructorUsedError;
+  String? get event_id => throw _privateConstructorUsedError;
+  String get event_type => throw _privateConstructorUsedError;
+  String get user_id => throw _privateConstructorUsedError;
   @TimestampConverter()
   DateTime? get timestamp => throw _privateConstructorUsedError;
-  Map<String, Object?>? get additionalData =>
+  Map<String, Object?>? get additional_data =>
       throw _privateConstructorUsedError;
 
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
@@ -1499,11 +1499,11 @@ abstract class $UserEventCopyWith<$Res> {
       _$UserEventCopyWithImpl<$Res, UserEvent>;
   @useResult
   $Res call(
-      {String? eventId,
-      String eventType,
-      String userId,
+      {String? event_id,
+      String event_type,
+      String user_id,
       @TimestampConverter() DateTime? timestamp,
-      Map<String, Object?>? additionalData});
+      Map<String, Object?>? additional_data});
 }
 
 /// @nodoc
@@ -1519,32 +1519,32 @@ class _$UserEventCopyWithImpl<$Res, $Val extends UserEvent>
   @pragma('vm:prefer-inline')
   @override
   $Res call({
-    Object? eventId = freezed,
-    Object? eventType = null,
-    Object? userId = null,
+    Object? event_id = freezed,
+    Object? event_type = null,
+    Object? user_id = null,
     Object? timestamp = freezed,
-    Object? additionalData = freezed,
+    Object? additional_data = freezed,
   }) {
     return _then(_value.copyWith(
-      eventId: freezed == eventId
-          ? _value.eventId
-          : eventId // ignore: cast_nullable_to_non_nullable
+      event_id: freezed == event_id
+          ? _value.event_id
+          : event_id // ignore: cast_nullable_to_non_nullable
               as String?,
-      eventType: null == eventType
-          ? _value.eventType
-          : eventType // ignore: cast_nullable_to_non_nullable
+      event_type: null == event_type
+          ? _value.event_type
+          : event_type // ignore: cast_nullable_to_non_nullable
               as String,
-      userId: null == userId
-          ? _value.userId
-          : userId // ignore: cast_nullable_to_non_nullable
+      user_id: null == user_id
+          ? _value.user_id
+          : user_id // ignore: cast_nullable_to_non_nullable
               as String,
       timestamp: freezed == timestamp
           ? _value.timestamp
           : timestamp // ignore: cast_nullable_to_non_nullable
               as DateTime?,
-      additionalData: freezed == additionalData
-          ? _value.additionalData
-          : additionalData // ignore: cast_nullable_to_non_nullable
+      additional_data: freezed == additional_data
+          ? _value.additional_data
+          : additional_data // ignore: cast_nullable_to_non_nullable
               as Map<String, Object?>?,
     ) as $Val);
   }
@@ -1558,11 +1558,11 @@ abstract class _$$_UserEventCopyWith<$Res> implements $UserEventCopyWith<$Res> {
   @override
   @useResult
   $Res call(
-      {String? eventId,
-      String eventType,
-      String userId,
+      {String? event_id,
+      String event_type,
+      String user_id,
       @TimestampConverter() DateTime? timestamp,
-      Map<String, Object?>? additionalData});
+      Map<String, Object?>? additional_data});
 }
 
 /// @nodoc
@@ -1576,32 +1576,32 @@ class __$$_UserEventCopyWithImpl<$Res>
   @pragma('vm:prefer-inline')
   @override
   $Res call({
-    Object? eventId = freezed,
-    Object? eventType = null,
-    Object? userId = null,
+    Object? event_id = freezed,
+    Object? event_type = null,
+    Object? user_id = null,
     Object? timestamp = freezed,
-    Object? additionalData = freezed,
+    Object? additional_data = freezed,
   }) {
     return _then(_$_UserEvent(
-      eventId: freezed == eventId
-          ? _value.eventId
-          : eventId // ignore: cast_nullable_to_non_nullable
+      event_id: freezed == event_id
+          ? _value.event_id
+          : event_id // ignore: cast_nullable_to_non_nullable
               as String?,
-      eventType: null == eventType
-          ? _value.eventType
-          : eventType // ignore: cast_nullable_to_non_nullable
+      event_type: null == event_type
+          ? _value.event_type
+          : event_type // ignore: cast_nullable_to_non_nullable
               as String,
-      userId: null == userId
-          ? _value.userId
-          : userId // ignore: cast_nullable_to_non_nullable
+      user_id: null == user_id
+          ? _value.user_id
+          : user_id // ignore: cast_nullable_to_non_nullable
               as String,
       timestamp: freezed == timestamp
           ? _value.timestamp
           : timestamp // ignore: cast_nullable_to_non_nullable
               as DateTime?,
-      additionalData: freezed == additionalData
-          ? _value._additionalData
-          : additionalData // ignore: cast_nullable_to_non_nullable
+      additional_data: freezed == additional_data
+          ? _value._additional_data
+          : additional_data // ignore: cast_nullable_to_non_nullable
               as Map<String, Object?>?,
     ));
   }
@@ -1611,38 +1611,38 @@ class __$$_UserEventCopyWithImpl<$Res>
 @JsonSerializable()
 class _$_UserEvent implements _UserEvent {
   const _$_UserEvent(
-      {this.eventId,
-      required this.eventType,
-      required this.userId,
+      {this.event_id,
+      required this.event_type,
+      required this.user_id,
       @TimestampConverter() this.timestamp,
-      final Map<String, Object?>? additionalData})
-      : _additionalData = additionalData;
+      final Map<String, Object?>? additional_data})
+      : _additional_data = additional_data;
 
   factory _$_UserEvent.fromJson(Map<String, dynamic> json) =>
       _$$_UserEventFromJson(json);
 
   @override
-  final String? eventId;
+  final String? event_id;
   @override
-  final String eventType;
+  final String event_type;
   @override
-  final String userId;
+  final String user_id;
   @override
   @TimestampConverter()
   final DateTime? timestamp;
-  final Map<String, Object?>? _additionalData;
+  final Map<String, Object?>? _additional_data;
   @override
-  Map<String, Object?>? get additionalData {
-    final value = _additionalData;
+  Map<String, Object?>? get additional_data {
+    final value = _additional_data;
     if (value == null) return null;
-    if (_additionalData is EqualUnmodifiableMapView) return _additionalData;
+    if (_additional_data is EqualUnmodifiableMapView) return _additional_data;
     // ignore: implicit_dynamic_type
     return EqualUnmodifiableMapView(value);
   }
 
   @override
   String toString() {
-    return 'UserEvent(eventId: $eventId, eventType: $eventType, userId: $userId, timestamp: $timestamp, additionalData: $additionalData)';
+    return 'UserEvent(event_id: $event_id, event_type: $event_type, user_id: $user_id, timestamp: $timestamp, additional_data: $additional_data)';
   }
 
   @override
@@ -1650,20 +1650,21 @@ class _$_UserEvent implements _UserEvent {
     return identical(this, other) ||
         (other.runtimeType == runtimeType &&
             other is _$_UserEvent &&
-            (identical(other.eventId, eventId) || other.eventId == eventId) &&
-            (identical(other.eventType, eventType) ||
-                other.eventType == eventType) &&
-            (identical(other.userId, userId) || other.userId == userId) &&
+            (identical(other.event_id, event_id) ||
+                other.event_id == event_id) &&
+            (identical(other.event_type, event_type) ||
+                other.event_type == event_type) &&
+            (identical(other.user_id, user_id) || other.user_id == user_id) &&
             (identical(other.timestamp, timestamp) ||
                 other.timestamp == timestamp) &&
             const DeepCollectionEquality()
-                .equals(other._additionalData, _additionalData));
+                .equals(other._additional_data, _additional_data));
   }
 
   @JsonKey(ignore: true)
   @override
-  int get hashCode => Object.hash(runtimeType, eventId, eventType, userId,
-      timestamp, const DeepCollectionEquality().hash(_additionalData));
+  int get hashCode => Object.hash(runtimeType, event_id, event_type, user_id,
+      timestamp, const DeepCollectionEquality().hash(_additional_data));
 
   @JsonKey(ignore: true)
   @override
@@ -1681,26 +1682,26 @@ class _$_UserEvent implements _UserEvent {
 
 abstract class _UserEvent implements UserEvent {
   const factory _UserEvent(
-      {final String? eventId,
-      required final String eventType,
-      required final String userId,
+      {final String? event_id,
+      required final String event_type,
+      required final String user_id,
       @TimestampConverter() final DateTime? timestamp,
-      final Map<String, Object?>? additionalData}) = _$_UserEvent;
+      final Map<String, Object?>? additional_data}) = _$_UserEvent;
 
   factory _UserEvent.fromJson(Map<String, dynamic> json) =
       _$_UserEvent.fromJson;
 
   @override
-  String? get eventId;
+  String? get event_id;
   @override
-  String get eventType;
+  String get event_type;
   @override
-  String get userId;
+  String get user_id;
   @override
   @TimestampConverter()
   DateTime? get timestamp;
   @override
-  Map<String, Object?>? get additionalData;
+  Map<String, Object?>? get additional_data;
   @override
   @JsonKey(ignore: true)
   _$$_UserEventCopyWith<_$_UserEvent> get copyWith =>

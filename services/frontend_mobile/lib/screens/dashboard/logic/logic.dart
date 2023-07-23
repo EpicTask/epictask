@@ -1,11 +1,14 @@
+import 'dart:convert';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
-import 'dart:convert';
+
 import '../../../models/task_model/task_model.dart';
 
+// Get tasks assigned to current user.
 Future<List<TaskModel>> getMyTasks() async {
   String uid = FirebaseAuth.instance.currentUser!.uid;
   final Query<Object> taskCollection = FirebaseFirestore.instance
@@ -28,16 +31,17 @@ Future<List<TaskModel>> getMyTasks() async {
   }
 }
 
-// ...
-
+// API call to retrieve USD value of XRP
 Future<double?> getUSDValue() async {
   const String baseURL =
       "https://api.coingecko.com/api/v3/simple/price?ids=ripple&vs_currencies=usd";
 
   SharedPreferences prefs = await SharedPreferences.getInstance();
-  DateTime? lastUpdateTime = DateTime.tryParse(prefs.getString('lastUpdateTime') ?? '');
+  DateTime? lastUpdateTime =
+      DateTime.tryParse(prefs.getString('lastUpdateTime') ?? '');
 
-  if (lastUpdateTime == null || DateTime.now().difference(lastUpdateTime).inDays >= 1) {
+  if (lastUpdateTime == null ||
+      DateTime.now().difference(lastUpdateTime).inDays >= 1) {
     try {
       final http.Response response = await http.get(Uri.parse(baseURL));
 
@@ -51,7 +55,8 @@ Future<double?> getUSDValue() async {
 
         return usdValue;
       } else {
-        throw Exception('Error: Request failed, status code ${response.statusCode}');
+        throw Exception(
+            'Error: Request failed, status code ${response.statusCode}');
       }
     } catch (e) {
       throw Exception('Error: $e');
@@ -62,8 +67,6 @@ Future<double?> getUSDValue() async {
     return cachedValue;
   }
 }
-
-
 
 // Sum up the reward amount
 double sumRewardAmount(List<TaskModel> tasks) {

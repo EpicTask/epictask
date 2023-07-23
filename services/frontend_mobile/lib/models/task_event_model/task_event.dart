@@ -1,3 +1,5 @@
+// ignore_for_file: non_constant_identifier_names
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 
@@ -45,8 +47,8 @@ class TaskEvent with _$TaskEvent {
       _$TaskEventFromJson(json);
 
   factory TaskEvent.defaultEvent() {
-    return TaskEvent(
-        event_type: 'defaultEvent', timestamp: DateTime.now(), user_id: '');
+    return const TaskEvent(
+        event_type: 'defaultEvent', user_id: '',event_id: '',status:'');
   }
 }
 
@@ -91,6 +93,7 @@ class TaskCompleted with _$TaskCompleted {
     List<String>? attachments,
     bool? marked_completed,
     bool? verified,
+    String? verification_method,
   }) = _TaskCompleted;
 
   factory TaskCompleted.fromJson(Map<String, Object?> json) =>

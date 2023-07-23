@@ -132,7 +132,8 @@ app.post('/authenticate', async (req, res) => {
 // User updated profile
 app.post('/profileUpdate', async (req, res) => {
   try {
-    const result = await profileUpdate();
+    const response = req.body;
+    const result = await profileUpdate(response);
     res.status(201).json({message: 'Successful profile update:', result});
   } catch (error) {
     console.log;
@@ -144,7 +145,8 @@ app.post('/profileUpdate', async (req, res) => {
 // User deleted account
 app.post('/deleteAccount', async (req, res) => {
   try {
-    const result = await deletedUserAccount();
+    const response = req.body;
+    const result = await deletedUserAccount(response);
     res
       .status(201)
       .json({message: 'Successful user account deletion:', result});
@@ -158,7 +160,8 @@ app.post('/deleteAccount', async (req, res) => {
 // User interaction
 app.post('/userInteraction', async (req, res) => {
   try {
-    const result = await saveUserInteraction();
+    const response = req.body;
+    const result = await saveUserInteraction(response);
     res
       .status(201)
       .json({message: 'Successful user interaction saved:', result});
@@ -172,7 +175,8 @@ app.post('/userInteraction', async (req, res) => {
 //User verified
 app.post('/userVerified', async (req, res) => {
   try {
-    const result = await verifyUser();
+    const response = req.body;
+    const result = await verifyUser(response);
     res.status(201).json({message: 'Successful user verification:', result});
   } catch (error) {
     console.log;
@@ -184,7 +188,8 @@ app.post('/userVerified', async (req, res) => {
 // Sign in with email and password
 app.post('/signout', async (req, res) => {
   try {
-    const result = await signUserOut();
+    const response = req.body;
+    const result = await signUserOut(response);
     res.status(201).json({message: 'Successful user signout:', result});
   } catch (error) {
     console.log;

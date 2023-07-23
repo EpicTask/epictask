@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:sign_in_with_apple/sign_in_with_apple.dart';
@@ -18,10 +19,10 @@ class LoginForm extends StatefulWidget {
   const LoginForm({Key? key}) : super(key: key);
 
   @override
-  _LoginFormState createState() => _LoginFormState();
+  LoginFormState createState() => LoginFormState();
 }
 
-class _LoginFormState extends State<LoginForm> {
+class LoginFormState extends State<LoginForm> {
   late TextEditingController _emailController;
   late TextEditingController _passwordController;
   late LoginBloc _loginBloc;
@@ -87,20 +88,24 @@ class _LoginFormState extends State<LoginForm> {
     _loginBloc.add(LoginWithGooglePressed());
   }
 
-  void _showSnackBar(BuildContext context, String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: <Widget>[
-            Text(message),
-            const Icon(Icons.error),
-          ],
-        ),
-        backgroundColor: Colors.blueGrey[200],
-      ),
-    );
+  void _onPressedAnonymousSignIn() {
+    _loginBloc.add(LoginAnonymousPressed());
   }
+
+  // void _showSnackBar(BuildContext context, String message) {
+  //   ScaffoldMessenger.of(context).showSnackBar(
+  //     SnackBar(
+  //       content: Row(
+  //         mainAxisAlignment: MainAxisAlignment.spaceBetween,
+  //         children: <Widget>[
+  //           Text(message),
+  //           const Icon(Icons.error),
+  //         ],
+  //       ),
+  //       backgroundColor: Colors.blueGrey[200],
+  //     ),
+  //   );
+  // }
 
   void _showLoggingInSnackBar(BuildContext context) {
     ScaffoldMessenger.of(context).showSnackBar(
@@ -149,18 +154,18 @@ class _LoginFormState extends State<LoginForm> {
   Widget buildEmailFormField(BuildContext context, LoginState state) {
     return TextFormField(
       key: const Key('email'),
+      style: titleLarge(context)?.copyWith(color: Colors.black),
       controller: _emailController,
-      decoration: const InputDecoration(
-        icon: Icon(Icons.email),
-        labelText: 'email',
+      decoration: InputDecoration(
+        icon: const Icon(Icons.email),
+        labelText: 'Email',
+        labelStyle: titleLarge(context)?.copyWith(color: Colors.black),
       ),
       keyboardType: TextInputType.emailAddress,
       autocorrect: false,
       autovalidateMode: AutovalidateMode.onUserInteraction,
       validator: (_) {
-        return state.isEmailValid
-            ? null
-            :'Invalid email!';
+        return state.isEmailValid ? null : 'Invalid email!';
       },
       autofocus: true,
     );
@@ -169,18 +174,18 @@ class _LoginFormState extends State<LoginForm> {
   Widget buildPasswordFormField(BuildContext context, LoginState state) {
     return TextFormField(
       key: const Key('password'),
+      style: titleLarge(context)?.copyWith(color: Colors.black),
       controller: _passwordController,
-      decoration: const InputDecoration(
-        icon: Icon(Icons.lock),
+      decoration: InputDecoration(
+        icon: const Icon(Icons.lock),
         labelText: 'Password',
+        labelStyle: titleLarge(context)?.copyWith(color: Colors.black),
       ),
       obscureText: true,
       autocorrect: false,
       autovalidateMode: AutovalidateMode.onUserInteraction,
       validator: (_) {
-        return state.isPasswordValid
-            ? null
-            : 'Invalid Password!';
+        return state.isPasswordValid ? null : 'Invalid Password!';
       },
     );
   }
@@ -188,7 +193,7 @@ class _LoginFormState extends State<LoginForm> {
   @override
   Widget build(BuildContext context) {
     return BlocListener<LoginBloc, LoginState>(
-      listener: (BuildContext context, LoginState state) {
+      listener: (context, state) {
         _handleAuthenticationState(state);
       },
       child: Padding(
@@ -196,7 +201,7 @@ class _LoginFormState extends State<LoginForm> {
         child: Form(
           child: BlocBuilder<LoginBloc, LoginState>(
             bloc: _loginBloc,
-            builder: (BuildContext context, LoginState state) {
+            builder: (context, state) {
               return Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: <Widget>[
@@ -206,7 +211,8 @@ class _LoginFormState extends State<LoginForm> {
                   buildLoginButton(context, state),
                   buildForgotPasswordButton(context),
                   const SizedBox(height: 15),
-                  buildSignInButtons(context, state),
+                  if (!kIsWeb) buildSignInButtons(context, state),
+                  buildAnonymousLoginButton(context, state),
                 ],
               );
             },
@@ -221,9 +227,28 @@ class _LoginFormState extends State<LoginForm> {
       child: Column(
         children: <Widget>[
           buildGoogleLoginButton(context, state),
-          const SizedBox(height:30),
+          const SizedBox(height: 30),
           buildAppleLoginButton(context, state),
         ],
+      ),
+    );
+  }
+
+  Widget buildAnonymousLoginButton(context, state) {
+    return Align(
+      alignment: Alignment.bottomCenter,
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(8, 8, 8.0, 16),
+        child: TextButton(
+          child: Text(
+            'SignUp as guest.',
+            style: titleLarge(context)
+                ?.copyWith(color: Colors.blue, fontStyle: FontStyle.italic),
+          ),
+          onPressed: () {
+            _onPressedAnonymousSignIn();
+          },
+        ),
       ),
     );
   }
@@ -247,9 +272,6 @@ class _LoginFormState extends State<LoginForm> {
           _onPressedGoogleSignIn();
         }
       },
-      // style: ElevatedButtonTheme.of(context).style!.copyWith(
-      //       backgroundColor: MaterialStateProperty.all(canvasColor),
-      //     ),
       child: Padding(
         padding: const EdgeInsets.symmetric(vertical: 15),
         child: Row(
@@ -257,7 +279,7 @@ class _LoginFormState extends State<LoginForm> {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: <Widget>[
             const Image(
-              image: AssetImage(google_logo),
+              image: AssetImage(googleLogo),
               height: 20.0,
             ),
             Text(
@@ -297,9 +319,7 @@ class _LoginFormState extends State<LoginForm> {
         padding: const EdgeInsets.fromLTRB(8, 8, 8.0, 16),
         child: TextButton(
           child: const Text('Forgot Password'),
-          onPressed: () {
-  
-          },
+          onPressed: () {},
         ),
       ),
     );

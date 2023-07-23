@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
 
+// UI Widget for Login Screen background
 class CurvedWidget extends StatelessWidget {
-
   const CurvedWidget(
-      {super.key, this.curvedDistance = 80, this.curvedHeight = 80, this.child});
+      {super.key,
+      this.curvedDistance = 80,
+      this.curvedHeight = 80,
+      this.child});
   final Widget? child;
   final double curvedDistance;
   final double curvedHeight;
@@ -21,8 +24,8 @@ class CurvedWidget extends StatelessWidget {
 }
 
 class CurvedWidgetBackgroundClipper extends CustomClipper<Path> {
-
-  CurvedWidgetBackgroundClipper({required this.curvedDistance, required this.curvedHeight});
+  CurvedWidgetBackgroundClipper(
+      {required this.curvedDistance, required this.curvedHeight});
   final double curvedDistance;
   final double curvedHeight;
 

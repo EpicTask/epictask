@@ -1,4 +1,3 @@
-import 'package:easy_search_bar/easy_search_bar.dart';
 import 'package:epictask/models/task_model/task_model.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -13,6 +12,7 @@ import '../../services/ui/text_styles.dart';
 import '../search/search_bar.dart';
 import 'components/loading_widget.dart';
 
+// Modal sheet to display all users
 class AllUserPage extends StatelessWidget {
   const AllUserPage({Key? key, required this.task}) : super(key: key);
 
@@ -32,7 +32,9 @@ class AllUserPage extends StatelessWidget {
                     GenericBloc<UserModel, AllUserRepository>(
                       repository: AllUserRepository(),
                     ),
-                child:  UserModalSheet(task: task,));
+                child: UserModalSheet(
+                  task: task,
+                ));
           },
         );
       },
