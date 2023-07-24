@@ -76,7 +76,7 @@ def update_task_fields(event_type, response):
         # Generate a custom document ID
         doc_ref = collection_ref.document(doc_id)
 
-        fields = data["fields"]
+        fields = data["updated_fields"]
         # Update the document with the generated ID
         doc_ref.update(fields)
 
