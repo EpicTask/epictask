@@ -151,23 +151,20 @@ async def verify_transaction(tx_hash: str):
 
 # Create an Escrow
 @app.get('/create_escrow/{destination}/{amount}/{finish_after}')
-async def create_escrow(destination: str, amount: int, finish_after: str):
-    if not all([destination, amount, finish_after]):
+async def create_escrow(destination: str, amount: float, account: str, finish_after: str):
+    if not all([destination, amount, account, finish_after]):
         return JSONResponse({"error": "Missing required parameters."})
 
-    fiveMinute = generate_xrpl_timestamp('5min')
-    tenMinute = generate_xrpl_timestamp('10min')
-    # finish_after = int(finish_after)
-    finish_after = fiveMinute
-    amount = int(amount)
+    timestamp = generate_xrpl_timestamp(finish_after)
+
     escrow_create = {
         "txjson": {
             "TransactionType": "EscrowCreate",
-            "Account": "rB4iz44nvW2yGDBYTkspVfyR2NMsR3NtfF",
+            "Account": account,
             "Destination": destination,
             "Amount": str(amount),
             "FinishAfter": finish_after,
-            "CancelAfter": tenMinute
+            "CancelAfter": timestamp
         },
     }
     payload = sdk.payload.create(escrow_create)
@@ -184,12 +181,10 @@ def lookup_escrow_sync(account: str):
 
 # Cancel Escrow
 @app.get('/cancel_escrow_xumm/{owner}')
-async def cancel_escrow_xumm(owner: str):
+async def cancel_escrow_xumm(owner: str, wallet: str, offer_sequence: str):
     if not owner:
         return JSONResponse({"error": "Missing 'owner' parameter."})
 
-    wallet = "rB4iz44nvW2yGDBYTkspVfyR2NMsR3NtfF"
-    offer_sequence = int(37541655)
     escrow_cancel = {
         "txjson": {
             "TransactionType": "EscrowCancel",
@@ -204,12 +199,10 @@ async def cancel_escrow_xumm(owner: str):
 
 # Finish Escrow
 @app.get('/finish_escrow_xumm/{owner}')
-async def finish_escrow_xumm(owner: str):
-    if not owner:
+async def finish_escrow_xumm(owner: str, wallet: str, offer_sequence: str):
+    if not all ([owner, wallet, offer_sequence]):
         return JSONResponse({"error": "Missing 'owner' parameter."})
 
-    wallet = "rB4iz44nvW2yGDBYTkspVfyR2NMsR3NtfF"
-    offer_sequence = int(1)
     escrow_finish = {
         "txjson": {
             "TransactionType": "EscrowFinish",
