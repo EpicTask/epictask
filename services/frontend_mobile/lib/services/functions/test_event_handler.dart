@@ -1,3 +1,5 @@
+// ignore_for_file: constant_identifier_names
+
 import 'package:epictask/models/task_event_model/task_event.dart';
 import 'package:epictask/services/functions/test_api.dart';
 import 'package:flutter/foundation.dart';
@@ -44,16 +46,20 @@ String? taskEventHandler(TaskEvent event) {
         handleTaskCalls('REC', event);
         break;
       default:
-        print(
+        if (kDebugMode) {
+          print(
           'Unknown event type: $eventType',
         );
+        }
         break;
     }
     return 'Event handled.';
   } catch (error) {
-    print(
+    if (kDebugMode) {
+      print(
       'Message publishing error: $error',
     );
+    }
     // Handle the error during message publishing
   }
   return null;
