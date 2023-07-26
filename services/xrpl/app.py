@@ -21,7 +21,7 @@ from starlette.responses import JSONResponse
 from subscription_xrpl import account_subscription_sync
 from xrpl.asyncio.ledger import get_fee
 from xrpl.clients import JsonRpcClient, WebsocketClient
-from xrpl_models import PaymentRequest
+from xrpl_models import CreateEscrowModel, PaymentRequest
 from dotenv import load_dotenv
 app = FastAPI()
 
@@ -108,6 +108,8 @@ async def account_exists(address: str):
         return JSONResponse({"error": str(e)})
 
 # Payment test
+
+
 @app.get('/paymentTest')
 async def test_payment(request: Request):
     try:
@@ -135,6 +137,8 @@ async def transaction_fee():
         return JSONResponse({"error": str(e)})
 
 # Verify a transaction
+
+
 @app.get('/verify_transaction/{tx_hash}')
 async def verify_transaction(tx_hash: str):
     if not tx_hash:
@@ -150,21 +154,21 @@ async def verify_transaction(tx_hash: str):
 
 
 # Create an Escrow
-@app.get('/create_escrow/{destination}/{amount}/{finish_after}')
-async def create_escrow(destination: str, amount: float, account: str, finish_after: str):
-    if not all([destination, amount, account, finish_after]):
+@app.get('/create_escrow')
+async def create_escrow(response: CreateEscrowModel):
+    if not response:
         return JSONResponse({"error": "Missing required parameters."})
 
-    timestamp = generate_xrpl_timestamp(finish_after)
-
+    finish_after = generate_xrpl_timestamp(response.finish_after)
+    cancel_after = generate_xrpl_timestamp(response.cancel_after)
     escrow_create = {
         "txjson": {
             "TransactionType": "EscrowCreate",
-            "Account": account,
-            "Destination": destination,
-            "Amount": str(amount),
+            "Account": response.account,
+            "Destination": response.destination,
+            "Amount": str(response.amount),
             "FinishAfter": finish_after,
-            "CancelAfter": timestamp
+            "CancelAfter": cancel_after,
         },
     }
     payload = sdk.payload.create(escrow_create)
@@ -180,6 +184,8 @@ def lookup_escrow_sync(account: str):
     return escrow_info
 
 # Cancel Escrow
+
+
 @app.get('/cancel_escrow_xumm/{owner}')
 async def cancel_escrow_xumm(owner: str, wallet: str, offer_sequence: str):
     if not owner:
@@ -198,9 +204,11 @@ async def cancel_escrow_xumm(owner: str, wallet: str, offer_sequence: str):
     return JSONResponse(payload.to_dict())
 
 # Finish Escrow
+
+
 @app.get('/finish_escrow_xumm/{owner}')
 async def finish_escrow_xumm(owner: str, wallet: str, offer_sequence: str):
-    if not all ([owner, wallet, offer_sequence]):
+    if not all([owner, wallet, offer_sequence]):
         return JSONResponse({"error": "Missing 'owner' parameter."})
 
     escrow_finish = {
@@ -214,6 +222,14 @@ async def finish_escrow_xumm(owner: str, wallet: str, offer_sequence: str):
     payload = sdk.payload.create(escrow_finish)
     write_response_to_firestore(payload.to_dict(), "finish_escrow_xumm")
     return JSONResponse(payload.to_dict())
+
+# Make a payment request
+
+
+@app.get('/xrpl_timestamp')
+async def process_payment(timestamp: int):
+    response = await generate_xrpl_timestamp(timestamp)
+    return response
 
 
 @app.get('/subscribe')
