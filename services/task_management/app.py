@@ -8,7 +8,7 @@ from fastapi import FastAPI, Request
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
 from starlette.middleware.cors import CORSMiddleware
-from firestore_db import create_task, update_task, update_task_fields, delete_task, assign_task, completed_task, get_tasks, write_event_to_firestore, update_leaderboard
+from firestore_db import create_task, update_task, update_task_fields, delete_task, assign_task, completed_task, get_tasks, write_event_to_firestore, update_leaderboard, generate_contract
 from schema import (TaskAssigned, TaskCreated, TaskCancelled, TaskCompleted,
                     TaskCommentAdded, TaskEvent, TaskExpired, TaskRatingUpdate, TaskRewarded, TaskUpdated, TaskVerified)
 
@@ -38,8 +38,6 @@ async def hello(request: Request):
     return templates.TemplateResponse("index.html", {"request": request, "message": message})
 
 # Create Task Event
-
-
 @app.post('/TaskEvent')
 async def task_func(request: TaskEvent):
     try:
@@ -152,6 +150,15 @@ async def task_func(request: TaskVerified):
 async def task_func(request: TaskCreated):
     try:
         response = update_leaderboard(request)
+        return {"message": response}
+    except Exception as e:
+        return {"error": str(e)}
+
+# Generate contract
+@app.post('/GenerateContract')
+async def task_func(request: TaskEvent):
+    try:
+        response = generate_contract(data=request)
         return {"message": response}
     except Exception as e:
         return {"error": str(e)}

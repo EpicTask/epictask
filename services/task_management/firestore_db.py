@@ -1,7 +1,8 @@
 import json
+import requests
 from google.cloud import firestore
 
-from schema import TaskCreated, LeaderboardEntry
+from schema import TaskCreated, LeaderboardEntry, TaskEvent
 
 # Initialize Firestore client
 db = firestore.Client()
@@ -287,3 +288,19 @@ def update_leaderboard(response):
         return f"Leaderboard updated for user {assigned_to_id}"
     except Exception as e:
         return f"Error updating leaderboard: {str(e)}"
+
+
+
+
+# def generate_contract( params=None, data=None):
+#     url = 'https://us-central1-task-coin-384722.cloudfunctions.net/generatContract'
+#     headers = {'Content-Type': 'application/json'} 
+#     json_data = json.dumps(data.dict()) if data is not None else None
+#     print(data.dict())
+#     try:
+#         response = requests.request('POST', url, headers=headers, params=params, data=data.dict())
+#         response.raise_for_status()  # Raise an exception for 4xx and 5xx status codes
+#         return response.json() if response.headers.get('content-type') == 'application/json' else response.text
+#     except requests.exceptions.RequestException as e:
+#         print(f"Error making HTTP request: {e}")
+#         return None
