@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:epictask/models/contract_model/contract_model.dart';
+import 'package:flutter/foundation.dart';
 import 'package:intl/intl.dart';
 import '../../../models/task_event_model/task_event.dart';
 import '../../../models/task_model/task_model.dart';
@@ -49,7 +50,9 @@ Future<ContractModel> getContract(String? docId) async {
       }
     }
   } catch (e) {
-    print("Error: $e");
+    if (kDebugMode) {
+      print("Error: $e");
+    }
   }
   return ContractModel.defaultEvent();
 }

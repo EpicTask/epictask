@@ -1,5 +1,4 @@
 import 'package:epictask/screens/tasks/logic/logic.dart';
-import 'package:epictask/screens/users/components/loading_widget.dart';
 import 'package:epictask/services/service_config/service_config.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
