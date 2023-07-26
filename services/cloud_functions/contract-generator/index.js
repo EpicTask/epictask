@@ -45,15 +45,18 @@ async function getOpenaiClient() {
   }
 }
 
+// Generate contract for a given task.
 http("generateContract", async (req, res) => {
   try {
     const openai = await getOpenaiClient();
-    const taskCreated = req.body; 
-    const taskCreatorName = "User 1";
-    const taskAssigneeName = "User 2";
+    const taskCreated = req.body;
+    console.log("Request Body:" + JSON.stringify(taskCreated));
+    const taskCreatorName = `User ID: ${taskCreated.user_id}`;
+    const taskAssigneeName = `User ID: ${taskCreated.additional_data.assigned_to_ids[0]}`;
 
-    const contractPrompt = `Generate a contract between Task Creator ${taskCreatorName} (ID: ${taskCreated.user_id}) and Task Assignee ${taskAssigneeName} (ID: ) using the following TaskCreated data:\n\nTask Title: ${taskCreated.additional_data.task_title}\nTask Description: ${taskCreated.additional_data.task_description}\nTask ID: ${taskCreated.task_id}\nProject ID: ${taskCreated.additional_data.project_id}\nProject Name: ${taskCreated.additional_data.project_name}\nReward Amount: ${taskCreated.additional_data.reward_amount} ${taskCreated.additional_data.reward_currency}\nPayment Method: ${taskCreated.additional_data.payment_method}\n\nUser provided terms and conditions: ${taskCreated.additional_data.terms_blob}\n\nContract:`;
-
+    // Contract prompt
+    const contractPrompt = `Generate a contract between Task Creator ${taskCreatorName} (ID: ${taskCreated.user_id}) and Task Assignee ${taskAssigneeName} (ID: ). This contract is not bonded by any law other than subject to EpicTask Policy. Use the following TaskCreated data:\n\nTask Title: ${taskCreated.additional_data.task_title}\nTask Description: ${taskCreated.additional_data.task_description}\nTask ID: ${taskCreated.task_id}\nProject ID: ${taskCreated.additional_data.project_id}\nProject Name: ${taskCreated.additional_data.project_name}\nReward Amount: ${taskCreated.additional_data.reward_amount} ${taskCreated.additional_data.reward_currency}\nPayment Method: ${taskCreated.additional_data.payment_method}\n\nUser provided terms and conditions: ${taskCreated.additional_data.terms_blob}\n\nContract :`;
+    // API call
     const response = await openai.createCompletion({
       model: "text-davinci-003",
       prompt: contractPrompt,
@@ -61,10 +64,10 @@ http("generateContract", async (req, res) => {
       temperature: 0.5,
     });
 
-    // TODO: Call TaskManagement api to generate terms_id and save contract to database.
+    // TODO: Call TaskManagement API to generate terms_id and save the contract to the database.
 
     const contract = response.data.choices[0].text.trim();
-    res.status(200).send(contract);
+
   } catch (error) {
     console.error(error);
     res.status(500).send("Error generating contract");
