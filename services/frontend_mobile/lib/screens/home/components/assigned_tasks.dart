@@ -78,24 +78,36 @@ class _AssignedTasksWidgetState extends State<AssignedTasksWidget> {
           }
           if (state is HasDataState) {
             final List<TaskModel> taskData = state.data as List<TaskModel>;
-            return SingleChildScrollView(
-              child: SizedBox(
-                height: SizeConfig.screenHeight * .8,
-                child: ListView.builder(
-                  controller: _scrollController,
-                  itemCount: taskData.length + 1,
-                  itemBuilder: (context, index) {
-                    if (index == taskData.length) {
-                      return SizedBox(
-                        height: SizeConfig.screenHeight * .2,
-                      );
-                    } else {
-                      return TaskCardAssigned(task: taskData[index]);
-                    }
-                  },
-                ),
-              ),
-            );
+            return kIsWeb
+                ? CustomScrollView(slivers: [
+                    SliverGrid(
+                      gridDelegate:
+                          const SliverGridDelegateWithFixedCrossAxisCount(
+                              crossAxisCount: 3),
+                      delegate: SliverChildBuilderDelegate(
+                          (BuildContext context, int index) {
+                        return TaskCard(task: taskData[index]);
+                      }, childCount: taskData.length),
+                    )
+                  ])
+                : SingleChildScrollView(
+                    child: SizedBox(
+                      height: SizeConfig.screenHeight * .8,
+                      child: ListView.builder(
+                        controller: _scrollController,
+                        itemCount: taskData.length + 1,
+                        itemBuilder: (context, index) {
+                          if (index == taskData.length) {
+                            return SizedBox(
+                              height: SizeConfig.screenHeight * .2,
+                            );
+                          } else {
+                            return TaskCardAssigned(task: taskData[index]);
+                          }
+                        },
+                      ),
+                    ),
+                  );
           } else {
             return const TaskCardShimmer();
           }

@@ -21,63 +21,69 @@ class TaskCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return TaskCardShape(
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        
         children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(task.task_description, style: titleLarge(context)),
-              PopupMenuButtonWidget(task: task)
-            ],
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(task.task_description, style: titleLarge(context)),
+                  PopupMenuButtonWidget(task: task)
+                ],
+              ),
+              Text('Reward: ${task.reward_amount} ${task.reward_currency}',
+                  style: titleLarge(context)),
+              Text(
+                  'Due Date: ${formatDate(DateTime.fromMillisecondsSinceEpoch(task.expiration_date * 1000))}',
+                  style: titleLarge(context)),
+              if (task.assigned_to_ids?.isNotEmpty ?? false)
+                FutureBuilder<String>(
+                    future: getUserDisplayName(task.assigned_to_ids!.first),
+                    builder: (context, snapshot) {
+                      if (snapshot.hasData) {
+                        String displayName = snapshot.data as String;
+                        return Text('Assigned To: $displayName',
+                            style: titleLarge(context));
+                      }
+                      return Text('Assigned To: Unknown User',
+                          style: titleLarge(context));
+                    }),
+              if (task.marked_completed ?? false)
+                Text('Marked Completed', style: titleLarge(context)),
+              SizedBox(
+                height: SizeConfig.screenHeight * .025,
+              ),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Row(children: [
+                    if (task.auto_verify ?? false)
+                      Tooltip(
+                        message:
+                            'This task will be automatically verified using AI.',
+                        child: Text('🤖  ', style: titleLarge(context)),
+                      ),
+                    if (task.terms_blob?.isNotEmpty ?? false)
+                      Text('Conditions:', style: titleLarge(context)),
+                  ]),
+                  if (task.terms_id?.isNotEmpty ?? false)
+                    Tooltip(
+                        message: 'View Contract',
+                        child: IconButton(
+                            onPressed: () {
+                              viewContractAlertDialog(context, task);
+                            },
+                            icon: const Icon(Icons.description)))
+                ],
+              ),
+              if ((task.terms_id?.isEmpty ?? false) &&
+                  (task.terms_blob?.isNotEmpty ?? false))
+                Text(task.terms_blob ?? '', style: titleLarge(context)),
+            ]),
           ),
-          Text('Reward: ${task.reward_amount} ${task.reward_currency}',
-              style: titleLarge(context)),
-          Text(
-              'Due Date: ${formatDate(DateTime.fromMillisecondsSinceEpoch(task.expiration_date * 1000))}',
-              style: titleLarge(context)),
-          if (task.assigned_to_ids?.isNotEmpty ?? false)
-            FutureBuilder<String>(
-                future: getUserDisplayName(task.assigned_to_ids!.first),
-                builder: (context, snapshot) {
-                  if (snapshot.hasData) {
-                    String displayName = snapshot.data as String;
-                    return Text('Assigned To: $displayName',
-                        style: titleLarge(context));
-                  }
-                  return Text('Assigned To: Unknown User',
-                      style: titleLarge(context));
-                }),
-            if (task.marked_completed ?? false)
-              Text('Marked Completed', style: titleLarge(context)),
-          SizedBox(
-            height: SizeConfig.screenHeight * .025,
-          ),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Row(children: [
-                if (task.auto_verify ?? false)
-                  Tooltip(
-                    message:
-                        'This task will be automatically verified using AI.',
-                    child: Text('🤖  ', style: titleLarge(context)),
-                  ),
-                if (task.terms_blob?.isNotEmpty ?? false)
-                  Text('Conditions:', style: titleLarge(context)),
-              ]),
-              if (task.terms_id?.isNotEmpty ?? false)
-                Tooltip(
-                    message: 'View Contract',
-                    child: IconButton(
-                        onPressed: () {
-                          viewContractAlertDialog(context, task);
-                        },
-                        icon: const Icon(Icons.description)))
-            ],
-          ),
-          if ((task.terms_id?.isEmpty ?? false) &&
-              (task.terms_blob?.isNotEmpty ?? false))
-            Text(task.terms_blob ?? '', style: titleLarge(context)),
           Padding(
             padding: const EdgeInsets.all(8.0),
             child: Row(
@@ -111,7 +117,6 @@ class TaskCard extends StatelessWidget {
     );
   }
 }
-
 
 class TaskCardAssigned extends StatelessWidget {
   final TaskModel task;
@@ -162,7 +167,6 @@ class TaskCardAssigned extends StatelessWidget {
     );
   }
 }
-
 
 class TaskCardShape extends StatelessWidget {
   const TaskCardShape({super.key, required this.child});
