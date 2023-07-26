@@ -4,10 +4,58 @@ import {onDocumentCreated} from "firebase-functions/v2/firestore";
 import {firestore} from "firebase-admin";
 import {FieldValue} from "firebase-admin/firestore";
 import * as functions from "firebase-functions";
+import {SecretManagerServiceClient} from "@google-cloud/secret-manager";
+import {Configuration, OpenAIApi} from "openai";
 
 initializeApp();
 
 const db = firestore();
+/**
+ * Retrieves the latest version of a secret from Google Cloud Secret Manager.
+ * @async
+ * @param {String} params - The name of the secret to retrieve.
+ * @return {Promise<String>} - The secret's payload data as a string.
+ */
+async function getSecretsClient(params: any) {
+  try {
+    const projectId = "672847978942";
+    const client = new SecretManagerServiceClient();
+    const [version] = await client.accessSecretVersion({
+      name: `projects/${projectId}/secrets/${params}/versions/latest`,
+    });
+    if (version?.payload?.data) {
+      return version.payload.data.toString();
+    } else {
+      return null;
+    }
+  } catch (err) {
+    console.error(`Error getting secret: ${err}`);
+    throw new Error(`Error getting secret: ${err}`);
+  }
+}
+
+/**
+ * Retrieves the OpenAI client with the appropriate API key and organization.
+ * @async
+ * @return {Promise<OpenAIApi>} - The OpenAI client.
+ */
+async function getOpenaiClient() {
+  try {
+    // Get the organization and OpenAI API key from Google Cloud Secret Manager
+    const orgKey = await getSecretsClient("open-ai-org-key");
+    const secretValue = await getSecretsClient("open-ai");
+    // Create a new configuration object with the retrieved keys
+    const configuration = new Configuration({
+      organization: orgKey ?? "",
+      apiKey: secretValue ?? "",
+    });
+    // Create and return a new OpenAI client using the configuration object
+    return new OpenAIApi(configuration);
+  } catch (err) {
+    console.error(`Error getting OpenAI client: ${err}`);
+    throw new Error(`Error getting OpenAI client: ${err}`);
+  }
+}
 
 exports.newUserCreated = functions.auth.user().onCreate((user) => {
   const email = user.email; // The email of the user.
@@ -143,10 +191,9 @@ exports.deleteTaskAfterSuccessfulPayment = onDocumentCreated(
             .collection("test_paid_tasks")
             .doc(taskEventDocData.custom_meta.blob.task_id)
             .set(taskData!);
-          db
-            .collection("test_paid_tasks")
+          db.collection("test_paid_tasks")
             .doc(taskEventDocData.custom_meta.blob.task_id)
-            .update({"rewarded": true}!);
+            .update({rewarded: true}!);
 
           // Delete the original document in test_tasks
           await db
@@ -196,5 +243,76 @@ exports.updateLeaderboard = onDocumentCreated(
   }
 );
 
+exports.generateContract = functions.https.onCall(async (data, context) => {
+  if (!context.auth) {
+    throw new functions.https.HttpsError(
+      "unauthenticated",
+      "Unable to perform action."
+    );
+  }
+
+  try {
+    const openai = await getOpenaiClient();
+    const taskCreated = data;
+    console.log("Request Body:" + JSON.stringify(taskCreated));
+    const taskCreatorName = `User ID: ${taskCreated.user_id}`;
+    const taskAssigneeName = `User ID: ${taskCreated
+      .additional_data.assigned_to_ids[0]}`;
+
+    // Contract prompt
+    const contractPrompt =
+      "Generate a contract between Task Creator " +
+      taskCreatorName +
+      " (ID: " +
+      taskCreated.user_id +
+      ") and Task Assignee " +
+      taskAssigneeName +
+      " (ID: ). This contract is not bonded by any law other " +
+      "than subject to EpicTask Policy. Use the following " +
+      "TaskCreated data:\n\nTask Title: " +
+      taskCreated.additional_data.task_title +
+      "\nTask Description: " +
+      taskCreated.additional_data.task_description +
+      "\nTask ID: " +
+      taskCreated.task_id +
+      "\nProject ID: " +
+      taskCreated.additional_data.project_id +
+      "\nProject Name: " +
+      taskCreated.additional_data.project_name +
+      "\nReward Amount: " +
+      taskCreated.additional_data.reward_amount +
+      " " +
+      taskCreated.additional_data.reward_currency +
+      "\nPayment Method: " +
+      taskCreated.additional_data.payment_method +
+      "\n\nUser provided terms and conditions: " +
+      taskCreated.additional_data.terms_blob;
+
+    // API call
+    const response = await openai.createCompletion({
+      model: "text-davinci-003",
+      prompt: contractPrompt,
+      max_tokens: 500,
+      temperature: 0.5,
+    });
+
+    const contract = response.data.choices[0].text?.trim();
+    console.log(contract);
+    // const docId = db.collection("test_contracts").doc().id;
+    // await db.collection("test_contracts").doc(docId).set({
+    //   contract: contract,
+    //   timestamp: FieldValue.serverTimestamp(),
+    // });
+
+    // return docId; // Return the docId to update task with terms_id value.
+    return contract;
+  } catch (error) {
+    console.error(error);
+    throw new functions.https.HttpsError(
+      "internal",
+      "Error generating contract"
+    );
+  }
+});
 // firebase deploy --only functions:updateXummUserToken
 // npm run lint -- --fix

@@ -28,6 +28,8 @@ async def submit_escrow_async(wallet: Wallet, destination: str, amount: int, fin
     return await send_reliable_submission(escrow, wallet, client)
 
 # Submit escrow after creation
+
+
 def submit_escrow_sync(wallet: Wallet, destination: str, amount: int, finish_after: int):
     loop = asyncio.new_event_loop()
     asyncio.set_event_loop(loop)
@@ -36,17 +38,6 @@ def submit_escrow_sync(wallet: Wallet, destination: str, amount: int, finish_aft
     return result
 
 
-def generate_xrpl_timestamp(interval):
-    if interval == '5min':
-        delta = 5 * 60
-    elif interval == '10min':
-        delta = 10 * 60
-    elif interval == '1hr':
-        delta = 60 * 60
-    elif interval == '24hr':
-        delta = 24 * 60 * 60
-    else:
-        raise ValueError("Invalid interval specified")
-
-    timestamp = int(time.time()) + delta - 946684800
-    return timestamp
+def generate_xrpl_timestamp(timestamp):
+    newTimestamp = timestamp - 946684800
+    return newTimestamp

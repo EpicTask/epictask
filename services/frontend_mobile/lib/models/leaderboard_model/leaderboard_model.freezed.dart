@@ -20,12 +20,12 @@ LeaderboardModel _$LeaderboardModelFromJson(Map<String, dynamic> json) {
 
 /// @nodoc
 mixin _$LeaderboardModel {
-  double? get eTask_earned => throw _privateConstructorUsedError;
+  double get eTask_earned => throw _privateConstructorUsedError;
   @TimestampConverter()
   DateTime? get lastUpdated => throw _privateConstructorUsedError;
   int get tasks_completed => throw _privateConstructorUsedError;
   String get user_id => throw _privateConstructorUsedError;
-  double? get xrp_earned => throw _privateConstructorUsedError;
+  double get xrp_earned => throw _privateConstructorUsedError;
 
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
   @JsonKey(ignore: true)
@@ -40,11 +40,11 @@ abstract class $LeaderboardModelCopyWith<$Res> {
       _$LeaderboardModelCopyWithImpl<$Res, LeaderboardModel>;
   @useResult
   $Res call(
-      {double? eTask_earned,
+      {double eTask_earned,
       @TimestampConverter() DateTime? lastUpdated,
       int tasks_completed,
       String user_id,
-      double? xrp_earned});
+      double xrp_earned});
 }
 
 /// @nodoc
@@ -60,17 +60,17 @@ class _$LeaderboardModelCopyWithImpl<$Res, $Val extends LeaderboardModel>
   @pragma('vm:prefer-inline')
   @override
   $Res call({
-    Object? eTask_earned = freezed,
+    Object? eTask_earned = null,
     Object? lastUpdated = freezed,
     Object? tasks_completed = null,
     Object? user_id = null,
-    Object? xrp_earned = freezed,
+    Object? xrp_earned = null,
   }) {
     return _then(_value.copyWith(
-      eTask_earned: freezed == eTask_earned
+      eTask_earned: null == eTask_earned
           ? _value.eTask_earned
           : eTask_earned // ignore: cast_nullable_to_non_nullable
-              as double?,
+              as double,
       lastUpdated: freezed == lastUpdated
           ? _value.lastUpdated
           : lastUpdated // ignore: cast_nullable_to_non_nullable
@@ -83,10 +83,10 @@ class _$LeaderboardModelCopyWithImpl<$Res, $Val extends LeaderboardModel>
           ? _value.user_id
           : user_id // ignore: cast_nullable_to_non_nullable
               as String,
-      xrp_earned: freezed == xrp_earned
+      xrp_earned: null == xrp_earned
           ? _value.xrp_earned
           : xrp_earned // ignore: cast_nullable_to_non_nullable
-              as double?,
+              as double,
     ) as $Val);
   }
 }
@@ -100,11 +100,11 @@ abstract class _$$_LeaderboardModelCopyWith<$Res>
   @override
   @useResult
   $Res call(
-      {double? eTask_earned,
+      {double eTask_earned,
       @TimestampConverter() DateTime? lastUpdated,
       int tasks_completed,
       String user_id,
-      double? xrp_earned});
+      double xrp_earned});
 }
 
 /// @nodoc
@@ -118,17 +118,17 @@ class __$$_LeaderboardModelCopyWithImpl<$Res>
   @pragma('vm:prefer-inline')
   @override
   $Res call({
-    Object? eTask_earned = freezed,
+    Object? eTask_earned = null,
     Object? lastUpdated = freezed,
     Object? tasks_completed = null,
     Object? user_id = null,
-    Object? xrp_earned = freezed,
+    Object? xrp_earned = null,
   }) {
     return _then(_$_LeaderboardModel(
-      eTask_earned: freezed == eTask_earned
+      eTask_earned: null == eTask_earned
           ? _value.eTask_earned
           : eTask_earned // ignore: cast_nullable_to_non_nullable
-              as double?,
+              as double,
       lastUpdated: freezed == lastUpdated
           ? _value.lastUpdated
           : lastUpdated // ignore: cast_nullable_to_non_nullable
@@ -141,10 +141,10 @@ class __$$_LeaderboardModelCopyWithImpl<$Res>
           ? _value.user_id
           : user_id // ignore: cast_nullable_to_non_nullable
               as String,
-      xrp_earned: freezed == xrp_earned
+      xrp_earned: null == xrp_earned
           ? _value.xrp_earned
           : xrp_earned // ignore: cast_nullable_to_non_nullable
-              as double?,
+              as double,
     ));
   }
 }
@@ -153,17 +153,17 @@ class __$$_LeaderboardModelCopyWithImpl<$Res>
 @JsonSerializable()
 class _$_LeaderboardModel implements _LeaderboardModel {
   const _$_LeaderboardModel(
-      {this.eTask_earned,
+      {required this.eTask_earned,
       @TimestampConverter() this.lastUpdated,
       required this.tasks_completed,
       required this.user_id,
-      this.xrp_earned});
+      required this.xrp_earned});
 
   factory _$_LeaderboardModel.fromJson(Map<String, dynamic> json) =>
       _$$_LeaderboardModelFromJson(json);
 
   @override
-  final double? eTask_earned;
+  final double eTask_earned;
   @override
   @TimestampConverter()
   final DateTime? lastUpdated;
@@ -172,7 +172,7 @@ class _$_LeaderboardModel implements _LeaderboardModel {
   @override
   final String user_id;
   @override
-  final double? xrp_earned;
+  final double xrp_earned;
 
   @override
   String toString() {
@@ -216,17 +216,17 @@ class _$_LeaderboardModel implements _LeaderboardModel {
 
 abstract class _LeaderboardModel implements LeaderboardModel {
   const factory _LeaderboardModel(
-      {final double? eTask_earned,
+      {required final double eTask_earned,
       @TimestampConverter() final DateTime? lastUpdated,
       required final int tasks_completed,
       required final String user_id,
-      final double? xrp_earned}) = _$_LeaderboardModel;
+      required final double xrp_earned}) = _$_LeaderboardModel;
 
   factory _LeaderboardModel.fromJson(Map<String, dynamic> json) =
       _$_LeaderboardModel.fromJson;
 
   @override
-  double? get eTask_earned;
+  double get eTask_earned;
   @override
   @TimestampConverter()
   DateTime? get lastUpdated;
@@ -235,7 +235,7 @@ abstract class _LeaderboardModel implements LeaderboardModel {
   @override
   String get user_id;
   @override
-  double? get xrp_earned;
+  double get xrp_earned;
   @override
   @JsonKey(ignore: true)
   _$$_LeaderboardModelCopyWith<_$_LeaderboardModel> get copyWith =>

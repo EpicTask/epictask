@@ -1,6 +1,6 @@
 # Verification Service
 
-The Verification Service is an API-based system that utilizes AI models to verify task completion. It provides a seamless integration of AI models for verification purposes, allowing users to submit tasks for verification and receive the verification results. Verifi has the potential to serve as a business in of itself. XRP payments can be utilized to monetized users that submit models to handle specific use cases. This can be facilitated through hooks/smart contracts.
+The Verification Service is an API-based system that utilizes AI models to verify task completion. It provides a seamless integration of AI models for verification purposes, allowing users to submit tasks for verification and receive the verification results. Verifi has the potential to serve as a business in of itself. XRP payments can be utilized to monetized users that submit models to handle specific use cases. This can be facilitated through hooks/smart contracts and M2M payments.
 
 ## API Design and Endpoints
 
