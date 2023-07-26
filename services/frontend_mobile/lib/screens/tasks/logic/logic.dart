@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:epictask/models/contract_model/contract_model.dart';
 import 'package:intl/intl.dart';
 import '../../../models/task_event_model/task_event.dart';
 import '../../../models/task_model/task_model.dart';
@@ -19,7 +20,8 @@ Future<String> getUserDisplayName(String? uid) async {
 
 Stream<String> getUserDisplayNameStream(String? uid) async* {
   if (uid?.isNotEmpty ?? false) {
-    var snapshot = await FirebaseFirestore.instance.collection('users').doc(uid).get();
+    var snapshot =
+        await FirebaseFirestore.instance.collection('users').doc(uid).get();
     if (snapshot.exists) {
       dynamic data = snapshot.data();
       String? displayName = data['displayName'] as String?;
@@ -30,6 +32,26 @@ Stream<String> getUserDisplayNameStream(String? uid) async* {
   } else {
     yield '';
   }
+}
+
+// Get newly generated contract.
+Future<ContractModel> getContract(String? docId) async {
+  try {
+    if (docId?.isNotEmpty ?? false) {
+      DocumentSnapshot snapshot = await FirebaseFirestore.instance
+          .collection('test_contracts')
+          .doc(docId)
+          .get();
+      if (snapshot.exists) {
+        ContractModel? contract =
+            ContractModel.fromJson(snapshot.data() as Map<String, dynamic>);
+        return contract;
+      }
+    }
+  } catch (e) {
+    print("Error: $e");
+  }
+  return ContractModel.defaultEvent();
 }
 
 completeTask(
@@ -54,7 +76,7 @@ completeTaskAndInitiatePayment(
   final TaskCompleted event = TaskCompleted(
       completed_by_id: task.assigned_to_ids?.first ?? '',
       task_id: task.task_id,
-      marked_completed:true,
+      marked_completed: true,
       verified: true,
       verification_method: 'user');
   final TaskEvent taskEvent = TaskEvent.defaultEvent().copyWith(
@@ -98,6 +120,10 @@ String formatDate(DateTime date) {
   } else {
     return DateFormat('MM/dd/yyyy').format(date);
   }
+}
+
+String formatDateStandard(DateTime date) {
+  return DateFormat('MM/dd/yyyy').format(date);
 }
 
 int timestampToSeconds(DateTime date) {

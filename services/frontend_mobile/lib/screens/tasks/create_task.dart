@@ -41,6 +41,8 @@ class _CreateTaskWidgetState extends State<CreateTaskWidget> {
 
   String rewardCurrencyType = 'XRP';
 
+  bool autoVerify = false;
+
   @override
   void initState() {
     expiratationDate =
@@ -179,6 +181,16 @@ class _CreateTaskWidgetState extends State<CreateTaskWidget> {
                     ),
                   ),
                   buildFormField(
+                    controller: termsBlobController,
+                    label: 'Conditions',
+                    // validator: (value) {
+                    //   if (value == null || value.isEmpty) {
+                    //     return 'Please enter conditions';
+                    //   }
+                    //   return null;
+                    // },
+                  ),
+                  buildFormField(
                       controller: projectNameController,
                       label: 'Project Name',
                       rule: TextCapitalization.words),
@@ -193,20 +205,31 @@ class _CreateTaskWidgetState extends State<CreateTaskWidget> {
                       //   return null;
                       // },
                       ),
-                  buildFormField(
-                    controller: termsBlobController,
-                    label: 'Conditions',
-                    // validator: (value) {
-                    //   if (value == null || value.isEmpty) {
-                    //     return 'Please enter conditions';
-                    //   }
-                    //   return null;
-                    // },
+                  Padding(
+                    padding: const EdgeInsets.only(
+                        left: 24.0, top: 16.0, right: 24.0, bottom: 16.0),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          'Auto Verify:',
+                          style: titleLarge(context),
+                        ),
+                        Switch(
+                            value: autoVerify,
+                            onChanged: (value) {
+                              setState(() {
+                                autoVerify = value;
+                              });
+                            })
+                      ],
+                    ),
                   ),
                   Padding(
-                    padding: const EdgeInsets.all(24.0),
+                    padding: const EdgeInsets.only(
+                        left: 24.0, top: 16.0, right: 24.0, bottom: 16.0),
                     child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceAround,
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Text(
                           'Require Attachments:',
@@ -247,6 +270,7 @@ class _CreateTaskWidgetState extends State<CreateTaskWidget> {
                                 timestampToSeconds(expiratationDate.value);
                             final task = TaskModel.defaultTask().copyWith(
                                 assigned_to_ids: [],
+                                auto_verify: autoVerify,
                                 expiration_date: timestamp,
                                 task_description:
                                     taskDescriptionController.text,
@@ -257,7 +281,7 @@ class _CreateTaskWidgetState extends State<CreateTaskWidget> {
                                 reward_currency: rewardCurrencyType,
                                 payment_method: paymentMethodType,
                                 user_id: currentUserID);
-          
+
                             final event = TaskFormSubmitted(task: task);
                             bloc.add(event);
                             router.pop();

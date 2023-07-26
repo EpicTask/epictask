@@ -1,7 +1,5 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 
-// ignore_for_file: non_constant_identifier_names
-
 part of 'leaderboard_model.dart';
 
 // **************************************************************************
@@ -10,12 +8,12 @@ part of 'leaderboard_model.dart';
 
 _$_LeaderboardModel _$$_LeaderboardModelFromJson(Map<String, dynamic> json) =>
     _$_LeaderboardModel(
-      eTask_earned: (json['eTask_earned'] as num?)?.toDouble(),
+      eTask_earned: (json['eTask_earned'] as num).toDouble(),
       lastUpdated: _$JsonConverterFromJson<Timestamp, DateTime>(
           json['lastUpdated'], const TimestampConverter().fromJson),
       tasks_completed: json['tasks_completed'] as int,
       user_id: json['user_id'] as String,
-      xrp_earned: (json['xrp_earned'] as num?)?.toDouble(),
+      xrp_earned: (json['xrp_earned'] as num).toDouble(),
     );
 
 Map<String, dynamic> _$$_LeaderboardModelToJson(_$_LeaderboardModel instance) =>
