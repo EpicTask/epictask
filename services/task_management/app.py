@@ -16,10 +16,11 @@ app = FastAPI()
 
 baseUrl = os.getenv("_BASEURL")
 defaultUrl = os.getenv("_DEFAULT_URL")
-# origins = [
-#     baseUrl,
-#     defaultUrl,
-# ]
+origins = [
+    baseUrl,
+    defaultUrl,
+    'https://task-management-api-us-8l3obb9a.uc.gateway.dev'
+]
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
