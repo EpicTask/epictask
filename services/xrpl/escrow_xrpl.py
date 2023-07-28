@@ -1,4 +1,5 @@
 import asyncio
+import datetime
 import os
 import time
 
@@ -41,3 +42,15 @@ def submit_escrow_sync(wallet: Wallet, destination: str, amount: int, finish_aft
 def generate_xrpl_timestamp(timestamp):
     newTimestamp = timestamp - 946684800
     return newTimestamp
+
+def createTenMinTimestamp():
+    current_time = datetime.datetime.now()
+    ten_min_from_now = current_time + datetime.timedelta(minutes=10)
+    newTimestamp = ten_min_from_now.timestamp() - 946684800
+
+    return newTimestamp
+
+# Check if the timestamp is in the future
+def is_timestamp_after_current(timestamp):
+    current_time = datetime.datetime.now()
+    return timestamp > current_time

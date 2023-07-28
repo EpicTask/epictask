@@ -8,12 +8,10 @@ import xumm
 from accounts_xrpl import (connectWallet, does_account_exist_async,
                            get_account_balance, get_account_info_async,
                            get_transaction_async, lookup_escrow)
-from escrow_xrpl import generate_xrpl_timestamp
-from fastapi import FastAPI, Request, WebSocket, WebSocketDisconnect
-from fastapi.middleware.cors import CORSMiddleware
+from escrow_xrpl import createTenMinTimestamp, generate_xrpl_timestamp, is_timestamp_after_current
+from fastapi import FastAPI, Request
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
-from fastapi.middleware.cors import CORSMiddleware
 from firestore_db import write_response_to_firestore
 from google_secrets import get_secret
 from payments_xrpl import handle_payment_request, send_payment_request
@@ -21,6 +19,7 @@ from starlette.responses import JSONResponse
 from subscription_xrpl import account_subscription_sync
 from xrpl.asyncio.ledger import get_fee
 from xrpl.clients import JsonRpcClient, WebsocketClient
+from xrpl.utils import xrp_to_drops
 from xrpl_models import CreateEscrowModel, PaymentRequest
 from dotenv import load_dotenv
 app = FastAPI()
@@ -32,15 +31,8 @@ defaultUrl = os.getenv("_DEFAULT_URL")
 origins = [
     baseUrl,
     defaultUrl,
+    "https://xrpl-api-us-8l3obb9a.uc.gateway.dev"
 ]
-
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
 
 templates = Jinja2Templates(directory="app/templates")
 
@@ -110,7 +102,7 @@ async def account_exists(address: str):
 # Payment test
 
 
-@app.get('/paymentTest')
+@app.post('/paymentTest')
 async def test_payment(request: Request):
     try:
         asyncio.set_event_loop(asyncio.SelectorEventLoop())
@@ -154,26 +146,28 @@ async def verify_transaction(tx_hash: str):
 
 
 # Create an Escrow
-@app.get('/create_escrow')
+@app.post('/create_escrow')
 async def create_escrow(response: CreateEscrowModel):
-    if not response:
-        return JSONResponse({"error": "Missing required parameters."})
+    if not response & is_timestamp_after_current(response.finish_after):
+        return JSONResponse({"error": "Missing or invalid required parameters."})
 
     finish_after = generate_xrpl_timestamp(response.finish_after)
+    if finish_after is None: finish_after = createTenMinTimestamp()
     cancel_after = generate_xrpl_timestamp(response.cancel_after)
+    amount = str(xrp_to_drops(response.amount))
     escrow_create = {
         "txjson": {
             "TransactionType": "EscrowCreate",
             "Account": response.account,
             "Destination": response.destination,
-            "Amount": str(response.amount),
+            "Amount": amount,
             "FinishAfter": finish_after,
             "CancelAfter": cancel_after,
         },
     }
     payload = sdk.payload.create(escrow_create)
     write_response_to_firestore(payload.to_dict(), "create_escrow")
-    return JSONResponse(payload.to_dict())
+    return JSONResponse({"status": "Escrow successfully created."})
 
 
 # Lookup Escrow
@@ -186,7 +180,7 @@ def lookup_escrow_sync(account: str):
 # Cancel Escrow
 
 
-@app.get('/cancel_escrow_xumm/{owner}')
+@app.post('/cancel_escrow_xumm/{owner}')
 async def cancel_escrow_xumm(owner: str, wallet: str, offer_sequence: str):
     if not owner:
         return JSONResponse({"error": "Missing 'owner' parameter."})
@@ -206,7 +200,7 @@ async def cancel_escrow_xumm(owner: str, wallet: str, offer_sequence: str):
 # Finish Escrow
 
 
-@app.get('/finish_escrow_xumm/{owner}')
+@app.post('/finish_escrow_xumm/{owner}')
 async def finish_escrow_xumm(owner: str, wallet: str, offer_sequence: str):
     if not all([owner, wallet, offer_sequence]):
         return JSONResponse({"error": "Missing 'owner' parameter."})
