@@ -22,6 +22,8 @@ from xrpl.clients import JsonRpcClient, WebsocketClient
 from xrpl.utils import xrp_to_drops
 from xrpl_models import CreateEscrowModel, PaymentRequest
 from dotenv import load_dotenv
+
+from xrpscan_api import xrpscan_get_accountBalance, xrpscan_get_accountEscrows, xrpscan_get_accountInfo, xrpscan_get_accountTransactions
 app = FastAPI()
 
 load_dotenv()
@@ -44,17 +46,6 @@ client = JsonRpcClient("https://s.altnet.rippletest.net:51234/")
 clientWebsocket = WebsocketClient("wss://s.altnet.rippletest.net:51233")
 
 
-@app.get('/', response_class=HTMLResponse)
-async def hello(request: Request):
-    """Return a friendly HTTP greeting."""
-    message = "It's running!"
-
-    """Get Cloud Run environment variables."""
-    service = os.environ.get('K_SERVICE', 'Unknown service')
-    revision = os.environ.get('K_REVISION', 'Unknown revision')
-
-    return templates.TemplateResponse("index.html", {"request": request, "message": message, "Service": service, "Revision": revision})
-
 # XUMM sign in request
 
 
@@ -64,29 +55,35 @@ async def signInRequest(uid: str):
 
 # Get account balance
 
-
 @app.get('/balance/{address}')
 async def balance(address: str):
     try:
-        balance = await get_account_balance(address)
+        balance = xrpscan_get_accountBalance(address)
         response = {"address": address, "balance": balance}
-        doc_id = write_response_to_firestore(response, "balance")
-        return JSONResponse({"doc_id": doc_id, "response": response})
+        return JSONResponse(response)
     except Exception as e:
         return JSONResponse({"error": str(e)})
 
 # Get account information
 
-
 @app.get('/account_info/{address}')
 def account_info(address: str):
     try:
-        account_info = get_account_info_async(address)
-        write_response_to_firestore(account_info.result, "account_info")
-        return JSONResponse(account_info.result)
+        account_info = xrpscan_get_accountInfo(address)
+        return JSONResponse(account_info)
     except Exception as e:
         return JSONResponse({"error": str(e)})
 
+# Gets list of transactions by account.
+
+@app.get('/transactions/{address}')
+async def account_exists(address: str):
+    try:
+        response = xrpscan_get_accountTransactions(address)
+        return JSONResponse(response)
+    except Exception as e:
+        return JSONResponse({"error": str(e)})
+    
 
 # Checks whether an account exists with the specified address parameter.
 @app.get('/account_exists/{address}')
@@ -144,6 +141,11 @@ async def verify_transaction(tx_hash: str):
     except Exception as e:
         return JSONResponse({"error": str(e)})
 
+# Lookup Escrow
+@app.get('/lookup_escrow/{account}')
+def lookup_escrow_sync(account: str):
+    escrow_info = xrpscan_get_accountEscrows(account)
+    return escrow_info
 
 # Create an Escrow
 @app.post('/create_escrow')
@@ -168,14 +170,6 @@ async def create_escrow(response: CreateEscrowModel):
     payload = sdk.payload.create(escrow_create)
     write_response_to_firestore(payload.to_dict(), "create_escrow")
     return JSONResponse({"status": "Escrow successfully created."})
-
-
-# Lookup Escrow
-@app.get('/lookup_escrow/{account}')
-def lookup_escrow_sync(account: str):
-    escrow_info = lookup_escrow(account)
-    write_response_to_firestore(escrow_info, "lookup_escrow")
-    return escrow_info
 
 # Cancel Escrow
 
@@ -259,6 +253,19 @@ async def unsubscribe(request: Request):
 async def process_payment(payment_request: PaymentRequest):
     response = await handle_payment_request(payment_request)
     return response
+
+
+@app.get('/', response_class=HTMLResponse)
+async def hello(request: Request):
+    """Return a friendly HTTP greeting."""
+    message = "It's running!"
+
+    """Get Cloud Run environment variables."""
+    service = os.environ.get('K_SERVICE', 'Unknown service')
+    revision = os.environ.get('K_REVISION', 'Unknown revision')
+
+    return templates.TemplateResponse("index.html", {"request": request, "message": message, "Service": service, "Revision": revision})
+
 
 # Execute the application when the script is run
 if __name__ == "__main__":
