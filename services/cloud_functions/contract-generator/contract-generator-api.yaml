@@ -1,0 +1,34 @@
+swagger: "2.0"
+info:
+  title: Contract Generator Function
+  description: API documentation for the Contract Generator Function
+  version: 1.0.0
+host: api-gateway-v1-3vfu5pwe8eq6a.apigateway.task-coin-384722.cloud.goog
+schemes:
+  - https
+produces:
+  - application/json
+security:
+  - api_key: []
+x-google-backend:
+  address: >-
+    https://generatcontract-5wpxgn35iq-uc.a.run.app
+paths:
+  /:
+    get:
+      operationId: rootPage
+      description: Default route
+      consumes:
+        - application/json
+      produces:
+        - application/json
+      security: []
+      responses:
+        '200':
+          description: API response
+          schema:
+            type: string
+        '400':
+          description: Invalid request.
+        '500':
+          description: Internal server error.
