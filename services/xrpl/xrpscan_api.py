@@ -1,6 +1,6 @@
 import requests
 
-from xrpl_models import AccountInfo
+from xrpl_models import AccountHeader, AccountInfo
 
 # xrpscan api url
 xrpscan_url = "https://api.xrpscan.com/api/v1"
@@ -62,7 +62,7 @@ def xrpscan_get_accountTransactions(address):
     if response.status_code == 200:
         try:
             data = response.json()
-            return data["xrpBalance"]
+            return data
         except ValueError:
             print("Failed to parse JSON response")
             return None
@@ -86,7 +86,7 @@ def xrpscan_get_accountEscrows(address):
     if response.status_code == 200:
         try:
             data = response.json()
-            return data["xrpBalance"]
+            return data
         except ValueError:
             print("Failed to parse JSON response")
             return None

@@ -1,5 +1,5 @@
 from pydantic import BaseModel
-from typing import Dict
+from typing import Dict, List
 
 class PaymentRequest(BaseModel):
     type = 'Payment'
@@ -49,3 +49,57 @@ class AccountInfo(BaseModel):
     tx_hash: str
     accountName: Dict[str, str]
     parentName: Dict[str, str]
+
+class DeliveredAmount(BaseModel):
+    value: int
+    currency: str
+    
+class Meta(BaseModel):
+    TransactionIndex: int
+    TransactionResult: str
+    delivered_amount: DeliveredAmount
+
+class AccountName(BaseModel):
+    name: str
+    desc: str
+    account: str
+    domain: str
+    twitter: str
+    verified: bool
+
+class DestinationName(BaseModel):
+    name: str
+    desc: str
+    account: str
+    domain: str
+    twitter: str
+    verified: bool
+
+class Transaction(BaseModel):
+    meta: Meta
+    validated: bool
+    Account: str
+    Amount: DeliveredAmount
+    Destination: str
+    DestinationTag: int
+    Fee: str
+    Flags: int
+    LastLedgerSequence: int
+    Sequence: int
+    SigningPubKey: str
+    TransactionType: str
+    TxnSignature: str
+    hash: str
+    ledger_index: int
+    date: str
+    AccountName: AccountName
+    DestinationName: DestinationName
+
+class AccountHeader(BaseModel):
+    account: str
+    ledger_index_min: int
+    ledger_index_max: int
+    transactions: List[Transaction]
+    validated: bool
+    marker: str
+    limit: int

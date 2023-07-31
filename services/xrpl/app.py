@@ -5,9 +5,8 @@ import os
 
 import uvicorn
 import xumm
-from accounts_xrpl import (connectWallet, does_account_exist_async,
-                           get_account_balance, get_account_info_async,
-                           get_transaction_async, lookup_escrow)
+from accounts_xrpl import (connectWallet, does_account_exist_async, get_account_balance, get_account_info_async,
+                           get_transaction_async)
 from escrow_xrpl import createTenMinTimestamp, generate_xrpl_timestamp, is_timestamp_after_current
 from fastapi import FastAPI, Request
 from fastapi.responses import HTMLResponse
@@ -96,6 +95,30 @@ async def account_exists(address: str):
     except Exception as e:
         return JSONResponse({"error": str(e)})
 
+# Get account balance using test net
+
+@app.get('/test_net/balance/{address}')
+async def balance(address: str):
+    try:
+        balance = await get_account_balance(address)
+        response = {"address": address, "balance": balance}
+        doc_id = write_response_to_firestore(response, "balance")
+        return JSONResponse({"doc_id": doc_id, "response": response})
+    except Exception as e:
+        return JSONResponse({"error": str(e)})
+
+# Get account information using test net
+
+
+@app.get('/test_net/account_info/{address}')
+def account_info(address: str):
+    try:
+        account_info = get_account_info_async(address)
+        write_response_to_firestore(account_info.result, "account_info")
+        return JSONResponse(account_info.result)
+    except Exception as e:
+        return JSONResponse({"error": str(e)})
+    
 # Payment test
 
 
