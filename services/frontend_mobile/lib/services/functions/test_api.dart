@@ -8,20 +8,22 @@ import 'package:epictask/services/functions/firebase_functions.dart';
 import 'package:flutter/foundation.dart';
 
 import '../../models/task_event_model/task_event.dart';
+import 'package:http/http.dart' as http;
 
 final Dio _dio = Dio();
 
 void handleUserCalls(String userManagementUrl, UserEvent event) async {
-  dynamic message = json.encode(event.additional_data);
+  dynamic message = jsonEncode(event.toJson()['additional_data']);
+  print(message);
   try {
-    final Response response = await _dio.post(
-      userManagementUrl,
-      data: message,
-    );
-
+    http.Response response = await http.post(Uri.parse(userManagementUrl),
+        headers: <String, String>{
+          'Content-Type': 'application/json; charset=UTF-8',
+        },
+        body: message);
     if (response.statusCode == 200) {
       if (kDebugMode) {
-        print('API response: ${response.data}');
+        print('API response: ${response.body}');
       }
       // Handle the API response or perform any additional actions
     } else {
@@ -43,16 +45,17 @@ void handleUserCalls(String userManagementUrl, UserEvent event) async {
 }
 
 void handleTaskCalls(String taskManagementUrl, TaskEvent event) async {
-  dynamic message = json.encode(event.additional_data);
+  dynamic message = jsonEncode(event.toJson()['additional_data']);
+  print(message);
   try {
-    final Response response = await _dio.post(
-      taskManagementUrl,
-      data: message,
-    );
-
+    http.Response response = await http.post(Uri.parse(taskManagementUrl),
+        headers: <String, String>{
+          'Content-Type': 'application/json; charset=UTF-8',
+        },
+        body: message);
     if (response.statusCode == 200) {
       if (kDebugMode) {
-        print('API response: ${response.data}');
+        print('API response: ${response.body}');
       }
       // Handle the API response or perform any additional actions
     } else {

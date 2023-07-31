@@ -8,8 +8,8 @@ Widget responsiveWrapperBuilder(BuildContext context, Widget widget){
     child: widget,
     breakpoints: <Breakpoint>[
       const Breakpoint(start: 0,end: 450, name: MOBILE),
-      const Breakpoint(start:451,end: 800, name: TABLET),
-      const Breakpoint(start:801,end: double.infinity, name: DESKTOP),
+      const Breakpoint(start:451,end: 900, name: TABLET),
+      const Breakpoint(start:901,end: double.infinity, name: DESKTOP),
     ],
   );
 }

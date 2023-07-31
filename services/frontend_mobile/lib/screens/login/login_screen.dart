@@ -1,6 +1,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:responsive_framework/responsive_breakpoints.dart';
 
 import '../../bloc/login_bloc/bloc.dart';
 
@@ -67,9 +68,12 @@ class LoginScreen extends StatelessWidget {
                   ),
                 ),
                 // CloudBackgroundImage(),
-                Container(
-                  margin:  EdgeInsets.only(top: SizeConfig.screenHeight*.45),
-                  child: const LoginForm(),
+                Center(
+                  child: Container(
+                    margin:  EdgeInsets.only(top: SizeConfig.screenHeight*.45),
+                    width: ResponsiveBreakpoints.of(context).largerOrEqualTo(TABLET) ? SizeConfig.screenWidth*.4 : null,
+                    child: const LoginForm(),
+                  ),
                 )
               ],
             ),

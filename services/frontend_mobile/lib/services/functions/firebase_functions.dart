@@ -27,6 +27,7 @@ class FirestoreDatabase {
   }
 
   Future<void> writeTaskEvent(TaskEvent taskEvent) async {
+    print(taskEvent.toJson());
     taskEventHandler(taskEvent);
     final DocumentReference ref = taskEventsCollection.doc();
     await ref.set(taskEvent.toJson());

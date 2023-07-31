@@ -33,7 +33,7 @@ class LoginBloc extends Bloc<LoginEvent, LoginState> {
             social: false,
           );
           UserEvent newEvent = UserEvent(
-              event_type: 'userSignIn',
+              event_type: 'UserSignIn',
               user_id: currentUserID,
               additional_data: data.toJson());
           FirestoreDatabase().writeUserEvent(newEvent);
@@ -46,7 +46,7 @@ class LoginBloc extends Bloc<LoginEvent, LoginState> {
           social: false,
         );
         UserEvent newEvent = UserEvent(
-            event_type: 'userSignIn',
+            event_type: 'UserSignIn',
             user_id: currentUserID,
             additional_data: data.toJson());
         FirestoreDatabase().writeUserEvent(newEvent);
@@ -65,7 +65,7 @@ class LoginBloc extends Bloc<LoginEvent, LoginState> {
           UserSignInEvent data = const UserSignInEvent(
               status: 'Success', social: true, social_type: 'apple');
           UserEvent newEvent = UserEvent(
-              event_type: 'userSignIn',
+              event_type: 'UserSignIn',
               user_id: currentUserID,
               additional_data: data.toJson());
           FirestoreDatabase().writeUserEvent(newEvent);
@@ -75,7 +75,7 @@ class LoginBloc extends Bloc<LoginEvent, LoginState> {
         UserSignInEvent data = const UserSignInEvent(
             status: 'Failed', social: true, social_type: 'apple');
         UserEvent newEvent = UserEvent(
-            event_type: 'userSignIn',
+            event_type: 'UserSignIn',
             user_id: currentUserID,
             additional_data: data.toJson());
         FirestoreDatabase().writeUserEvent(newEvent);
@@ -91,7 +91,7 @@ class LoginBloc extends Bloc<LoginEvent, LoginState> {
           UserSignInEvent data = const UserSignInEvent(
               status: 'Success', social: true, social_type: 'google');
           UserEvent newEvent = UserEvent(
-              event_type: 'userSignIn',
+              event_type: 'UserSignIn',
               user_id: currentUserID,
               additional_data: data.toJson());
           FirestoreDatabase().writeUserEvent(newEvent);
@@ -101,7 +101,7 @@ class LoginBloc extends Bloc<LoginEvent, LoginState> {
         UserSignInEvent data = const UserSignInEvent(
             status: 'Failed', social: true, social_type: 'google');
         UserEvent newEvent = UserEvent(
-            event_type: 'userSignIn',
+            event_type: 'UserSignIn',
             user_id: currentUserID,
             additional_data: data.toJson());
         FirestoreDatabase().writeUserEvent(newEvent);

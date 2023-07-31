@@ -15,6 +15,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../bloc/generics/generic_bloc.dart';
 import '../../models/task_model/task_model.dart';
+import '../../models/user_event_model/user_event.dart';
 import '../dashboard/dashboard.dart';
 
 ValueNotifier<int> paginator = ValueNotifier<int>(10);
@@ -119,20 +120,33 @@ class HomeWidget extends StatelessWidget {
                   ],
                 ),
                 Padding(
-                  padding: const EdgeInsets.only(left:16.0),
+                  padding: const EdgeInsets.only(left: 16.0),
                   child: IconButton(
                       onPressed: () {
+                        UserEvent newEvent = UserEvent(
+                            event_type: 'UserSignIn',
+                            user_id: currentUserID,
+                            additional_data: const UserSignInEvent(
+                                    status: 'status', social: false)
+                                .toJson());
+                        FirestoreDatabase().writeUserEvent(newEvent);
                         showModalBottomSheet(
                           isScrollControlled: true,
                           shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(20)),
                           context: context,
                           builder: (BuildContext context) {
-                            return SizedBox(height: SizeConfig.screenHeight*.8, child: const CreateTaskWidget());
+                            return SizedBox(
+                                height: SizeConfig.screenHeight * .8,
+                                child: const CreateTaskWidget());
                           },
                         );
                       },
-                      icon: const Icon(Icons.add,color: Colors.blueAccent,size: 32,)),
+                      icon: const Icon(
+                        Icons.add,
+                        color: Colors.blueAccent,
+                        size: 32,
+                      )),
                 )
               ],
             ),

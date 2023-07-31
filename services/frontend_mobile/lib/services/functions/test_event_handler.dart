@@ -1,6 +1,7 @@
 // ignore_for_file: constant_identifier_names
 
 import 'package:epictask/models/task_event_model/task_event.dart';
+import 'package:epictask/services/constants.dart';
 import 'package:epictask/services/functions/test_api.dart';
 import 'package:flutter/foundation.dart';
 
@@ -114,44 +115,44 @@ String? userEventHandler(UserEvent event) {
 }
 
 const String TASKCREATED =
-    'https://task-management-5wpxgn35iq-uc.a.run.app/TaskCreated';
+    '$taskManagementGatewayUrl/TaskCreated';
 const String TASKASSIGNED =
-    'https://task-management-5wpxgn35iq-uc.a.run.app/TaskAssigned';
+    '$taskManagementGatewayUrl/TaskAssigned';
 const String TASKUPDATED =
-    'https://task-management-5wpxgn35iq-uc.a.run.app/TaskUpdated';
+    '$taskManagementGatewayUrl/TaskUpdated';
 const String TASKCOMPLETED =
-    'https://task-management-5wpxgn35iq-uc.a.run.app/TaskCompleted';
+    '$taskManagementGatewayUrl/TaskCompleted';
 const String TASKCANCELLED =
-    'https://task-management-5wpxgn35iq-uc.a.run.app/TaskCancelled';
+    '$taskManagementGatewayUrl/TaskCancelled';
 const String TASKEXPIRED =
-    'https://task-management-5wpxgn35iq-uc.a.run.app/TaskExpired';
+    '$taskManagementGatewayUrl/TaskExpired';
 const String TASKREWARDED =
-    'https://task-management-5wpxgn35iq-uc.a.run.app/TaskRewarded';
+    '$taskManagementGatewayUrl/TaskRewarded';
 const String TASKRATINGUPDATE =
-    'https://task-management-5wpxgn35iq-uc.a.run.app/TaskRatingUpdate';
+    '$taskManagementGatewayUrl/TaskRatingUpdate';
 const String TASKCOMMENTADDED =
-    'https://task-management-5wpxgn35iq-uc.a.run.app/TaskCommentAdded';
+    '$taskManagementGatewayUrl/TaskCommentAdded';
 const String TASKVERIFIED =
-    'https://task-management-5wpxgn35iq-uc.a.run.app/TaskVerified';
+    '$taskManagementGatewayUrl/TaskVerified';
 const String UPDATELEADERBOARD =
-    'https://task-management-5wpxgn35iq-uc.a.run.app/UpdateLeaderboard';
+    '$taskManagementGatewayUrl/UpdateLeaderboard';
 const String USERREGISTERED =
-    'https://user-management-5wpxgn35iq-uc.a.run.app/userRegister';
+    '$userManagementGatewayUrl/userRegister';
 const String USERSIGNIN =
-    'https://user-management-5wpxgn35iq-uc.a.run.app/signIn';
+    '$userManagementGatewayUrl/signIn';
 const String USERWALLETCONNECTED =
     'https://xrpl-5wpxgn35iq-uc.a.run.app/xummSignInRequest';
 const String PAYMENTREQUEST =
     'https://xrpl-5wpxgn35iq-uc.a.run.app/paymentrequest';
 const String USERFORGOTPASSWORD =
-    'https://user-management-5wpxgn35iq-uc.a.run.app/forgotPassword';
+    '$userManagementGatewayUrl/forgotPassword';
 const String USERAUTHENTICATION =
-    'https://user-management-5wpxgn35iq-uc.a.run.app/authenticate';
+    '$userManagementGatewayUrl/authenticate';
 const String USERPROFILEUPDATE =
-    'https://user-management-5wpxgn35iq-uc.a.run.app/profileUpdate';
+    '$userManagementGatewayUrl/profileUpdate';
 const String USERACCOUNTDELETION =
-    'https://user-management-5wpxgn35iq-uc.a.run.app/deleteAccount';
+    '$userManagementGatewayUrl/deleteAccount';
 const String USERINTERACTION =
-    'https://user-management-5wpxgn35iq-uc.a.run.app/userInteraction';
+    '$userManagementGatewayUrl/userInteraction';
 const String USERVERIFIED =
-    'https://user-management-5wpxgn35iq-uc.a.run.app/userVerified';
+    '$userManagementGatewayUrl/userVerified';

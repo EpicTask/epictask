@@ -5,6 +5,7 @@ import 'package:epictask/screens/tasks/task_card.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:responsive_framework/responsive_framework.dart';
 
 import '../../../bloc/generics/generic_bloc.dart';
 import '../../../bloc/generics/generic_state.dart';
@@ -76,7 +77,7 @@ class _OpenTasksWidgetState extends State<OpenTasksWidget> {
           }
           if (state is HasDataState) {
             final List<TaskModel> taskData = state.data as List<TaskModel>;
-            return kIsWeb
+            return ResponsiveBreakpoints.of(context).largerThan(TABLET)
                 ? CustomScrollView(slivers: [
                     SliverGrid(
                       gridDelegate:
@@ -91,32 +92,20 @@ class _OpenTasksWidgetState extends State<OpenTasksWidget> {
                 : SingleChildScrollView(
                     child: SizedBox(
                       height: SizeConfig.screenHeight * .8,
-                      width: (kIsWeb)
-                          ? SizeConfig.screenWidth * .75
-                          : SizeConfig.screenWidth,
-                      child: kIsWeb
-                          ? SliverGrid(
-                              gridDelegate:
-                                  const SliverGridDelegateWithFixedCrossAxisCount(
-                                      crossAxisCount: 3),
-                              delegate: SliverChildBuilderDelegate(
-                                  (BuildContext context, int index) {
-                                return TaskCard(task: taskData[index]);
-                              }, childCount: taskData.length),
-                            )
-                          : ListView.builder(
-                              controller: _scrollController,
-                              itemCount: taskData.length + 1,
-                              itemBuilder: (context, index) {
-                                if (index == taskData.length) {
-                                  return SizedBox(
-                                    height: SizeConfig.screenHeight * .2,
-                                  );
-                                } else {
-                                  return TaskCard(task: taskData[index]);
-                                }
-                              },
-                            ),
+                      width: SizeConfig.screenWidth,
+                      child: ListView.builder(
+                        controller: _scrollController,
+                        itemCount: taskData.length + 1,
+                        itemBuilder: (context, index) {
+                          if (index == taskData.length) {
+                            return SizedBox(
+                              height: SizeConfig.screenHeight * .2,
+                            );
+                          } else {
+                            return TaskCard(task: taskData[index]);
+                          }
+                        },
+                      ),
                     ),
                   );
           } else {
