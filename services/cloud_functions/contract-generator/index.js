@@ -67,9 +67,10 @@ http("generateContract", async (req, res) => {
     // TODO: Call TaskManagement API to generate terms_id and save the contract to the database.
 
     const contract = response.data.choices[0].text.trim();
-
+    return 'Successful created contract.'
   } catch (error) {
     console.error(error);
     res.status(500).send("Error generating contract");
+    return 'Failed to created contract.'
   }
 });
