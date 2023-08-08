@@ -7,7 +7,7 @@ import 'package:flutter/foundation.dart';
 import '../../models/user_event_model/user_event.dart';
 import 'test_event_handler.dart';
 
-final String currentUserID = FirebaseAuth.instance.currentUser!.uid;
+final String currentUserID = FirebaseAuth.instance.currentUser?.uid ?? '';
 final Dio dio = Dio();
 
 class FirestoreDatabase {
