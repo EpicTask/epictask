@@ -1,3 +1,4 @@
+import 'package:epictask/services/navigation/navigation.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -88,9 +89,9 @@ class LoginFormState extends State<LoginForm> {
     _loginBloc.add(LoginWithGooglePressed());
   }
 
-  void _onPressedAnonymousSignIn() {
-    _loginBloc.add(LoginAnonymousPressed());
-  }
+  // void _onPressedAnonymousSignIn() {
+  //   _loginBloc.add(LoginAnonymousPressed());
+  // }
 
   // void _showSnackBar(BuildContext context, String message) {
   //   ScaffoldMessenger.of(context).showSnackBar(
@@ -209,10 +210,11 @@ class LoginFormState extends State<LoginForm> {
                   buildPasswordFormField(context, state),
                   const SizedBox(height: 25),
                   buildLoginButton(context, state),
+                  const SizedBox(height: 15),
                   buildForgotPasswordButton(context),
                   const SizedBox(height: 15),
                   if (!kIsWeb) buildSignInButtons(context, state),
-                  buildAnonymousLoginButton(context, state),
+                  // buildAnonymousLoginButton(context, state),
                 ],
               );
             },
@@ -234,24 +236,24 @@ class LoginFormState extends State<LoginForm> {
     );
   }
 
-  Widget buildAnonymousLoginButton(context, state) {
-    return Align(
-      alignment: Alignment.bottomCenter,
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(8, 8, 8.0, 16),
-        child: TextButton(
-          child: Text(
-            'SignUp as guest.',
-            style: titleLarge(context)
-                ?.copyWith(color: Colors.blue, fontStyle: FontStyle.italic),
-          ),
-          onPressed: () {
-            _onPressedAnonymousSignIn();
-          },
-        ),
-      ),
-    );
-  }
+  // Widget buildAnonymousLoginButton(context, state) {
+  //   return Align(
+  //     alignment: Alignment.bottomCenter,
+  //     child: Padding(
+  //       padding: const EdgeInsets.fromLTRB(8, 8, 8.0, 16),
+  //       child: TextButton(
+  //         child: Text(
+  //           'Sign up as guest.',
+  //           style: titleLarge(context)
+  //               ?.copyWith(color: Colors.blue, fontStyle: FontStyle.italic),
+  //         ),
+  //         onPressed: () {
+  //           _onPressedAnonymousSignIn();
+  //         },
+  //       ),
+  //     ),
+  //   );
+  // }
 
   Widget buildAppleLoginButton(BuildContext context, LoginState state) {
     if (UserRepository().appleSignInAvailable) {
@@ -293,22 +295,42 @@ class LoginFormState extends State<LoginForm> {
   }
 
   Widget buildLoginButton(BuildContext context, LoginState state) {
-    return GradientButton(
-      width: 150,
-      height: 45,
-      onPressed: () {
-        if (isLoginWithEmailAndPasswordButtonEnabled(state)) {
-          _onFormSubmitted();
-        }
-      },
-      text: Text(
-        'Login',
-        style: titleMedium(context),
-      ),
-      icon: const Icon(
-        Icons.check,
-        color: Colors.black,
-      ),
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        GradientButton(
+          width: 150,
+          height: 45,
+          onPressed: () {
+            if (isLoginWithEmailAndPasswordButtonEnabled(state)) {
+              _onFormSubmitted();
+            }
+          },
+          text: Text(
+            'Login',
+            style: titleMedium(context),
+          ),
+          icon: const Icon(
+            Icons.check,
+            color: Colors.black,
+          ),
+        ),
+        GradientButton(
+          width: 150,
+          height: 45,
+          text: Text(
+            'Sign up.',
+            style: titleMedium(context),
+          ),
+          onPressed: () {
+            router.goNamed('signup');
+          },
+          icon: const Icon(
+            Icons.arrow_forward,
+            color: Colors.black,
+          ),
+        ),
+      ],
     );
   }
 
@@ -324,24 +346,4 @@ class LoginFormState extends State<LoginForm> {
       ),
     );
   }
-
-  // Widget buildSignUpLink(BuildContext context) {
-  //   return Align(
-  //     alignment: Alignment.bottomCenter,
-  //     child: Padding(
-  //       padding: const EdgeInsets.all(8.0),
-  //       child: Row(
-  //         children: <Widget>[
-  //           Text(AppLocalizations.of(context)!.dont_have_an_account),
-  //           TextButton(
-  //             child: Text(AppLocalizations.of(context)!.sign_up),
-  //             onPressed: () {
-  //               navigationService.navigateTo(SignUpScreenRoute);
-  //             },
-  //           ),
-  //         ],
-  //       ),
-  //     ),
-  //   );
-  // }
 }

@@ -14,7 +14,9 @@ final Dio _dio = Dio();
 
 void handleUserCalls(String userManagementUrl, UserEvent event) async {
   dynamic message = jsonEncode(event.toJson()['additional_data']);
-  print(message);
+  if (kDebugMode) {
+    print(message);
+  }
   try {
     http.Response response = await http.post(Uri.parse(userManagementUrl),
         headers: <String, String>{
@@ -46,7 +48,9 @@ void handleUserCalls(String userManagementUrl, UserEvent event) async {
 
 void handleTaskCalls(String taskManagementUrl, TaskEvent event) async {
   dynamic message = jsonEncode(event.toJson()['additional_data']);
-  print(message);
+  if (kDebugMode) {
+    print(message);
+  }
   try {
     http.Response response = await http.post(Uri.parse(taskManagementUrl),
         headers: <String, String>{

@@ -1,5 +1,6 @@
 import 'package:epictask/screens/payment/payment_screen.dart';
 import 'package:epictask/screens/profile/profile.dart';
+import 'package:epictask/screens/signup/signup_screen.dart';
 import 'package:epictask/screens/users/components/loading_widget.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
@@ -38,6 +39,13 @@ final GoRouter router = GoRouter(
             return PaymentScreen(
               task_id: task_id,
             );
+          },
+        ),
+        GoRoute(
+          name: 'signup',
+          path: 'signup',
+          builder: (BuildContext context, GoRouterState state) {
+            return const SignupScreen();
           },
         ),
       ],

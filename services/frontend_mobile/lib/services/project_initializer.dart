@@ -10,7 +10,15 @@ import '../bloc/bloc_observer/custom_bloc_observer.dart';
 Future<String> projectInitializer() async {
   WidgetsFlutterBinding.ensureInitialized();
   if (kIsWeb) {
-
+    await Firebase.initializeApp(
+        options: const FirebaseOptions(
+            apiKey: "AIzaSyATAJ0EJtaAsMeTzB17MQpJJuoT4gYnchY",
+            authDomain: "task-coin-384722.firebaseapp.com",
+            projectId: "task-coin-384722",
+            storageBucket: "task-coin-384722.appspot.com",
+            messagingSenderId: "672847978942",
+            appId: "1:672847978942:web:e797e3882c63201e8799ef",
+            measurementId: "G-CJH3SG2YTS"));
   } else {
     await Firebase.initializeApp();
   }
