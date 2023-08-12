@@ -17,12 +17,18 @@ class CreateEscrowModel(BaseModel):
     cancel_after: int | None = None
     destination: str
     finish_after: int | None = None
+    task_id: str
+    user_id: str
+    user_token: str | None = None
 
 
 class EscrowModel(BaseModel):
+    account: str
     offer_sequence: str
     owner: str
-    wallet: str
+    task_id: str | None = None
+    user_id: str | None = None
+    user_token: str | None = None
 
 # From xrpscan
 class AccountInfo(BaseModel):
