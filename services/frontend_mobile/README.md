@@ -17,7 +17,6 @@ Epic Task Flutter Frontend is a mobile app built using Flutter to interact with 
 
 ## Screenshots
 
-Demo Screenshots
 ![Screenshot 1](../../resources/assets/images/IMG_1_08_07_2023.PNG)
 ![Screenshot 2](../../resources/assets/images/IMG_2_08_07_2023.PNG)
 ![Screenshot 3](../../resources/assets/images/IMG_3_08_07_2023.PNG)
