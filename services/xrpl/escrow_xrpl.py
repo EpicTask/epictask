@@ -146,7 +146,7 @@ def cancel_escrow_xumm(response: EscrowModel):
             }
         }
         payload = sdk.payload.create(escrow_tx)
-        write_response_to_firestore(payload.to_dict(), "finish_escrow_xumm")
+        write_response_to_firestore(payload.to_dict(), "cancel_escrow_xumm")
         return JSONResponse(payload.to_dict())
     except Exception as e:
         # Handle the errore appropriately
