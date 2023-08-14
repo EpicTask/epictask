@@ -1,7 +1,5 @@
 # Epic Task Flutter Frontend
 
-![Epic Task Logo](https://example.com/epic-task-logo.png)
-
 ## Overview
 
 Epic Task Flutter Frontend is a mobile app built using Flutter to interact with the Epic Task backend API. This app allows users to manage tasks, collaborate with team members, and track project progress.
