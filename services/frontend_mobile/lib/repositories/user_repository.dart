@@ -2,6 +2,7 @@
 
 import 'dart:io';
 
+import 'package:epictask/services/functions/firebase_functions.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import 'package:google_sign_in/google_sign_in.dart';
@@ -24,6 +25,18 @@ class UserRepository {
       {required String email, required String password}) async {
     return _firebaseAuth.signInWithEmailAndPassword(
         email: email, password: password);
+  }
+
+  Future<void> signUp(
+      String email, String password, String? displayName) async {
+    final UserCredential result = await _firebaseAuth
+        .createUserWithEmailAndPassword(email: email, password: password);
+    final User? user = result.user;
+    if (user != null) {
+      String uid = user.uid;
+      FirestoreDatabase()
+          .createUserAccount(email, displayName, user.photoURL, uid);
+    }
   }
 
 // Reset Password

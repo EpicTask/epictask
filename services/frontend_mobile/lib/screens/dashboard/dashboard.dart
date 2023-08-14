@@ -88,11 +88,11 @@ class DashboardWidget extends StatelessWidget {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              'Upcoming Expirations',
+                              'Upcoming Due Dates',
                               style: headlineSmall(context),
                             ),
                             if (tasks.isEmpty)
-                              const Text('No upcoming expirations'),
+                              const Text('No tasks due.'),
                             ...tasks
                                 .map((element) => Text(
                                       formatDate(

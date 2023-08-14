@@ -5,6 +5,7 @@ import 'package:epictask/screens/tasks/task_card.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:responsive_framework/responsive_breakpoints.dart';
 
 import '../../../bloc/generics/generic_bloc.dart';
 import '../../../bloc/generics/generic_state.dart';
@@ -78,7 +79,7 @@ class _AssignedTasksWidgetState extends State<AssignedTasksWidget> {
           }
           if (state is HasDataState) {
             final List<TaskModel> taskData = state.data as List<TaskModel>;
-            return kIsWeb
+            return ResponsiveBreakpoints.of(context).largerThan(TABLET)
                 ? CustomScrollView(slivers: [
                     SliverGrid(
                       gridDelegate:
@@ -86,7 +87,7 @@ class _AssignedTasksWidgetState extends State<AssignedTasksWidget> {
                               crossAxisCount: 3),
                       delegate: SliverChildBuilderDelegate(
                           (BuildContext context, int index) {
-                        return TaskCard(task: taskData[index]);
+                        return TaskCardAssigned(task: taskData[index]);
                       }, childCount: taskData.length),
                     )
                   ])

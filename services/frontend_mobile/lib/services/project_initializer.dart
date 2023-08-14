@@ -1,4 +1,5 @@
 // import 'package:cloud_functions/cloud_functions.dart';
+import 'package:epictask/services/var.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:flutter/foundation.dart';
@@ -10,7 +11,15 @@ import '../bloc/bloc_observer/custom_bloc_observer.dart';
 Future<String> projectInitializer() async {
   WidgetsFlutterBinding.ensureInitialized();
   if (kIsWeb) {
-
+    await Firebase.initializeApp(
+        options: const FirebaseOptions(
+            apiKey: apiKey,
+            authDomain: authDomain,
+            projectId: projectId,
+            storageBucket: storageBucket,
+            messagingSenderId: messagingSenderId,
+            appId: appId,
+            measurementId: measurementId));
   } else {
     await Firebase.initializeApp();
   }

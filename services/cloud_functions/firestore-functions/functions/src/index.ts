@@ -6,10 +6,12 @@ import {FieldValue} from "firebase-admin/firestore";
 import * as functions from "firebase-functions";
 import {SecretManagerServiceClient} from "@google-cloud/secret-manager";
 import {Configuration, OpenAIApi} from "openai";
+import {PubSub} from "@google-cloud/pubsub";
 
 initializeApp();
 
 const db = firestore();
+const pubsub = new PubSub();
 /**
  * Retrieves the latest version of a secret from Google Cloud Secret Manager.
  * @async
@@ -59,17 +61,23 @@ async function getOpenaiClient() {
 
 exports.newUserCreated = functions.auth.user().onCreate((user) => {
   const email = user.email; // The email of the user.
-  const displayName = user.displayName;
   const imageUrl = user.photoURL;
   const uid = user.uid;
+  const displayName =
+    user.displayName || "user" + uid.substring(uid.length - 5);
 
-  db.collection("users").doc(uid).set({
-    email: email,
-    displayName: displayName,
-    imageUrl: imageUrl,
-    dateCreated: FieldValue.serverTimestamp(),
-    uid: uid,
-  });
+  try {
+    db.collection("users").doc(uid).set({
+      email: email,
+      displayName: displayName,
+      imageUrl: imageUrl,
+      dateCreated: FieldValue.serverTimestamp(),
+      uid: uid,
+    });
+  } catch (error) {
+    console.error("Error saving user data:", error);
+    // Handle the error here, such as logging or sending a notification.
+  }
 });
 
 exports.updateXummUserToken = onDocumentCreated(
@@ -256,8 +264,8 @@ exports.generateContract = functions.https.onCall(async (data, context) => {
     const taskCreated = data;
     console.log("Request Body:" + JSON.stringify(taskCreated));
     const taskCreatorName = `User ID: ${taskCreated.user_id}`;
-    const taskAssigneeName = `User ID: ${taskCreated
-      .additional_data.assigned_to_ids[0]}`;
+    const taskAssigneeName =
+    `User ID: ${taskCreated.additional_data.assigned_to_ids[0]}`;
 
     // Contract prompt
     const contractPrompt =
@@ -314,5 +322,78 @@ exports.generateContract = functions.https.onCall(async (data, context) => {
     );
   }
 });
+
+// This function uses cloud scheduler as a trigger to check if any Escrows 
+// have expired and are ready to be executed with a finish transaction 
+// or cancelled. 
+// 'every day 05:00, 13:00, 21:00'
+exports.scheduleEscrowFinish = functions.pubsub
+  .schedule("every 10 minutes")
+  .timeZone("UTC")
+  .onRun(async (context) => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const todayTimestamp = firestore.Timestamp.fromDate(today);
+
+    try {
+      const tasksSnapshot = await db
+        .collection("test_tasks")
+        .where("payment_method", "==", "Escrow")
+        .get();
+
+      const tasksToProcess: firestore
+      .QueryDocumentSnapshot<firestore.DocumentData>[] = [];
+
+      tasksSnapshot.forEach((doc) => {
+        const expirationDate = doc.get("expiration_date");
+        if (
+          expirationDate &&
+          expirationDate.toMillis() === todayTimestamp.toMillis()
+        ) {
+          tasksToProcess.push(doc);
+        }
+      });
+
+      const processPromises = tasksToProcess.map(async (taskDoc) => {
+        const taskId = taskDoc.id;
+        console.log(taskId);
+        const xrplServiceSnapshot = await db
+          .collection("test_xrpl_service")
+          .where("task_id", "==", taskId)
+          .where("function", "==", "verify_transaction")
+          .orderBy("timestamp", "desc")
+          .limit(1)
+          .get();
+
+        if (!xrplServiceSnapshot.empty) {
+          const xrplDoc = xrplServiceSnapshot.docs[0];
+          const xrplData = xrplDoc.data();
+
+          console.log(xrplData);
+          // Publish the xrplData to the "finish_escrow" Pub/Sub topic
+          const topicName = "finish_escrow";
+          const data = Buffer.from(JSON.stringify(xrplData), "utf8");
+
+          console.log(data);
+          const callback = (err: any, messageId: any) => {
+            if (err) {
+              console.error(`Error: ${err.message}, Message ID: ${messageId}`);
+            }
+          };
+          pubsub.topic(topicName).publishMessage({data}, callback);
+
+          console.log(`Published data for task ${taskId} to ${topicName}`);
+        }
+      });
+
+      await Promise.all(processPromises);
+
+      return null;
+    } catch (error) {
+      console.error("Error scheduling escrow finish:", error);
+      return null;
+    }
+  });
+
 // firebase deploy --only functions:updateXummUserToken
 // npm run lint -- --fix

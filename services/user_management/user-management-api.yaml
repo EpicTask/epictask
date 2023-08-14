@@ -1,0 +1,414 @@
+swagger: "2.0"
+info:
+  title: User Management Service
+  description: API documentation for the User Management Service
+  version: 1.0.0
+host: api-gateway-v1-3vfu5pwe8eq6a.apigateway.task-coin-384722.cloud.goog
+schemes:
+  - https
+produces:
+  - application/json
+security:
+  - api_key: []
+x-google-backend:
+  address: >-
+    https://user-management-5wpxgn35iq-uc.a.run.app
+paths:
+  /getCurrentUser:
+    get:
+      operationId: getCurrentUser
+      description: Gets the current user.
+      consumes:
+        - application/json
+      produces:
+        - application/json
+      security: []
+      responses:
+        '200':
+          description: Successful response
+          schema:
+            type: object
+            properties:
+              message:
+                type: string
+        '400':
+          description: Invalid request.
+        '500':
+          description: Internal server error.
+
+  /events:
+    post:
+      operationId: createUserEvent
+      description: Creates a new user event.
+      consumes:
+        - application/json
+      produces:
+        - application/json
+      security: []
+      parameters:
+        - name: body
+          in: body
+          required: true
+          schema:
+            $ref: '#/definitions/UserEvent'
+      responses:
+        '201':
+          description: UserEvent created successfully
+        '400':
+          description: Invalid request.
+        '500':
+          description: Internal server error.
+
+  /userRegister:
+    post:
+      operationId: userRegister
+      description: User registration.
+      produces:
+        - application/json
+      security: []
+      responses:
+        '201':
+          description: User registered successfully
+        '400':
+          description: Invalid request.
+        '500':
+          description: Internal server error.
+
+  /signIn:
+    post:
+      operationId: signIn
+      description: User signed in successfully.
+      consumes:
+        - application/json
+      produces:
+        - application/json
+      security: []
+      responses:
+        '201':
+          description: User signed in successfully
+        '400':
+          description: Invalid request.
+        '500':
+          description: Internal server error.
+
+  /walletConnected:
+    post:
+      operationId: walletConnected
+      description: User wallet connected
+      consumes:
+        - application/json
+      produces:
+        - application/json
+      security: []
+      responses:
+        '201':
+          description: User wallet connected successfully
+        '400':
+          description: Invalid request.
+        '500':
+          description: Internal server error.
+
+  /forgotPassword:
+    post:
+      operationId: forgotPassword
+      description: User forgot password
+      consumes:
+        - application/json
+      produces:
+        - application/json
+      security: []
+      responses:
+        '201':
+          description: User forgot password successful
+        '400':
+          description: Invalid request.
+        '500':
+          description: Internal server error.
+
+  /authenticate:
+    post:
+      operationId: authenticate
+      description: User authenticated
+      consumes:
+        - application/json
+      produces:
+        - application/json
+      security: []
+      responses:
+        '201':
+          description: User authenticated successfully
+        '400':
+          description: Invalid request.
+        '500':
+          description: Internal server error.
+
+  /profileUpdate:
+    post:
+      operationId: profileUpdate
+      description: User updated profile
+      consumes:
+        - application/json
+      produces:
+        - application/json
+      security: []
+      parameters:
+        - in: body
+          name: profileUpdate
+          description: The profile update object
+          required: true
+          schema:
+              $ref: '#/definitions/ProfileUpdate'
+      responses:
+        '201':
+          description: User profile updated successfully
+        '400':
+          description: Invalid request.
+        '500':
+          description: Internal server error.
+
+  /deleteAccount:
+    post:
+      operationId: deleteAccount
+      description: User deleted account
+      consumes:
+        - application/json
+      produces:
+        - application/json
+      security: []
+      parameters:
+        - in: body
+          name: deleteAccount
+          description: The delete account object
+          required: true
+          schema:
+              $ref: '#/definitions/UserAccountDeletion'
+      responses:
+        '201':
+          description: User account deleted successfully
+        '400':
+          description: Invalid request.
+        '500':
+          description: Internal server error.
+
+  /userInteraction:
+    post:
+      operationId: userInteraction
+      description: User interaction
+      consumes:
+        - application/json
+      produces:
+        - application/json
+      security: []
+      parameters:
+        - in: body
+          name: userInteraction
+          description: The user interaction object
+          required: true
+          schema:
+              $ref: '#/definitions/UserInteraction'
+      responses:
+        '201':
+          description: User interaction saved successfully
+        '400':
+          description: Invalid request.
+        '500':
+          description: Internal server error.
+
+  /userVerified:
+    post:
+      operationId: userVerified
+      description: User verified
+      consumes:
+        - application/json
+      produces:
+        - application/json
+      security: []
+      parameters:
+        - in: body
+          name: user verified
+          description: The user verified object
+          required: true
+          schema:
+              $ref: '#/definitions/UserAuthentication'
+      responses:
+        '201':
+          description: User verified successfully
+        '400':
+          description: Invalid request.
+        '500':
+          description: Internal server error.
+
+  /signout:
+    post:
+      operationId: signout
+      description: Sign out
+      consumes:
+        - application/json
+      produces:
+        - application/json
+      security: []
+      parameters:
+        - in: body
+          name: signout
+          description: The signout object
+          required: true
+          schema:
+              $ref: '#/definitions/UserSignIn'
+      responses:
+        '201':
+          description: User signed out successfully
+        '400':
+          description: Invalid request.
+        '500':
+          description: Internal server error.
+
+  /registerWithPassword:
+    post:
+      operationId: registerWithPassword
+      description: Sign user out
+      consumes:
+        - application/json
+      produces:
+        - application/json
+      security: []
+      parameters:
+        - in: body
+          name: signout
+          description: The registration object
+          required: true
+          schema:
+              $ref: '#/definitions/UserRegistration'
+      responses:
+        '201':
+          description: User created successfully
+        '400':
+          description: Invalid request.
+        '500':
+          description: Internal server error.
+
+  /loginWithPassword:
+    post:
+      operationId: loginWithPassword
+      description: Login in with password
+      consumes:
+        - application/json
+      produces:
+        - application/json
+      security: []
+      parameters:
+        - in: body
+          name: loginWithPassword
+          description: The user sign in object
+          required: true
+          schema:
+              $ref: '#/definitions/UserSignIn'
+      responses:
+        '201':
+          description: User logged in successfully
+        '400':
+          description: Invalid request.
+        '500':
+          description: Internal server error.
+
+  /:
+    get:
+      operationId: rootPage
+      description: Default route
+      consumes:
+        - application/json
+      produces:
+        - application/json
+      security: []
+      responses:
+        '200':
+          description: Welcome message
+          schema:
+            type: string
+        '400':
+          description: Invalid request.
+        '500':
+          description: Internal server error.
+definitions:
+  UserEvent:
+    type: object
+    properties:
+      event_id:
+        type: string
+      event_type:
+        type: string
+      user_id:
+        type: string
+      timestamp:
+        type: string
+      additional_data:
+        type: object
+  UserRegistration:
+    type: object
+    properties:
+      email:
+        type: string
+      timestamp:
+        type: string
+      status:
+        type: string
+      social:
+        type: boolean
+      social_type:
+        type: string
+  UserSignIn:
+    type: object
+    properties:
+      status:
+        type: string
+      timestamp:
+        type: string
+      social:
+        type: boolean
+      social_type:
+        type: string
+  UserWalletConnected:
+    type: object
+    properties:
+      status:
+        type: string
+      timestamp:
+        type: string
+      user_id:
+        type: string
+      wallet_type:
+        type: string
+  UserForgotPassword:
+    type: object
+    properties:
+      email:
+        type: string
+  UserAuthentication:
+    type: object
+    properties:
+      email:
+        type: string
+      verified:
+        type: boolean
+      timestamp:
+        type: string
+  ProfileUpdate:
+    type: object
+    properties:
+      user_id:
+        type: string
+      fields:
+        type: object
+  UserAccountDeletion:
+    type: object
+    properties:
+      user_id:
+        type: string
+      reason:
+        type: string
+  UserInteraction:
+    type: object
+    properties:
+      user_id:
+        type: string
+      interaction:
+        type: string

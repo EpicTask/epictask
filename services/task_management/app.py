@@ -8,7 +8,7 @@ from fastapi import FastAPI, Request
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
 from starlette.middleware.cors import CORSMiddleware
-from firestore_db import create_task, update_task, update_task_fields, delete_task, assign_task, completed_task, get_tasks, write_event_to_firestore, update_leaderboard, generate_contract
+from firestore_db import create_task, update_task, update_task_fields, delete_task, assign_task, completed_task, get_tasks, write_event_to_firestore, update_leaderboard
 from schema import (TaskAssigned, TaskCreated, TaskCancelled, TaskCompleted,
                     TaskCommentAdded, TaskEvent, TaskExpired, TaskRatingUpdate, TaskRewarded, TaskUpdated, TaskVerified)
 
@@ -16,10 +16,11 @@ app = FastAPI()
 
 baseUrl = os.getenv("_BASEURL")
 defaultUrl = os.getenv("_DEFAULT_URL")
-# origins = [
-#     baseUrl,
-#     defaultUrl,
-# ]
+origins = [
+    baseUrl,
+    defaultUrl,
+    'https://task-management-api-us-8l3obb9a.uc.gateway.dev'
+]
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -155,13 +156,13 @@ async def task_func(request: TaskCreated):
         return {"error": str(e)}
 
 # Generate contract
-@app.post('/GenerateContract')
-async def task_func(request: TaskEvent):
-    try:
-        response = generate_contract(data=request)
-        return {"message": response}
-    except Exception as e:
-        return {"error": str(e)}
+# @app.post('/GenerateContract')
+# async def task_func(request: TaskEvent):
+#     try:
+#         response = generate_contract(data=request)
+#         return {"message": response}
+#     except Exception as e:
+#         return {"error": str(e)}
 
 
 @app.get("/tasks")

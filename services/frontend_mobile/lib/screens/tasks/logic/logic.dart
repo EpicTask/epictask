@@ -121,7 +121,7 @@ String formatDate(DateTime date) {
       date.day == DateTime.now().day + 1) {
     return 'Tomorrow';
   } else {
-    return DateFormat('MM/dd/yyyy').format(date);
+    return DateFormat('dd MMM').format(date);
   }
 }
 

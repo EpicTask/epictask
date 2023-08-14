@@ -23,20 +23,14 @@ import {
 
 dotenv.config();
 const app = express();
-// const origins = [
-//   'http://localhost',
-//   'http://localhost:8080',
-//   'http://localhost:3000',
-//   'http://192.168.1.176:3000/',
-//   'https://task-coin-384722.uc.r.appspot.com/',
-// ];
+const origins = ['https://user-management-api-us-8l3obb9a.uc.gateway.dev'];
 
 app.use(
   cors({
-    origin: '*',
+    origin: origins,
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
-    allowedHeaders: ['Content-Type', 'Authorization'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
   })
 );
 app.use(json());

@@ -5,15 +5,12 @@ import os
 
 import uvicorn
 import xumm
-from accounts_xrpl import (connectWallet, does_account_exist_async,
-                           get_account_balance, get_account_info_async,
+from accounts_xrpl import (connectWallet, does_account_exist_async, get_account_balance, get_account_info_async,
                            get_transaction_async, lookup_escrow)
-from escrow_xrpl import generate_xrpl_timestamp
-from fastapi import FastAPI, Request, WebSocket, WebSocketDisconnect
-from fastapi.middleware.cors import CORSMiddleware
+from escrow_xrpl import cancel_escrow_xumm, create_escrow_xumm, createTenMinTimestamp, finish_escrow_xumm, generate_xrpl_timestamp, is_timestamp_after_current
+from fastapi import FastAPI, Request
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
-from fastapi.middleware.cors import CORSMiddleware
 from firestore_db import write_response_to_firestore
 from google_secrets import get_secret
 from payments_xrpl import handle_payment_request, send_payment_request
@@ -21,8 +18,10 @@ from starlette.responses import JSONResponse
 from subscription_xrpl import account_subscription_sync
 from xrpl.asyncio.ledger import get_fee
 from xrpl.clients import JsonRpcClient, WebsocketClient
-from xrpl_models import CreateEscrowModel, PaymentRequest
+from xrpl_models import CreateEscrowModel, EscrowModel, PaymentRequest
 from dotenv import load_dotenv
+
+from xrpscan_api import xrpscan_get_accountBalance, xrpscan_get_accountEscrows, xrpscan_get_accountInfo, xrpscan_get_accountTransactions
 app = FastAPI()
 
 load_dotenv()
@@ -32,15 +31,8 @@ defaultUrl = os.getenv("_DEFAULT_URL")
 origins = [
     baseUrl,
     defaultUrl,
+    "https://xrpl-api-us-8l3obb9a.uc.gateway.dev"
 ]
-
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
 
 templates = Jinja2Templates(directory="app/templates")
 
@@ -51,17 +43,7 @@ sdk = xumm.XummSdk(api_key, api_secret)
 client = JsonRpcClient("https://s.altnet.rippletest.net:51234/")
 clientWebsocket = WebsocketClient("wss://s.altnet.rippletest.net:51233")
 
-
-@app.get('/', response_class=HTMLResponse)
-async def hello(request: Request):
-    """Return a friendly HTTP greeting."""
-    message = "It's running!"
-
-    """Get Cloud Run environment variables."""
-    service = os.environ.get('K_SERVICE', 'Unknown service')
-    revision = os.environ.get('K_REVISION', 'Unknown revision')
-
-    return templates.TemplateResponse("index.html", {"request": request, "message": message, "Service": service, "Revision": revision})
+# *** Primary Functions ***********************************
 
 # XUMM sign in request
 
@@ -70,16 +52,66 @@ async def hello(request: Request):
 async def signInRequest(uid: str):
     return await connectWallet(uid)
 
-# Get account balance
+# Make a payment request
 
+
+@app.post('/payment_request')
+async def process_payment(payment_request: PaymentRequest):
+    response = await handle_payment_request(payment_request)
+    return response
+
+# Lookup Escrow
+
+
+@app.get('/lookup_escrow/{account}')
+def lookup_escrow_sync(account: str):
+    escrow_info = lookup_escrow(account)
+    return escrow_info
+
+# Create an Escrow
+
+
+@app.post('/create_escrow')
+async def create_escrow(response: CreateEscrowModel):
+    if not response and is_timestamp_after_current(response.finish_after):
+        return JSONResponse({"error": "Missing or invalid required parameters."})
+
+    result = create_escrow_xumm(response)
+    return result
+
+# Cancel Escrow
+
+
+@app.post('/cancel_escrow_xumm')
+async def cancel_escrow(response: EscrowModel):
+    if not response:
+        return JSONResponse({"error": "Missing 'owner' parameter."})
+
+    result = cancel_escrow_xumm(response)
+
+    return result
+
+# Finish Escrow
+
+
+@app.post('/finish_escrow_xumm')
+async def finish_escrow(response: EscrowModel):
+    if not response:
+        return JSONResponse({"error": "Missing 'owner' parameter."})
+
+    result = finish_escrow_xumm(response)
+    return result
+
+
+# *** Account Functions ********************************
+# Get account balance
 
 @app.get('/balance/{address}')
 async def balance(address: str):
     try:
-        balance = await get_account_balance(address)
+        balance = xrpscan_get_accountBalance(address)
         response = {"address": address, "balance": balance}
-        doc_id = write_response_to_firestore(response, "balance")
-        return JSONResponse({"doc_id": doc_id, "response": response})
+        return JSONResponse(response)
     except Exception as e:
         return JSONResponse({"error": str(e)})
 
@@ -89,9 +121,8 @@ async def balance(address: str):
 @app.get('/account_info/{address}')
 def account_info(address: str):
     try:
-        account_info = get_account_info_async(address)
-        write_response_to_firestore(account_info.result, "account_info")
-        return JSONResponse(account_info.result)
+        account_info = xrpscan_get_accountInfo(address)
+        return JSONResponse(account_info)
     except Exception as e:
         return JSONResponse({"error": str(e)})
 
@@ -107,25 +138,35 @@ async def account_exists(address: str):
     except Exception as e:
         return JSONResponse({"error": str(e)})
 
-# Payment test
+# Get account balance using test net
 
 
-@app.get('/paymentTest')
-async def test_payment(request: Request):
+@app.get('/test_net/balance/{address}')
+async def balance(address: str):
     try:
-        asyncio.set_event_loop(asyncio.SelectorEventLoop())
-        url = asyncio.get_event_loop().run_until_complete(send_payment_request(100000,
-                                                                               'rB4iz44nvW2yGDBYTkspVfyR2NMsR3NtfF', 'rpaxHGQVgQSXF1HaKGRpLKm6X7eh26v6eV', 'test payment request'))
-        data = {'url': url}
-    except RuntimeError as e:
-        print(f"Error occurred: {e}")
-        data = {'url': f"Error occurred: {e}"}
-        return JSONResponse(data)
+        balance = await get_account_balance(address)
+        response = {"address": address, "balance": balance}
+        doc_id = write_response_to_firestore(response, "balance")
+        return JSONResponse({"doc_id": doc_id, "response": response})
+    except Exception as e:
+        return JSONResponse({"error": str(e)})
 
-    return JSONResponse(data)
+# Get account information using test net
 
 
-# Returns the transaction fee as a JSON object
+@app.get('/test_net/account_info/{address}')
+def account_info(address: str):
+    try:
+        account_info = get_account_info_async(address)
+        write_response_to_firestore(account_info.result, "account_info")
+        return JSONResponse(account_info.result)
+    except Exception as e:
+        return JSONResponse({"error": str(e)})
+
+
+# *** Transactions ********************************
+
+# Returns the transaction fee
 @app.get('/transaction_fee')
 async def transaction_fee():
     try:
@@ -152,76 +193,16 @@ async def verify_transaction(tx_hash: str):
     except Exception as e:
         return JSONResponse({"error": str(e)})
 
-
-# Create an Escrow
-@app.get('/create_escrow')
-async def create_escrow(response: CreateEscrowModel):
-    if not response:
-        return JSONResponse({"error": "Missing required parameters."})
-
-    finish_after = generate_xrpl_timestamp(response.finish_after)
-    cancel_after = generate_xrpl_timestamp(response.cancel_after)
-    escrow_create = {
-        "txjson": {
-            "TransactionType": "EscrowCreate",
-            "Account": response.account,
-            "Destination": response.destination,
-            "Amount": str(response.amount),
-            "FinishAfter": finish_after,
-            "CancelAfter": cancel_after,
-        },
-    }
-    payload = sdk.payload.create(escrow_create)
-    write_response_to_firestore(payload.to_dict(), "create_escrow")
-    return JSONResponse(payload.to_dict())
+# Gets list of transactions by account.
 
 
-# Lookup Escrow
-@app.get('/lookup_escrow/{account}')
-def lookup_escrow_sync(account: str):
-    escrow_info = lookup_escrow(account)
-    write_response_to_firestore(escrow_info, "lookup_escrow")
-    return escrow_info
-
-# Cancel Escrow
-
-
-@app.get('/cancel_escrow_xumm/{owner}')
-async def cancel_escrow_xumm(owner: str, wallet: str, offer_sequence: str):
-    if not owner:
-        return JSONResponse({"error": "Missing 'owner' parameter."})
-
-    escrow_cancel = {
-        "txjson": {
-            "TransactionType": "EscrowCancel",
-            "Account": wallet,
-            "Owner": owner,
-            "OfferSequence": offer_sequence
-        },
-    }
-    payload = sdk.payload.create(escrow_cancel)
-    write_response_to_firestore(payload.to_dict(), "cancel_escrow_xumm")
-    return JSONResponse(payload.to_dict())
-
-# Finish Escrow
-
-
-@app.get('/finish_escrow_xumm/{owner}')
-async def finish_escrow_xumm(owner: str, wallet: str, offer_sequence: str):
-    if not all([owner, wallet, offer_sequence]):
-        return JSONResponse({"error": "Missing 'owner' parameter."})
-
-    escrow_finish = {
-        "txjson": {
-            "TransactionType": "EscrowFinish",
-            "Account": wallet,
-            "Owner": owner,
-            "OfferSequence": offer_sequence
-        },
-    }
-    payload = sdk.payload.create(escrow_finish)
-    write_response_to_firestore(payload.to_dict(), "finish_escrow_xumm")
-    return JSONResponse(payload.to_dict())
+@app.get('/transactions/{address}')
+async def account_exists(address: str):
+    try:
+        response = get_transaction_async(address)
+        return JSONResponse(response)
+    except Exception as e:
+        return JSONResponse({"error": str(e)})
 
 # Make a payment request
 
@@ -259,12 +240,35 @@ async def unsubscribe(request: Request):
     except Exception as e:
         return JSONResponse({"error": str(e)})
 
+# Payment test
 
-# Make a payment request
-@app.post('/payment_request')
-async def process_payment(payment_request: PaymentRequest):
-    response = await handle_payment_request(payment_request)
-    return response
+
+@app.post('/paymentTest')
+async def test_payment(request: Request):
+    try:
+        asyncio.set_event_loop(asyncio.SelectorEventLoop())
+        url = asyncio.get_event_loop().run_until_complete(send_payment_request(100000,
+                                                                               'rB4iz44nvW2yGDBYTkspVfyR2NMsR3NtfF', 'rpaxHGQVgQSXF1HaKGRpLKm6X7eh26v6eV', 'test payment request'))
+        data = {'url': url}
+    except RuntimeError as e:
+        print(f"Error occurred: {e}")
+        data = {'url': f"Error occurred: {e}"}
+        return JSONResponse(data)
+
+    return JSONResponse(data)
+
+
+@app.get('/', response_class=HTMLResponse)
+async def hello(request: Request):
+    """Return a friendly HTTP greeting."""
+    message = "It's running!"
+
+    """Get Cloud Run environment variables."""
+    service = os.environ.get('K_SERVICE', 'Unknown service')
+    revision = os.environ.get('K_REVISION', 'Unknown revision')
+
+    return templates.TemplateResponse("index.html", {"request": request, "message": message, "Service": service, "Revision": revision})
+
 
 # Execute the application when the script is run
 if __name__ == "__main__":

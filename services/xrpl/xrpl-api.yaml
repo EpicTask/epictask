@@ -1,0 +1,449 @@
+swagger: "2.0"
+info:
+  title: API Gateway for XRPL Service
+  description: API documentation for XRPL API Gateway
+  version: 1.0.0
+host: api-gateway-v1-3vfu5pwe8eq6a.apigateway.task-coin-384722.cloud.goog
+schemes:
+  - https
+produces:
+  - application/json
+security:
+  - api_key: []
+x-google-backend:
+  address: >-
+    https://xrpl-5wpxgn35iq-uc.a.run.app
+paths:
+  /:
+    get:
+      operationId: rootPage
+      description: Default route
+      consumes:
+        - application/json
+      produces:
+        - application/json
+      security: []
+      responses:
+        '200':
+          description: Welcome message
+          schema:
+            type: string
+        '400':
+          description: Invalid request.
+        '500':
+          description: Internal server error.
+  /xummSignInRequest/{uid}:
+    get:
+      summary: Sign In Request
+      operationId: xummSignInRequest
+      consumes:
+        - application/json
+      produces:
+        - application/json
+      security: []
+      parameters:
+        - name: uid
+          in: path
+          description: User ID
+          required: true
+          type: string
+      responses:
+        200:
+          description: Successful operation
+        500:
+          description: Internal server error
+
+  /balance/{address}:
+    get:
+      summary: Get Account Balance
+      operationId: balance
+      consumes:
+        - application/json
+      produces:
+        - application/json
+      security: []
+      parameters:
+        - name: address
+          in: path
+          description: Account address
+          required: true
+          type: string
+      responses:
+        200:
+          description: Successful operation
+          schema:
+            type: object
+            properties:
+              address:
+                type: string
+              balance:
+                type: number
+        500:
+          description: Internal server error
+
+  /account_info/{address}:
+    get:
+      summary: Get Account Information
+      operationId: account_info
+      consumes:
+        - application/json
+      produces:
+        - application/json
+      security: []
+      parameters:
+        - name: address
+          in: path
+          description: Account address
+          required: true
+          type: string
+      responses:
+        200:
+          description: Successful operation
+          schema:
+            type: object
+        500:
+          description: Internal server error
+
+  /account_exists/{address}:
+    get:
+      summary: Check if Account Exists
+      operationId: account_exists
+      consumes:
+        - application/json
+      produces:
+        - application/json
+      security: []
+      parameters:
+        - name: address
+          in: path
+          description: Account address
+          required: true
+          type: string
+      responses:
+        200:
+          description: Successful operation
+          schema:
+            type: object
+            properties:
+              address:
+                type: string
+              exists:
+                type: boolean
+        500:
+          description: Internal server error
+
+  /paymentTest:
+    post:
+      summary: Payment Test
+      operationId: paymentTest
+      consumes:
+        - application/json
+      produces:
+        - application/json
+      security: []
+      responses:
+        200:
+          description: Successful operation
+          schema:
+            type: object
+            properties:
+              url:
+                type: string
+        500:
+          description: Internal server error
+
+  /transaction_fee:
+    get:
+      summary: Get Transaction Fee
+      operationId: transaction_fee
+      consumes:
+        - application/json
+      produces:
+        - application/json
+      security: []
+      responses:
+        200:
+          description: Successful operation
+          schema:
+            type: object
+            properties:
+              transaction_fee:
+                type: number
+        500:
+          description: Internal server error
+
+  /verify_transaction/{tx_hash}:
+    get:
+      summary: Verify Transaction
+      operationId: verify_transaction
+      consumes:
+        - application/json
+      produces:
+        - application/json
+      security: []
+      parameters:
+        - name: tx_hash
+          in: path
+          description: Transaction hash
+          required: true
+          type: string
+      responses:
+        200:
+          description: Successful operation
+          schema:
+            type: object
+            properties:
+              transaction_hash:
+                type: string
+              transaction:
+                type: object
+        500:
+          description: Internal server error
+
+  /create_escrow:
+    post:
+      summary: Create Escrow
+      operationId: create_escrow
+      consumes:
+        - application/json
+      produces:
+        - application/json
+      security: []
+      parameters:
+        - name: CreateEscrowModel
+          in: body
+          required: true
+          schema:
+            $ref: '#/definitions/CreateEscrowModel'
+      responses:
+        200:
+          description: Successful operation
+          schema:
+            type: object
+            properties:
+              status:
+                type: string
+        500:
+          description: Internal server error
+
+  /lookup_escrow/{account}:
+    get:
+      summary: Lookup Escrow
+      operationId: lookup_escrow
+      consumes:
+        - application/json
+      produces:
+        - application/json
+      security: []
+      parameters:
+        - name: account
+          in: path
+          description: Account address
+          required: true
+          type: string
+      responses:
+        200:
+          description: Successful operation
+        500:
+          description: Internal server error
+
+  /cancel_escrow_xumm/{owner}:
+    post:
+      summary: Cancel Escrow (Xumm)
+      operationId: cancel_escrow_xumm
+      consumes:
+        - application/json
+      produces:
+        - application/json
+      security: []
+      parameters:
+        - name: owner
+          in: path
+          description: Escrow owner address
+          required: true
+          type: string
+        - name: wallet
+          in: formData
+          description: Wallet address
+          required: true
+          type: string
+        - name: offer_sequence
+          in: formData
+          description: Offer sequence
+          required: true
+          type: string
+      responses:
+        200:
+          description: Successful operation
+          schema:
+            type: object
+            properties:
+              txjson:
+                type: object
+        500:
+          description: Internal server error
+
+  /finish_escrow_xumm/{owner}:
+    post:
+      summary: Finish Escrow (Xumm)
+      operationId: finish_escrow_xumm
+      consumes:
+        - application/json
+      produces:
+        - application/json
+      security: []
+      parameters:
+        - name: owner
+          in: path
+          description: Escrow owner address
+          required: true
+          type: string
+        - name: wallet
+          in: formData
+          description: Wallet address
+          required: true
+          type: string
+        - name: offer_sequence
+          in: formData
+          description: Offer sequence
+          required: true
+          type: string
+      responses:
+        200:
+          description: Successful operation
+          schema:
+            type: object
+            properties:
+              txjson:
+                type: object
+        500:
+          description: Internal server error
+
+  /xrpl_timestamp:
+    get:
+      summary: Get XRPL Timestamp
+      operationId: xrpl_timestamp
+      consumes:
+        - application/json
+      produces:
+        - application/json
+      security: []
+      parameters:
+        - name: timestamp
+          in: query
+          description: Timestamp value
+          required: true
+          type: integer
+      responses:
+        200:
+          description: Successful operation
+          schema:
+            type: object
+        500:
+          description: Internal server error
+
+  /subscribe:
+    get:
+      summary: Subscribe to Accounts
+      operationId: subscribe
+      consumes:
+        - application/json
+      produces:
+        - application/json
+      security: []
+      parameters:
+        - name: accounts
+          in: query
+          description: List of accounts to subscribe
+          required: true
+          type: array
+          items:
+            type: string
+      responses:
+        200:
+          description: Successful operation
+        500:
+          description: Internal server error
+
+  /unsubscribe:
+    post:
+      summary: Unsubscribe from Accounts
+      operationId: unsubscribe
+      consumes:
+        - application/json
+      produces:
+        - application/json
+      security: []
+      parameters:
+        - name: accounts
+          in: formData
+          description: List of accounts to unsubscribe
+          required: true
+          type: array
+          items:
+            type: string
+      responses:
+        200:
+          description: Successful operation
+        500:
+          description: Internal server error
+
+  /payment_request:
+    post:
+      summary: Process Payment Request
+      operationId: payment_request
+      consumes:
+        - application/json
+      produces:
+        - application/json
+      security: []
+      parameters:
+        - name: payment_request
+          in: body
+          required: true
+          schema:
+            $ref: '#/definitions/PaymentRequest'
+      responses:
+        200:
+          description: Successful operation
+          schema:
+            type: object
+
+definitions:
+  CreateEscrowModel:
+    type: object
+    properties:
+      account:
+        type: string
+      destination:
+        type: string
+      finish_after:
+        type: string
+      cancel_after:
+        type: string
+      amount:
+        type: number
+
+  EscrowModel:
+    type: object
+    properties:
+      offer_sequence:
+        type: string
+      owner:
+        type: string
+      wallet:
+        type: string
+
+  PaymentRequest:
+    type: object
+    properties:
+      amount:
+        type: number
+      source_address:
+        type: string
+      destination_address:
+        type: string
+      invoice_id:
+        type: string
+      memo:
+        type: string
