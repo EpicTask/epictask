@@ -1,16 +1,39 @@
-# frontend_mobile
+# Epic Task Flutter Frontend
 
-A new Flutter project.
+## Overview
+
+Epic Task Flutter Frontend is a mobile app built using Flutter to interact with the Epic Task backend API. This app allows users to manage tasks, collaborate with team members, and track project progress.
+
+## Features
+
+- User authentication and registration
+- Create, view, update, and delete tasks
+- Assign tasks to team members
+- Track task progress and status
+- Collaborate with team members through comments
+- Responsive and intuitive user interface
+
+## Screenshots
+
+![Screenshot 1](../../resources/assets/images/IMG_1_08_07_2023.PNG)
+![Screenshot 2](../../resources/assets/images/IMG_2_08_07_2023.PNG)
+![Screenshot 3](../../resources/assets/images/IMG_3_08_07_2023.PNG)
 
 ## Getting Started
 
-This project is a starting point for a Flutter application.
+1. Clone the repository:
 
-A few resources to get you started if this is your first Flutter project:
+   ```bash
+   git clone https://github.com/kaitech-corp/epictask.git
+   cd services/frontend_mobile
+   flutter pub get
+   flutter run
 
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
+## Contributing
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+Contributions are welcome! If you find a bug or want to add a new feature, please open an issue or create a pull request. Make sure to follow the project's coding style and guidelines.
+
+## Resources
+
+Find more info here [EpicTask](epictask.app/)
+
