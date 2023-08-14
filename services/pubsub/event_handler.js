@@ -112,20 +112,29 @@ async function eventHandler(event) {
  * @return {Promise<void>} - A Promise object representing
  * the completion of the message publishing.
  */
-async function publishMessage(topicName, jsonData) {
+async function publishMessage(topicName, jsonData, scheduledTime) {
   try {
     const topic = _pubsub.topic(topicName);
     const data = Buffer.from(jsonData, 'utf8');
+    const attributes = {};
+
+    // Schedule the message to be published at the specified timestamp
+    if (scheduledTime) {
+      attributes.scheduledTime = new Date(scheduledTime).toISOString();
+    }
+
     const callback = (err, messageId) => {
       if (err) {
         console.error(`Error: ${err.message}, Message ID: ${messageId}`);
       }
     };
-    topic.publishMessage({data}, callback);
+
+    topic.publishMessage({data, attributes}, callback);
   } catch (error) {
     console.error('An error occurred while publishing message:', error);
   }
 }
+
 
 // ... Implement functions for other topics ...
 

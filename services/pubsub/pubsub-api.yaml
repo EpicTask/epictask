@@ -1,0 +1,112 @@
+swagger: "2.0"
+info:
+  title: Escrow Scheduler Service
+  description: API documentation for the Escrow Scheduler Service
+  version: 1.0.0
+host: api-gateway-v1-3vfu5pwe8eq6a.apigateway.task-coin-384722.cloud.goog
+schemes:
+  - https
+produces:
+  - application/json
+security:
+  - api_key: []
+x-google-backend:
+  address: >-
+    https://pubsub-5wpxgn35iq-uc.a.run.app
+x-google-management:
+  metrics:
+    - name: request_count
+      metricKind: CUMULATIVE
+      valueType: INT64
+      labels:
+        - key: method
+          description: The HTTP method of the request.
+        - key: status
+          description: The HTTP status code of the response.
+    - name: response_size
+      metricKind: DELTA
+      valueType: INT64
+      labels:
+        - key: method
+          description: The HTTP method of the request.
+        - key: status
+          description: The HTTP status code of the response.
+    - name: latency
+      metricKind: DELTA
+      valueType: DISTRIBUTION
+      labels:
+        - key: method
+          description: The HTTP method of the request.
+        - key: status
+          description: The HTTP status code of the response.
+    - name: request_validation_count
+      metricKind: CUMULATIVE
+      valueType: INT64
+      labels:
+        - key: method
+          description: The HTTP method of the request.
+        - key: status
+          description: The HTTP status code of the response.
+    - name: request_error_count
+      metricKind: CUMULATIVE
+      valueType: INT64
+      labels:
+        - key: method
+          description: The HTTP method of the request.
+        - key: status
+          description: The HTTP status code of the response.
+    - name: response_validation_count
+      metricKind: CUMULATIVE
+      valueType: INT64
+      labels:
+        - key: method
+          description: The HTTP method of the request.
+        - key: status
+          description: The HTTP status code of the response.
+  quota:
+    limits:
+      - name: requests-per-minute
+        metric: request_count
+        unit: "1/min/{project}"
+        values:
+          STANDARD: 100
+paths:
+  /escrow_scheduler:
+    post:
+      summary: Schedule EscrowFinish and EscrowCancel actions
+      operationId: scheduleEscrowAction
+      consumes:
+        - application/json
+      produces:
+        - application/json
+      parameters:
+        - in: body
+          name: body
+          description: JSON object containing task_id, finishAfter, and cancelAfter
+          required: true
+          schema:
+            type: object
+            properties:
+              task_id:
+                type: string
+              finishAfter:
+                type: string
+                format: date-time
+              cancelAfter:
+                type: string
+                format: date-time
+      responses:
+        '200':
+          description: Actions scheduled successfully
+          schema:
+            type: object
+            properties:
+              message:
+                type: string
+        '500':
+          description: Failed to schedule actions
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
