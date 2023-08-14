@@ -37,5 +37,5 @@ Contributions are welcome! If you find a bug or want to add a new feature, pleas
 
 ## Resources
 
-Find more info here epictask.app/
+Find more info here [EpicTask](epictask.app/)
 
