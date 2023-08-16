@@ -129,8 +129,16 @@ def delete_task(event_type, response):
         data = response.dict()
 
         doc_id = data["task_id"]
-       # Delete document
-        collection_ref.document(doc_id).delete()
+        
+        # Check if "smart_contract_enabled" field exists and its value is true
+        doc_ref = collection_ref.document(doc_id)
+        doc = doc_ref.get().to_dict()
+        
+        if doc.get("smart_contract_enabled") and doc.get("smart_contract_enabled") == True:
+            return "Unable to delete Task due to active smart contract"
+        
+        # Delete document
+        doc_ref.delete()
 
         return doc_id
 

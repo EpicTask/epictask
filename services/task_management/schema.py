@@ -13,24 +13,25 @@ class TaskEvent(BaseModel):
 
 # Corresponding models that would go into additional_data depending on event type.
 class TaskCreated(BaseModel):
-    task_title: str = None
     task_description: str
     task_id: str
     expiration_date: int
+    payment_method: str # Pay Directly or Escrow/Smart Contract
     reward_amount: float
     reward_currency: str
-    payment_method: str  # Pay directly or Escrow
     user_id: str
+    assigned_to_ids: List[str] = None
+    auto_verify: bool = None
+    marked_completed: bool = None
     project_id: str = None
     project_name: str = None
+    rating: int = None
     requires_attachments: bool = False
+    rewarded: bool = None
+    task_title: str = None
     terms_blob: str = None
     terms_id: str = None
-    rating: int = None
-    assigned_to_ids: List[str] = None
-    rewarded: bool = None
-    marked_completed: bool = None
-    auto_verify: bool = None
+    smart_contract_enabled: bool = None
 
 
 class TaskAssigned(BaseModel):
