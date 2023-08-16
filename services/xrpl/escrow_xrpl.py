@@ -14,6 +14,7 @@ from xrpl.clients import JsonRpcClient, WebsocketClient
 from xrpl.models.transactions import EscrowCreate
 from xrpl.wallet import Wallet
 from xrpl.utils import xrp_to_drops
+from services.xrpl.firestore_db import create_indentifier
 from xrpl_models import CreateEscrowModel, EscrowModel
 
 api_key = get_secret('xumm-key')
@@ -57,6 +58,7 @@ def create_escrow_xumm(response: CreateEscrowModel):
     if cancel_after is None:
         cancel_after = createCancelAfterTimestamp(response.finish_after)
     amount = str(xrp_to_drops(response.amount))
+    identifier = create_indentifier()
     try:
         escrow_tx = {
             "txjson": {
@@ -73,12 +75,12 @@ def create_escrow_xumm(response: CreateEscrowModel):
                     "task_id": response.task_id,
                     "uid": response.user_id,
                     "function":"create_escrow_xumm"
-                }
+                },
+                "identifier":identifier
             }
         }
-        print(escrow_tx)
         payload = sdk.payload.create(escrow_tx)
-        write_response_to_firestore(payload.to_dict(), "create_escrow")
+        print(payload)
         return JSONResponse({"status": "Escrow successfully created."})
     except Exception as e:
         # Handle the error appropriately
@@ -87,6 +89,7 @@ def create_escrow_xumm(response: CreateEscrowModel):
 # Finish Escrow
 
 def finish_escrow_xumm(response: EscrowModel):
+    identifier = create_indentifier()
     try:
         escrow_finish = {
             "txjson": {
@@ -99,12 +102,14 @@ def finish_escrow_xumm(response: EscrowModel):
             "custom_meta": {
                 "blob": {
                     "task_id": response.task_id,
-                    "uid": response.user_id
-                }
+                    "uid": response.user_id,
+                    "function":"finish_escrow_xumm"
+                },
+                "identifier":identifier
             }
         }
         payload = sdk.payload.create(escrow_finish)
-        write_response_to_firestore(payload.to_dict(), "finish_escrow_xumm")
+        print(payload)
         return JSONResponse(payload.to_dict())
     except Exception as e:
         # Handle the errore appropriately
@@ -113,6 +118,7 @@ def finish_escrow_xumm(response: EscrowModel):
 # Cancel Escrow
 
 def cancel_escrow_xumm(response: EscrowModel):
+    identifier = create_indentifier()
     try:
         escrow_tx = {
             "txjson": {
@@ -125,12 +131,14 @@ def cancel_escrow_xumm(response: EscrowModel):
             "custom_meta": {
                 "blob": {
                     "task_id": response.task_id,
-                    "uid": response.user_id
-                }
+                    "uid": response.user_id,
+                    "function":"cancel_escrow_xumm"
+                },
+                "identifier":identifier
             }
         }
         payload = sdk.payload.create(escrow_tx)
-        write_response_to_firestore(payload.to_dict(), "cancel_escrow_xumm")
+        print(payload)
         return JSONResponse(payload.to_dict())
     except Exception as e:
         # Handle the errore appropriately

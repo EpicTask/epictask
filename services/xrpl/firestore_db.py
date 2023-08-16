@@ -36,5 +36,10 @@ def write_response_to_firestore(response, function, task_id = None):
         return None
 
 
+# Create indentifier
+def create_indentifier():
+    # Initialize Firestore client
+    db = firestore.Client()
 
+    return db.collection('test_xumm_callbacks').id
 
