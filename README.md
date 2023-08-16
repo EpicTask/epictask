@@ -46,9 +46,9 @@ The Epic Task application uses event-driven model for communication between the 
 The data flow within the application typically involves the following steps:
 
 1. User interacts with the frontend UI to perform actions such as creating tasks, assigning tasks, or verifying transactions.
-2. The frontend writes these events to Firestore database.
+2. The frontend writes these events to Firestore database as well as makes api calls through an API Gateway.
 3. PubSub subscribers handle events and publish messages to corresponding backend services.
-3. Backend services process the messages, perform necessary operations, and interact with external services through pubsub if required.
+3. Backend services process api calls and messages, perform necessary operations, and interact with external services through pubsub if required.
 4. Backend services respond with the appropriate HTTP responses containing the requested data or status updates.
 5. The frontend receives the responses and updates the UI accordingly, providing real-time feedback to the user.
 
