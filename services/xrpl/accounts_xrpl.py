@@ -29,7 +29,12 @@ async def connectWallet(uid: str):
         "txjson": {
             "TransactionType": "SignIn"
         },
-        "custom_meta": {"blob": uid}
+        "custom_meta": {
+                "blob": {
+                    "uid": uid,
+                    "function":"connectWallet"
+                }
+            }
     }
 
     # Create the payment request with the XUMM SDK

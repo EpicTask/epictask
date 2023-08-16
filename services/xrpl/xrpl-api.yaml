@@ -13,6 +13,63 @@ security:
 x-google-backend:
   address: >-
     https://xrpl-5wpxgn35iq-uc.a.run.app
+x-google-management:
+  metrics:
+    - name: request_count
+      metricKind: CUMULATIVE
+      valueType: INT64
+      labels:
+        - key: method
+          description: The HTTP method of the request.
+        - key: status
+          description: The HTTP status code of the response.
+    - name: response_size
+      metricKind: DELTA
+      valueType: INT64
+      labels:
+        - key: method
+          description: The HTTP method of the request.
+        - key: status
+          description: The HTTP status code of the response.
+    - name: latency
+      metricKind: DELTA
+      valueType: DISTRIBUTION
+      labels:
+        - key: method
+          description: The HTTP method of the request.
+        - key: status
+          description: The HTTP status code of the response.
+    - name: request_validation_count
+      metricKind: CUMULATIVE
+      valueType: INT64
+      labels:
+        - key: method
+          description: The HTTP method of the request.
+        - key: status
+          description: The HTTP status code of the response.
+    - name: request_error_count
+      metricKind: CUMULATIVE
+      valueType: INT64
+      labels:
+        - key: method
+          description: The HTTP method of the request.
+        - key: status
+          description: The HTTP status code of the response.
+    - name: response_validation_count
+      metricKind: CUMULATIVE
+      valueType: INT64
+      labels:
+        - key: method
+          description: The HTTP method of the request.
+        - key: status
+          description: The HTTP status code of the response.
+  quota:
+    limits:
+      - name: requests-per-minute
+        metric: request_count
+        unit: "1/min/{project}"
+        values:
+          STANDARD: 100
 paths:
   /:
     get:
@@ -24,14 +81,15 @@ paths:
         - application/json
       security: []
       responses:
-        '200':
+        "200":
           description: Welcome message
           schema:
             type: string
-        '400':
+        "400":
           description: Invalid request.
-        '500':
+        "500":
           description: Internal server error.
+
   /xummSignInRequest/{uid}:
     get:
       summary: Sign In Request
@@ -53,152 +111,26 @@ paths:
         500:
           description: Internal server error
 
-  /balance/{address}:
-    get:
-      summary: Get Account Balance
-      operationId: balance
-      consumes:
-        - application/json
-      produces:
-        - application/json
-      security: []
-      parameters:
-        - name: address
-          in: path
-          description: Account address
-          required: true
-          type: string
-      responses:
-        200:
-          description: Successful operation
-          schema:
-            type: object
-            properties:
-              address:
-                type: string
-              balance:
-                type: number
-        500:
-          description: Internal server error
-
-  /account_info/{address}:
-    get:
-      summary: Get Account Information
-      operationId: account_info
-      consumes:
-        - application/json
-      produces:
-        - application/json
-      security: []
-      parameters:
-        - name: address
-          in: path
-          description: Account address
-          required: true
-          type: string
-      responses:
-        200:
-          description: Successful operation
-          schema:
-            type: object
-        500:
-          description: Internal server error
-
-  /account_exists/{address}:
-    get:
-      summary: Check if Account Exists
-      operationId: account_exists
-      consumes:
-        - application/json
-      produces:
-        - application/json
-      security: []
-      parameters:
-        - name: address
-          in: path
-          description: Account address
-          required: true
-          type: string
-      responses:
-        200:
-          description: Successful operation
-          schema:
-            type: object
-            properties:
-              address:
-                type: string
-              exists:
-                type: boolean
-        500:
-          description: Internal server error
-
-  /paymentTest:
+  /payment_request:
     post:
-      summary: Payment Test
-      operationId: paymentTest
-      consumes:
-        - application/json
-      produces:
-        - application/json
-      security: []
-      responses:
-        200:
-          description: Successful operation
-          schema:
-            type: object
-            properties:
-              url:
-                type: string
-        500:
-          description: Internal server error
-
-  /transaction_fee:
-    get:
-      summary: Get Transaction Fee
-      operationId: transaction_fee
-      consumes:
-        - application/json
-      produces:
-        - application/json
-      security: []
-      responses:
-        200:
-          description: Successful operation
-          schema:
-            type: object
-            properties:
-              transaction_fee:
-                type: number
-        500:
-          description: Internal server error
-
-  /verify_transaction/{tx_hash}:
-    get:
-      summary: Verify Transaction
-      operationId: verify_transaction
+      summary: Process Payment Request
+      operationId: payment_request
       consumes:
         - application/json
       produces:
         - application/json
       security: []
       parameters:
-        - name: tx_hash
-          in: path
-          description: Transaction hash
+        - name: payment_request
+          in: body
           required: true
-          type: string
+          schema:
+            $ref: "#/definitions/PaymentRequest"
       responses:
         200:
           description: Successful operation
           schema:
             type: object
-            properties:
-              transaction_hash:
-                type: string
-              transaction:
-                type: object
-        500:
-          description: Internal server error
 
   /create_escrow:
     post:
@@ -214,7 +146,7 @@ paths:
           in: body
           required: true
           schema:
-            $ref: '#/definitions/CreateEscrowModel'
+            $ref: "#/definitions/CreateEscrowModel"
       responses:
         200:
           description: Successful operation
@@ -319,6 +251,232 @@ paths:
         500:
           description: Internal server error
 
+  /balance/{address}:
+    get:
+      summary: Get Account Balance
+      operationId: balance
+      consumes:
+        - application/json
+      produces:
+        - application/json
+      security: []
+      parameters:
+        - name: address
+          in: path
+          description: Account address
+          required: true
+          type: string
+      responses:
+        200:
+          description: Successful operation
+          schema:
+            type: object
+            properties:
+              address:
+                type: string
+              balance:
+                type: number
+        500:
+          description: Internal server error
+
+  /account_info/{address}:
+    get:
+      summary: Get Account Information
+      operationId: account_info
+      consumes:
+        - application/json
+      produces:
+        - application/json
+      security: []
+      parameters:
+        - name: address
+          in: path
+          description: Account address
+          required: true
+          type: string
+      responses:
+        200:
+          description: Successful operation
+          schema:
+            type: object
+        500:
+          description: Internal server error
+
+  /account_exists/{address}:
+    get:
+      summary: Check if Account Exists
+      operationId: account_exists
+      consumes:
+        - application/json
+      produces:
+        - application/json
+      security: []
+      parameters:
+        - name: address
+          in: path
+          description: Account address
+          required: true
+          type: string
+      responses:
+        200:
+          description: Successful operation
+          schema:
+            type: object
+            properties:
+              address:
+                type: string
+              exists:
+                type: boolean
+        500:
+          description: Internal server error
+
+  /test_net/balance/{address}:
+    get:
+      summary: Get Account Balance
+      operationId: balance_test_net
+      consumes:
+        - application/json
+      produces:
+        - application/json
+      security: []
+      parameters:
+        - name: address
+          in: path
+          description: Account address
+          required: true
+          type: string
+      responses:
+        200:
+          description: Successful operation
+          schema:
+            type: object
+            properties:
+              address:
+                type: string
+              balance:
+                type: number
+        500:
+          description: Internal server error
+
+  /test_net/account_info/{address}:
+    get:
+      summary: Get Account Information
+      operationId: account_info_test_net
+      consumes:
+        - application/json
+      produces:
+        - application/json
+      security: []
+      parameters:
+        - name: address
+          in: path
+          description: Account address
+          required: true
+          type: string
+      responses:
+        200:
+          description: Successful operation
+          schema:
+            type: object
+        500:
+          description: Internal server error
+
+  /paymentTest:
+    post:
+      summary: Payment Test
+      operationId: paymentTest
+      consumes:
+        - application/json
+      produces:
+        - application/json
+      security: []
+      responses:
+        200:
+          description: Successful operation
+          schema:
+            type: object
+            properties:
+              url:
+                type: string
+        500:
+          description: Internal server error
+
+  /transaction_fee:
+    get:
+      summary: Get Transaction Fee
+      operationId: transaction_fee
+      consumes:
+        - application/json
+      produces:
+        - application/json
+      security: []
+      responses:
+        200:
+          description: Successful operation
+          schema:
+            type: object
+            properties:
+              transaction_fee:
+                type: number
+        500:
+          description: Internal server error
+
+  /verify_transaction/{tx_hash}:
+    get:
+      summary: Verify Transaction
+      operationId: verify_transaction
+      consumes:
+        - application/json
+      produces:
+        - application/json
+      security: []
+      parameters:
+        - name: tx_hash
+          in: path
+          description: Transaction hash
+          required: true
+          type: string
+      responses:
+        200:
+          description: Successful operation
+          schema:
+            type: object
+            properties:
+              transaction_hash:
+                type: string
+              transaction:
+                type: object
+        500:
+          description: Internal server error
+
+  /transactions/{address}:
+    get:
+      summary: List Transactions
+      operationId: transactions
+      consumes:
+        - application/json
+      produces:
+        - application/json
+      security: []
+      parameters:
+        - name: address
+          in: path
+          description: Transaction List
+          required: true
+          type: string
+      responses:
+        200:
+          description: Successful operation
+          schema:
+            type: object
+            properties:
+              transaction_hash:
+                type: string
+              transaction:
+                type: object
+        500:
+          description: Internal server error
+
   /xrpl_timestamp:
     get:
       summary: Get XRPL Timestamp
@@ -388,62 +546,55 @@ paths:
         500:
           description: Internal server error
 
-  /payment_request:
-    post:
-      summary: Process Payment Request
-      operationId: payment_request
-      consumes:
-        - application/json
-      produces:
-        - application/json
-      security: []
-      parameters:
-        - name: payment_request
-          in: body
-          required: true
-          schema:
-            $ref: '#/definitions/PaymentRequest'
-      responses:
-        200:
-          description: Successful operation
-          schema:
-            type: object
-
 definitions:
+  PaymentRequest:
+    type: object
+    properties:
+      type:
+        type: string
+      amount:
+        type: integer
+      source:
+        type: string
+      destination:
+        type: string
+      note:
+        type: string
+      user_token:
+        type: string
+      task_id:
+        type: string
   CreateEscrowModel:
     type: object
     properties:
       account:
         type: string
+      amount:
+        type: number
+      cancel_after:
+        type: integer
       destination:
         type: string
       finish_after:
+        type: integer
+      task_id:
         type: string
-      cancel_after:
+      user_id:
         type: string
-      amount:
-        type: number
-
+      user_token:
+        type: string
   EscrowModel:
     type: object
     properties:
+      account:
+        type: string
       offer_sequence:
         type: string
       owner:
         type: string
-      wallet:
+      task_id:
         type: string
-
-  PaymentRequest:
-    type: object
-    properties:
-      amount:
-        type: number
-      source_address:
+      user_id:
         type: string
-      destination_address:
-        type: string
-      invoice_id:
-        type: string
-      memo:
+      user_token:
         type: string

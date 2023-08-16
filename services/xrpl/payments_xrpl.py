@@ -39,13 +39,19 @@ async def send_payment_request(payment_request: PaymentRequest):
             "expire": 3
         },
         "user_token": payment_request.user_token,
-        "custom_meta": {"blob": {"task_id":payment_request.task_id}}
+        "custom_meta": {
+            "blob": {
+                "task_id": payment_request.task_id,
+                "function": "payment_request"
+            }
+        }
     }
 
     # Create the payment request with the XUMM SDK
     try:
         subscription = sdk.payload.create(xumm_payload)
-        write_response_to_firestore(subscription.to_dict(), "payment_request", payment_request.task_id)
+        write_response_to_firestore(
+            subscription.to_dict(), "payment_request", payment_request.task_id)
         response = json.dumps(subscription.to_dict(), indent=4, sort_keys=True)
         # url = '{}'.format(subscription.next.always)
         return response
@@ -69,7 +75,12 @@ async def send_payment_request_no_user_token(payment_request: PaymentRequest):
         "options": {
             "expire": 3
         },
-        "custom_meta": {"blob": {"task_id":payment_request.task_id}}
+        "custom_meta": {
+            "blob": {
+                "task_id": payment_request.task_id,
+                "function": "payment_request"
+            }
+        }
     }
 
     def callback_func(event):
@@ -95,7 +106,8 @@ async def send_payment_request_no_user_token(payment_request: PaymentRequest):
         # start the websocket subscription on this payload and listen for changes
     try:
         subscription = await sdk.payload.subscribe(create_payload.uuid, callback_func)
-        write_response_to_firestore(subscription.to_dict(), "payment_request", payment_request.task_id)
+        write_response_to_firestore(
+            subscription.to_dict(), "payment_request", payment_request.task_id)
         # wait for the payload to resolve
         print("Subscribe to payload")
         resolve_data = await subscription.resolved()

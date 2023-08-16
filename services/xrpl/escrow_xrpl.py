@@ -71,7 +71,8 @@ def create_escrow_xumm(response: CreateEscrowModel):
             "custom_meta": {
                 "blob": {
                     "task_id": response.task_id,
-                    "uid": response.user_id
+                    "uid": response.user_id,
+                    "function":"create_escrow_xumm"
                 }
             }
         }
