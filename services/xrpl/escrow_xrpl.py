@@ -2,6 +2,7 @@ import asyncio
 import datetime
 import os
 import time
+from typing import Optional
 from fastapi.responses import JSONResponse
 
 import xumm
@@ -22,57 +23,39 @@ sdk = xumm.XummSdk(api_key, api_secret)
 client = JsonRpcClient("https://s.altnet.rippletest.net:51234/")
 clientWebsocket = WebsocketClient("wss://s.altnet.rippletest.net:51233")
 
+# Generate timestamp according to XRPL standards
 
-async def submit_escrow_async(wallet: Wallet, destination: str, amount: int, finish_after: int):
-    escrow = EscrowCreate(
-        account=wallet.classic_address,
-        destination=destination,
-        amount=str(amount),
-        finish_after=finish_after,
-    )
-    return await send_reliable_submission(escrow, wallet, client)
-
-# Submit escrow after creation
-
-
-def submit_escrow_sync(wallet: Wallet, destination: str, amount: int, finish_after: int):
-    loop = asyncio.new_event_loop()
-    asyncio.set_event_loop(loop)
-    result = loop.run_until_complete(submit_escrow_async(
-        wallet, destination, amount, finish_after))
-    return result
-
-
-def generate_xrpl_timestamp(timestamp):
+def generate_xrpl_timestamp(timestamp: Optional[int] = None) -> int:
     if timestamp is None:
-        newTimestamp = createTenMinTimestamp()
-    newTimestamp = timestamp - 946684800
+        return createTenMinTimestamp()
+    return timestamp - 946684800
+
+# Create a default timestamp of ten minutes in the future. Testing Purposes
+
+def createTenMinTimestamp() -> int:
+    ten_min_from_now = datetime.datetime.utcnow() + datetime.timedelta(minutes=10)
+    newTimestamp = int((ten_min_from_now - datetime.datetime(1970, 1, 1)).total_seconds()) - 946684800
     return newTimestamp
 
+# Create Cancel After timestamp for Escrow Transaction. Default value is 24 hrs after Finish Date.
 
-def createTenMinTimestamp():
-    current_time = datetime.datetime.now()
-    ten_min_from_now = current_time + datetime.timedelta(minutes=10)
-    newTimestamp = ten_min_from_now.timestamp() - 946684800
+def createCancelAfterTimestamp(finish_after: int) -> int:
+    cancel_after_datetime = datetime.datetime.fromtimestamp(finish_after) + datetime.timedelta(hours=24)
+    return generate_xrpl_timestamp(int((cancel_after_datetime - datetime.datetime(1970, 1, 1)).total_seconds()))
 
-    return newTimestamp
+# Verify if timestamp is valid for Escrow transaction.
 
-# Check if the timestamp is in the future
+def is_timestamp_after_current(timestamp: int) -> bool:
+    return timestamp > int(datetime.datetime.utcnow().timestamp())
 
-
-def is_timestamp_after_current(timestamp):
-    current_time = datetime.datetime.now()
-    timestamp_datetime = datetime.datetime.fromtimestamp(timestamp)
-    print(timestamp_datetime > current_time)
-    return timestamp_datetime > current_time
-
+# Create Escrow Transaction
 
 def create_escrow_xumm(response: CreateEscrowModel):
     finish_after = generate_xrpl_timestamp(response.finish_after)
     print(finish_after)
     cancel_after = response.cancel_after
-    if cancel_after is not None:
-        cancel_after = generate_xrpl_timestamp(response.cancel_after)
+    if cancel_after is None:
+        cancel_after = createCancelAfterTimestamp(response.finish_after)
     amount = str(xrp_to_drops(response.amount))
     try:
         escrow_tx = {
@@ -82,7 +65,7 @@ def create_escrow_xumm(response: CreateEscrowModel):
                 "Destination": response.destination,
                 "Amount": amount,
                 "FinishAfter": finish_after,
-                # "CancelAfter": cancel_after,
+                "CancelAfter": cancel_after,
             },
             "user_token": response.user_token,
             "custom_meta": {
@@ -97,7 +80,7 @@ def create_escrow_xumm(response: CreateEscrowModel):
         write_response_to_firestore(payload.to_dict(), "create_escrow")
         return JSONResponse({"status": "Escrow successfully created."})
     except Exception as e:
-        # Handle the errore appropriately
+        # Handle the error appropriately
         return JSONResponse({"error": str(e)})
 
 # Finish Escrow
@@ -151,3 +134,23 @@ def cancel_escrow_xumm(response: EscrowModel):
     except Exception as e:
         # Handle the errore appropriately
         return JSONResponse({"error": str(e)})
+
+# XRPL Transaction
+async def submit_escrow_async(wallet: Wallet, destination: str, amount: int, finish_after: int):
+    escrow = EscrowCreate(
+        account=wallet.classic_address,
+        destination=destination,
+        amount=str(amount),
+        finish_after=finish_after,
+    )
+    return await send_reliable_submission(escrow, wallet, client)
+
+# Submit escrow after creation
+
+
+def submit_escrow_sync(wallet: Wallet, destination: str, amount: int, finish_after: int):
+    loop = asyncio.new_event_loop()
+    asyncio.set_event_loop(loop)
+    result = loop.run_until_complete(submit_escrow_async(
+        wallet, destination, amount, finish_after))
+    return result
