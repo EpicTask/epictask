@@ -1,7 +1,5 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 
-// ignore_for_file: non_constant_identifier_names
-
 part of 'task_model.dart';
 
 // **************************************************************************
@@ -28,6 +26,7 @@ _$_TaskModel _$$_TaskModelFromJson(Map<String, dynamic> json) => _$_TaskModel(
       task_title: json['task_title'] as String?,
       terms_blob: json['terms_blob'] as String?,
       terms_id: json['terms_id'] as String?,
+      smart_contract_enabled: json['smart_contract_enabled'] as bool?,
       user_id: json['user_id'] as String,
       timestamp: _$JsonConverterFromJson<Timestamp, DateTime>(
           json['timestamp'], const TimestampConverter().fromJson),
@@ -52,6 +51,7 @@ Map<String, dynamic> _$$_TaskModelToJson(_$_TaskModel instance) =>
       'task_title': instance.task_title,
       'terms_blob': instance.terms_blob,
       'terms_id': instance.terms_id,
+      'smart_contract_enabled': instance.smart_contract_enabled,
       'user_id': instance.user_id,
       'timestamp': _$JsonConverterToJson<Timestamp, DateTime>(
           instance.timestamp, const TimestampConverter().toJson),

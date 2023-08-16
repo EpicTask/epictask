@@ -53,6 +53,7 @@ class TaskModel with _$TaskModel {
     String? task_title,
     String? terms_blob,
     String? terms_id,
+    bool? smart_contract_enabled,
     required String user_id,
     @TimestampConverter() DateTime? timestamp,
   }) = _TaskModel;

@@ -1,7 +1,6 @@
 import 'dart:convert';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:cloud_functions/cloud_functions.dart';
-import 'package:dio/dio.dart';
 import 'package:epictask/models/task_model/task_model.dart';
 import 'package:epictask/models/user_event_model/user_event.dart';
 import 'package:epictask/services/functions/firebase_functions.dart';
@@ -10,7 +9,6 @@ import 'package:flutter/foundation.dart';
 import '../../models/task_event_model/task_event.dart';
 import 'package:http/http.dart' as http;
 
-final Dio _dio = Dio();
 
 void handleUserCalls(String userManagementUrl, UserEvent event) async {
   dynamic message = jsonEncode(event.toJson()['additional_data']);
@@ -97,15 +95,10 @@ Future<String> generateContract(TaskModel task) async {
     final String response =
         await callable(message).then((result) => result.data);
     if (response.isNotEmpty) {
-      CollectionReference ref =
-          FirebaseFirestore.instance.collection('test_contracts');
-      String docId = ref.doc().id;
-      ref.doc(docId).set(
-          {'contract': response, 'timestamp': FieldValue.serverTimestamp()});
       TaskEvent event = TaskEvent.defaultEvent().copyWith(
           additional_data: TaskUpdated(
               task_id: task.task_id,
-              updated_fields: {'terms_id': docId}).toJson(),
+              updated_fields: {'terms_id': response}).toJson(),
           event_type: 'TaskUpdated',
           task_id: task.task_id,
           user_id: currentUserID);

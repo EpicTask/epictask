@@ -63,3 +63,37 @@ Future<dynamic> viewContractAlertDialog(BuildContext context, TaskModel task) {
     },
   );
 }
+
+// Delete task alert dialog
+Future<dynamic> deleteTaskAlertDialog(BuildContext context, String taskId) {
+  return showDialog(
+    context: context,
+    builder: (BuildContext context) {
+      return AlertDialog(
+        title: const Text(
+          "Delete Task.",
+        ),
+        titleTextStyle: headlineSmall(context)?.copyWith(color: Colors.black),
+        contentTextStyle: titleLarge(context)?.copyWith(color: Colors.black),
+        content: const Text(
+          "This task will not be deleted until Escrow is cancelled or finished.",
+        ),
+        actions: <Widget>[
+          TextButton(
+            child: const Text('Delete.'),
+            onPressed: () {
+              deleteTask(taskId);
+              router.pop();
+            },
+          ),
+         TextButton(
+            child: const Text('Close'),
+            onPressed: () {
+              router.pop();
+            },
+          ),
+        ],
+      );
+    },
+  );
+}

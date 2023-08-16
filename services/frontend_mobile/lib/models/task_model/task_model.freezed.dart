@@ -37,6 +37,7 @@ mixin _$TaskModel {
   String? get task_title => throw _privateConstructorUsedError;
   String? get terms_blob => throw _privateConstructorUsedError;
   String? get terms_id => throw _privateConstructorUsedError;
+  bool? get smart_contract_enabled => throw _privateConstructorUsedError;
   String get user_id => throw _privateConstructorUsedError;
   @TimestampConverter()
   DateTime? get timestamp => throw _privateConstructorUsedError;
@@ -70,6 +71,7 @@ abstract class $TaskModelCopyWith<$Res> {
       String? task_title,
       String? terms_blob,
       String? terms_id,
+      bool? smart_contract_enabled,
       String user_id,
       @TimestampConverter() DateTime? timestamp});
 }
@@ -104,6 +106,7 @@ class _$TaskModelCopyWithImpl<$Res, $Val extends TaskModel>
     Object? task_title = freezed,
     Object? terms_blob = freezed,
     Object? terms_id = freezed,
+    Object? smart_contract_enabled = freezed,
     Object? user_id = null,
     Object? timestamp = freezed,
   }) {
@@ -176,6 +179,10 @@ class _$TaskModelCopyWithImpl<$Res, $Val extends TaskModel>
           ? _value.terms_id
           : terms_id // ignore: cast_nullable_to_non_nullable
               as String?,
+      smart_contract_enabled: freezed == smart_contract_enabled
+          ? _value.smart_contract_enabled
+          : smart_contract_enabled // ignore: cast_nullable_to_non_nullable
+              as bool?,
       user_id: null == user_id
           ? _value.user_id
           : user_id // ignore: cast_nullable_to_non_nullable
@@ -213,6 +220,7 @@ abstract class _$$_TaskModelCopyWith<$Res> implements $TaskModelCopyWith<$Res> {
       String? task_title,
       String? terms_blob,
       String? terms_id,
+      bool? smart_contract_enabled,
       String user_id,
       @TimestampConverter() DateTime? timestamp});
 }
@@ -245,6 +253,7 @@ class __$$_TaskModelCopyWithImpl<$Res>
     Object? task_title = freezed,
     Object? terms_blob = freezed,
     Object? terms_id = freezed,
+    Object? smart_contract_enabled = freezed,
     Object? user_id = null,
     Object? timestamp = freezed,
   }) {
@@ -317,6 +326,10 @@ class __$$_TaskModelCopyWithImpl<$Res>
           ? _value.terms_id
           : terms_id // ignore: cast_nullable_to_non_nullable
               as String?,
+      smart_contract_enabled: freezed == smart_contract_enabled
+          ? _value.smart_contract_enabled
+          : smart_contract_enabled // ignore: cast_nullable_to_non_nullable
+              as bool?,
       user_id: null == user_id
           ? _value.user_id
           : user_id // ignore: cast_nullable_to_non_nullable
@@ -350,6 +363,7 @@ class _$_TaskModel implements _TaskModel {
       this.task_title,
       this.terms_blob,
       this.terms_id,
+      this.smart_contract_enabled,
       required this.user_id,
       @TimestampConverter() this.timestamp})
       : _assigned_to_ids = assigned_to_ids;
@@ -400,6 +414,8 @@ class _$_TaskModel implements _TaskModel {
   @override
   final String? terms_id;
   @override
+  final bool? smart_contract_enabled;
+  @override
   final String user_id;
   @override
   @TimestampConverter()
@@ -407,7 +423,7 @@ class _$_TaskModel implements _TaskModel {
 
   @override
   String toString() {
-    return 'TaskModel(assigned_to_ids: $assigned_to_ids, auto_verify: $auto_verify, expiration_date: $expiration_date, marked_completed: $marked_completed, payment_method: $payment_method, project_id: $project_id, project_name: $project_name, rating: $rating, requires_attachments: $requires_attachments, reward_amount: $reward_amount, reward_currency: $reward_currency, rewarded: $rewarded, task_description: $task_description, task_id: $task_id, task_title: $task_title, terms_blob: $terms_blob, terms_id: $terms_id, user_id: $user_id, timestamp: $timestamp)';
+    return 'TaskModel(assigned_to_ids: $assigned_to_ids, auto_verify: $auto_verify, expiration_date: $expiration_date, marked_completed: $marked_completed, payment_method: $payment_method, project_id: $project_id, project_name: $project_name, rating: $rating, requires_attachments: $requires_attachments, reward_amount: $reward_amount, reward_currency: $reward_currency, rewarded: $rewarded, task_description: $task_description, task_id: $task_id, task_title: $task_title, terms_blob: $terms_blob, terms_id: $terms_id, smart_contract_enabled: $smart_contract_enabled, user_id: $user_id, timestamp: $timestamp)';
   }
 
   @override
@@ -447,6 +463,8 @@ class _$_TaskModel implements _TaskModel {
                 other.terms_blob == terms_blob) &&
             (identical(other.terms_id, terms_id) ||
                 other.terms_id == terms_id) &&
+            (identical(other.smart_contract_enabled, smart_contract_enabled) ||
+                other.smart_contract_enabled == smart_contract_enabled) &&
             (identical(other.user_id, user_id) || other.user_id == user_id) &&
             (identical(other.timestamp, timestamp) ||
                 other.timestamp == timestamp));
@@ -473,6 +491,7 @@ class _$_TaskModel implements _TaskModel {
         task_title,
         terms_blob,
         terms_id,
+        smart_contract_enabled,
         user_id,
         timestamp
       ]);
@@ -510,6 +529,7 @@ abstract class _TaskModel implements TaskModel {
       final String? task_title,
       final String? terms_blob,
       final String? terms_id,
+      final bool? smart_contract_enabled,
       required final String user_id,
       @TimestampConverter() final DateTime? timestamp}) = _$_TaskModel;
 
@@ -550,6 +570,8 @@ abstract class _TaskModel implements TaskModel {
   String? get terms_blob;
   @override
   String? get terms_id;
+  @override
+  bool? get smart_contract_enabled;
   @override
   String get user_id;
   @override

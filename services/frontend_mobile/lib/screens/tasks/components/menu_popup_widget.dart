@@ -12,6 +12,7 @@ import '../../../repositories/all_users_repository.dart';
 import '../../../services/navigation/navigation.dart';
 import '../../users/all_users_modal.dart';
 import '../logic/logic.dart';
+import 'alert_dialog.dart';
 
 class PopupMenuButtonWidget extends StatelessWidget {
   const PopupMenuButtonWidget({
@@ -59,7 +60,11 @@ class PopupMenuButtonWidget extends StatelessWidget {
             break;
           case 'Delete':
             {
-              deleteTask(task.task_id);
+              if (task.smart_contract_enabled == true) {
+                deleteTaskAlertDialog(context, task.task_id);
+              } else{
+                deleteTask(task.task_id);
+              }
             }
             break;
           case 'Edit':
