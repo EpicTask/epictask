@@ -2,7 +2,8 @@ import {initializeApp} from "firebase-admin/app";
 import axios from "axios";
 import {
   onDocumentCreated,
-  onDocumentUpdated} from "firebase-functions/v2/firestore";
+  onDocumentUpdated,
+} from "firebase-functions/v2/firestore";
 import {firestore} from "firebase-admin";
 import {FieldValue} from "firebase-admin/firestore";
 import * as functions from "firebase-functions";
@@ -112,7 +113,7 @@ document from the firestore database.
 @param {string} docId - The ID of the user document.
 @return {Promise<{publicAddress: string, userToken: string} | null>}
  */
-async function getPublicAddressAndUserToken(docId:string) {
+async function getPublicAddressAndUserToken(docId: string) {
   try {
     const userDocRef = db.collection("users").doc(docId);
     const userDocSnapshot = await userDocRef.get();
@@ -139,8 +140,7 @@ exports.createXRPPaymentRequest = onDocumentCreated(
     try {
       const snapshot = event.data;
       if (!snapshot) {
-        console
-          .log("No data associated with webhook callback event");
+        console.log("No data associated with webhook callback event");
         return;
       }
       const taskEventDocData = snapshot.data();
@@ -198,24 +198,27 @@ exports.createXRPPaymentRequest = onDocumentCreated(
   }
 );
 
-
 // Initiate Escrow payment
 
-
 exports.initiateEscrowPayment = onDocumentUpdated(
-  "test_tasks/{doc}", async (event) => {
+  "test_tasks/{doc}",
+  async (event) => {
     try {
       const newValue = event.data?.after?.data();
       const previousValue = event.data?.before?.data();
 
-
       // Check if assigned_to_ids field has been updated
       if (
+        // Check if assigned_to_ids is an array
+        Array.isArray(newValue?.assigned_to_ids) &&
+        // Check if the value of assigned_to_ids has changed
         newValue?.assigned_to_ids !== previousValue?.assigned_to_ids &&
-        Array.isArray(newValue?.assigned_to_ids && newValue?.assigned_to_ids[0])
+        // Check if the first element exists
+        newValue?.assigned_to_ids[0] !== undefined
       ) {
-      // Check if smart_contract_enabled exists and is true
-      // If true return to avoid duplicate Escrow creation.
+        console.log(newValue?.assigned_to_ids[0]);
+        // Check if smart_contract_enabled exists and is true
+        // If true return to avoid duplicate Escrow creation.
         if (newValue?.smart_contract_enabled === true) {
           return "Escrow exists"; // Return response as needed
         }
@@ -245,18 +248,21 @@ exports.initiateEscrowPayment = onDocumentUpdated(
 
         // Make CreateEscrow request
         const xrplUrl = process.env.ESCROWCREATED || "";
+
         const response = await axios.post(xrplUrl, postData);
 
         return response;
       }
+
+      console.log("No action needed if assigned_to_ids not updated");
 
       return null; // No action needed if assigned_to_ids not updated
     } catch (error) {
       console.error("Error initiating Escrow transaction:", error);
       return null;
     }
-  });
-
+  }
+);
 
 exports.deleteTaskAfterSuccessfulPayment = onDocumentCreated(
   // TODO: update collection for production
@@ -269,43 +275,54 @@ exports.deleteTaskAfterSuccessfulPayment = onDocumentCreated(
         return;
       }
       const taskEventDocData = snapshot.data();
+      if (
+        taskEventDocData
+          .custom_meta
+          .blob
+          .function === "finish_escrow_xumm" ||
+        taskEventDocData
+          .custom_meta
+          .blob
+          .function === "payment_request"
+      ) {
+        // Check if the task_id exists in the test_tasks collection
+        const taskSnapshot = await db
+          .collection("test_tasks")
+          .doc(taskEventDocData.custom_meta.blob.task_id)
+          .get();
 
-      // Check if the task_id exists in the test_tasks collection
-      const taskSnapshot = await db
-        .collection("test_tasks")
-        .doc(taskEventDocData.custom_meta.blob.task_id)
-        .get();
+        if (taskSnapshot.exists) {
+          const taskData = taskSnapshot.data();
+          const returnURLSigned = taskEventDocData.payloadResponse?.signed;
 
-      if (taskSnapshot.exists) {
-        const taskData = taskSnapshot.data();
-        const returnURLSigned = taskEventDocData.payloadResponse?.signed;
+          if (returnURLSigned && returnURLSigned === true && taskData) {
+            // Save the contents of the task_id document to new collection
+            await db
+              .collection("test_paid_tasks")
+              .doc(taskEventDocData.custom_meta.blob.task_id)
+              .set(taskData);
+            db.collection("test_paid_tasks")
+              .doc(taskEventDocData.custom_meta.blob.task_id)
+              .update({rewarded: true});
 
-        if (returnURLSigned && returnURLSigned === true && taskData) {
-          // Save the contents of the task_id document to new collection
-          await db
-            .collection("test_paid_tasks")
-            .doc(taskEventDocData.custom_meta.blob.task_id)
-            .set(taskData);
-          db.collection("test_paid_tasks")
-            .doc(taskEventDocData.custom_meta.blob.task_id)
-            .update({rewarded: true});
+            // Delete the original document in test_tasks
+            await db
+              .collection("test_tasks")
+              .doc(taskEventDocData.custom_meta.blob.task_id)
+              .delete();
 
-          // Delete the original document in test_tasks
-          await db
-            .collection("test_tasks")
-            .doc(taskEventDocData.custom_meta.blob.task_id)
-            .delete();
-
-          console.log(
-            "Task saved to test_paid_tasks and deleted from test_tasks"
-          );
+            console.log(
+              "Task saved to test_paid_tasks and deleted from test_tasks"
+            );
+          } else {
+            console.log(
+              "return_url.signed is not true, skipping document deletion"
+            );
+          }
         } else {
-          console.log(
-            "return_url.signed is not true, skipping document deletion"
-          );
+          console.log("Task does not exist in test_tasks");
         }
-      } else {
-        console.log("Task does not exist in test_tasks");
+        return null;
       }
       return null;
     } catch (error) {
@@ -436,10 +453,7 @@ exports.scheduleEscrowFinish = functions.pubsub
         const expirationDate = doc.get("expiration_date");
         console.log(expirationDate);
         console.log(todayTimestamp.toMillis);
-        if (
-          expirationDate &&
-          expirationDate <= todayTimestamp.toMillis()
-        ) {
+        if (expirationDate && expirationDate <= todayTimestamp.toMillis()) {
           tasksToProcess.push(doc);
         }
       });
