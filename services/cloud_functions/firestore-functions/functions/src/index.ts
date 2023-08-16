@@ -1,6 +1,8 @@
 import {initializeApp} from "firebase-admin/app";
 import axios from "axios";
-import {onDocumentCreated} from "firebase-functions/v2/firestore";
+import {
+  onDocumentCreated,
+  onDocumentUpdated} from "firebase-functions/v2/firestore";
 import {firestore} from "firebase-admin";
 import {FieldValue} from "firebase-admin/firestore";
 import * as functions from "firebase-functions";
@@ -18,7 +20,7 @@ const pubsub = new PubSub();
  * @param {String} params - The name of the secret to retrieve.
  * @return {Promise<String>} - The secret's payload data as a string.
  */
-async function getSecretsClient(params: any) {
+async function getSecretsClient(params: string) {
   try {
     const projectId = "672847978942";
     const client = new SecretManagerServiceClient();
@@ -103,13 +105,42 @@ exports.updateXummUserToken = onDocumentCreated(
   }
 );
 
+/**
+Retrieves the public address and user token of a user
+document from the firestore database.
+@async
+@param {string} docId - The ID of the user document.
+@return {Promise<{publicAddress: string, userToken: string} | null>}
+ */
+async function getPublicAddressAndUserToken(docId:string) {
+  try {
+    const userDocRef = db.collection("users").doc(docId);
+    const userDocSnapshot = await userDocRef.get();
+
+    if (userDocSnapshot.exists) {
+      const userData = userDocSnapshot.data();
+      return {
+        publicAddress: userData?.publicAddress,
+        userToken: userData?.userToken.user_token,
+      };
+    } else {
+      console.log(`User document with ID ${docId} not found.`);
+      return null;
+    }
+  } catch (error) {
+    console.error("Error fetching user data:", error);
+    return null;
+  }
+}
+
 exports.createXRPPaymentRequest = onDocumentCreated(
   "test_task_events/{doc}",
   async (event) => {
     try {
       const snapshot = event.data;
       if (!snapshot) {
-        console.log("No data associated with webhook callback event");
+        console
+          .log("No data associated with webhook callback event");
         return;
       }
       const taskEventDocData = snapshot.data();
@@ -135,23 +166,19 @@ exports.createXRPPaymentRequest = onDocumentCreated(
         }
 
         const assignedToId = taskEventDocData.additional_data.completed_by_id;
-        const usersCollectionRef = db.collection("users");
-        const userQuerySnapshot = await usersCollectionRef
-          .where("uid", "in", [assignedToId, userId])
-          .get();
-        const usersData: { [key: string]: any } = {};
-        userQuerySnapshot.forEach((userDoc) => {
-          const userData = userDoc.data();
-          usersData[userData.uid] = {
-            publicAddress: userData.publicAddress,
-            userToken: userData.userToken.user_token,
-          };
-        });
+
+        const source = await getPublicAddressAndUserToken(userId);
+        const sourceToken = source?.userToken;
+        const sourcePublicAddress = source?.publicAddress;
+
+        const destination = await getPublicAddressAndUserToken(assignedToId);
+        const destinationPublicAddress = destination?.publicAddress;
+
         const rewardJsonMap = {
           amount: rewardAmount,
-          source: usersData[userId].publicAddress,
-          destination: usersData[assignedToId].publicAddress,
-          user_token: usersData[userId].userToken,
+          source: sourcePublicAddress,
+          destination: destinationPublicAddress,
+          user_token: sourceToken,
           task_id: taskEventDocData.task_id,
         };
 
@@ -170,6 +197,66 @@ exports.createXRPPaymentRequest = onDocumentCreated(
     }
   }
 );
+
+
+// Initiate Escrow payment
+
+
+exports.initiateEscrowPayment = onDocumentUpdated(
+  "test_tasks/{doc}", async (event) => {
+    try {
+      const newValue = event.data?.after?.data();
+      const previousValue = event.data?.before?.data();
+
+
+      // Check if assigned_to_ids field has been updated
+      if (
+        newValue?.assigned_to_ids !== previousValue?.assigned_to_ids &&
+        Array.isArray(newValue?.assigned_to_ids && newValue?.assigned_to_ids[0])
+      ) {
+      // Check if smart_contract_enabled exists and is true
+      // If true return to avoid duplicate Escrow creation.
+        if (newValue?.smart_contract_enabled === true) {
+          return "Escrow exists"; // Return response as needed
+        }
+
+        const userId = newValue?.user_id;
+        const assignedToId = newValue?.assigned_to_ids[0];
+
+        const source = await getPublicAddressAndUserToken(userId);
+        const sourceToken = source?.userToken;
+        const sourcePublicAddress = source?.publicAddress;
+
+        const destination = await getPublicAddressAndUserToken(assignedToId);
+        const destinationPublicAddress = destination?.publicAddress;
+
+        // Prepare data for the Axios API POST call
+        const postData = {
+          amount: newValue?.reward_amount,
+          account: sourcePublicAddress,
+          destination: destinationPublicAddress,
+          user_token: sourceToken,
+          finish_after: newValue?.expiration_date,
+          task_id: newValue?.task_id,
+          user_id: newValue?.user_id,
+        };
+
+        console.log(postData);
+
+        // Make CreateEscrow request
+        const xrplUrl = process.env.ESCROWCREATED || "";
+        const response = await axios.post(xrplUrl, postData);
+
+        return response;
+      }
+
+      return null; // No action needed if assigned_to_ids not updated
+    } catch (error) {
+      console.error("Error initiating Escrow transaction:", error);
+      return null;
+    }
+  });
+
 
 exports.deleteTaskAfterSuccessfulPayment = onDocumentCreated(
   // TODO: update collection for production
@@ -193,15 +280,15 @@ exports.deleteTaskAfterSuccessfulPayment = onDocumentCreated(
         const taskData = taskSnapshot.data();
         const returnURLSigned = taskEventDocData.payloadResponse?.signed;
 
-        if (returnURLSigned && returnURLSigned === true) {
+        if (returnURLSigned && returnURLSigned === true && taskData) {
           // Save the contents of the task_id document to new collection
           await db
             .collection("test_paid_tasks")
             .doc(taskEventDocData.custom_meta.blob.task_id)
-            .set(taskData!);
+            .set(taskData);
           db.collection("test_paid_tasks")
             .doc(taskEventDocData.custom_meta.blob.task_id)
-            .update({rewarded: true}!);
+            .update({rewarded: true});
 
           // Delete the original document in test_tasks
           await db
@@ -306,14 +393,14 @@ exports.generateContract = functions.https.onCall(async (data, context) => {
 
     const contract = response.data.choices[0].text?.trim();
     console.log(contract);
-    // const docId = db.collection("test_contracts").doc().id;
-    // await db.collection("test_contracts").doc(docId).set({
-    //   contract: contract,
-    //   timestamp: FieldValue.serverTimestamp(),
-    // });
+    const docId = db.collection("test_contracts").doc().id;
+    await db.collection("test_contracts").doc(docId).set({
+      contract: contract,
+      timestamp: FieldValue.serverTimestamp(),
+    });
 
-    // return docId; // Return the docId to update task with terms_id value.
-    return contract;
+    return docId; // Return the docId to update task with terms_id value.
+    // return contract;
   } catch (error) {
     console.error(error);
     throw new functions.https.HttpsError(
@@ -323,12 +410,12 @@ exports.generateContract = functions.https.onCall(async (data, context) => {
   }
 });
 
-// This function uses cloud scheduler as a trigger to check if any Escrows 
-// have expired and are ready to be executed with a finish transaction 
-// or cancelled. 
+// This function uses cloud scheduler as a trigger to check if any Escrows
+// have expired and are ready to be executed with a finish transaction
+// or cancelled.
 // 'every day 05:00, 13:00, 21:00'
 exports.scheduleEscrowFinish = functions.pubsub
-  .schedule("every 10 minutes")
+  .schedule("0 6,14,20 * * *")
   .timeZone("UTC")
   .onRun(async (context) => {
     const today = new Date();
@@ -342,13 +429,16 @@ exports.scheduleEscrowFinish = functions.pubsub
         .get();
 
       const tasksToProcess: firestore
-      .QueryDocumentSnapshot<firestore.DocumentData>[] = [];
+      .QueryDocumentSnapshot<firestore.DocumentData>[] =
+        [];
 
       tasksSnapshot.forEach((doc) => {
         const expirationDate = doc.get("expiration_date");
+        console.log(expirationDate);
+        console.log(todayTimestamp.toMillis);
         if (
           expirationDate &&
-          expirationDate.toMillis() === todayTimestamp.toMillis()
+          expirationDate <= todayTimestamp.toMillis()
         ) {
           tasksToProcess.push(doc);
         }
