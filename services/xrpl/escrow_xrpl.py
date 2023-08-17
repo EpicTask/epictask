@@ -6,7 +6,7 @@ from typing import Optional
 from fastapi.responses import JSONResponse
 
 import xumm
-from firestore_db import write_response_to_firestore
+from firestore_db import create_indentifier
 from google_secrets import get_secret
 from xrpl.asyncio.transaction import send_reliable_submission
 # XRPL imports
@@ -14,7 +14,6 @@ from xrpl.clients import JsonRpcClient, WebsocketClient
 from xrpl.models.transactions import EscrowCreate
 from xrpl.wallet import Wallet
 from xrpl.utils import xrp_to_drops
-from services.xrpl.firestore_db import create_indentifier
 from xrpl_models import CreateEscrowModel, EscrowModel
 
 api_key = get_secret('xumm-key')
