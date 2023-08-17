@@ -6,7 +6,7 @@ from typing import Optional
 from fastapi.responses import JSONResponse
 
 import xumm
-from firestore_db import create_indentifier
+from firestore_db import create_indentifier, write_response_to_firestore
 from google_secrets import get_secret
 from xrpl.asyncio.transaction import send_reliable_submission
 # XRPL imports
@@ -79,7 +79,7 @@ def create_escrow_xumm(response: CreateEscrowModel):
             }
         }
         payload = sdk.payload.create(escrow_tx)
-        print(payload)
+        write_response_to_firestore(payload.to_dict(), "create_escrow_xumm",response.task_id)
         return JSONResponse({"status": "Escrow successfully created."})
     except Exception as e:
         # Handle the error appropriately
@@ -108,7 +108,7 @@ def finish_escrow_xumm(response: EscrowModel):
             }
         }
         payload = sdk.payload.create(escrow_finish)
-        print(payload)
+        write_response_to_firestore(payload.to_dict(), "finish_escrow_xumm",response.task_id)
         return JSONResponse(payload.to_dict())
     except Exception as e:
         # Handle the errore appropriately
@@ -137,7 +137,7 @@ def cancel_escrow_xumm(response: EscrowModel):
             }
         }
         payload = sdk.payload.create(escrow_tx)
-        print(payload)
+        write_response_to_firestore(payload.to_dict(), "cancel_escrow_xumm",response.task_id)
         return JSONResponse(payload.to_dict())
     except Exception as e:
         # Handle the errore appropriately
