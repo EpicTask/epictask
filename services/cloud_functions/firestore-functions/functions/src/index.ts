@@ -252,9 +252,10 @@ exports.initiateEscrowPayment = onDocumentUpdated(
         const response = await axios.post(xrplUrl, postData);
 
         return response;
+      } else {
+        console.log("No action needed if assigned_to_ids not updated");
       }
 
-      console.log("No action needed if assigned_to_ids not updated");
 
       return null; // No action needed if assigned_to_ids not updated
     } catch (error) {
@@ -495,6 +496,37 @@ exports.scheduleEscrowFinish = functions.pubsub
       return null;
     } catch (error) {
       console.error("Error scheduling escrow finish:", error);
+      return null;
+    }
+  });
+
+exports.handleCreateEscrowCallback = onDocumentCreated(
+  // TODO: update collection for production
+  "test_xumm_callbacks/{doc}",
+  async (event) => {
+    try {
+      const snapshot = event.data;
+      if (!snapshot) {
+        console.log("No data associated with document");
+        return;
+      }
+      const callbackData = snapshot.data();
+
+      if (callbackData.custom_meta?.blob?.function === "create_escrow_xumm") {
+        const taskId = callbackData.custom_meta.blob.task_id;
+
+        // Update the task document with smart_contract_enabled set to true
+        const taskRef = db.collection("test_tasks").doc(taskId);
+        await taskRef.update({smart_contract_enabled: true});
+
+        console.log(`Smart contract enabled for task ${taskId}`);
+      } else {
+        console.log("Function is not create_escrow_xumm");
+      }
+
+      return null;
+    } catch (error) {
+      console.error("Error handling callback:", error);
       return null;
     }
   });

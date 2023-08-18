@@ -5,7 +5,7 @@ from google.cloud.firestore import SERVER_TIMESTAMP
 db = firestore.Client()
 
 
-async def webhook_callback(request):
+def webhook_callback(request):
     try:
         # Extract the callback data from the request payload
         callback_data = request.json
@@ -23,12 +23,7 @@ async def webhook_callback(request):
         # Save the callback data to Firestore
         db = firestore.Client()  # Initialize the Firestore client
         collection_ref = db.collection('test_xumm_callbacks')
-        docId = callback_data.custom_meta.identifier
-        doc = await collection_ref.doc(docId).get()
-        if (doc.exists):
-            return
-
-        doc_ref = collection_ref.document(docId)
+        doc_ref = collection_ref.document()  # Create a new document reference
         doc_ref.set(callback_data)  # Set the document data
 
         # Update the created document with a server timestamp
