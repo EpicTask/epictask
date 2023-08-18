@@ -58,11 +58,17 @@ class PopupMenuButtonWidget extends StatelessWidget {
               );
             }
             break;
+          case 'View':
+            {
+              router.goNamed('taskDetail',
+                  pathParameters: {'task_id': task.task_id}, extra: task);
+            }
+            break;
           case 'Delete':
             {
               if (task.smart_contract_enabled == true) {
                 deleteTaskAlertDialog(context, task.task_id);
-              } else{
+              } else {
                 deleteTask(task.task_id);
               }
             }
@@ -112,16 +118,16 @@ class PopupMenuButtonWidget extends StatelessWidget {
             ),
           ),
         ),
-        // PopupMenuItem<String>(
-        //   value: 'Edit',
-        //   child: ListTile(
-        //     leading: const Icon(Icons.edit),
-        //     title: Text(
-        //       'Edit',
-        //       style: titleMedium(context)?.copyWith(color: Colors.black),
-        //     ),
-        //   ),
-        // ),
+        PopupMenuItem<String>(
+          value: 'View',
+          child: ListTile(
+            leading: const Icon(Icons.edit),
+            title: Text(
+              'View',
+              style: titleMedium(context)?.copyWith(color: Colors.black),
+            ),
+          ),
+        ),
         (task.terms_id?.isEmpty ?? false)
             ? PopupMenuItem<String>(
                 value: 'Generate Contract',

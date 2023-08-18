@@ -85,7 +85,7 @@ class _OpenTasksWidgetState extends State<OpenTasksWidget> {
                               crossAxisCount: 3),
                       delegate: SliverChildBuilderDelegate(
                           (BuildContext context, int index) {
-                        return TaskCard2(task: taskData[index]);
+                        return TaskCardWeb(task: taskData[index]);
                       }, childCount: taskData.length),
                     )
                   ])

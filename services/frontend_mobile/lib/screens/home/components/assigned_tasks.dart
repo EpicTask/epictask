@@ -11,6 +11,7 @@ import '../../../bloc/generics/generic_bloc.dart';
 import '../../../bloc/generics/generic_state.dart';
 import '../../../models/task_model/task_model.dart';
 import '../../../services/service_config/service_config.dart';
+import '../../tasks/task_card_assigned.dart';
 import '../home_screen.dart';
 
 // Assigned Tasks Widget
