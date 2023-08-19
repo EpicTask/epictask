@@ -41,5 +41,5 @@ def create_indentifier():
     # Initialize Firestore client
     db = firestore.Client()
 
-    return db.collection('test_xumm_callbacks').id
+    return db.collection('test_xumm_callbacks').document().id
 

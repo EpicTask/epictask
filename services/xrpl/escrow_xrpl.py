@@ -79,6 +79,7 @@ def create_escrow_xumm(response: CreateEscrowModel):
             }
         }
         payload = sdk.payload.create(escrow_tx)
+        print(payload.to_dict())
         write_response_to_firestore(payload.to_dict(), "create_escrow_xumm",response.task_id)
         return JSONResponse({"status": "Escrow successfully created."})
     except Exception as e:

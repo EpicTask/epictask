@@ -179,7 +179,7 @@ paths:
         500:
           description: Internal server error
 
-  /cancel_escrow_xumm/{owner}:
+  /cancel_escrow_xumm:
     post:
       summary: Cancel Escrow (Xumm)
       operationId: cancel_escrow_xumm
@@ -215,7 +215,7 @@ paths:
         500:
           description: Internal server error
 
-  /finish_escrow_xumm/{owner}:
+  /finish_escrow_xumm:
     post:
       summary: Finish Escrow (Xumm)
       operationId: finish_escrow_xumm
