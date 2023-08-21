@@ -215,7 +215,7 @@ class LoginFormState extends State<LoginForm> {
                   buildForgotPasswordButton(context),
                   const SizedBox(height: 15),
                   if (!kIsWeb) buildSignInButtons(context, state),
-                  buildTestLoginButton(context, state),
+                  // buildTestLoginButton(context, state),
                 ],
               );
             },
