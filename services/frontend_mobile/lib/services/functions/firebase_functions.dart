@@ -20,6 +20,7 @@ class FirestoreDatabase {
       FirebaseFirestore.instance.collection('users');
 
   Future<void> writeUserEvent(UserEvent userEvent) async {
+    userEventHandler(userEvent);
     final DocumentReference ref = userEventsCollection.doc();
     await ref.set(userEvent.toJson());
     await ref.update(<String, dynamic>{

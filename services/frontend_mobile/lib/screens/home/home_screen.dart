@@ -18,7 +18,6 @@ import '../../models/task_model/task_model.dart';
 import '../../models/user_event_model/user_event.dart';
 import '../../services/navigation/navigation.dart';
 import '../dashboard/dashboard.dart';
-import 'components/alert_dialog.dart';
 
 ValueNotifier<int> paginator = ValueNotifier<int>(10);
 ValueNotifier<int> paginator2 = ValueNotifier<int>(10);

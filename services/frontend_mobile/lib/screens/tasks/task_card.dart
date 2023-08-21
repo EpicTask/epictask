@@ -129,15 +129,14 @@ class CardBody extends StatelessWidget {
                                   );
                                 }
                                 return Column(
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    children: [
-                                      Text('Assigned',
-                                          style: titleSmall(context)),
-                                      const Icon(Icons.person),
-                                      Text('Unknown',
-                                          style: titleLarge(context)),
-                                    ],
-                                  );
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Text('Assigned',
+                                        style: titleSmall(context)),
+                                    const Icon(Icons.person),
+                                    Text('Unknown', style: titleLarge(context)),
+                                  ],
+                                );
                               },
                             )
                           : Column(
@@ -228,11 +227,13 @@ class CardButtons extends StatelessWidget {
               children: [
                 ElevatedButton(
                   onPressed: () {
-                    completeTaskAndInitiatePayment(task);
-                    Timer(const Duration(seconds: 3), () {
-                      router.goNamed('payment', extra: task.task_id);
-                    });
-                    router.goNamed('loading');
+                    if (task.payment_method == 'Pay Directly') {
+                      completeTaskAndInitiatePayment(task);
+                      Timer(const Duration(seconds: 3), () {
+                        router.goNamed('payment', extra: task.task_id);
+                      });
+                      router.goNamed('loading');
+                    }
                   },
                   child: Text(
                     'Pay',

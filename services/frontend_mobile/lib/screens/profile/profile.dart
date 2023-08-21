@@ -123,7 +123,7 @@ class ProfilePage extends StatelessWidget {
                         obscureText: true,
                         controller: TextEditingController(
                             text: state.profile.publicAddress ?? ''),
-                      ): Text('Update Public XRP Wallet Address', style: titleLarge(context)),
+                      ): Text('Update Address', style: titleLarge(context)),
                     ),
                     IconButton(
                         onPressed: () {

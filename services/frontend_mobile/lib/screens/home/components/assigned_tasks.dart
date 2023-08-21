@@ -1,7 +1,6 @@
 import 'package:epictask/bloc/generics/generics_event.dart';
 import 'package:epictask/repositories/assigned_task_repository.dart';
 import 'package:epictask/screens/home/components/shimmer_widget.dart';
-import 'package:epictask/screens/tasks/task_card.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';

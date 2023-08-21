@@ -124,3 +124,30 @@ Future<dynamic> reassignTaskAlertDialog(BuildContext context) {
     },
   );
 }
+
+// Under Escrow contract alert dialog
+Future<dynamic> escrowAlertDialog(BuildContext context) {
+  return showDialog(
+    context: context,
+    builder: (BuildContext context) {
+      return AlertDialog(
+        title: const Text(
+          "Under Contract.",
+        ),
+        titleTextStyle: headlineSmall(context)?.copyWith(color: Colors.black),
+        contentTextStyle: titleLarge(context)?.copyWith(color: Colors.black),
+        content: const Text(
+          "The current task is under an active smart contract and will be processed for payment on the specified expiration date.",
+        ),
+        actions: <Widget>[
+         TextButton(
+            child: const Text('Close'),
+            onPressed: () {
+              router.pop();
+            },
+          ),
+        ],
+      );
+    },
+  );
+}
