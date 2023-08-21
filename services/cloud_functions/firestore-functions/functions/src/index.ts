@@ -157,7 +157,11 @@ exports.createXRPPaymentRequest = onDocumentCreated(
         const paymentMethod = taskDocData?.payment_method;
         const rewardCurrency = taskDocData?.reward_currency;
 
-        if (!userId || !rewardAmount || !paymentMethod || !rewardCurrency) {
+        if (!userId ||
+          !rewardAmount ||
+          !paymentMethod ||
+          !rewardCurrency ||
+          paymentMethod !== "Pay Directly") {
           throw new Error("Missing required fields in task document");
         }
 
@@ -475,6 +479,27 @@ exports.scheduleEscrowFinish = functions.pubsub
           const xrplData = xrplDoc.data();
 
           console.log(xrplData);
+          const account = xrplData.transaction.Destination;
+          const offer_sequence = xrplData.transaction.Sequence;
+          const owner = xrplData.transaction.Account;
+          const user_token = '';
+          const user_id = '';
+
+          const escrowJsonMap = {
+            account: account,
+            offer_sequence: offer_sequence,
+            owner: owner,
+            user_token: user_token,
+            task_id: taskId,
+            user_id: user_id
+          };
+  
+          console.log(escrowJsonMap);
+          const xrplUrl = process.env.PAYMENTREQUEST || "";
+          const response = await axios.post(xrplUrl, escrowJsonMap);
+  
+          return response;
+
           // Publish the xrplData to the "finish_escrow" Pub/Sub topic
           const topicName = "finish_escrow";
           const data = Buffer.from(JSON.stringify(xrplData), "utf8");
@@ -522,6 +547,35 @@ exports.handleCreateEscrowCallback = onDocumentCreated(
         console.log(`Smart contract enabled for task ${taskId}`);
       } else {
         console.log("Function is not create_escrow_xumm");
+      }
+
+      return null;
+    } catch (error) {
+      console.error("Error handling callback:", error);
+      return null;
+    }
+  });
+
+exports.autoVerifyTransaction = onDocumentCreated(
+  // TODO: update collection for production
+  "test_xumm_callbacks/{doc}",
+  async (event) => {
+    try {
+      const snapshot = event.data;
+      if (!snapshot) {
+        console.log("No data associated with document");
+        return;
+      }
+
+      const callbackData = snapshot.data();
+
+      if (callbackData.payloadResponse && callbackData.payloadResponse.txid) {
+        const transactionId = callbackData.payloadResponse.txid;
+        const taskId = callbackData.task_id;
+        const baseUrl = process.env.VERIFYTRANSACTION || "";
+        const xrplUrl = baseUrl + transactionId + '/' + taskId;
+
+        await axios.get(xrplUrl);
       }
 
       return null;
