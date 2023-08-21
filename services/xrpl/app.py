@@ -180,15 +180,16 @@ async def transaction_fee():
 # Verify a transaction
 
 
-@app.get('/verify_transaction/{tx_hash}')
-async def verify_transaction(tx_hash: str):
+@app.get('/verify_transaction/{tx_hash}/{task_id}')
+async def verify_transaction(tx_hash: str, task_id: str = None):
     if not tx_hash:
         return JSONResponse({"error": "Missing 'tx_hash' parameter."})
 
     try:
         tx = await get_transaction_async(tx_hash)
         response = {"transaction_hash": tx_hash, "transaction": tx.result}
-        doc_id = write_response_to_firestore(response, "verify_transaction")
+        doc_id = write_response_to_firestore(
+            response, "verify_transaction", task_id=task_id)
         return JSONResponse({"doc_id": doc_id, "response": response})
     except Exception as e:
         return JSONResponse({"error": str(e)})

@@ -421,15 +421,38 @@ paths:
         500:
           description: Internal server error
 
+  /verify_transaction/{tx_hash}/{task_id}:
+    get:
+      summary: Verify Transaction With Task ID
+      operationId: verify_transaction_w_task_id
+      parameters:
+        - name: tx_hash
+          in: path
+          description: Transaction hash
+          required: true
+          type: string
+        - name: task_id
+          in: path
+          description: Task ID
+          required: true
+          type: string
+      responses:
+        200:
+          description: Successful operation
+          schema:
+            type: object
+            properties:
+              transaction_hash:
+                type: string
+              transaction:
+                type: object
+        500:
+          description: Internal server error
+
   /verify_transaction/{tx_hash}:
     get:
       summary: Verify Transaction
       operationId: verify_transaction
-      consumes:
-        - application/json
-      produces:
-        - application/json
-      security: []
       parameters:
         - name: tx_hash
           in: path
@@ -448,6 +471,7 @@ paths:
                 type: object
         500:
           description: Internal server error
+
 
   /transactions/{address}:
     get:
