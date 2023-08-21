@@ -99,7 +99,7 @@ class _SignupFormState extends State<SignupForm> {
                     icon: Icons.person,
                     labelText: 'Display Name',
                     state: state,
-                    isValidated: true,
+                    isValidated: false,
                   ),
                   SizedBox(
                     height: SizeConfig.screenHeight * .05,

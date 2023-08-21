@@ -16,7 +16,9 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../bloc/generics/generic_bloc.dart';
 import '../../models/task_model/task_model.dart';
 import '../../models/user_event_model/user_event.dart';
+import '../../services/navigation/navigation.dart';
 import '../dashboard/dashboard.dart';
+import 'components/alert_dialog.dart';
 
 ValueNotifier<int> paginator = ValueNotifier<int>(10);
 ValueNotifier<int> paginator2 = ValueNotifier<int>(10);
@@ -41,6 +43,39 @@ class _HomeScreenState extends State<HomeScreen> {
   void _onItemTapped(int index) {
     setState(() {
       _selectedIndex = index;
+    });
+  }
+
+  @override
+  void initState() {
+    super.initState();
+        Future.delayed(Duration.zero, () {
+      showDialog(
+        context: context,
+        builder: (BuildContext context) {
+          return AlertDialog(
+        title: const Text(
+          "Welcome to Epic Task.",
+        ),
+        titleTextStyle: headlineSmall(context)?.copyWith(color: Colors.black),
+        contentTextStyle: titleLarge(context)?.copyWith(color: Colors.black),
+        content: const Text(
+          "This is an MVP deployed on the testnet environment."
+          " We kindly request that you refrain from using mainnet wallets with this prototype."
+          " Some features might not function as expected due to its developmental nature."
+          " Please be sure to connect test wallet before creating tasks.",
+        ),
+        actions: <Widget>[
+          TextButton(
+            child: const Text('Close'),
+            onPressed: () {
+              router.pop();
+            },
+          ),
+        ],
+      );
+        },
+      );
     });
   }
 

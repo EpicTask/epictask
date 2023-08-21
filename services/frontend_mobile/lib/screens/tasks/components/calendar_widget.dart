@@ -29,8 +29,8 @@ class _CalendarWidgetState extends State<CalendarWidget> {
     final DateTime? picked = await showDatePicker(
       context: context,
       initialDate: _datePicked,
-      firstDate: DateTime(2015),
-      lastDate: DateTime(2100),
+      firstDate: DateTime(DateTime.now().year, DateTime.now().month, DateTime.now().day),
+      lastDate: DateTime(2050),
     );
     if (picked != null && picked != _datePicked) {
       setState(() {

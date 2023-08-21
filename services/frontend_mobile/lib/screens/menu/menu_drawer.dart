@@ -9,6 +9,8 @@ import '../../services/constants.dart';
 import '../../services/functions/firebase_functions.dart';
 import '../../services/service_config/service_config.dart';
 import '../../services/ui/text_styles.dart';
+import '../profile/logic/logic.dart';
+
 
 // Menu Drawer
 class MenuDrawer extends StatelessWidget {
@@ -48,9 +50,40 @@ class MenuDrawer extends StatelessWidget {
             leading: const Icon(Icons.wallet, color: Colors.blueAccent),
             title: Text('Connect Wallet', style: titleMedium(context)),
             onTap: () async {
-              String xrplUrl = '$xummSignIn/$currentUserID';
-              final response = await dio.get(xrplUrl);
-              launchUrl(Uri.parse(response.data));
+              bool validAddress = await checkPublicAddress(currentUserID);
+              if (validAddress) {
+                String xrplUrl = '$xummSignIn/$currentUserID';
+                final response = await dio.get(xrplUrl);
+                launchUrl(Uri.parse(response.data));
+              } else {
+                Future.delayed(Duration.zero, () {
+                  showDialog(
+                    context: context,
+                    builder: (BuildContext context) {
+                      return AlertDialog(
+                        title: const Text(
+                          "Unable To Connect",
+                        ),
+                        titleTextStyle: headlineSmall(context)
+                            ?.copyWith(color: Colors.black),
+                        contentTextStyle:
+                            titleLarge(context)?.copyWith(color: Colors.black),
+                        content: const Text(
+                          "Missing Public Address. Please update profile with Public Wallet Address",
+                        ),
+                        actions: <Widget>[
+                          TextButton(
+                            child: const Text('Close'),
+                            onPressed: () {
+                              router.pop();
+                            },
+                          ),
+                        ],
+                      );
+                    },
+                  );
+                });
+              }
             },
           ),
           ListTile(

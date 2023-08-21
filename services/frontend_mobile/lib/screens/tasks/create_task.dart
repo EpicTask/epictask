@@ -219,7 +219,7 @@ class _CreateTaskWidgetState extends State<CreateTaskWidget> {
                             value: autoVerify,
                             onChanged: (value) {
                               setState(() {
-                                autoVerify = value;
+                                autoVerify = false;
                               });
                             })
                       ],

@@ -24,3 +24,17 @@ Future<void> updateProfile(String field, dynamic value) async {
     });
   }
 }
+
+Future<bool> checkPublicAddress(String? uid) async {
+  if (uid?.isNotEmpty ?? false) {
+    DocumentSnapshot snapshot =
+        await FirebaseFirestore.instance.collection('users').doc(uid).get();
+    if (snapshot.exists) {
+      Map<String, dynamic> userData = snapshot.data() as Map<String, dynamic>;
+      if (userData.containsKey('publicAddress') && userData['publicAddress'].isNotEmpty) {
+        return true;
+      }
+    }
+  }
+  return false;
+}

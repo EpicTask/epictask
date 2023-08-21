@@ -1,9 +1,7 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-
 import '../../../../repositories/user_repository.dart';
-
 
 import '../../services/utils/validators.dart';
 import 'signup_event.dart';
@@ -20,6 +18,9 @@ class SignupBloc extends Bloc<SignupEvent, SignupState> {
     on<SignupPasswordChanged>((SignupPasswordChanged event,
             Emitter<SignupState> emit) async =>
         emit(state.update(isPasswordValid: isValidPassword(event.password))));
+    on<SignupDisplayNameChanged>(
+        (SignupDisplayNameChanged event, Emitter<SignupState> emit) async =>
+            emit(state.update()));
     on<SignupWithApplePressed>(
         (SignupWithApplePressed event, Emitter<SignupState> emit) async {
       emit(SignupState.loading());
@@ -44,13 +45,14 @@ class SignupBloc extends Bloc<SignupEvent, SignupState> {
         emit(SignupState.failure());
       }
     });
-    on<SignupSubmitted>((SignupSubmitted event, Emitter<SignupState> emit) async {
+    on<SignupSubmitted>(
+        (SignupSubmitted event, Emitter<SignupState> emit) async {
       emit(SignupState.loading());
       try {
-        await UserRepository().signUp(
-            event.email, event.password, event.displayName);
-          emit(SignupState.success());
-        } catch (_) {
+        await UserRepository()
+            .signUp(event.email, event.password, event.displayName);
+        emit(SignupState.success());
+      } catch (_) {
         emit(SignupState.failure());
       }
     });

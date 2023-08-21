@@ -40,22 +40,26 @@ class PopupMenuButtonWidget extends StatelessWidget {
             break;
           case 'Assign':
             {
-              showModalBottomSheet(
-                shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(20)),
-                context: context,
-                builder: (BuildContext context) {
-                  return BlocProvider<
-                          GenericBloc<UserModel, AllUserRepository>>(
-                      create: (BuildContext context) =>
-                          GenericBloc<UserModel, AllUserRepository>(
-                            repository: AllUserRepository(),
-                          ),
-                      child: UserModalSheet(
-                        task: task,
-                      ));
-                },
-              );
+              if (task.smart_contract_enabled == true) {
+                reassignTaskAlertDialog(context);
+              } else {
+                showModalBottomSheet(
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(20)),
+                  context: context,
+                  builder: (BuildContext context) {
+                    return BlocProvider<
+                            GenericBloc<UserModel, AllUserRepository>>(
+                        create: (BuildContext context) =>
+                            GenericBloc<UserModel, AllUserRepository>(
+                              repository: AllUserRepository(),
+                            ),
+                        child: UserModalSheet(
+                          task: task,
+                        ));
+                  },
+                );
+              }
             }
             break;
           case 'View':

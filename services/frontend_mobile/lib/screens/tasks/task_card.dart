@@ -30,7 +30,8 @@ class TaskCardWeb extends StatelessWidget {
         child: Column(
       children: [
         GestureDetector(
-          onTap: () => router.goNamed('taskDetail', pathParameters: {'task_id': task.task_id},extra: task),
+          onTap: () => router.goNamed('taskDetail',
+              pathParameters: {'task_id': task.task_id}, extra: task),
           child: CardTitle(
             task: task,
           ),
@@ -127,8 +128,16 @@ class CardBody extends StatelessWidget {
                                     ],
                                   );
                                 }
-                                return Text('Assigned To: Unknown User',
-                                    style: titleSmall(context));
+                                return Column(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      Text('Assigned',
+                                          style: titleSmall(context)),
+                                      const Icon(Icons.person),
+                                      Text('Unknown',
+                                          style: titleLarge(context)),
+                                    ],
+                                  );
                               },
                             )
                           : Column(
@@ -234,7 +243,8 @@ class CardButtons extends StatelessWidget {
                   task: task,
                 ),
                 ElevatedButton(
-                    onPressed: () => router.goNamed('taskDetail', pathParameters: {'task_id': task.task_id},extra: task),
+                    onPressed: () => router.goNamed('taskDetail',
+                        pathParameters: {'task_id': task.task_id}, extra: task),
                     child: Text(
                       'View',
                       style: titleMedium(context),

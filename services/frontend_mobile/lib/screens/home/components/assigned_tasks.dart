@@ -88,7 +88,7 @@ class _AssignedTasksWidgetState extends State<AssignedTasksWidget> {
                               crossAxisCount: 3),
                       delegate: SliverChildBuilderDelegate(
                           (BuildContext context, int index) {
-                        return TaskCardAssigned(task: taskData[index]);
+                        return TaskCardAssignedWeb(task: taskData[index]);
                       }, childCount: taskData.length),
                     )
                   ])

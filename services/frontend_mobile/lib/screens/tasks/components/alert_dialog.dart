@@ -97,3 +97,30 @@ Future<dynamic> deleteTaskAlertDialog(BuildContext context, String taskId) {
     },
   );
 }
+
+// Reassign task alert dialog
+Future<dynamic> reassignTaskAlertDialog(BuildContext context) {
+  return showDialog(
+    context: context,
+    builder: (BuildContext context) {
+      return AlertDialog(
+        title: const Text(
+          "Reassign Task.",
+        ),
+        titleTextStyle: headlineSmall(context)?.copyWith(color: Colors.black),
+        contentTextStyle: titleLarge(context)?.copyWith(color: Colors.black),
+        content: const Text(
+          "This task can not be reassigned until Escrow is cancelled or finished.",
+        ),
+        actions: <Widget>[
+         TextButton(
+            child: const Text('Close'),
+            onPressed: () {
+              router.pop();
+            },
+          ),
+        ],
+      );
+    },
+  );
+}

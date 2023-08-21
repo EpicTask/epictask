@@ -89,9 +89,10 @@ class LoginFormState extends State<LoginForm> {
     _loginBloc.add(LoginWithGooglePressed());
   }
 
-  // void _onPressedAnonymousSignIn() {
-  //   _loginBloc.add(LoginAnonymousPressed());
-  // }
+  void _onTestButtonSignIn() {
+        _loginBloc.add(LoginWithCredentialsPressed(
+        email: "rnolden5@gmail.com", password: "password"));
+  }
 
   // void _showSnackBar(BuildContext context, String message) {
   //   ScaffoldMessenger.of(context).showSnackBar(
@@ -214,7 +215,7 @@ class LoginFormState extends State<LoginForm> {
                   buildForgotPasswordButton(context),
                   const SizedBox(height: 15),
                   if (!kIsWeb) buildSignInButtons(context, state),
-                  // buildAnonymousLoginButton(context, state),
+                  buildTestLoginButton(context, state),
                 ],
               );
             },
@@ -236,24 +237,24 @@ class LoginFormState extends State<LoginForm> {
     );
   }
 
-  // Widget buildAnonymousLoginButton(context, state) {
-  //   return Align(
-  //     alignment: Alignment.bottomCenter,
-  //     child: Padding(
-  //       padding: const EdgeInsets.fromLTRB(8, 8, 8.0, 16),
-  //       child: TextButton(
-  //         child: Text(
-  //           'Sign up as guest.',
-  //           style: titleLarge(context)
-  //               ?.copyWith(color: Colors.blue, fontStyle: FontStyle.italic),
-  //         ),
-  //         onPressed: () {
-  //           _onPressedAnonymousSignIn();
-  //         },
-  //       ),
-  //     ),
-  //   );
-  // }
+  Widget buildTestLoginButton(context, state) {
+    return Align(
+      alignment: Alignment.bottomCenter,
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(8, 8, 8.0, 16),
+        child: TextButton(
+          child: Text(
+            'Test Login',
+            style: titleLarge(context)
+                ?.copyWith(color: Colors.blue, fontStyle: FontStyle.italic),
+          ),
+          onPressed: () {
+            _onTestButtonSignIn();
+          },
+        ),
+      ),
+    );
+  }
 
   Widget buildAppleLoginButton(BuildContext context, LoginState state) {
     if (UserRepository().appleSignInAvailable) {
