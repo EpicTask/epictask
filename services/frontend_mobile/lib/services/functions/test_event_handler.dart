@@ -49,8 +49,8 @@ String? taskEventHandler(TaskEvent event) {
       default:
         if (kDebugMode) {
           print(
-          'Unknown event type: $eventType',
-        );
+            'Unknown event type: $eventType',
+          );
         }
         break;
     }
@@ -58,8 +58,8 @@ String? taskEventHandler(TaskEvent event) {
   } catch (error) {
     if (kDebugMode) {
       print(
-      'Message publishing error: $error',
-    );
+        'Message publishing error: $error',
+      );
     }
     // Handle the error during message publishing
   }
@@ -114,45 +114,27 @@ String? userEventHandler(UserEvent event) {
   return null;
 }
 
-const String TASKCREATED =
-    '$taskManagementGatewayUrl/TaskCreated';
-const String TASKASSIGNED =
-    '$taskManagementGatewayUrl/TaskAssigned';
-const String TASKUPDATED =
-    '$taskManagementGatewayUrl/TaskUpdated';
-const String TASKCOMPLETED =
-    '$taskManagementGatewayUrl/TaskCompleted';
-const String TASKCANCELLED =
-    '$taskManagementGatewayUrl/TaskCancelled';
-const String TASKEXPIRED =
-    '$taskManagementGatewayUrl/TaskExpired';
-const String TASKREWARDED =
-    '$taskManagementGatewayUrl/TaskRewarded';
-const String TASKRATINGUPDATE =
-    '$taskManagementGatewayUrl/TaskRatingUpdate';
-const String TASKCOMMENTADDED =
-    '$taskManagementGatewayUrl/TaskCommentAdded';
-const String TASKVERIFIED =
-    '$taskManagementGatewayUrl/TaskVerified';
-const String UPDATELEADERBOARD =
-    '$taskManagementGatewayUrl/UpdateLeaderboard';
-const String USERREGISTERED =
-    '$userManagementGatewayUrl/userRegister';
-const String USERSIGNIN =
-    '$userManagementGatewayUrl/signIn';
+const String TASKCALL = '$taskManagementGatewayUrl/';
+const String TASKCREATED = '$taskManagementGatewayUrl/TaskCreated';
+const String TASKASSIGNED = '$taskManagementGatewayUrl/TaskAssigned';
+const String TASKUPDATED = '$taskManagementGatewayUrl/TaskUpdated';
+const String TASKCOMPLETED = '$taskManagementGatewayUrl/TaskCompleted';
+const String TASKCANCELLED = '$taskManagementGatewayUrl/TaskCancelled';
+const String TASKEXPIRED = '$taskManagementGatewayUrl/TaskExpired';
+const String TASKREWARDED = '$taskManagementGatewayUrl/TaskRewarded';
+const String TASKRATINGUPDATE = '$taskManagementGatewayUrl/TaskRatingUpdate';
+const String TASKCOMMENTADDED = '$taskManagementGatewayUrl/TaskCommentAdded';
+const String TASKVERIFIED = '$taskManagementGatewayUrl/TaskVerified';
+const String UPDATELEADERBOARD = '$taskManagementGatewayUrl/UpdateLeaderboard';
+const String USERREGISTERED = '$userManagementGatewayUrl/userRegister';
+const String USERSIGNIN = '$userManagementGatewayUrl/signIn';
 const String USERWALLETCONNECTED =
     'https://xrpl-5wpxgn35iq-uc.a.run.app/xummSignInRequest';
 const String PAYMENTREQUEST =
     'https://xrpl-5wpxgn35iq-uc.a.run.app/paymentrequest';
-const String USERFORGOTPASSWORD =
-    '$userManagementGatewayUrl/forgotPassword';
-const String USERAUTHENTICATION =
-    '$userManagementGatewayUrl/authenticate';
-const String USERPROFILEUPDATE =
-    '$userManagementGatewayUrl/profileUpdate';
-const String USERACCOUNTDELETION =
-    '$userManagementGatewayUrl/deleteAccount';
-const String USERINTERACTION =
-    '$userManagementGatewayUrl/userInteraction';
-const String USERVERIFIED =
-    '$userManagementGatewayUrl/userVerified';
+const String USERFORGOTPASSWORD = '$userManagementGatewayUrl/forgotPassword';
+const String USERAUTHENTICATION = '$userManagementGatewayUrl/authenticate';
+const String USERPROFILEUPDATE = '$userManagementGatewayUrl/profileUpdate';
+const String USERACCOUNTDELETION = '$userManagementGatewayUrl/deleteAccount';
+const String USERINTERACTION = '$userManagementGatewayUrl/userInteraction';
+const String USERVERIFIED = '$userManagementGatewayUrl/userVerified';

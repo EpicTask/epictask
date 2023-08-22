@@ -40,7 +40,6 @@ dependencies:
   firebase_storage_web: ^3.6.4
 
   #Networking
-  dio: ^5.3.0
   http: ^1.1.0
   url_launcher: ^6.1.7
 

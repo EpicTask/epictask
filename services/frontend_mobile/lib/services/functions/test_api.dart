@@ -45,7 +45,7 @@ void handleUserCalls(String userManagementUrl, UserEvent event) async {
 }
 
 void handleTaskCalls(String taskManagementUrl, TaskEvent event) async {
-  dynamic message = jsonEncode(event.toJson()['additional_data']);
+  dynamic message = jsonEncode(event?.toJson()['additional_data']);
   if (kDebugMode) {
     print(message);
   }
@@ -75,6 +75,31 @@ void handleTaskCalls(String taskManagementUrl, TaskEvent event) async {
 
   if (kDebugMode) {
     print('Message received: $message');
+  }
+}
+
+void handleTaskDefaultCalls(String taskManagementUrl) async {
+  try {
+    http.Response response = await http.get(Uri.parse(taskManagementUrl),
+        headers: <String, String>{
+          'Content-Type': 'application/json; charset=UTF-8',
+        });
+    if (response.statusCode == 200) {
+      if (kDebugMode) {
+        print('API response: ${response.body}');
+      }
+      // Handle the API response or perform any additional actions
+    } else {
+      if (kDebugMode) {
+        print('API call error: ${response.statusCode}');
+      }
+      // Handle the API call error
+    }
+  } catch (error) {
+    if (kDebugMode) {
+      print('API call error: $error');
+    }
+    // Handle the API call error
   }
 }
 

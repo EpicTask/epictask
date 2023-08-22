@@ -1,5 +1,4 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:dio/dio.dart';
 import 'package:epictask/models/task_event_model/task_event.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
@@ -8,7 +7,6 @@ import '../../models/user_event_model/user_event.dart';
 import 'test_event_handler.dart';
 
 final String currentUserID = FirebaseAuth.instance.currentUser?.uid ?? '';
-final Dio dio = Dio();
 
 class FirestoreDatabase {
   // Collection References

@@ -4,6 +4,8 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../repositories/user_repository.dart';
+import '../../services/functions/test_api.dart';
+import '../../services/functions/test_event_handler.dart';
 import 'authentication_event.dart';
 import 'authentication_state.dart';
 
@@ -23,6 +25,7 @@ class AuthenticationBloc
             UserEvent event =
                 UserEvent(event_type: 'UserSignIn', user_id: currentUserID);
             FirestoreDatabase().writeUserEvent(event);
+            handleTaskDefaultCalls(TASKCALL);
             emit(AuthenticationSuccess(firebaseUser));
           }
         } catch (e) {

@@ -10,7 +10,7 @@ import '../../services/functions/firebase_functions.dart';
 import '../../services/service_config/service_config.dart';
 import '../../services/ui/text_styles.dart';
 import '../profile/logic/logic.dart';
-
+import 'package:http/http.dart' as http;
 
 // Menu Drawer
 class MenuDrawer extends StatelessWidget {
@@ -53,8 +53,8 @@ class MenuDrawer extends StatelessWidget {
               bool validAddress = await checkPublicAddress(currentUserID);
               if (validAddress) {
                 String xrplUrl = '$xummSignIn/$currentUserID';
-                final response = await dio.get(xrplUrl);
-                launchUrl(Uri.parse(response.data));
+                final response = await http.get(Uri.parse(xrplUrl));
+                launchUrl(Uri.parse(response.body));
               } else {
                 Future.delayed(Duration.zero, () {
                   showDialog(
