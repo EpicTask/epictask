@@ -4,7 +4,6 @@ Empowering Children with Financial Responsibility
 Website: [https://epictask.app/](https://epictask.app/)
 
 Demo: [Demo Website](https://task-coin-384722.web.app)
-Tested Browser: Safari (known issues using Chrome)
 
 
 ## Description:
