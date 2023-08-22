@@ -23,7 +23,7 @@ import {
 
 dotenv.config();
 const app = express();
-const origins = ['https://user-management-api-us-8l3obb9a.uc.gateway.dev'];
+const origins = ['https://user-management-api-us-8l3obb9a.uc.gateway.dev', 'https://task-coin-384722.web.app/'];
 
 app.use(
   cors({
