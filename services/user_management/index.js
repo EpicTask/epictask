@@ -23,14 +23,14 @@ import {
 
 dotenv.config();
 const app = express();
-const origins = ['https://user-management-api-us-8l3obb9a.uc.gateway.dev', 'https://task-coin-384722.web.app/'];
+const origins = ['https://user-management-api-us-8l3obb9a.uc.gateway.dev', 'https://task-coin-384722.web.app'];
 
 app.use(
   cors({
     origin: origins,
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
-    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Access-Control-Allow-Origin'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
   })
 );
 app.use(json());
