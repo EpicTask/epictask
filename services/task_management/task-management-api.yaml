@@ -71,6 +71,19 @@ x-google-management:
         values:
           STANDARD: 100
 paths:
+  /:
+    get:
+      summary: Return a friendly HTTP greeting
+      operationId: getHello
+      responses:
+        "200":
+          description: Successful response
+    options: # Added for handling OPTIONS requests
+      operationId: getHelloHandleOptions
+      responses:
+        "200":
+          description: OK
+
   /TaskEvent:
     post:
       summary: Write Task Event to Firestore
@@ -90,6 +103,12 @@ paths:
       responses:
         "200":
           description: Successful response
+    options: # Added for handling OPTIONS requests
+      operationId: writeTaskEventHandleOptions
+      responses:
+        "200":
+          description: OK
+
   /TaskCreated:
     post:
       summary: Create Task
@@ -109,6 +128,12 @@ paths:
       responses:
         "200":
           description: Successful response
+    options: # Added for handling OPTIONS requests
+      operationId: createTaskHandleOptions
+      responses:
+        "200":
+          description: OK
+
   /TaskAssigned:
     post:
       summary: Assign Task
@@ -128,6 +153,12 @@ paths:
       responses:
         "200":
           description: Successful response
+    options: # Added for handling OPTIONS requests
+      operationId: assignTaskHandleOptions
+      responses:
+        "200":
+          description: OK
+
   /TaskCancelled:
     post:
       summary: Cancel Task
@@ -147,6 +178,12 @@ paths:
       responses:
         "200":
           description: Successful response
+    options: # Added for handling OPTIONS requests
+      operationId: cancelTaskHandleOptions
+      responses:
+        "200":
+          description: OK
+
   /TaskCommentAdded:
     post:
       summary: Add Comment to Task
@@ -166,6 +203,12 @@ paths:
       responses:
         "200":
           description: Successful response
+    options: # Added for handling OPTIONS requests
+      operationId: addCommentToTaskHandleOptions
+      responses:
+        "200":
+          description: OK
+
   /TaskCompleted:
     post:
       summary: Complete Task
@@ -185,6 +228,12 @@ paths:
       responses:
         "200":
           description: Successful response
+    options: # Added for handling OPTIONS requests
+      operationId: completeTaskHandleOptions
+      responses:
+        "200":
+          description: OK
+
   /TaskExpired:
     post:
       summary: Expire Task
@@ -204,6 +253,12 @@ paths:
       responses:
         "200":
           description: Successful response
+    options: # Added for handling OPTIONS requests
+      operationId: expireTaskHandleOptions
+      responses:
+        "200":
+          description: OK
+
   /TaskRatingUpdate:
     post:
       summary: Update Task Rating
@@ -223,6 +278,12 @@ paths:
       responses:
         "200":
           description: Successful response
+    options: # Added for handling OPTIONS requests
+      operationId: updateTaskRatingHandleOptions
+      responses:
+        "200":
+          description: OK
+
   /TaskRewarded:
     post:
       summary: Reward Task
@@ -242,6 +303,12 @@ paths:
       responses:
         "200":
           description: Successful response
+    options: # Added for handling OPTIONS requests
+      operationId: rewardTaskHandleOptions
+      responses:
+        "200":
+          description: OK
+
   /TaskUpdated:
     post:
       summary: Update Task Fields
@@ -261,6 +328,12 @@ paths:
       responses:
         "200":
           description: Successful response
+    options: # Added for handling OPTIONS requests
+      operationId: updateTaskFieldsHandleOptions
+      responses:
+        "200":
+          description: OK
+
   /TaskVerified:
     post:
       summary: Verify Task
@@ -280,6 +353,12 @@ paths:
       responses:
         "200":
           description: Successful response
+    options: # Added for handling OPTIONS requests
+      operationId: verifyTaskHandleOptions
+      responses:
+        "200":
+          description: OK
+
   /UpdateLeaderboard:
     post:
       summary: Update Leaderboard
@@ -299,6 +378,12 @@ paths:
       responses:
         "200":
           description: Successful response
+    options: # Added for handling OPTIONS requests
+      operationId: updateLeaderboardHandleOptions
+      responses:
+        "200":
+          description: OK
+
   /tasks:
     get:
       summary: Get All Tasks
@@ -317,6 +402,12 @@ paths:
       responses:
         "200":
           description: Successful response
+    options: # Added for handling OPTIONS requests
+      operationId: getAllTasksHandleOptions
+      responses:
+        "200":
+          description: OK
+
 definitions:
   TaskEvent:
     type: object

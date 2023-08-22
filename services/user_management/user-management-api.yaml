@@ -1,4 +1,4 @@
-swagger: "2.0"
+swagger: '2.0'
 info:
   title: User Management Service
   description: API documentation for the User Management Service
@@ -35,6 +35,11 @@ paths:
           description: Invalid request.
         '500':
           description: Internal server error.
+    options: # Added for handling OPTIONS requests
+      operationId: getCurrentUserHandleOptions
+      responses:
+        '200':
+          description: OK
 
   /events:
     post:
@@ -58,6 +63,11 @@ paths:
           description: Invalid request.
         '500':
           description: Internal server error.
+    options: # Added for handling OPTIONS requests
+      operationId: createUserEventHandleOptions
+      responses:
+        '200':
+          description: OK
 
   /userRegister:
     post:
@@ -73,6 +83,11 @@ paths:
           description: Invalid request.
         '500':
           description: Internal server error.
+    options: # Added for handling OPTIONS requests
+      operationId: userRegisterHandleOptions
+      responses:
+        '200':
+          description: OK
 
   /signIn:
     post:
@@ -90,6 +105,11 @@ paths:
           description: Invalid request.
         '500':
           description: Internal server error.
+    options: # Added for handling OPTIONS requests
+      operationId: signInHandleOptions
+      responses:
+        '200':
+          description: OK
 
   /walletConnected:
     post:
@@ -107,6 +127,11 @@ paths:
           description: Invalid request.
         '500':
           description: Internal server error.
+    options: # Added for handling OPTIONS requests
+      operationId: walletConnectedHandleOptions
+      responses:
+        '200':
+          description: OK
 
   /forgotPassword:
     post:
@@ -124,6 +149,11 @@ paths:
           description: Invalid request.
         '500':
           description: Internal server error.
+    options: # Added for handling OPTIONS requests
+      operationId: forgotPasswordHandleOptions
+      responses:
+        '200':
+          description: OK
 
   /authenticate:
     post:
@@ -141,6 +171,11 @@ paths:
           description: Invalid request.
         '500':
           description: Internal server error.
+    options: # Added for handling OPTIONS requests
+      operationId: authenticateHandleOptions
+      responses:
+        '200':
+          description: OK
 
   /profileUpdate:
     post:
@@ -157,7 +192,7 @@ paths:
           description: The profile update object
           required: true
           schema:
-              $ref: '#/definitions/ProfileUpdate'
+            $ref: '#/definitions/ProfileUpdate'
       responses:
         '201':
           description: User profile updated successfully
@@ -165,6 +200,11 @@ paths:
           description: Invalid request.
         '500':
           description: Internal server error.
+    options: # Added for handling OPTIONS requests
+      operationId: profileUpdateHandleOptions
+      responses:
+        '200':
+          description: OK
 
   /deleteAccount:
     post:
@@ -181,7 +221,7 @@ paths:
           description: The delete account object
           required: true
           schema:
-              $ref: '#/definitions/UserAccountDeletion'
+            $ref: '#/definitions/UserAccountDeletion'
       responses:
         '201':
           description: User account deleted successfully
@@ -189,6 +229,11 @@ paths:
           description: Invalid request.
         '500':
           description: Internal server error.
+    options: # Added for handling OPTIONS requests
+      operationId: deleteAccountHandleOptions
+      responses:
+        '200':
+          description: OK
 
   /userInteraction:
     post:
@@ -205,7 +250,7 @@ paths:
           description: The user interaction object
           required: true
           schema:
-              $ref: '#/definitions/UserInteraction'
+            $ref: '#/definitions/UserInteraction'
       responses:
         '201':
           description: User interaction saved successfully
@@ -213,6 +258,11 @@ paths:
           description: Invalid request.
         '500':
           description: Internal server error.
+    options: # Added for handling OPTIONS requests
+      operationId: userInteractionHandleOptions
+      responses:
+        '200':
+          description: OK
 
   /userVerified:
     post:
@@ -229,7 +279,7 @@ paths:
           description: The user verified object
           required: true
           schema:
-              $ref: '#/definitions/UserAuthentication'
+            $ref: '#/definitions/UserAuthentication'
       responses:
         '201':
           description: User verified successfully
@@ -237,6 +287,11 @@ paths:
           description: Invalid request.
         '500':
           description: Internal server error.
+    options: # Added for handling OPTIONS requests
+      operationId: userVerifiedHandleOptions
+      responses:
+        '200':
+          description: OK
 
   /signout:
     post:
@@ -253,7 +308,7 @@ paths:
           description: The signout object
           required: true
           schema:
-              $ref: '#/definitions/UserSignIn'
+            $ref: '#/definitions/UserSignIn'
       responses:
         '201':
           description: User signed out successfully
@@ -261,6 +316,11 @@ paths:
           description: Invalid request.
         '500':
           description: Internal server error.
+    options: # Added for handling OPTIONS requests
+      operationId: signoutHandleOptions
+      responses:
+        '200':
+          description: OK
 
   /registerWithPassword:
     post:
@@ -277,7 +337,7 @@ paths:
           description: The registration object
           required: true
           schema:
-              $ref: '#/definitions/UserRegistration'
+            $ref: '#/definitions/UserRegistration'
       responses:
         '201':
           description: User created successfully
@@ -285,6 +345,11 @@ paths:
           description: Invalid request.
         '500':
           description: Internal server error.
+    options: # Added for handling OPTIONS requests
+      operationId: registerWithPasswordHandleOptions
+      responses:
+        '200':
+          description: OK
 
   /loginWithPassword:
     post:
@@ -301,7 +366,7 @@ paths:
           description: The user sign in object
           required: true
           schema:
-              $ref: '#/definitions/UserSignIn'
+            $ref: '#/definitions/UserSignIn'
       responses:
         '201':
           description: User logged in successfully
@@ -309,6 +374,11 @@ paths:
           description: Invalid request.
         '500':
           description: Internal server error.
+    options: # Added for handling OPTIONS requests
+      operationId: loginWithPasswordHandleOptions
+      responses:
+        '200':
+          description: OK
 
   /:
     get:
@@ -328,6 +398,12 @@ paths:
           description: Invalid request.
         '500':
           description: Internal server error.
+    options: # Added for handling OPTIONS requests
+      operationId: rootPageHandleOptions
+      responses:
+        '200':
+          description: OK
+
 definitions:
   UserEvent:
     type: object

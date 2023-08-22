@@ -110,6 +110,11 @@ paths:
           description: Successful operation
         500:
           description: Internal server error
+    options: # Added for handling OPTIONS requests
+      operationId: xummSignInRequestHandleOptions
+      responses:
+        '200':
+          description: OK
 
   /payment_request:
     post:

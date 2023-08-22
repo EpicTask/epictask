@@ -129,9 +129,9 @@ const String UPDATELEADERBOARD = '$taskManagementGatewayUrl/UpdateLeaderboard';
 const String USERREGISTERED = '$userManagementGatewayUrl/userRegister';
 const String USERSIGNIN = '$userManagementGatewayUrl/signIn';
 const String USERWALLETCONNECTED =
-    'https://xrpl-5wpxgn35iq-uc.a.run.app/xummSignInRequest';
+    'https://xrpl-api-us-8l3obb9a.uc.gateway.dev/xummSignInRequest';
 const String PAYMENTREQUEST =
-    'https://xrpl-5wpxgn35iq-uc.a.run.app/paymentrequest';
+    'https://xrpl-api-us-8l3obb9a.uc.gateway.dev/paymentrequest';
 const String USERFORGOTPASSWORD = '$userManagementGatewayUrl/forgotPassword';
 const String USERAUTHENTICATION = '$userManagementGatewayUrl/authenticate';
 const String USERPROFILEUPDATE = '$userManagementGatewayUrl/profileUpdate';
