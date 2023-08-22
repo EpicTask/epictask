@@ -89,6 +89,11 @@ paths:
           description: Invalid request.
         "500":
           description: Internal server error.
+    options:
+      operationId: rootHandleOptions
+      responses:
+        200:
+          description: OK
 
   /xummSignInRequest/{uid}:
     get:
@@ -110,10 +115,16 @@ paths:
           description: Successful operation
         500:
           description: Internal server error
-    options: # Added for handling OPTIONS requests
-      operationId: xummSignInRequestHandleOptions
+    options:
+      operationId: signInHandleOptions
+      parameters:
+        - name: uid
+          in: path
+          description: User ID
+          required: true
+          type: string
       responses:
-        '200':
+        200:
           description: OK
 
   /payment_request:
@@ -134,8 +145,13 @@ paths:
       responses:
         200:
           description: Successful operation
-          schema:
-            type: object
+        500:
+          description: Internal server error
+    options:
+      operationId: paymentHandleOptions
+      responses:
+        200:
+          description: OK
 
   /create_escrow:
     post:
@@ -476,7 +492,6 @@ paths:
                 type: object
         500:
           description: Internal server error
-
 
   /transactions/{address}:
     get:
