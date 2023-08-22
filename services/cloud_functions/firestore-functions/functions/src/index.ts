@@ -9,12 +9,12 @@ import {FieldValue} from "firebase-admin/firestore";
 import * as functions from "firebase-functions";
 import {SecretManagerServiceClient} from "@google-cloud/secret-manager";
 import {Configuration, OpenAIApi} from "openai";
-import {PubSub} from "@google-cloud/pubsub";
+// import {PubSub} from "@google-cloud/pubsub";
 
 initializeApp();
 
 const db = firestore();
-const pubsub = new PubSub();
+// const pubsub = new PubSub();
 /**
  * Retrieves the latest version of a secret from Google Cloud Secret Manager.
  * @async
@@ -133,6 +133,31 @@ async function getPublicAddressAndUserToken(docId: string) {
     return null;
   }
 }
+
+/**
+Get Task document from the firestore database.
+@async
+@param {string} docId - The ID of the user document.
+@return {Promise<{taskData:any} | null>}
+ */
+async function getTaskDoc(docId: string) {
+  try {
+    const taskDocRef = db.collection("test_tasks").doc(docId);
+    const taskDocSnapshot = await taskDocRef.get();
+
+    if (taskDocSnapshot.exists) {
+      const taskData = taskDocSnapshot.data();
+      return taskData;
+    } else {
+      console.log(`Task document with ID ${docId} not found.`);
+      return null;
+    }
+  } catch (error) {
+    console.error("Error fetching user data:", error);
+    return null;
+  }
+}
+
 
 exports.createXRPPaymentRequest = onDocumentCreated(
   "test_task_events/{doc}",
@@ -435,9 +460,9 @@ exports.generateContract = functions.https.onCall(async (data, context) => {
 // This function uses cloud scheduler as a trigger to check if any Escrows
 // have expired and are ready to be executed with a finish transaction
 // or cancelled.
-// 'every day 05:00, 13:00, 21:00'
+// 'every day 01:00, 13:00, 18:00'
 exports.scheduleEscrowFinish = functions.pubsub
-  .schedule("0 6,14,20 * * *")
+  .schedule("0 1,13,18 * * *")
   .timeZone("UTC")
   .onRun(async (context) => {
     const today = new Date();
@@ -450,22 +475,21 @@ exports.scheduleEscrowFinish = functions.pubsub
         .where("payment_method", "==", "Escrow")
         .get();
 
-      const tasksToProcess: firestore
-      .QueryDocumentSnapshot<firestore.DocumentData>[] =
-        [];
+      const tasksToProcess:
+      firestore.QueryDocumentSnapshot<firestore.DocumentData>[] = [];
 
       tasksSnapshot.forEach((doc) => {
         const expirationDate = doc.get("expiration_date");
-        console.log(expirationDate);
-        console.log(todayTimestamp.toMillis);
         if (expirationDate && expirationDate <= todayTimestamp.toMillis()) {
           tasksToProcess.push(doc);
         }
       });
 
+      const batch = db.batch();
+
       const processPromises = tasksToProcess.map(async (taskDoc) => {
         const taskId = taskDoc.id;
-        console.log(taskId);
+
         const xrplServiceSnapshot = await db
           .collection("test_xrpl_service")
           .where("task_id", "==", taskId)
@@ -478,50 +502,58 @@ exports.scheduleEscrowFinish = functions.pubsub
           const xrplDoc = xrplServiceSnapshot.docs[0];
           const xrplData = xrplDoc.data();
 
-          console.log(xrplData);
+          const taskData = await getTaskDoc(taskId);
           const account = xrplData.transaction.Destination;
-          const offer_sequence = xrplData.transaction.Sequence;
+          const offerSequence = xrplData.transaction.Sequence;
           const owner = xrplData.transaction.Account;
-          const user_token = '';
-          const user_id = '';
+
+          const userId = taskData?.user_id;
+          const userData = await getPublicAddressAndUserToken(userId);
+          const userToken = userData?.userToken;
+
+          const assignedToId = taskData?.assigned_to_ids[0];
+          const assignedToData = await getPublicAddressAndUserToken(userId);
+          const assignedToToken = assignedToData?.userToken;
 
           const escrowJsonMap = {
             account: account,
-            offer_sequence: offer_sequence,
+            offer_sequence: offerSequence,
             owner: owner,
-            user_token: user_token,
+            user_token: userToken,
             task_id: taskId,
-            user_id: user_id
+            user_id: userId,
           };
-  
-          console.log(escrowJsonMap);
-          const xrplUrl = process.env.PAYMENTREQUEST || "";
+
+          const escrowJsonMap2 = {
+            account: account,
+            offer_sequence: offerSequence,
+            owner: owner,
+            user_token: assignedToToken,
+            task_id: taskId,
+            user_id: assignedToId,
+          };
+
+          const xrplUrl = process.env.FINISHESCROW || "";
           const response = await axios.post(xrplUrl, escrowJsonMap);
-  
-          return response;
+          const response2 = await axios.post(xrplUrl, escrowJsonMap2);
+          // Add a write operation to the batch
+          const taskRef = db.collection("test_tasks").doc(taskId);
+          batch.update(taskRef, {escrowProcessed: true});
 
-          // Publish the xrplData to the "finish_escrow" Pub/Sub topic
-          const topicName = "finish_escrow";
-          const data = Buffer.from(JSON.stringify(xrplData), "utf8");
-
-          console.log(data);
-          const callback = (err: any, messageId: any) => {
-            if (err) {
-              console.error(`Error: ${err.message}, Message ID: ${messageId}`);
-            }
-          };
-          pubsub.topic(topicName).publishMessage({data}, callback);
-
-          console.log(`Published data for task ${taskId} to ${topicName}`);
+          console.log(response);
+          console.log(response2);
         }
       });
 
       await Promise.all(processPromises);
 
+      // Commit the batched writes
+      await batch.commit();
+
       return null;
     } catch (error) {
       console.error("Error scheduling escrow finish:", error);
-      return null;
+      throw error; // Throw the error to trigger retries or alert the system
     }
   });
 
@@ -573,7 +605,7 @@ exports.autoVerifyTransaction = onDocumentCreated(
         const transactionId = callbackData.payloadResponse.txid;
         const taskId = callbackData.task_id;
         const baseUrl = process.env.VERIFYTRANSACTION || "";
-        const xrplUrl = baseUrl + transactionId + '/' + taskId;
+        const xrplUrl = baseUrl + transactionId + "/" + taskId;
 
         await axios.get(xrplUrl);
       }
