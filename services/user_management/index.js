@@ -28,7 +28,7 @@ const origins = ['https://user-management-api-us-8l3obb9a.uc.gateway.dev', 'http
 app.use(
   cors({
     origin: origins,
-    credentials: true,
+    credentials: false,
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
     allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
   })
