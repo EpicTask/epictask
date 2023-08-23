@@ -83,13 +83,13 @@ class PopupMenuButtonWidget extends StatelessWidget {
           case 'Generate Contract':
             {
               generateContract(task);
-              _showGeneratingContractSnackBar(context);
+              showGeneratingContractSnackBar(context);
             }
             break;
           case 'Delete Contract':
             {
               deleteContract(task.terms_id ?? '', task.task_id);
-              _showDeletingContractSnackBar(context);
+              showDeletingContractSnackBar(context);
             }
             break;
           case 'Add to Calendar':
@@ -178,7 +178,7 @@ class PopupMenuButtonWidget extends StatelessWidget {
   }
 }
 
-void _showGeneratingContractSnackBar(BuildContext context) {
+void showGeneratingContractSnackBar(BuildContext context) {
   ScaffoldMessenger.of(context).showSnackBar(
     SnackBar(
       content: const Row(
@@ -196,7 +196,7 @@ void _showGeneratingContractSnackBar(BuildContext context) {
   );
 }
 
-void _showDeletingContractSnackBar(BuildContext context) {
+void showDeletingContractSnackBar(BuildContext context) {
   ScaffoldMessenger.of(context).showSnackBar(
     SnackBar(
       content: const Row(

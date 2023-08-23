@@ -54,7 +54,8 @@ class MenuDrawer extends StatelessWidget {
               if (validAddress) {
                 String xrplUrl = '$xummSignIn/$currentUserID';
                 final response = await http.get(Uri.parse(xrplUrl));
-                launchUrl(Uri.parse(response.body));
+                String responseBody = response.body.replaceAll('"', '');
+                launchUrl(Uri.parse(responseBody));
               } else {
                 Future.delayed(Duration.zero, () {
                   showDialog(
