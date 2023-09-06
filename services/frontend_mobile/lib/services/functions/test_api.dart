@@ -45,7 +45,7 @@ void handleUserCalls(String userManagementUrl, UserEvent event) async {
 }
 
 void handleTaskCalls(String taskManagementUrl, TaskEvent event) async {
-  dynamic message = jsonEncode(event?.toJson()['additional_data']);
+  dynamic message = jsonEncode(event.toJson()['additional_data']);
   if (kDebugMode) {
     print(message);
   }

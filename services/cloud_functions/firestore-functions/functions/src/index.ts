@@ -93,7 +93,7 @@ exports.updateXummUserToken = onDocumentCreated(
         return;
       }
       const data = snapshot.data();
-      const uid = data.custom_meta.blob;
+      const uid = data.custom_meta.blob.uid;
       const userToken = data.userToken;
       console.log(userToken);
       if (uid) {
@@ -606,6 +606,7 @@ exports.autoVerifyTransaction = onDocumentCreated(
         const taskId = callbackData.task_id;
         const baseUrl = process.env.VERIFYTRANSACTION || "";
         const xrplUrl = baseUrl + transactionId + "/" + taskId;
+        console.log("Url: " +xrplUrl + " " + "Task ID: " + taskId);
 
         await axios.get(xrplUrl);
       }
