@@ -155,15 +155,6 @@ async def task_func(request: TaskCreated):
     except Exception as e:
         return {"error": str(e)}
 
-# Generate contract
-# @app.post('/GenerateContract')
-# async def task_func(request: TaskEvent):
-#     try:
-#         response = generate_contract(data=request)
-#         return {"message": response}
-#     except Exception as e:
-#         return {"error": str(e)}
-
 
 @app.get("/tasks")
 async def get_all_tasks(user_id: str):

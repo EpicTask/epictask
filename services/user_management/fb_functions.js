@@ -5,6 +5,7 @@ import {
   doc,
   setDoc,
   updateDoc,
+  deleteDoc,
   collection,
   serverTimestamp,
 } from 'firebase/firestore';
@@ -65,9 +66,17 @@ async function authenticateUser(response) {
 
 // Delete user account
 async function deletedUserAccount(response) {
-  console.log('Deleted account' + response);
-  return 'Successful';
+  try {
+    const userRef = doc(db, 'users', response);
+    await deleteDoc(userRef);
+    console.log('Deleted account' + response);
+    return 'Successful';
+  } catch (error) {
+    console.error('Error deleting user account:', error);
+    return 'Error deleting user account';
+  }
 }
+
 
 // Verify User
 async function verifyUser(response) {

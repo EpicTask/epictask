@@ -5,6 +5,8 @@ import os
 from google.cloud import storage
 from model import Model, TaskType, VerificationType
 
+# Using google Model Garden for tests
+
 class ModelManager:
     def __init__(self):
         self.models = []
