@@ -210,7 +210,7 @@ async def verify_transaction(tx_hash: str, task_id: str=None):
 @ app.get('/transactions/{address}')
 async def account_exists(address: str):
     try:
-        response=get_transaction_async(address)
+        response=xrpscan_get_accountTransactions(address)
         return JSONResponse(response)
     except Exception as e:
         return JSONResponse({"error": str(e)})
