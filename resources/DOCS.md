@@ -21,3 +21,7 @@ Resources for financial literacy. Currently reviewing:
 10. **Banzai:** Provides real-life financial literacy scenarios and interactive content for students to learn about managing money.
 
 Remember to review and adapt these resources to best suit your students' needs and the curriculum requirements.
+
+Partnership Programs with schools.
+Create pilot program to reward students.
+Search for wallets tailored to younger generation
