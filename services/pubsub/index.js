@@ -4,6 +4,8 @@ import * as dotenv from 'dotenv';
 import cors from 'cors';
 import {PubSub} from '@google-cloud/pubsub';
 
+# TODO: Split mainnet and test new. Create Staging, Testing and Production Environments.
+
 const pubsub = new PubSub({projectId: 'task-coin-384722'});
 dotenv.config();
 const app = express();

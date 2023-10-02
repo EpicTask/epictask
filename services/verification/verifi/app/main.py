@@ -9,6 +9,7 @@ from model_manager import ModelManager, Model, TaskType, VerificationType
 from task import Task, VerificationRequest, VerificationResult
 
 app = FastAPI()
+# TODO: Split mainnet and test new. Create Staging, Testing and Production Environments.
 
 # Initialize ModelManager with models from GCP Cloud Storage
 model_manager = ModelManager()

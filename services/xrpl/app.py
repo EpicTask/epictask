@@ -22,6 +22,7 @@ from xrpl.clients import JsonRpcClient, WebsocketClient
 from xrpl_models import CreateEscrowModel, EscrowModel, PaymentRequest
 from dotenv import load_dotenv
 
+# TODO: Split mainnet and test new. Create Staging, Testing and Production Environments.
 from xrpscan_api import xrpscan_get_accountBalance, xrpscan_get_accountEscrows, xrpscan_get_accountInfo, xrpscan_get_accountTransactions
 app = FastAPI()
 
