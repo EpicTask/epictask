@@ -25,7 +25,7 @@ dotenv.config();
 const app = express();
 const origins = ['https://user-management-api-us-8l3obb9a.uc.gateway.dev', 'https://task-coin-384722.web.app'];
 
-# TODO: Split mainnet and test new. Create Staging, Testing and Production Environments.
+// # TODO: Split mainnet and test new. Create Staging, Testing and Production Environments.
 
 app.use(
   cors({
