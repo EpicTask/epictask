@@ -7,6 +7,7 @@ The Task Management Service is a component of Epic Task, providing functionaliti
 - Task Updates: Users can update task details, including status, progress, priority, and other attributes.
 - Task Tracking: The service allows users to track the progress of tasks, monitor expiration dates, and view task status changes.
 - Task Commenting: Users can add comments, discussions, or notes to tasks, facilitating communication and collaboration among team members.
+- Task Deletion: Delete tasks.
 
 ## Getting Started
 To use the Task Management Service, follow these steps:

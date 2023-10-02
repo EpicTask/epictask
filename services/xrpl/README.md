@@ -12,6 +12,7 @@ The XRPL Service is a component of Epic Task that integrates with the XRP Ledger
 - Transaction History: Users can access their transaction history on the XRPL, allowing transparent tracking and auditing of past transactions.
 - Integration with Other Microservices: The XRPL Service integrates with other Epic Task microservices, such as Task Management and Recommendation System, to enable seamless execution and processing of transactions.
 - XRPSCAN api integration.
+- New Features
 
 ## Getting Started
 
