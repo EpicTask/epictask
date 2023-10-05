@@ -25,3 +25,5 @@ Remember to review and adapt these resources to best suit your students' needs a
 Partnership Programs with schools.
 Create pilot program to reward students.
 Search for wallets tailored to younger generation
+Research files stored ./research
+KYC updates
