@@ -7,23 +7,23 @@ import uvicorn
 import xumm
 from accounts_xrpl import (connectWallet, does_account_exist_async, get_account_balance, get_account_info_async,
                            get_transaction_async, lookup_escrow)
-from escrow_xrpl import cancel_escrow_xumm, create_escrow_xumm, createTenMinTimestamp, finish_escrow_xumm, generate_xrpl_timestamp, is_timestamp_after_current
+from services.xrpl.escrow.escrow_xrpl import cancel_escrow_xumm, create_escrow_xumm, createTenMinTimestamp, finish_escrow_xumm, generate_xrpl_timestamp, is_timestamp_after_current
 from fastapi import FastAPI, Request
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
-from firestore_db import write_response_to_firestore
-from google_secrets import get_secret
-from payments_xrpl import handle_payment_request, send_payment_request
+from services.xrpl.firebase.firestore_db import write_response_to_firestore
+from services.xrpl.config.google_secrets import get_secret
+from services.xrpl.payments.payments_xrpl import handle_payment_request, send_payment_request
 from starlette.responses import JSONResponse
 from starlette.middleware.cors import CORSMiddleware
 from subscription_xrpl import account_subscription_sync
 from xrpl.asyncio.ledger import get_fee
 from xrpl.clients import JsonRpcClient, WebsocketClient
-from xrpl_models import CreateEscrowModel, EscrowModel, PaymentRequest
+from services.xrpl.models.xrpl_models import CreateEscrowModel, EscrowModel, PaymentRequest
 from dotenv import load_dotenv
 
 # TODO: Split mainnet and test new. Create Staging, Testing and Production Environments.
-from xrpscan_api import xrpscan_get_accountBalance, xrpscan_get_accountEscrows, xrpscan_get_accountInfo, xrpscan_get_accountTransactions
+from services.xrpl.config.misc.xrpscan_api import xrpscan_get_accountBalance, xrpscan_get_accountEscrows, xrpscan_get_accountInfo, xrpscan_get_accountTransactions
 app = FastAPI()
 
 load_dotenv()

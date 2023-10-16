@@ -1,27 +1,21 @@
 import asyncio
 import json
-import os
 import datetime
-import xumm
-from firestore_db import write_response_to_firestore
-from google_secrets import get_secret
+from services.xrpl.firebase.firestore_db import write_response_to_firestore
 from starlette.responses import JSONResponse
 from xrpl.asyncio.account import (does_account_exist, get_account_info,
                                   get_balance)
 from xrpl.asyncio.transaction import ledger
-from xrpl.clients import JsonRpcClient, WebsocketClient
 from xrpl.models.requests import AccountObjects
 
-api_key = get_secret('xumm-key')
-api_secret = get_secret('xumm-secret')
-sdk = xumm.XummSdk(api_key, api_secret)
+from services.xrpl.config.client import XRPLClient,Xumm_SDK
 
-client = JsonRpcClient("https://s.altnet.rippletest.net:51234/")
-clientWebsocket = WebsocketClient("wss://s.altnet.rippletest.net:51233")
+client_class = XRPLClient()
+sdk_class = Xumm_SDK()
+client = client_class.get_client()
+sdk = sdk_class.get_xumm_sdk()
 
 # Connect wallet
-
-
 async def connectWallet(uid: str):
     current_date = datetime.datetime.now().isoformat()
     # Create the XUMM payment request payload
