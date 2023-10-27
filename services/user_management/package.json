@@ -21,7 +21,7 @@
     "firebase": "^9.22.0",
     "firebase-admin": "11.8.0",
     "handlebars": "^4.7.4",
-    "mongoose": "7.3.3"
+    "mongoose": "^7.6.3"
   },
   "devDependencies": {
     "chai": "^3.5.0",
