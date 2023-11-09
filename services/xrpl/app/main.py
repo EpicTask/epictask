@@ -230,16 +230,6 @@ async def verify_transaction(tx_hash: str, task_id: str = None):
 
 # Gets list of transactions by account.
 
-
-# @app.get("/transactions/{address}")
-# async def account_exists_mainnet(address: str):
-#     """Check if account exists. Mainnet"""
-#     try:
-#         response = xrpscan_get_accountTransactions(address)
-#         return JSONResponse(response)
-#     except Exception as e:
-#         return JSONResponse({"error": str(e)})
-
 @app.get("/transactions/{address}")
 def account_exists_mainnet(address: str):
     """Check if account exists. Mainnet"""
