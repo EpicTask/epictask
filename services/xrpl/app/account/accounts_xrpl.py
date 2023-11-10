@@ -109,7 +109,7 @@ def get_transactions(wallet_address):
         # Create a transaction history request
         transaction_history_request = AccountTx(
             account=wallet_address,
-            limit=150,  # Number of transactions to retrieve
+            limit=100,  # Number of transactions to retrieve
             marker=marker
         )
         # Send the request and wait for the response
