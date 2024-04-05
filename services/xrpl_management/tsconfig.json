@@ -1,0 +1,13 @@
+{
+  "compilerOptions": {
+    "outDir": "./dist",
+    "target": "es2017",
+    "rootDir": "./src",
+    "module": "esnext",
+    "moduleResolution": "node",
+    // "strict": true,
+    "skipLibCheck": false
+  },
+  "include": ["src/**/*.ts"],
+  "exclude": ["node_modules"]
+}

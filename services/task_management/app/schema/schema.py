@@ -3,6 +3,7 @@ from typing import Optional, List
 
 
 class TaskEvent(BaseModel):
+    """Task event schema"""
     event_id: str
     event_type: str
     timestamp: str
@@ -11,8 +12,8 @@ class TaskEvent(BaseModel):
     status: str
     additional_data: Optional[dict]
 
-# Corresponding models that would go into additional_data depending on event type.
 class TaskCreated(BaseModel):
+    """Task created schema"""
     task_description: str
     task_id: str
     expiration_date: int
@@ -35,21 +36,25 @@ class TaskCreated(BaseModel):
 
 
 class TaskAssigned(BaseModel):
+    """Task assigned schema"""
     task_id: str
     assigned_to_id: str
 
 
 class TaskCancelled(BaseModel):
+    """Task cancelled schema"""
     task_id: str
 
 
 class TaskCommentAdded(BaseModel):
+    """Task comment added schema"""
     task_id: str
     user_id: str
     comment: str
 
 
 class TaskCompleted(BaseModel):
+    """Task completed schema"""
     task_id: str
     completed_by_id: str
     attachments: List[str] = None
@@ -59,30 +64,36 @@ class TaskCompleted(BaseModel):
 
 
 class TaskExpired(BaseModel):
+    """Task expired schema"""
     task_id: str
 
 
 class TaskRatingUpdate(BaseModel):
+    """Task rating update schema"""
     task_id: str
     user_id: str
 
 
 class TaskRewarded(BaseModel):
+    """Task rewarded schema"""
     task_id: str
     user_id: str
 
 
 class TaskUpdated(BaseModel):
+    """Task updated schema"""
     task_id: str
     updated_fields: dict
 
 class TaskVerified(BaseModel):
+    """Task verified schema"""
     task_id: str
     verified: bool
     verification_method: str # user or verifi
 
 # Leaderboard entry schema
 class LeaderboardEntry(BaseModel):
+    """Leaderboard entry schema"""
     user_id: str
     tasks_completed: int
     xrp_earned: float

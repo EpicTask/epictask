@@ -1,4 +1,5 @@
 from google.cloud import secretmanager
+import os
 
 def get_secret(secret):
     client = secretmanager.SecretManagerServiceClient()

@@ -2,37 +2,36 @@
 import os
 
 import uvicorn
-import xumm
+from dotenv import load_dotenv
 from account.accounts_xrpl import (connectWallet, does_account_exist_async,
                                    get_account_balance, get_account_info_async,
-                                   get_transaction_async, get_transactions, lookup_escrow)
-from config.google_secrets import get_secret
-from dotenv import load_dotenv
-from escrow.escrow_xrpl import (cancel_escrow_xumm, create_escrow_xumm,
+                                   get_transaction_async, get_transactions,
+                                   lookup_escrow)
+
+from wallets.xumm.escrow import (cancel_escrow_xumm, create_escrow_xumm,
                                 finish_escrow_xumm, generate_xrpl_timestamp,
                                 is_timestamp_after_current)
 from fastapi import FastAPI, Request
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
 from firebase.firestore_db import write_response_to_firestore
+from gcs.storage import write_to_gcs
 # TODO: Split mainnet and test new. Create Staging, Testing and Production Environments.
 from misc.xrpscan_api import (xrpscan_get_accountBalance,
                               xrpscan_get_accountInfo,
-                              xrpscan_get_accountTransactions)
+                              )
 from models.xrpl_models import CreateEscrowModel, EscrowModel, PaymentRequest
-from payments.payments_xrpl import handle_payment_request
+from wallets.xumm.payments import handle_payment_request
 from starlette.middleware.cors import CORSMiddleware
 from starlette.responses import JSONResponse
-from xrpl.asyncio.ledger import get_fee
-from xrpl.clients import JsonRpcClient, WebsocketClient
 
 app = FastAPI()
 
 load_dotenv()
 
-baseUrl = os.getenv("_BASEURL")
-defaultUrl = os.getenv("_DEFAULT_URL")
-gatewayUrl = os.getenv("_GATEWAY")
+baseUrl = os.environ.get("_BASEURL")
+defaultUrl = os.environ.get("_DEFAULT_URL")
+gatewayUrl = os.environ.get("_GATEWAY")
 origins = [baseUrl, defaultUrl, gatewayUrl]
 
 app.add_middleware(
@@ -45,14 +44,14 @@ app.add_middleware(
 
 templates = Jinja2Templates(directory="templates")
 
-api_key = get_secret("xumm-key")
-api_secret = get_secret("xumm-secret")
-sdk = xumm.XummSdk(api_key, api_secret)
-
-client = JsonRpcClient("https://s.altnet.rippletest.net:51234/")
-clientWebsocket = WebsocketClient("wss://s.altnet.rippletest.net:51233")
 
 # *** Primary Functions ***********************************
+
+@app.get("/xchain_payment_request")
+async def xchain_payment(request: Request):
+    """Payment Request"""
+    response = await handle_xchain_payment_request(payment_request)
+    return response
 
 # XUMM sign in request
 
@@ -194,23 +193,8 @@ def account_info_testnet(address: str):
 
 # *** Transactions ********************************
 
-
-# Returns the transaction fee
-@app.get("/transaction_fee")
-async def transaction_fee():
-    """Get transaction fee"""
-    try:
-        fee = await get_fee(client)
-        response = {"transaction_fee": fee}
-        doc_id = write_response_to_firestore(response, "transaction_fee")
-        return JSONResponse({"doc_id": doc_id, "response": response})
-    except Exception as e:
-        return JSONResponse({"error": str(e)})
-
-
 # Verify a transaction
-
-
+    
 @app.get("/verify_transaction/{tx_hash}/{task_id}")
 async def verify_transaction(tx_hash: str, task_id: str = None):
     """Verify transaction"""
@@ -240,6 +224,20 @@ def account_exists_mainnet(address: str):
     except Exception as e:
         return JSONResponse({"error": str(e)})
 
+# Record transaction history by account.
+
+@app.get("/recordTransactions/{address}")
+def account_exists_mainnet(address: str):
+    """Check if account exists. Mainnet"""
+    try:
+        # Await the result of the asynchronous function
+        transactions = get_transactions(address, 500)
+        write_to_gcs(address, transactions)
+        return JSONResponse(content=transactions)
+    except Exception as e:
+        return JSONResponse({"error": str(e)})
+
+
 
 # Make a payment request
 
@@ -251,51 +249,6 @@ async def generate_timestamp(timestamp: int):
     return response
 
 
-# @ app.get('/subscribe')
-# async def subscribe(request: Request):
-#     accounts=request.query_params.getlist('accounts')
-
-#     if not accounts:
-#         return JSONResponse({"error": "Missing 'accounts' parameter."})
-
-#     try:
-#         result=await account_subscription_sync("subscribe", accounts)
-#         return JSONResponse(result)
-#     except Exception as e:
-#         return JSONResponse({"error": str(e)})
-
-
-# @ app.post('/unsubscribe')
-# async def unsubscribe(request: Request):
-#     accounts=request.query_params.getlist('accounts')
-
-#     if not accounts:
-#         return JSONResponse({"error": "Missing 'accounts' parameter."})
-
-#     try:
-#         result=await account_subscription_sync("unsubscribe", accounts)
-#         return result
-#     except Exception as e:
-#         return JSONResponse({"error": str(e)})
-
-# Payment test
-
-
-# @ app.post('/paymentTest')
-# async def test_payment(request: Request):
-#     try:
-#         asyncio.set_event_loop(asyncio.SelectorEventLoop())
-#         url=asyncio.get_event_loop().run_until_complete(send_payment_request(100000,
-#                                                                                'rB4iz44nvW2yGDBYTkspVfyR2NMsR3NtfF', 'rpaxHGQVgQSXF1HaKGRpLKm6X7eh26v6eV', 'test payment request'))
-#         data={'url': url}
-#     except RuntimeError as e:
-#         print(f"Error occurred: {e}")
-#         data={'url': f"Error occurred: {e}"}
-#         return JSONResponse(data)
-
-#     return JSONResponse(data)
-
-
 @app.get("/", response_class=HTMLResponse)
 async def hello(request: Request):
     """Return a friendly HTTP greeting."""
@@ -303,7 +256,7 @@ async def hello(request: Request):
 
     service = os.environ.get("K_SERVICE", "Unknown service")
     revision = os.environ.get("K_REVISION", "Unknown revision")
-
+    print(baseUrl)
     return templates.TemplateResponse(
         "index.html",
         {

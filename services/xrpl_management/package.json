@@ -1,0 +1,51 @@
+{
+  "name": "xrpl-management",
+  "version": "1.0.0",
+  "description": "XRPL wallet integration service.",
+  "main": "./dist/index.js",
+  "author": "Randy Nolden",
+  "license": "MIT",
+  "private": true,
+  "directories": {
+    "tests": "tests"
+  },
+  "type": "module",
+  "scripts": {
+    "test": "jest",
+    "start": "node dist/index.js",
+    "dev": "npx ts-node src/index.ts",
+    "build": "tsc",
+    "lint": "eslint .",
+    "watch": "tsc --watch"
+  },
+  "dependencies": {
+    "@google-cloud/secret-manager": "^5.0.1",
+    "@ladjs/koa-views": "^9.0.0",
+    "@types/mime": "^4.0.0",
+    "ejs": "^3.1.9",
+    "firebase": "^10.10.0",
+    "firebase-admin": "^12.0.0",
+    "koa": "^2.14.2",
+    "koa-bodyparser": "^4.4.1",
+    "koa-json": "^2.0.2",
+    "koa-router": "^12.0.1",
+    "koa-static": "^5.0.0",
+    "mime": "^4.0.1",
+    "path": "^0.12.7",
+    "xrpl": "^2.14.0",
+    "xumm": "^1.7.6"
+  },
+  "devDependencies": {
+    "@types/koa-bodyparser": "^4.3.12",
+    "@types/koa-json": "^2.0.23",
+    "@types/koa-router": "^7.4.8",
+    "@types/koa-static": "^4.0.4",
+    "@types/koa__router": "^12.0.4",
+    "@types/node": "^20.12.4",
+    "jest": "^27.2.4",
+    "nodemon": "^2.0.13",
+    "ts-jest": "^29.1.2",
+    "ts-node": "^10.2.1",
+    "typescript": "^5.3.3"
+  }
+}

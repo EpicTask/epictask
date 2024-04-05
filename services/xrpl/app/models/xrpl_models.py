@@ -14,6 +14,15 @@ class PaymentRequest(BaseModel):
     user_token: str | None = None
     task_id: str | None = None
 
+class XChainPaymentRequest(BaseModel):
+    """Payment request model"""
+    type = 'Payment'
+    amount: int
+    source: str
+    destination: str
+    note: str | None = None
+    user_token: str | None = None
+    task_id: str | None = None
 
 class CreateEscrowModel(BaseModel):
     """Create escrow model"""

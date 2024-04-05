@@ -7,8 +7,8 @@ from xrpl.clients import JsonRpcClient, WebsocketClient
 class XRPLClient:
     """XRPL Client"""
     def __init__(self):
-        self.client_address = JsonRpcClient(os.getenv('JSONRPCCLIENT'))
-        self.client_websocket = WebsocketClient(os.getenv('WEBSOCKETCLIENT'))
+        self.client_address = JsonRpcClient(os.environ.get('JSONRPCCLIENT'))
+        self.client_websocket = WebsocketClient(os.environ.get('WEBSOCKETCLIENT'))
 
 
     def get_client(self):

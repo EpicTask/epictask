@@ -100,7 +100,7 @@ def lookup_escrow(account: str):
 
     return escrows
 
-def get_transactions(wallet_address):
+def get_transactions(wallet_address, limit: int = 25):
     transactions = []
     marker = None
 
@@ -109,7 +109,7 @@ def get_transactions(wallet_address):
         # Create a transaction history request
         transaction_history_request = AccountTx(
             account=wallet_address,
-            limit=25,  # Number of transactions to retrieve
+            limit=limit,  # Number of transactions to retrieve
             marker=marker
         )
         # Send the request and wait for the response

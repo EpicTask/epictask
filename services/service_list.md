@@ -3,8 +3,8 @@ EpicTask is a platform that utilizes XRP, the digital asset native to the XRP Le
 
 ## Micro-Service List:
 
-### 1. XRPL
-Description: Controls all functionality related to the xrp ledger and wallet integration.
+### 1. XRPL Management
+Description: Controls all functionality related to the xrp ledger and wallet integration. There is a directory for each wallet provider that can be accessed by the user.
 
 ### 2. Verification
 Description: Ensures transaction completion and provides AI-powered verification when applicable.

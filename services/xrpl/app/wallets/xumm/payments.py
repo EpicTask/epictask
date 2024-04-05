@@ -21,6 +21,9 @@ async def handle_payment_request(payment_request: PaymentRequest):
     else:
         return await send_payment_request(payment_request)
 
+async def handle_xchain_payment_request(payment_request: PaymentRequest):
+    """Handle payment request"""
+    return await send_xchain_payment_request(payment_request)
 
 async def send_payment_request(payment_request: PaymentRequest):
     """Send payment request"""
@@ -39,6 +42,33 @@ async def send_payment_request(payment_request: PaymentRequest):
         "custom_meta": {
             "blob": {"task_id": payment_request.task_id, "function": "payment_request"}
         },
+    }
+
+    # Create the payment request with the XUMM SDK
+    try:
+        subscription = sdk.payload.create(xumm_payload)
+        write_response_to_firestore(
+            subscription.to_dict(), "payment_request", payment_request.task_id
+        )
+        response = json.dumps(subscription.to_dict(), indent=4, sort_keys=True)
+        # url = '{}'.format(subscription.next.always)
+        return response
+    except Exception as e:
+        print(f"Error creating subscription: {e}")
+        # Handle the error as appropriate
+        return f"Error creating subscription: {e}"
+
+async def send_xchain_payment_request(payment_request: PaymentRequest):
+    """Send payment request"""
+    url = ""
+    # Create the XUMM payment request payload
+    xumm_payload = {
+            "TransactionType": "XChainAccountCreateCommit",
+    "Account": wallet_lockingchain.address,
+    "Destination": wallet_issuingchain.address,
+    "XChainBridge": xchainbridge,
+    "SignatureReward": "100",
+    "Amount": "5000000000"
     }
 
     # Create the payment request with the XUMM SDK
