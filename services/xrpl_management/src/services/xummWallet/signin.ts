@@ -1,7 +1,7 @@
 import { XummSDK } from "../../config/clients";
-import { XummPayload } from "./types";
+import { XummPayload } from "./typings";
 import { writeResponseToDatabase } from "../../controllers/database";
-import { XummFunctionType } from "./types";
+import { XummFunctionType } from "./typings";
 
 export const connectWallet = async (uid: string) => {
   const xummSdk = new XummSDK();

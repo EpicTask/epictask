@@ -1,5 +1,5 @@
 import { db } from "../config/clients/firebase";
-import { addDoc, collection, Timestamp } from "firebase/firestore";
+import { addDoc, collection, Timestamp, doc } from "firebase/firestore";
 import { config } from "../config/config.dev";
 
 export const writeResponseToDatabase = async (
@@ -25,4 +25,8 @@ export const writeResponseToDatabase = async (
     console.error("Error adding document: ", e);
     return null;
   }
+};
+export const createIdentifier = (): string => {
+  doc(db, config.xrplServiceCollection).id;
+  return doc(db, config.xrplServiceCollection).id;
 };

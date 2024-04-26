@@ -33,11 +33,11 @@ export class AccountService {
     this.xrplClient.getClient().request(accountSubscribe);
   };
 
-  getNetworkID = (account: string): number => {
+  getNetworkID = (): number => {
     return this.xrplClient.getClient().networkID;
   };
 
-  getConnectionStatus = (account: string): Connection => {
+  getConnectionStatus = (): Connection => {
     return this.xrplClient.getClient().connection;
   };
 }
