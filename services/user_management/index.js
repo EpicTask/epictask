@@ -254,7 +254,6 @@ app.post('/linkChild', async (req, res) => {
 });
 
 // Delete a specific User
-
 app.get('/', (req, res) => {
   res.send('Welcome to my service. Service is running successfully.');
 });
