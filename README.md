@@ -1,5 +1,5 @@
 # EpicTask
-Empowering Children with Financial Responsibility
+Empowering Children with Financial Responsibility!
 
 Website: [https://epictask.app/](https://epictask.app/)
 
