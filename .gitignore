@@ -1,6 +1,7 @@
 services/frontend_nuxt3
 services/frontend_nuxt/nuxt.config.js
 services/frontend_nuxt/.env
+services/frontend_mobile/
 services/task_management/.env
 services/xrpl/.env
 services/xrpl_management/.yarn
