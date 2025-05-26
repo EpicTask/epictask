@@ -23,7 +23,7 @@ const Screen2 = () => {
           }}
         >
           <Image
-            source={IMAGES.ob_k_2}
+            source={IMAGES.onboarding_kid_2}
             style={{
               width: responsiveWidth(100),
               height: responsiveHeight(100),

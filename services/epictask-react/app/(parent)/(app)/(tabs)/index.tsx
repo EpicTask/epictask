@@ -12,7 +12,16 @@ import {
 import { ICONS, IMAGES } from "@/assets";
 import { COLORS } from "@/constants/Colors";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { Image, ScrollView, StyleSheet, View } from "react-native";
+import {
+  Image,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  TouchableOpacity,
+  View,
+} from "react-native";
+import { Link, router } from "expo-router";
+import React from "react";
 
 export default function HomeScreen() {
   return (
@@ -26,13 +35,17 @@ export default function HomeScreen() {
               alignItems: "center",
             }}
           >
-            <Image
-              source={IMAGES.profile}
-              style={{
-                height: responsiveHeight(8),
-                width: responsiveHeight(8),
-              }}
-            />
+            <Link href="/screens/settings/personal-info" asChild>
+              <Pressable>
+                <Image
+                  source={IMAGES.profile}
+                  style={{
+                    height: responsiveHeight(8),
+                    width: responsiveHeight(8),
+                  }}
+                />
+              </Pressable>
+            </Link>
             <View
               style={{
                 padding: 14,
@@ -40,7 +53,9 @@ export default function HomeScreen() {
                 borderRadius: responsiveWidth(100),
               }}
             >
-              {ICONS.SETTINGS.bell}
+              <Link href="/screens/notification-screen" asChild>
+                <Pressable>{ICONS.SETTINGS.bell}</Pressable>
+              </Link>
             </View>
           </View>
           <View style={{ gap: 10 }}>
@@ -84,7 +99,17 @@ export default function HomeScreen() {
             </View>
           </View>
           <View style={{ gap: 10, paddingVertical: 20 }}>
-            <Heading title="Recent tasks" icon={<HomeIcon fill="black" />} />
+            <Heading
+              title="Recent tasks"
+              icon={
+                <Link href="/screens/manage-tasks/assign-task" asChild>
+                  <Pressable>
+                    <HomeIcon fill="black" />
+                  </Pressable>
+                </Link>
+              }
+            />
+
             <View style={{ flexDirection: "row", gap: 10 }}></View>
             {Array(3)
               .fill(0)

@@ -130,7 +130,9 @@ const SettingsScreen = () => {
           <SettingButton
             icon={ICONS.SETTINGS.bell}
             text={"Notifications"}
-            onPress={() => {}}
+            onPress={() => {
+              router.push("/screens/settings/notifications" as any);
+            }}
           />
           <Text
             style={{

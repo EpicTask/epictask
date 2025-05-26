@@ -98,9 +98,9 @@ const Register = () => {
           >
             <View
               style={{
-                alignItems: "flex-start",
+                alignItems: "center",
                 width: "100%",
-                paddingVertical: 6,
+                paddingVertical: responsiveHeight(2),
               }}
             >
               <TouchableOpacity
@@ -117,10 +117,10 @@ const Register = () => {
                 <CustomText
                   style={{
                     color: COLORS.black,
-                    fontSize: responsiveFontSize(1.7),
+                    fontSize: responsiveFontSize(1.75),
                   }}
                 >
-                  Yse, i agree to the terms and conditioins
+                  Yes, I agree to the Terms & Conditioins
                 </CustomText>
               </TouchableOpacity>
             </View>
@@ -128,7 +128,7 @@ const Register = () => {
               <AuthButton
                 fill={true}
                 text="Sign Up"
-                height={responsiveHeight(7)}
+                height={responsiveHeight(6)}
                 onPress={() => {
                   router.push("/(app)/screens/create-profile" as any);
                 }}
@@ -138,7 +138,7 @@ const Register = () => {
               style={{
                 flexDirection: "row",
                 gap: 4,
-                paddingBottom: responsiveHeight(10),
+                paddingBottom: responsiveHeight(5),
               }}
               onPress={() => {
                 router.back();

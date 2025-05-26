@@ -18,6 +18,7 @@ import { router } from "expo-router";
 import { COLORS } from "@/constants/Colors";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { StyleSheet, Text, TextInput, View } from "react-native";
+import AuthButton from "@/components/buttons/AuthButton";
 
 const Register = () => {
 
@@ -83,11 +84,11 @@ const Register = () => {
               )}
             />
           </View>
-          <CustomButton
+          <AuthButton
             fill={true}
             onPress={() => router.back()}
             text="Register"
-            height={responsiveHeight(7)}
+            height={responsiveHeight(6)}
           />
         </View>
         <View

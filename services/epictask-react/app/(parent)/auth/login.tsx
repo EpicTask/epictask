@@ -70,7 +70,7 @@ const Login = () => {
               <AuthButton
                 fill={true}
                 onPress={() => {
-                  router.push("/(app)/(tabs)" as any);
+              router.replace("/(app)/(tabs)" as any);
                 }}
                 text="Login"
               />

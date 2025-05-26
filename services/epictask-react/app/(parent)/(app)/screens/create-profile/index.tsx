@@ -15,6 +15,7 @@ import { COLORS } from "@/constants/Colors";
 import { Image, StyleSheet, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import CustomText from "@/components/CustomText";
+import AuthButton from "@/components/buttons/AuthButton";
 
 const CreateProfile = () => {
   return (
@@ -62,13 +63,13 @@ const CreateProfile = () => {
           />
         </View>
         <View style={{ paddingVertical: 30 }}>
-          <CustomButton
+          <AuthButton
             fill={true}
             onPress={() => {
-              router.push("/(tabs)" as any);
+          router.replace("/(app)/(tabs)" as any);
             }}
             text="Complete"
-            height={responsiveHeight(8)}
+            height={responsiveHeight(6)}
           />
         </View>
       </View>

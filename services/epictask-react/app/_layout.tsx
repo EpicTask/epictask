@@ -12,6 +12,7 @@ import { Stack } from "expo-router";
 import { useFonts } from "expo-font";
 import { StatusBar } from "expo-status-bar";
 import { useColorScheme } from "@/hooks/useColorScheme";
+import React from "react";
 
 
 // Prevent the splash screen from auto-hiding before asset loading is complete.

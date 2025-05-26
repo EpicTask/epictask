@@ -12,6 +12,7 @@ import CustomInput from "@/components/custom-input/CustomInput";
 import CustomButton from "@/components/buttons/CustomButton";
 import { router } from "expo-router";
 import CustomText from "@/components/CustomText";
+import AuthButton from "@/components/buttons/AuthButton";
 
 const UpdatePassword = () => {
   const [currentPassword, setCurrentPassword] = useState("");
@@ -57,13 +58,12 @@ const UpdatePassword = () => {
             />
           </View>
         </View>
-        <CustomButton
+        <AuthButton
           fill={true}
           onPress={() => {
             router.back();
           }}
           text="Confirm"
-          height={responsiveHeight(8)}
         />
       </View>
     </SafeAreaView>

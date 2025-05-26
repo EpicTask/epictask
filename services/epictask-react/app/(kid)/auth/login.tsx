@@ -18,6 +18,7 @@ import { router } from "expo-router";
 import { COLORS } from "@/constants/Colors";
 import { StyleSheet, TextInput, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import AuthButton from "@/components/buttons/AuthButton";
 
 const Login = () => {
   const CELL_COUNT = 4;
@@ -103,13 +104,13 @@ const Login = () => {
               )}
             />
           </View>
-          <CustomButton
+          <AuthButton
             fill={true}
             onPress={() => {
-              router.push("/(kid)/(app)/(tabs)");
+          router.replace("/(kid)/(app)/(tabs)");
             }}
             text="Login"
-            height={responsiveHeight(7)}
+            height={responsiveHeight(6)}
           />
         </View>
         <View

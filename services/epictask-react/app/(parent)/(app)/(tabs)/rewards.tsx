@@ -19,6 +19,7 @@ import {
 import { COLORS } from "@/constants/Colors";
 import { AntDesign } from "@expo/vector-icons";
 import { SafeAreaView } from "react-native-safe-area-context";
+import React from "react";
 
 const RewardHistoryComponent = () => {
   return (

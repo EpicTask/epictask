@@ -12,6 +12,7 @@ import { ICONS, IMAGES } from "@/assets";
 import { router } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Image, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import AuthButton from "@/components/buttons/AuthButton";
 
 const PersonalInformation = () => {
 
@@ -95,13 +96,13 @@ const PersonalInformation = () => {
           />
         </View>
         <View style={{ paddingVertical: 30 }}>
-          <CustomButton
+          <AuthButton
             fill={true}
             onPress={() => {
               router.back();
             }}
             text="Update"
-            height={responsiveHeight(8)}
+            height={responsiveHeight(6)}
           />
         </View>
       </View>

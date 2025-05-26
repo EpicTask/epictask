@@ -33,14 +33,15 @@ import UploadIcon from "./icons/settings/wallet/Upload"
 import DownloadIcon from "./icons/settings/wallet/Download"
 import TransferIcon from "./icons/settings/wallet/Transfer"
 import WalletIcon from "./icons/settings/Wallet"
+import React from "react"
 
 export const IMAGES = {
-    ob_p_1: require("./images/ob-p-1.png"),
-    ob_p_2: require("./images/ob-p-2.png"),
-    ob_p_3: require("./images/ob-p-3.png"),
-    ob_k_1: require("./images/ob-k-1.png"),
-    ob_k_2: require("./images/ob-k-2.png"),
-    ob_k_3: require("./images/ob-k-3.png"),
+    onboarding_parent_1: require("./images/ob-p-1.png"),
+    onboarding_parent_2: require("./images/ob-p-2.png"),
+    onboarding_parent_3: require("./images/ob-p-3.png"),
+    onboarding_kid_1: require("./images/ob-k-1.png"),
+    onboarding_kid_2: require("./images/ob-k-2.png"),
+    onboarding_kid_3: require("./images/ob-k-3.png"),
     role: require("./images/role.png"),
     bhalu: require("./images/bhalu.png"),
     img_bg: require("./images/imgbg.png"),

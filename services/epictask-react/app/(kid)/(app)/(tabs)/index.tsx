@@ -23,6 +23,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { router } from "expo-router";
 import CustomText from "@/components/CustomText";
 import KidArrowIcon from "@/assets/icons/KidArrow";
+import React from "react";
 
 export default function HomeScreen() {
   return (
@@ -40,13 +41,13 @@ export default function HomeScreen() {
                 variant="semiBold"
                 style={{ fontSize: responsiveFontSize(4) }}
               >
-                Hallo,
+                Hello,
               </CustomText>
               <CustomText
                 variant="semiBold"
                 style={{ fontSize: responsiveFontSize(3.7), fontWeight: "500" }}
               >
-                John Kanic! 👋
+                John Kai! 👋
               </CustomText>
               <CustomText style={{ paddingRight: 40, color: COLORS.grey }}>
                 Ready for some fun tasks and rewards today?
