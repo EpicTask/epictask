@@ -1,6 +1,6 @@
 import { Connection } from "xrpl/dist/npm/client/connection";
-import { XRPLClient } from "../../config/clients/xrpl";
-import { AccountSubscribe } from "./typings";
+import { XRPLClient } from "../../config/clients/xrpl.js";
+import { AccountSubscribe } from "./typings/index.js";
 
 export class AccountService {
   private xrplClient: XRPLClient;
@@ -10,21 +10,42 @@ export class AccountService {
     this.xrplClient.connect(); // Connect to the XRPL network
   }
 
-  getBalances = async (account: string): Promise<any> => {
+  getBalances = async (
+    address: string
+  ): Promise<Array<{
+    value: string;
+    currency: string;
+    issuer?: string | undefined;
+  }> | null> => {
     try {
-      return await this.xrplClient.getClient().getBalances(account);
+      return await this.xrplClient.getClient().getBalances(address);
     } catch (error) {
       console.error("Error occurred while getting balances:", error);
       return null;
     }
   };
 
-  getXrpBalance = async (account: string): Promise<any> => {
+  getXrpBalance = async (address: string): Promise<number> => {
     try {
-      return await this.xrplClient.getClient().getXrpBalance(account);
+      console.log("Fetching XRP balance for address:", address);
+      if (!address) {
+        console.error("Address is required to fetch XRP balance.");
+        return 0;
+      }
+      // Ensure the client is connected before making the request
+      if (this.xrplClient.getClient().isConnected()) {
+        console.error("XRPL client is connected.");
+
+        return await this.xrplClient.getClient().getXrpBalance(address);
+      } else {
+        console.error(
+          "XRPL client is not connected. Please check the connection."
+        );
+        return 0;
+      }
     } catch (error) {
       console.error("Error occurred while getting XRP balance:", error);
-      return null;
+      return 0;
     }
   };
 
@@ -33,7 +54,7 @@ export class AccountService {
     this.xrplClient.getClient().request(accountSubscribe);
   };
 
-  getNetworkID = (): number => {
+  getNetworkID = (): number | undefined => {
     return this.xrplClient.getClient().networkID;
   };
 
@@ -42,7 +63,7 @@ export class AccountService {
   };
 }
 
-const accountService = new AccountService();
-let newSubscription = accountService.subscribeToAccount(["rwNn3ptJBkLuqoNrTEAgJ5Y2ZVqaXb1ccV"]);
-console.log(newSubscription);
-console.log('Done');
+export const accountService = new AccountService();
+// let newSubscription = accountService.subscribeToAccount(["rwNn3ptJBkLuqoNrTEAgJ5Y2ZVqaXb1ccV"]);
+// console.log(newSubscription);
+// console.log('Done');

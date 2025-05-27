@@ -4,7 +4,7 @@ export class XRPLClient {
   private client: Client;
 
   constructor() {
-    this.client = new Client(process.env.WEBSOCKETCLIENT,
+    this.client = new Client(process.env.XRPL_TESTNET_WSS || 'wss://s.altnet.rippletest.net:51233',
     );
   }
 

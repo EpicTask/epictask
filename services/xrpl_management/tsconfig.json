@@ -1,13 +1,23 @@
 {
   "compilerOptions": {
-    "outDir": "./dist",
-    "target": "es2017",
-    "rootDir": "./src",
-    "module": "esnext",
+    "target": "ES2020", // Or your desired ECMAScript target
+    "module": "ESNext",  // Or "CommonJS" depending on your output and runtime
     "moduleResolution": "node",
-    // "strict": true,
-    "skipLibCheck": false
+    "outDir": "./dist",
+    "rootDir": "./src",
+    "strict": true,
+    "esModuleInterop": true, // This option implies allowSyntheticDefaultImports and is generally recommended
+    // OR explicitly:
+    // "allowSyntheticDefaultImports": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true
+    // ... other options
   },
-  "include": ["src/**/*.ts", "src/tests/*.ts"],
-  "exclude": ["node_modules"]
+  "include": [
+    "src/**/*"
+  ],
+  "exclude": [
+    "node_modules",
+    "**/*.test.ts" // if your tests are not meant to be compiled in the main build
+  ]
 }

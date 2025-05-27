@@ -31,7 +31,7 @@ describe("AccountService", () => {
 
   it("should get XRP balance", async () => {
     const mockAccount = "mockAccount";
-    const mockXrpBalance = "500";
+    const mockXrpBalance = 500;
     jest
       .fn(mockXRPLClient.getClient().getXrpBalance)
       .mockResolvedValue(mockXrpBalance);

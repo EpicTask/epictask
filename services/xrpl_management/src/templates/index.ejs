@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= title %></title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; background-color: #f4f4f4; color: #333; }
+        .container { background-color: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
+        h1, h2 { color: #333; }
+        .section { margin-bottom: 30px; padding: 15px; border: 1px solid #ddd; border-radius: 5px; }
+        label { display: block; margin-bottom: 5px; font-weight: bold; }
+        input[type="text"], input[type="number"], input[type="password"] {
+            width: calc(100% - 22px);
+            padding: 10px;
+            margin-bottom: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+        button {
+            background-color: #007bff;
+            color: white;
+            padding: 10px 15px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-right: 5px;
+            margin-bottom: 5px;
+        }
+        button:hover { background-color: #0056b3; }
+        #responseArea {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #e9e9e9;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            white-space: pre-wrap; /* Allows line breaks and preserves spaces */
+            word-wrap: break-word; /* Breaks long words */
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        .api-status { margin-top: 10px; font-style: italic; }
+        .xumm-qr-link { margin-top: 10px; }
+        .section-response {
+            margin-top: 15px;
+            padding: 10px;
+            background-color: #f0f0f0;
+            border: 1px solid #dcdcdc;
+            border-radius: 4px;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1><%= title %> - XRPL Management Dashboard</h1>
+
+        <div class="section">
+            <h2>Xumm Wallet</h2>
+            <label for="userId">User ID (for Xumm connection):</label>
+            <input type="text" id="userId" placeholder="Enter your unique user ID" value="test-user-123">
+            <button onclick="connectXummWallet()">Connect Xumm Wallet (Sign In)</button>
+            <div id="xummQrLink" class="xumm-qr-link"></div>
+            <br>
+            <div id="xummWalletResponse" class="section-response">Xumm Wallet responses will appear here...</div>
+            <label for="userToken">Xumm User Token (obtained after sign-in, for subsequent requests):</label>
+            <input type="text" id="userToken" placeholder="Xumm User Token (optional)">
+        </div>
+
+        <div class="section">
+            <h2>XRPL Account Actions</h2>
+            <label for="xrplAccount">XRPL Account Address:</label>
+            <input type="text" id="xrplAccount" placeholder="e.g., rP9jPyP5VanV..." value="ranheEbv6ZdHpFZUEh9HJKYvEDAZNtXFHM">
+            <button onclick="getBalances()">Get Balances</button>
+            <button onclick="getXrpBalance()">Get XRP Balance</button>
+            <button onclick="getAccountInfo()">Get Account Info</button>
+            <button onclick="checkAccountExists()">Check Account Exists</button>
+            <div id="xrplAccountActionsResponse" class="section-response">XRPL Account Action responses will appear here...</div>
+        </div>
+
+        <div class="section">
+            <h2>Xumm Payments</h2>
+            <label for="paymentSource">Source Account (Your XRPL Account):</label>
+            <input type="text" id="paymentSource" placeholder="Your XRPL account for payment">
+            <label for="paymentDestination">Destination Account:</label>
+            <input type="text" id="paymentDestination" placeholder="Recipient's XRPL account">
+            <label for="paymentAmount">Amount (XRP):</label>
+            <input type="number" id="paymentAmount" placeholder="Amount in XRP">
+            <label for="paymentTaskId">Task ID (optional):</label>
+            <input type="text" id="paymentTaskId" placeholder="Optional Task ID">
+            <button onclick="makePayment()">Make Payment via Xumm</button>
+            <div id="xummPaymentsResponse" class="section-response">Xumm Payment responses will appear here...</div>
+        </div>
+
+        <div class="section">
+            <h2>Xumm Escrow Management</h2>
+            <p>Ensure your Xumm User Token is set above if required by your backend for these actions.</p>
+            
+            <h3>Create Escrow</h3>
+            <label for="escrowAccountCreate">Account (Creator):</label>
+            <input type="text" id="escrowAccountCreate" placeholder="Your XRPL account">
+            <label for="escrowDestinationCreate">Destination Account:</label>
+            <input type="text" id="escrowDestinationCreate" placeholder="Recipient's XRPL account">
+            <label for="escrowAmountCreate">Amount (XRP):</label>
+            <input type="number" id="escrowAmountCreate" placeholder="Amount in XRP">
+            <label for="escrowFinishAfterCreate">Finish After (Unix Timestamp, optional):</label>
+            <input type="number" id="escrowFinishAfterCreate" placeholder="e.g., 1672531200">
+            <label for="escrowCancelAfterCreate">Cancel After (Unix Timestamp, optional):</label>
+            <input type="number" id="escrowCancelAfterCreate" placeholder="e.g., 1672617600">
+            <label for="escrowTaskIdCreate">Task ID:</label>
+            <input type="text" id="escrowTaskIdCreate" placeholder="Task ID for escrow">
+            <label for="escrowUserIdCreate">User ID:</label>
+            <input type="text" id="escrowUserIdCreate" placeholder="Your User ID">
+            <button onclick="createEscrow()">Create Escrow</button>
+
+            <h3>Finish Escrow</h3>
+            <label for="escrowAccountFinish">Account (Executor):</label>
+            <input type="text" id="escrowAccountFinish" placeholder="Your XRPL account">
+            <label for="escrowOwnerFinish">Owner (Creator of Escrow):</label>
+            <input type="text" id="escrowOwnerFinish" placeholder="Escrow creator's account">
+            <label for="escrowOfferSeqFinish">Offer Sequence:</label>
+            <input type="text" id="escrowOfferSeqFinish" placeholder="Escrow's OfferSequence">
+            <label for="escrowTaskIdFinish">Task ID (optional):</label>
+            <input type="text" id="escrowTaskIdFinish" placeholder="Optional Task ID">
+            <button onclick="finishEscrow()">Finish Escrow</button>
+
+            <h3>Cancel Escrow</h3>
+            <label for="escrowAccountCancel">Account (Executor or Owner):</label>
+            <input type="text" id="escrowAccountCancel" placeholder="Your XRPL account">
+            <label for="escrowOwnerCancel">Owner (Creator of Escrow):</label>
+            <input type="text" id="escrowOwnerCancel" placeholder="Escrow creator's account">
+            <label for="escrowOfferSeqCancel">Offer Sequence:</label>
+            <input type="text" id="escrowOfferSeqCancel" placeholder="Escrow's OfferSequence">
+            <label for="escrowTaskIdCancel">Task ID (optional):</label>
+            <input type="text" id="escrowTaskIdCancel" placeholder="Optional Task ID">
+            <button onclick="cancelEscrow()">Cancel Escrow</button>
+            <div id="xummEscrowResponse" class="section-response">Xumm Escrow responses will appear here...</div>
+        </div>
+
+    </div>
+
+    <script>
+        const xummQrLinkDiv = document.getElementById('xummQrLink');
+
+        async function apiCall(endpoint, method = 'POST', body = null, targetResponseElementId) {
+            const targetResponseArea = document.getElementById(targetResponseElementId);
+            if (!targetResponseArea) {
+                console.error(`Response area with ID '${targetResponseElementId}' not found.`);
+                return;
+            }
+            targetResponseArea.textContent = 'Loading...';
+            xummQrLinkDiv.innerHTML = ''; // Clear previous QR link
+            try {
+                const options = {
+                    method: method,
+                    headers: { 'Content-Type': 'application/json' },
+                };
+                if (body) {
+                    options.body = JSON.stringify(body);
+                }
+                const response = await fetch(endpoint, options); // Removed /api prefix
+                const data = await response.json();
+                
+                targetResponseArea.textContent = JSON.stringify(data, null, 2);
+
+                if (data.qrUrl) { // Specific for Xumm connect
+                    xummQrLinkDiv.innerHTML = `<p>Scan QR or open link: <a href="${data.qrUrl}" target="_blank">${data.qrUrl}</a></p>`;
+                }
+                 if (data.next && data.next.always) { // General Xumm payload response
+                    xummQrLinkDiv.innerHTML = `<p>Xumm Interaction URL: <a href="${data.next.always}" target="_blank">${data.next.always}</a></p>`;
+                }
+
+            } catch (error) {
+                console.error('API Call Error:', error);
+                targetResponseArea.textContent = `Error: ${error.message}\n\nIs the backend server running and are the API endpoints correctly defined?`;
+            }
+        }
+
+        function getInputValue(id, type = 'string') {
+            const value = document.getElementById(id).value;
+            if (type === 'number') return value ? parseFloat(value) : null;
+            if (type === 'integer') return value ? parseInt(value, 10) : null;
+            return value || null;
+        }
+
+        function connectXummWallet() {
+            const uid = getInputValue('userId');
+            if (!uid) {
+                alert('Please enter a User ID.');
+                return;
+            }
+            apiCall(`/xummSignInRequest/${uid}`, 'GET', null, 'xummWalletResponse');
+        }
+
+        function getBalances() {
+            const account = getInputValue('xrplAccount');
+            if (!account) {
+                alert('Please enter an XRPL Account Address.');
+                return;
+            }
+            apiCall(`/balance/${account}`, 'GET', null, 'xrplAccountActionsResponse');
+        }
+
+        function getXrpBalance() {
+            const account = getInputValue('xrplAccount');
+            if (!account) {
+                alert('Please enter an XRPL Account Address.');
+                return;
+            }
+            // Mapped to /balance/:address as per current index.ts
+            apiCall(`/balance/${account}`, 'GET', null, 'xrplAccountActionsResponse');
+        }
+
+        function getAccountInfo() {
+            const account = getInputValue('xrplAccount');
+            if (!account) {
+                alert('Please enter an XRPL Account Address.');
+                return;
+            }
+            apiCall(`/account_info/${account}`, 'GET', null, 'xrplAccountActionsResponse');
+        }
+
+        function checkAccountExists() {
+            const account = getInputValue('xrplAccount');
+            if (!account) {
+                alert('Please enter an XRPL Account Address.');
+                return;
+            }
+            apiCall(`/account_exists/${account}`, 'GET', null, 'xrplAccountActionsResponse');
+        }
+
+        function makePayment() {
+            const source = getInputValue('paymentSource') || getInputValue('xrplAccount'); // Fallback to main XRPL account
+            const destination = getInputValue('paymentDestination');
+            const amount = getInputValue('paymentAmount', 'number');
+            const user_token = getInputValue('userToken');
+            const task_id = getInputValue('paymentTaskId');
+
+            if (!source || !destination || amount === null || amount <= 0) {
+                alert('Please fill in Source, Destination, and a valid Amount for payment.');
+                return;
+            }
+            
+            const payload = { type: 'Payment', source, destination, amount, user_token, task_id };
+            apiCall('/payment_request', 'POST', payload, 'xummPaymentsResponse');
+        }
+
+        function createEscrow() {
+            const payload = {
+                account: getInputValue('escrowAccountCreate') || getInputValue('xrplAccount'),
+                destination: getInputValue('escrowDestinationCreate'),
+                amount: getInputValue('escrowAmountCreate', 'number'),
+                finish_after: getInputValue('escrowFinishAfterCreate', 'integer'),
+                cancel_after: getInputValue('escrowCancelAfterCreate', 'integer'),
+                task_id: getInputValue('escrowTaskIdCreate'),
+                user_id: getInputValue('escrowUserIdCreate') || getInputValue('userId'),
+                user_token: getInputValue('userToken')
+            };
+
+            if (!payload.account || !payload.destination || !payload.amount || !payload.task_id || !payload.user_id) {
+                alert('Please fill in all required fields for Create Escrow (Account, Destination, Amount, Task ID, User ID).');
+                return;
+            }
+            apiCall('/create_escrow', 'POST', payload, 'xummEscrowResponse');
+        }
+
+        function finishEscrow() {
+            const payload = {
+                account: getInputValue('escrowAccountFinish') || getInputValue('xrplAccount'),
+                owner: getInputValue('escrowOwnerFinish'),
+                offer_sequence: getInputValue('escrowOfferSeqFinish'),
+                task_id: getInputValue('escrowTaskIdFinish'),
+                user_id: getInputValue('userId'), // Assuming current user is finishing
+                user_token: getInputValue('userToken')
+            };
+
+             if (!payload.account || !payload.owner || !payload.offer_sequence) {
+                alert('Please fill in Account, Owner, and Offer Sequence for Finish Escrow.');
+                return;
+            }
+            apiCall('/finish_escrow_xumm', 'POST', payload, 'xummEscrowResponse');
+        }
+
+        function cancelEscrow() {
+            const payload = {
+                account: getInputValue('escrowAccountCancel') || getInputValue('xrplAccount'),
+                owner: getInputValue('escrowOwnerCancel'),
+                offer_sequence: getInputValue('escrowOfferSeqCancel'),
+                task_id: getInputValue('escrowTaskIdCancel'),
+                user_id: getInputValue('userId'), // Assuming current user is cancelling
+                user_token: getInputValue('userToken')
+            };
+
+            if (!payload.account || !payload.owner || !payload.offer_sequence) {
+                alert('Please fill in Account, Owner, and Offer Sequence for Cancel Escrow.');
+                return;
+            }
+            apiCall('/cancel_escrow_xumm', 'POST', payload, 'xummEscrowResponse');
+        }
+
+        // Auto-fill some fields for convenience if a primary XRPL account is entered
+        const xrplAccountInput = document.getElementById('xrplAccount');
+        if (xrplAccountInput) {
+            xrplAccountInput.addEventListener('change', (event) => {
+                const accountValue = event.target.value;
+                if (accountValue) {
+                    ['paymentSource', 'escrowAccountCreate', 'escrowAccountFinish', 'escrowAccountCancel'].forEach(id => {
+                        const field = document.getElementById(id);
+                        if (field && !field.value) { // Only fill if empty
+                            field.value = accountValue;
+                        }
+                    });
+                }
+            });
+        }
+         // Auto-fill User ID for escrow if main User ID is entered
+        const mainUserIdInput = document.getElementById('userId');
+        if (mainUserIdInput) {
+            mainUserIdInput.addEventListener('change', (event) => {
+                const userIdValue = event.target.value;
+                if (userIdValue) {
+                    const escrowUserIdField = document.getElementById('escrowUserIdCreate');
+                    if (escrowUserIdField && !escrowUserIdField.value) {
+                        escrowUserIdField.value = userIdValue;
+                    }
+                }
+            });
+        }
+
+    </script>
+</body>
+</html>
