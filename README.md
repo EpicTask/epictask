@@ -30,7 +30,7 @@ Secure and Reliable: The XRPL provides a secure and reliable environment for tas
 The Epic Task application follows a microservices architecture to achieve modularity, scalability, and maintainability. It consists of the following key components:
 
 1. Frontend:
-   - The frontend is built using Flutter/Dart to provide a responsive and interactive user interface.
+   - The frontend is built using React to provide a responsive and interactive user interface.
    - It communicates with the backend services through well-defined APIs.
 
 2. Backend Services:
