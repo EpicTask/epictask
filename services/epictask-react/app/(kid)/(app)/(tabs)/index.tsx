@@ -47,7 +47,7 @@ export default function HomeScreen() {
                 variant="semiBold"
                 style={{ fontSize: responsiveFontSize(3.7), fontWeight: "500" }}
               >
-                John Kai! 👋
+                Kai Kai! 👋
               </CustomText>
               <CustomText style={{ paddingRight: 40, color: COLORS.grey }}>
                 Ready for some fun tasks and rewards today?

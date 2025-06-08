@@ -12,7 +12,7 @@ const CustomButton = ({
   text,
   fill,
   onPress,
-  height = responsiveHeight(7),
+  height = responsiveHeight(6),
 }: {
   text: string;
   fill: boolean;
@@ -34,7 +34,7 @@ const CustomButton = ({
           flex: 1,
           height: height,
           paddingHorizontal: 20,
-          paddingVertical: 10,
+          paddingVertical: 15,
           borderRadius: responsiveWidth(100),
         }}
       >

@@ -10,6 +10,8 @@ import {
 import { ICONS, IMAGES } from "@/assets";
 import { COLORS } from "@/constants/Colors";
 import { View, Image, StyleSheet } from "react-native";
+import { router } from "expo-router";
+
 
 interface TaskCardProps {
   name: string;
@@ -74,7 +76,6 @@ const TaskCard: React.FC<TaskCardProps> = ({ name, stars, onPress }) => {
         >
           <View style={{ flex: 1 }}>
             <CustomButton
-              height={responsiveHeight(5)}
               onPress={onPress!}
               text="MODIFY"
               fill={false}
@@ -82,8 +83,9 @@ const TaskCard: React.FC<TaskCardProps> = ({ name, stars, onPress }) => {
           </View>
           <View style={{ flex: 1 }}>
             <CustomButton
-              height={responsiveHeight(5)}
-              onPress={onPress!}
+              onPress={() => {
+                router.push("/screens/task" as any);
+              }}
               text="VIEW"
               fill={true}
             />
