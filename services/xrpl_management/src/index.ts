@@ -7,7 +7,13 @@ import serve from "koa-static";
 import * as path from "path";
 import { fileURLToPath } from "url";
 import { dirname } from "path";
-import { accountService } from "./services/xrpLedger/account.js";
+import { connectWallet } from "./services/wallets/xumm/signin.js";
+import { PaymentHandler } from "./services/wallets/xumm/payments.js";
+import { EscrowService } from "./services/wallets/xumm/escrow.js";
+import { handleXummWebhook, XummWebhookBody } from "./services/wallets/xumm/webhook.js";
+import * as crossmarkService from "./services/wallets/crossmark/index.js";
+import { accountService } from "./ledger/account.js";
+import { PaymentRequest, CreateEscrowModel, EscrowModel } from "./typings/models.js";
 
 
 const __filename = fileURLToPath(import.meta.url);
@@ -26,10 +32,26 @@ app.use(async (ctx, next) => {
   try {
     await next();
   } catch (err) {
-    const typedErr = err as { status?: number; message: string };
-    ctx.status = typedErr.status || 500;
+    let errorMessage = "An unknown error occurred.";
+    let errorStatus = 500;
+
+    if (err instanceof Error) {
+      errorMessage = err.message;
+    }
+
+    // Check for Koa-specific error properties
+    if (typeof err === 'object' && err !== null) {
+      if ('status' in err && typeof err.status === 'number') {
+        errorStatus = err.status;
+      }
+      if ('message' in err && typeof err.message === 'string') {
+        errorMessage = err.message;
+      }
+    }
+    
+    ctx.status = errorStatus;
     ctx.body = {
-      error: typedErr.message,
+      error: errorMessage,
     };
   }
 });
@@ -51,158 +73,148 @@ router.get("/xchain_payment_request", async (ctx) => {
 // GET /xummSignInRequest/:uid
 router.get("/xummSignInRequest/:uid", async (ctx) => {
   const { uid } = ctx.params;
-  // TODO: Implement actual logic similar to connectWallet(uid)
-  ctx.body = { message: `XUMM Sign In request for UID: ${uid}`, data: {} };
+  const signInUrl = await connectWallet(uid);
+  ctx.body = { message: `XUMM Sign In request for UID: ${uid}`, data: { signInUrl } };
 });
 
 // POST /payment_request
 router.post("/payment_request", async (ctx) => {
-  const paymentRequest = ctx.request.body as any; // TODO: Define and use a proper PaymentRequest interface
-  // TODO: Implement actual logic similar to handle_payment_request(paymentRequest)
-  ctx.body = { message: "Payment request processed placeholder", request: paymentRequest };
+  const paymentRequest = ctx.request.body as PaymentRequest;
+  const paymentHandler = new PaymentHandler();
+  const result = await paymentHandler.handlePaymentRequest(paymentRequest);
+  ctx.body = { message: "Payment request processed", data: result };
 });
 
 // GET /lookup_escrow/:account
 router.get("/lookup_escrow/:account", async (ctx) => {
   const { account } = ctx.params;
-  // TODO: Implement actual logic similar to lookup_escrow(account)
-  ctx.body = { message: `Lookup escrow for account: ${account}`, data: {} };
+  const escrows = await accountService.lookupEscrow(account);
+  ctx.body = { account, escrows };
 });
 
 // POST /create_escrow
 router.post("/create_escrow", async (ctx) => {
-  const createEscrowModel = ctx.request.body as any; // TODO: Define and use a proper CreateEscrowModel interface
-  // Example validation based on Python code:
-  // const finishAfter = createEscrowModel?.finish_after;
-  // if (!createEscrowModel || (finishAfter && !is_timestamp_after_current(finishAfter))) { // Define is_timestamp_after_current
-  //   ctx.status = 400;
-  //   ctx.body = { error: "Missing or invalid required parameters." };
-  //   return;
-  // }
-  // TODO: Implement actual logic similar to create_escrow_xumm(createEscrowModel)
-  ctx.body = { message: "Create escrow placeholder", data: createEscrowModel };
+  const createEscrowModel = ctx.request.body as CreateEscrowModel;
+  const escrowService = new EscrowService();
+  const result = await escrowService.createEscrowXumm(createEscrowModel);
+  ctx.body = { message: "Create escrow placeholder", data: result };
 });
 
 // POST /cancel_escrow_xumm
 router.post("/cancel_escrow_xumm", async (ctx) => {
-  const escrowModel = ctx.request.body as any; // TODO: Define and use a proper EscrowModel interface
-  // Example validation:
-  // if (!escrowModel || !Object.keys(escrowModel).length) { // Check if body is empty or missing required fields
-  //   ctx.status = 400;
-  //   ctx.body = { error: "Missing request body or required parameters." };
-  //   return;
-  // }
-  // TODO: Implement actual logic similar to cancel_escrow_xumm(escrowModel)
-  ctx.body = { message: "Cancel escrow placeholder", data: escrowModel };
+  const escrowModel = ctx.request.body as EscrowModel;
+  const escrowService = new EscrowService();
+  const result = await escrowService.cancelEscrowXumm(escrowModel);
+  ctx.body = { message: "Cancel escrow placeholder", data: result };
 });
 
 // POST /finish_escrow_xumm
 router.post("/finish_escrow_xumm", async (ctx) => {
-  const escrowModel = ctx.request.body as any; // TODO: Define and use a proper EscrowModel interface
-  // Example validation:
-  // if (!escrowModel || !Object.keys(escrowModel).length) {
-  //   ctx.status = 400;
-  //   ctx.body = { error: "Missing request body or required parameters." };
-  //   return;
-  // }
-  // TODO: Implement actual logic similar to finish_escrow_xumm(escrowModel)
-  ctx.body = { message: "Finish escrow placeholder", data: escrowModel };
+  const escrowModel = ctx.request.body as EscrowModel;
+  const escrowService = new EscrowService();
+  const result = await escrowService.finishEscrowXumm(escrowModel);
+  ctx.body = { message: "Finish escrow placeholder", data: result };
 });
 
-// *** Account Functions - Placeholder Handlers ***
+// POST /xumm/webhook
+router.post("/xumm/webhook", async (ctx) => {
+  const webhookBody = ctx.request.body as XummWebhookBody;
+  const result = await handleXummWebhook(webhookBody);
+  ctx.body = result;
+  ctx.status = 200;
+});
+
+// *** Crossmark Endpoints ***
+
+router.post("/crossmark/signin", async (ctx) => {
+    try {
+        const address = await crossmarkService.signIn();
+        ctx.body = { address };
+    } catch (error) {
+        if (error instanceof Error) {
+            ctx.status = 500;
+            ctx.body = { error: error.message };
+        }
+    }
+});
+
+router.post("/crossmark/sign_transaction", async (ctx) => {
+    try {
+        const tx = ctx.request.body as any;
+        const signedTx = await crossmarkService.signTransaction(tx);
+        ctx.body = { signedTx };
+    } catch (error) {
+        if (error instanceof Error) {
+            ctx.status = 500;
+            ctx.body = { error: error.message };
+        }
+    }
+});
+
+router.post("/crossmark/submit_transaction", async (ctx) => {
+    try {
+        const { signedTx } = ctx.request.body as { signedTx: string };
+        const result = await crossmarkService.submitTransaction(signedTx);
+        ctx.body = result;
+    } catch (error) {
+        if (error instanceof Error) {
+            ctx.status = 500;
+            ctx.body = { error: error.message };
+        }
+    }
+});
+
+// *** Account Functions ***
 
 // GET /balance/:address
 router.get("/balance/:address", async (ctx) => {
   const { address } = ctx.params;
-  const account_balance = accountService.getXrpBalance(address);
-  ctx.body = { address, balance: account_balance };
+  const balance = await accountService.getXrpBalance(address);
+  ctx.body = { address, balance };
 });
 
 // GET /account_info/:address
 router.get("/account_info/:address", async (ctx) => {
   const { address } = ctx.params;
-  // TODO: Implement actual logic similar to xrpscan_get_accountInfo(address)
-  ctx.body = { message: `Account info for ${address}`, data: {} };
+  const accountInfo = await accountService.getAccountInfo(address);
+  ctx.body = { address, accountInfo };
 });
 
 // GET /account_exists/:address
 router.get("/account_exists/:address", async (ctx) => {
   const { address } = ctx.params;
-  // TODO: Implement actual logic similar to does_account_exist_async(address)
-  // TODO: Implement write_response_to_firestore if needed
-  const exists = true; // Placeholder
-  const response = { address, exists };
-  ctx.body = response;
+  const exists = await accountService.accountExists(address);
+  ctx.body = { address, exists };
 });
 
-// GET /test_net/balance/:address
-router.get("/test_net/balance/:address", async (ctx) => {
-  const { address } = ctx.params;
-  // TODO: Implement actual logic similar to get_account_balance(address) (async)
-  // TODO: Implement write_response_to_firestore if needed
-  const account_balance = "placeholder_testnet_balance"; // Placeholder
-  const response = { address, balance: account_balance };
-  // const doc_id = "placeholder_doc_id"; // from write_response_to_firestore
-  ctx.body = { /*doc_id,*/ response };
-});
+// *** Transactions ***
 
-// GET /test_net/account_info/:address
-router.get("/test_net/account_info/:address", async (ctx) => {
-  const { address } = ctx.params;
-  // TODO: Implement actual logic similar to get_account_info_async(address)
-  // TODO: Implement write_response_to_firestore if needed
-  const accountInfoResult = { info: "placeholder_testnet_account_info" }; // Placeholder for the .result part
-  // const doc_id = "placeholder_doc_id"; // from write_response_to_firestore
-  ctx.body = { /*doc_id,*/ result: accountInfoResult };
-});
-
-// *** Transactions - Placeholder Handlers ***
-
-// GET /verify_transaction/:tx_hash/:task_id?
-router.get("/verify_transaction/:tx_hash/:task_id?", async (ctx) => {
-  const { tx_hash, task_id } = ctx.params; // task_id will be undefined if not provided
-  if (!tx_hash) {
-    ctx.status = 400;
-    ctx.body = { error: "Missing 'tx_hash' parameter." };
-    return;
-  }
-  // TODO: Implement actual logic similar to get_transaction_async(tx_hash)
-  // TODO: Implement write_response_to_firestore if needed, passing task_id
-  const transactionResult = { details: "placeholder_transaction_details" }; // Placeholder for the .result part
-  const response = { transaction_hash: tx_hash, transaction: transactionResult };
-  // const doc_id = "placeholder_doc_id"; // from write_response_to_firestore
-  ctx.body = { /*doc_id,*/ response };
+// GET /verify_transaction/:tx_hash
+router.get("/verify_transaction/:tx_hash", async (ctx) => {
+  const { tx_hash } = ctx.params;
+  const transaction = await accountService.verifyTransaction(tx_hash);
+  ctx.body = { transaction_hash: tx_hash, transaction };
 });
 
 // GET /transactions/:address
 router.get("/transactions/:address", async (ctx) => {
   const { address } = ctx.params;
-  // TODO: Implement actual logic similar to get_transactions(address)
-  const transactions = [{ id: "tx1" }, { id: "tx2" }]; // Placeholder
-  ctx.body = transactions;
-});
-
-// GET /recordTransactions/:address
-router.get("/recordTransactions/:address", async (ctx) => {
-  const { address } = ctx.params;
-  // TODO: Implement actual logic similar to get_transactions(address, 500)
-  // TODO: Implement write_to_gcs(address, transactions) if needed
-  const transactions = [{ id: "tx1_recorded" }, { id: "tx2_recorded" }]; // Placeholder
-  ctx.body = transactions;
+  const limit = ctx.query.limit ? Number(ctx.query.limit) : undefined;
+  const transactions = await accountService.getTransactions(address, limit);
+  ctx.body = { address, transactions };
 });
 
 // GET /xrpl_timestamp
 router.get("/xrpl_timestamp", async (ctx) => {
   const timestampInput = ctx.query.timestamp as string | undefined;
-  // TODO: Implement actual logic similar to generate_xrpl_timestamp(timestamp)
-  if (!timestampInput || isNaN(parseInt(timestampInput))) {
+  const numericTimestamp = timestampInput ? parseInt(timestampInput) : undefined;
+  if (timestampInput && isNaN(numericTimestamp)) {
     ctx.status = 400;
-    ctx.body = { error: "Missing or invalid 'timestamp' query parameter." };
+    ctx.body = { error: "Invalid 'timestamp' query parameter." };
     return;
   }
-  const numericTimestamp = parseInt(timestampInput);
-  // const generatedTimestamp = await generate_xrpl_timestamp_logic(numericTimestamp);
-  ctx.body = { message: `XRPL timestamp for ${numericTimestamp}`, generated_timestamp: {} /* generatedTimestamp */ };
+  const generatedTimestamp = accountService.generateXrplTimestamp(numericTimestamp);
+  ctx.body = { message: `XRPL timestamp for ${numericTimestamp || 'now'}`, generated_timestamp: generatedTimestamp };
 });
 
 router.get("/", async (ctx) => {
@@ -216,4 +228,4 @@ app.listen(port, () => {
 
 app.use(router.routes());
 app.use(router.allowedMethods());
-// node --loader ts-node/esm --experimental-specifier-resolution=node ./dist/src/services/xrpLedger/account.js
+// node --loader ts-node/esm --experimental-specifier-resolution=node ./dist/src/ledger/account.js

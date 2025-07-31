@@ -1,26 +1,22 @@
 import { Client } from 'xrpl';
 
-export class XRPLClient {
-  private client: Client;
-
-  constructor() {
-    this.client = new Client(process.env.XRPL_TESTNET_WSS || 'wss://s.altnet.rippletest.net:51233',
-    );
-  }
-
-  async connect(): Promise<void> {
+const initializeClient = async () => {
+  const client = new Client(process.env.XRPL_TESTNET_WSS || 'wss://s.altnet.rippletest.net:51233');
+  try {
+    await client.connect();
+  } catch (error) {
+    console.error('Error connecting to XRPL WebSocket:', error);
+    // Fallback to JSON RPC client if WebSocket connection fails
+    const jsonRpcClient = new Client(process.env.JSONRPCCLIENT || '');
     try {
-      await this.client.connect();
-    } catch (error) {
-      console.error('Error connecting to XRPL WebSocket:', error);
-      console.log('Connecting to XRPL RPC');
-      this.client = new Client(process.env.JSONRPCCLIENT || '',
-      );
-      await this.client.connect();
+      await jsonRpcClient.connect();
+      return jsonRpcClient;
+    } catch (rpcError) {
+      console.error('Error connecting to XRPL JSON RPC:', rpcError);
+      return null;
     }
   }
+  return client;
+};
 
-  getClient(): Client {
-    return this.client;
-  }
-}
+export const xrplClient = await initializeClient();
