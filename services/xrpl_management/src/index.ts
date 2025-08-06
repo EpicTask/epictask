@@ -138,10 +138,10 @@ router.post("/crossmark/signin", async (ctx) => {
     }
 });
 
-router.post("/crossmark/sign_transaction", async (ctx) => {
+router.post("/crossmark/sign_and_submit_transaction", async (ctx) => {
     try {
         const tx = ctx.request.body as any;
-        const signedTx = await crossmarkService.signTransaction(tx);
+        const signedTx = await crossmarkService.signAndSubmitTransaction(tx);
         ctx.body = { signedTx };
     } catch (error) {
         if (error instanceof Error) {
@@ -151,18 +151,6 @@ router.post("/crossmark/sign_transaction", async (ctx) => {
     }
 });
 
-router.post("/crossmark/submit_transaction", async (ctx) => {
-    try {
-        const { signedTx } = ctx.request.body as { signedTx: string };
-        const result = await crossmarkService.submitTransaction(signedTx);
-        ctx.body = result;
-    } catch (error) {
-        if (error instanceof Error) {
-            ctx.status = 500;
-            ctx.body = { error: error.message };
-        }
-    }
-});
 
 // *** Account Functions ***
 
@@ -205,17 +193,17 @@ router.get("/transactions/:address", async (ctx) => {
 });
 
 // GET /xrpl_timestamp
-router.get("/xrpl_timestamp", async (ctx) => {
-  const timestampInput = ctx.query.timestamp as string | undefined;
-  const numericTimestamp = timestampInput ? parseInt(timestampInput) : undefined;
-  if (timestampInput && isNaN(numericTimestamp)) {
-    ctx.status = 400;
-    ctx.body = { error: "Invalid 'timestamp' query parameter." };
-    return;
-  }
-  const generatedTimestamp = accountService.generateXrplTimestamp(numericTimestamp);
-  ctx.body = { message: `XRPL timestamp for ${numericTimestamp || 'now'}`, generated_timestamp: generatedTimestamp };
-});
+// router.get("/xrpl_timestamp", async (ctx) => {
+//   const timestampInput = ctx.query.timestamp as string | undefined;
+//   const numericTimestamp = timestampInput ? parseInt(timestampInput) : undefined;
+//   if (timestampInput && isNaN(numericTimestamp)) {
+//     ctx.status = 400;
+//     ctx.body = { error: "Invalid 'timestamp' query parameter." };
+//     return;
+//   }
+//   const generatedTimestamp = accountService.generateXrplTimestamp(numericTimestamp);
+//   ctx.body = { message: `XRPL timestamp for ${numericTimestamp || 'now'}`, generated_timestamp: generatedTimestamp };
+// });
 
 router.get("/", async (ctx) => {
   await ctx.render("index", { title: "XRPL Management Service" });

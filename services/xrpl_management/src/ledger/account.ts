@@ -1,5 +1,5 @@
 import { xrplClient } from "../config/clients/xrpl.js";
-import { AccountSubscribe } from "./typings/index.js";
+// import { AccountSubscribe } from "./typings/index.js";
 import { 
     AccountInfoRequest, 
     AccountTxRequest, 
@@ -9,7 +9,6 @@ import {
     AccountObjectsResponse,
     AccountTxResponse,
     TxResponse,
-    Connection
 } from "xrpl";
 
 export class AccountService {
@@ -160,14 +159,14 @@ export class AccountService {
     }
   };
 
-  subscribeToAccount = (accounts: string[]): void => {
-    if (!xrplClient) {
-        console.error("XRPL client is not initialized.");
-        return;
-    }
-    const accountSubscribe = new AccountSubscribe(accounts);
-    xrplClient.request(accountSubscribe);
-  };
+  // subscribeToAccount = (accounts: string[]): void => {
+  //   if (!xrplClient) {
+  //       console.error("XRPL client is not initialized.");
+  //       return;
+  //   }
+  //   const accountSubscribe = new AccountSubscribe(accounts);
+  //   xrplClient.request(accountSubscribe);
+  // };
 
   getNetworkID = (): number | undefined => {
     if (!xrplClient) {
@@ -177,13 +176,13 @@ export class AccountService {
     return xrplClient.networkID;
   };
 
-  getConnectionStatus = (): Connection | null => {
-    if (!xrplClient) {
-        console.error("XRPL client is not initialized.");
-        return null;
-    }
-    return xrplClient.connection;
-  };
+  // getConnectionStatus = (): Connection | null => {
+  //   if (!xrplClient) {
+  //       console.error("XRPL client is not initialized.");
+  //       return null;
+  //   }
+  //   return xrplClient.connection;
+  // };
 }
 
 export const accountService = new AccountService();

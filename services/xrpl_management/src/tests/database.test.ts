@@ -1,5 +1,5 @@
 import { describe, beforeEach, test, it, jest, expect } from "@jest/globals";
-import { writeResponseToDatabase } from "../controllers/database";
+import { writeResponseToDatabase } from "../data/database";
 import { Timestamp, addDoc, collection } from "firebase/firestore";
 import { db } from "../config/clients/firebase";
 import { config } from "../config/config.dev";
@@ -9,7 +9,7 @@ jest.mock("firebase/firestore", () => ({
   collection: jest.fn(),
 }));
 
-jest.mock("../src/firebase", () => ({
+jest.mock("../config/clients/firebase", () => ({
   db: jest.fn(),
   config: {
     xrplServiceCollection: "xrpl_service",

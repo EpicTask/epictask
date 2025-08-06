@@ -1,5 +1,5 @@
 import { describe, beforeEach, test, it, jest, expect } from "@jest/globals";
-import { AccountService } from "../services/xrpLedger/account";
+import { AccountService } from "../ledger/account";
 import { XRPLClient } from "../config/clients";
 
 describe("AccountService", () => {

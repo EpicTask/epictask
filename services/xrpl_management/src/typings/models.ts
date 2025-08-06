@@ -108,3 +108,17 @@ interface AccountHeader {
     marker: string;
     limit: number;
 }
+
+export {
+    PaymentRequest,
+    XChainPaymentRequest,
+    CreateEscrowModel,
+    EscrowModel,
+    AccountInfo,
+    DeliveredAmount,
+    Meta,
+    AccountName,
+    DestinationName,
+    Transaction,
+    AccountHeader
+};

@@ -72,7 +72,7 @@ export class PaymentHandler {
         this.writeResponse(subscription, paymentRequest.task_id);
         console.log("Subscribe to payload");
         resolveData = (await subscription.resolved) as ResolveData;
-        xummSdk.payload!.unsubscribe();
+        // xummSdk.payload!.unsubscribe();
       }
     } catch (error) {
       console.warn(`Caught RuntimeWarning: ${error}`);
