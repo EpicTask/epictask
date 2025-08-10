@@ -1,8 +1,4 @@
-import Heading from "@/components/headings/Heading";
-import TaskCard from "@/components/cards/kid/TaskCard";
-import ProgressCard from "@/components/cards/ProgressCard";
-import * as Progress from "react-native-progress";
-
+import React from "react";
 import {
   Image,
   ScrollView,
@@ -10,211 +6,153 @@ import {
   Text,
   TouchableOpacity,
   View,
+  ActivityIndicator,
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
+import { useQuery } from '@tanstack/react-query';
+import { router } from "expo-router";
+import * as Progress from "react-native-progress";
+
+import TaskCard from "@/components/cards/kid/TaskCard";
+import CustomText from "@/components/CustomText";
+import KidArrowIcon from "@/assets/icons/KidArrow";
+import { ICONS, IMAGES } from "@/assets";
+import { COLORS } from "@/constants/Colors";
 import {
   responsiveFontSize,
   responsiveHeight,
   responsiveWidth,
 } from "react-native-responsive-dimensions";
+import apiClient from "@/api/apiClient";
+import MicroserviceUrls from "@/constants/Microservices";
 
-import { ICONS, IMAGES } from "@/assets";
-import { COLORS } from "@/constants/Colors";
-import { SafeAreaView } from "react-native-safe-area-context";
-import { router } from "expo-router";
-import CustomText from "@/components/CustomText";
-import KidArrowIcon from "@/assets/icons/KidArrow";
-import React from "react";
+const fetchTasks = async () => {
+  const { data } = await apiClient.get(`${MicroserviceUrls.taskManagement}/tasks?user_id=kid_user_id`); // Replace with actual user_id
+  if (Array.isArray(data)) {
+    return data;
+  }
+  if (data && Array.isArray(data.tasks)) {
+    return data.tasks;
+  }
+  // Return an empty array if the response is not in the expected format.
+  return [];
+};
 
 export default function HomeScreen() {
+  const { data: tasks = [], isLoading, isError, error } = useQuery({
+    queryKey: ['tasks'],
+    queryFn: fetchTasks,
+  });
+
+  if (isLoading) {
+    return <ActivityIndicator size="large" style={styles.centered} />;
+  }
+
+  if (isError) {
+    return <Text style={styles.centered}>Error: {error.message}</Text>;
+  }
+
+  const completedTasks = tasks.filter(task => task.status === 'completed').length;
+  const progress = tasks.length > 0 ? completedTasks / tasks.length : 0;
+
   return (
     <SafeAreaView style={styles.safeArea}>
       <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
         <View style={{ gap: 10 }}>
-          <View
-            style={{
-              flexDirection: "row",
-              justifyContent: "space-between",
-            }}
-          >
+          {/* Header */}
+          <View style={{ flexDirection: "row", justifyContent: "space-between" }}>
             <View style={{ flex: 1 }}>
-              <CustomText
-                variant="semiBold"
-                style={{ fontSize: responsiveFontSize(4) }}
-              >
+              <CustomText variant="semiBold" style={{ fontSize: responsiveFontSize(4) }}>
                 Hello,
               </CustomText>
-              <CustomText
-                variant="semiBold"
-                style={{ fontSize: responsiveFontSize(3.7), fontWeight: "500" }}
-              >
+              <CustomText variant="semiBold" style={{ fontSize: responsiveFontSize(3.7), fontWeight: "500" }}>
                 Kai Kai! 👋
               </CustomText>
               <CustomText style={{ paddingRight: 40, color: COLORS.grey }}>
                 Ready for some fun tasks and rewards today?
               </CustomText>
             </View>
-            <View style={{}}>
-              <View
-                style={{
-                  padding: 14,
-                  backgroundColor: "white",
-                  borderRadius: responsiveWidth(100),
-                }}
-              >
+            <View>
+              <View style={{ padding: 14, backgroundColor: "white", borderRadius: responsiveWidth(100) }}>
                 {ICONS.SETTINGS.bell}
               </View>
             </View>
           </View>
+
+          {/* Progress Cards */}
           <View style={{ paddingVertical: 10 }}>
             <View style={{ flexDirection: "row", gap: 10 }}>
+              {/* Tasks Progress */}
               <View style={{ width: responsiveWidth(44), height: 165 }}>
-                <View style={{}}>{ICONS.kidCard}</View>
-                <View
-                  style={{
-                    position: "absolute",
-                    width: 160,
-                    paddingTop: 10,
-                    gap: 4,
-                    paddingLeft: 10,
-                  }}
-                >
-                  <CustomText style={{}} variant="semiBold">
-                    You have 3 tasks today!
-                  </CustomText>
+                <View>{ICONS.kidCard}</View>
+                <View style={styles.cardOverlay}>
+                  <CustomText variant="semiBold">You have {tasks.length} tasks today!</CustomText>
+                  <Progress.Circle
+                    size={40}
+                    progress={progress}
+                    thickness={3}
+                    color={COLORS.purple}
+                    unfilledColor="#E5E7EB"
+                    borderWidth={0}
+                    showsText={true}
+                    formatText={() => `${Math.round(progress * 100)}%`}
+                    textStyle={{ fontSize: 12, fontWeight: "600", color: COLORS.purple }}
+                  />
                   <View>
-                    <Progress.Circle
-                      size={40}
-                      progress={0.7}
-                      thickness={3}
-                      color={COLORS.purple}
-                      unfilledColor="#E5E7EB"
-                      borderWidth={0}
-                      showsText={true}
-                      formatText={() => `${Math.round(0.7 * 100)}%`}
-                      textStyle={{
-                        fontSize: 12,
-                        fontWeight: "semibold",
-                        color: COLORS.purple,
-                      }}
-                    />
-                    <View
-                      style={{
-                        gap: 4,
-                      }}
-                    >
-                      <CustomText
-                        variant="semiBold"
-                        style={[styles.completedText, { fontSize: 10 }]}
-                      >
-                        Completed
-                      </CustomText>
-                      <Text style={styles.fractionText}>{`${7}/${10}`}</Text>
-                    </View>
+                    <CustomText variant="semiBold" style={[styles.completedText, { fontSize: 10 }]}>
+                      Completed
+                    </CustomText>
+                    <Text style={styles.fractionText}>{`${completedTasks}/${tasks.length}`}</Text>
                   </View>
                 </View>
-                <TouchableOpacity
-                  style={{ position: "absolute", bottom: 6, right: 0 }}
-                >
+                <TouchableOpacity style={styles.arrow}>
                   {ICONS.kidArrow}
                 </TouchableOpacity>
               </View>
+
+              {/* Earnings */}
               <View style={{ width: responsiveWidth(44), height: 165 }}>
-                <View style={{}}>{ICONS.kidCard}</View>
-                <View
-                  style={{
-                    position: "absolute",
-                    gap: 20,
-                    width: 160,
-                    paddingTop: 10,
-                    paddingLeft: 10,
-                  }}
-                >
-                  <CustomText style={{}} variant="semiBold">
-                    You've Earned!
-                  </CustomText>
+                <View>{ICONS.kidCard}</View>
+                <View style={[styles.cardOverlay, { gap: 20 }]}>
+                  <CustomText variant="semiBold">You've Earned!</CustomText>
                   <View>
-                    <Image
-                      source={IMAGES.reward}
-                      style={{ width: 50, height: 50 }}
-                    />
-                    <View
-                      style={{
-                        justifyContent: "center",
-                        gap: 4,
-                      }}
-                    >
-                      <CustomText
-                        variant="semiBold"
-                        style={[styles.completedText, { fontSize: 14 }]}
-                      >
-                        150 Stars!
-                      </CustomText>
-                    </View>
+                    <Image source={IMAGES.reward} style={{ width: 50, height: 50 }} />
+                    <CustomText variant="semiBold" style={[styles.completedText, { fontSize: 14 }]}>
+                      {tasks.reduce((acc, task) => acc + task.reward_amount, 0)} Stars!
+                    </CustomText>
                   </View>
                 </View>
-                <TouchableOpacity
-                  style={{ position: "absolute", bottom: 6, right: 0 }}
-                >
+                <TouchableOpacity style={styles.arrow}>
                   <KidArrowIcon fill={COLORS.secondary} />
                 </TouchableOpacity>
               </View>
             </View>
           </View>
+
+          {/* Upcoming Tasks */}
           <View style={{ gap: 10, paddingVertical: 6 }}>
-            <View
-              style={{
-                flexDirection: "row",
-                justifyContent: "space-between",
-                paddingHorizontal: 4,
-              }}
-            >
-              <CustomText
-                style={{
-                  fontSize: responsiveFontSize(2.7),
-                  color: COLORS.black,
-                  fontWeight: "500",
-                }}
-                variant="semiBold"
-              >
+            <View style={{ flexDirection: "row", justifyContent: "space-between", paddingHorizontal: 4 }}>
+              <CustomText style={{ fontSize: responsiveFontSize(2.7), color: COLORS.black, fontWeight: "500" }} variant="semiBold">
                 Upcoming Tasks
               </CustomText>
-              <TouchableOpacity
-                onPress={() => {
-                  router.push("/screens/task");
-                }}
-              >
-                <CustomText
-                  style={{
-                    fontSize: responsiveFontSize(2),
-                    color: COLORS.grey,
-                    fontWeight: "400",
-                  }}
-                >
+              <TouchableOpacity onPress={() => router.push("/screens/task")}>
+                <CustomText style={{ fontSize: responsiveFontSize(2), color: COLORS.grey, fontWeight: "400" }}>
                   See All
                 </CustomText>
               </TouchableOpacity>
             </View>
-            <View style={{ flexDirection: "row", gap: 10 }}></View>
-            {Array(1)
-              .fill(0)
-              .map((_, index) => (
+            {tasks.length > 0 ? (
+              tasks.map((task, index) => (
                 <TaskCard
-                  bg={COLORS.light_purple}
+                  bg={index % 3 === 0 ? COLORS.light_purple : index % 3 === 1 ? COLORS.light_green : COLORS.light_yellow}
                   key={index}
-                  name="Prepare your breakfast"
-                  stars={55}
+                  name={task.task_title}
+                  stars={task.reward_amount}
                 />
-              ))}
-            <TaskCard
-              bg={COLORS.light_green}
-              name="Prepare your breakfast"
-              stars={55}
-            />
-            <TaskCard
-              bg={COLORS.light_yellow}
-              name="Prepare your breakfast"
-              stars={55}
-            />
+              ))
+            ) : (
+              <Text>No tasks for today. Great job!</Text>
+            )}
           </View>
         </View>
       </ScrollView>
@@ -234,27 +172,31 @@ const styles = StyleSheet.create({
     flex: 1,
     marginBottom: 50,
   },
-  container1: {
-    backgroundColor: "white",
-    borderColor: "#EAEBEC",
-    borderRadius: 28,
-    borderWidth: 1,
-    alignItems: "center",
-    justifyContent: "center",
+  centered: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
-  percentageText: {
-    fontSize: 24,
-    fontWeight: "bold",
-    color: "#000",
+  cardOverlay: {
+    position: "absolute",
+    width: 160,
+    paddingTop: 10,
+    gap: 4,
+    paddingLeft: 10,
   },
   completedText: {
     marginTop: 10,
-    fontWeight: "semibold",
+    fontWeight: "600",
     fontSize: 16,
     color: COLORS.grey,
   },
   fractionText: {
     fontSize: 14,
     color: "#000",
+  },
+  arrow: {
+    position: "absolute",
+    bottom: 6,
+    right: 0,
   },
 });

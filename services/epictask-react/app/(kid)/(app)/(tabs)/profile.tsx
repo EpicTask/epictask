@@ -1,11 +1,9 @@
-import React, { ReactNode } from "react";
-
+import React, { ReactNode, useContext } from "react";
 import {
   responsiveFontSize,
   responsiveHeight,
   responsiveWidth,
 } from "react-native-responsive-dimensions";
-
 import { router } from "expo-router";
 import { ICONS, IMAGES } from "@/assets";
 import { COLORS } from "@/constants/Colors";
@@ -18,12 +16,17 @@ import {
   Text,
   TouchableOpacity,
   View,
+  Alert,
 } from "react-native";
 import CustomText from "@/components/CustomText";
 import LinkIcon from "@/assets/icons/Link";
 import TaskIcon from "@/assets/icons/tab-bar/Task";
+import { AuthContext } from "@/context/AuthContext";
+import { signOut } from "firebase/auth";
+import { auth } from "../../../../firebaseConfig";
 
 const ProfileCard = () => {
+  const { user } = useContext(AuthContext);
   return (
     <View
       style={{
@@ -38,14 +41,14 @@ const ProfileCard = () => {
     >
       <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
         <Image
-          source={IMAGES.profile}
-          style={{ width: responsiveWidth(12), height: responsiveWidth(12) }}
+          source={user?.photoURL ? { uri: user.photoURL } : IMAGES.profile}
+          style={{ width: responsiveWidth(12), height: responsiveWidth(12), borderRadius: responsiveWidth(6) }}
         />
         <CustomText
           variant="semiBold"
           style={{ fontSize: responsiveFontSize(2.3) }}
         >
-          Joshua Smith
+          {user?.displayName || 'Joshua Smith'}
         </CustomText>
       </View>
     </View>
@@ -90,6 +93,18 @@ const SettingButton = ({
 };
 
 const ProfileScreen = () => {
+  const { setUser } = useContext(AuthContext);
+
+  const handleSignOut = async () => {
+    try {
+      await signOut(auth);
+      setUser(null);
+      router.replace('/auth');
+    } catch (error) {
+      Alert.alert("Sign Out Failed", error.message);
+    }
+  };
+
   return (
     <SafeAreaView style={styles.safeArea}>
       <ScrollView
@@ -120,14 +135,14 @@ const ProfileScreen = () => {
               icon={ICONS.SETTINGS.user_avatar}
               text={"Avatar"}
               onPress={() => {
-                router.push("/screens/settings/avatar" as any);
+                router.push("/(kid)/(app)/screens/profile" as any);
               }}
             />
             <SettingButton
               icon={ICONS.basicInfo}
               text={"Basic Info"}
               onPress={() => {
-                router.push("/screens/settings/basic-info" as any);
+                router.push("/(kid)/(app)/screens/profile" as any);
               }}
             />
             <SettingButton
@@ -141,7 +156,7 @@ const ProfileScreen = () => {
               icon={<LinkIcon height={20} width={20} />}
               text={"Linked Parent"}
               onPress={() => {
-                router.push("/screens/settings/linked-parent" as any);
+                router.push("/(kid)/(app)/screens/profile" as any);
               }}
             />
             <SettingButton
@@ -182,6 +197,11 @@ const ProfileScreen = () => {
               icon={ICONS.SETTINGS.terms}
               text={"Who We Are"}
               onPress={() => {}}
+            />
+            <SettingButton
+              icon={<MaterialIcons name="logout" size={24} color="red" />}
+              text={"Sign Out"}
+              onPress={handleSignOut}
             />
           </View>
         </View>

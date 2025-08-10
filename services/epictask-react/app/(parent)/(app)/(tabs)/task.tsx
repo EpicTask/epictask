@@ -1,20 +1,47 @@
 import React from "react";
+import { ScrollView, StyleSheet, View, ActivityIndicator, Text } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
+import { useQuery } from '@tanstack/react-query';
+import { router } from "expo-router";
+
 import Search from "@/components/search/Search";
 import TaskCard from "@/components/cards/TaskCard";
 import ProgressCard from "@/components/cards/ProgressCard";
 import ScreenHeading from "@/components/headings/ScreenHeading";
-
+import { COLORS } from "@/constants/Colors";
 import {
   responsiveHeight,
   responsiveWidth,
 } from "react-native-responsive-dimensions";
+import apiClient from "@/api/apiClient";
+import MicroserviceUrls from "@/constants/Microservices";
 
-import { router } from "expo-router";
-import { COLORS } from "@/constants/Colors";
-import { ScrollView, StyleSheet, View } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+const fetchTasks = async () => {
+  const { data } = await apiClient.get(`${MicroserviceUrls.taskManagement}/tasks?user_id=parent_user_id`); // Replace with actual user_id
+  if (Array.isArray(data)) {
+    return data;
+  }
+  if (data && Array.isArray(data.tasks)) {
+    return data.tasks;
+  }
+  // Return an empty array if the response is not in the expected format.
+  return [];
+};
 
 const ManageTasks = () => {
+  const { data: tasks = [], isLoading, isError, error } = useQuery({
+    queryKey: ['tasks'],
+    queryFn: fetchTasks,
+  });
+
+  if (isLoading) {
+    return <ActivityIndicator size="large" style={styles.centered} />;
+  }
+
+  if (isError) {
+    return <Text style={styles.centered}>Error: {error.message}</Text>;
+  }
+
   return (
     <SafeAreaView style={styles.safeArea}>
       <ScrollView
@@ -46,17 +73,17 @@ const ManageTasks = () => {
               <ProgressCard
                 color={COLORS.purple}
                 row={true}
-                completed={7}
-                progress={0.7}
-                total={10}
+                completed={tasks.filter(task => task.status === 'completed').length}
+                progress={tasks.length > 0 ? tasks.filter(task => task.status === 'completed').length / tasks.length : 0}
+                total={tasks.length}
               />
               <ProgressCard
                 text="In Progress"
                 color={COLORS.grey}
                 row={true}
-                completed={2}
-                progress={0.2}
-                total={10}
+                completed={tasks.filter(task => task.status === 'in_progress').length}
+                progress={tasks.length > 0 ? tasks.filter(task => task.status === 'in_progress').length / tasks.length : 0}
+                total={tasks.length}
               />
             </View>
             <View style={{ flexDirection: "row" }}>
@@ -64,17 +91,17 @@ const ManageTasks = () => {
                 text="Overdue"
                 color={"#AB0A0A"}
                 row={true}
-                completed={5}
-                progress={0.5}
-                total={10}
+                completed={tasks.filter(task => task.status === 'overdue').length}
+                progress={tasks.length > 0 ? tasks.filter(task => task.status === 'overdue').length / tasks.length : 0}
+                total={tasks.length}
               />
             </View>
           </View>
         </View>
         <View style={{ gap: 10, flex: 1, paddingVertical: 10 }}>
-          <TaskCard name="Prepare your breakfast" stars={55} />
-          <TaskCard name="Prepare your breakfast" stars={55} />
-          <TaskCard name="Prepare your breakfast" stars={55} />
+          {tasks.map((task, index) => (
+            <TaskCard key={index} name={task.task_title} stars={task.reward_amount} />
+          ))}
         </View>
       </ScrollView>
     </SafeAreaView>
@@ -91,7 +118,10 @@ const styles = StyleSheet.create({
     height: responsiveHeight(100),
     width: responsiveWidth(100),
   },
-  container: {
+  centered: {
     flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
 });
+

@@ -1,20 +1,22 @@
-import React, { ReactNode } from "react";
-
+import React, { ReactNode, useContext } from "react";
 import {
   responsiveFontSize,
   responsiveHeight,
   responsiveWidth,
 } from "react-native-responsive-dimensions";
-
 import { router } from "expo-router";
 import { ICONS, IMAGES } from "@/assets";
 import { COLORS } from "@/constants/Colors";
 import { MaterialIcons } from "@expo/vector-icons";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { Image, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { Image, StyleSheet, Text, TouchableOpacity, View, Alert, ScrollView } from "react-native";
 import CustomText from "@/components/CustomText";
+import { AuthContext } from "@/context/AuthContext";
+import { signOut } from "firebase/auth";
+import { auth } from "../../../../firebaseConfig";
 
 const ProfileCard = () => {
+  const { user } = useContext(AuthContext);
   return (
     <View
       style={{
@@ -29,19 +31,19 @@ const ProfileCard = () => {
     >
       <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
         <Image
-          source={IMAGES.profile}
-          style={{ width: responsiveWidth(10), height: responsiveWidth(10) }}
+          source={user?.photoURL ? { uri: user.photoURL } : IMAGES.profile}
+          style={{ width: responsiveWidth(10), height: responsiveWidth(10), borderRadius: responsiveWidth(5) }}
         />
         <CustomText
           variant="semiBold"
           style={{ fontWeight: "500", fontSize: responsiveFontSize(2.5) }}
         >
-          Joshua Smith
+          {user?.displayName || 'Joshua Smith'}
         </CustomText>
       </View>
       <TouchableOpacity
         onPress={() => {
-          router.push("/screens/settings/personal-info" as any);
+          router.push("/(parent)/(app)/screens/profile" as any);
         }}
       >
         {ICONS.edit}
@@ -87,80 +89,99 @@ const SettingButton = ({
 };
 
 const SettingsScreen = () => {
+  const { setUser } = useContext(AuthContext);
+
+  const handleSignOut = async () => {
+    try {
+      await signOut(auth);
+      setUser(null);
+      router.replace('/auth');
+    } catch (error) {
+      Alert.alert("Sign Out Failed", error.message);
+    }
+  };
+
   return (
     <SafeAreaView style={styles.safeArea}>
-      <View style={{ flexDirection: "row", justifyContent: "center" }}>
-        <Text style={{ fontSize: responsiveFontSize(3), fontWeight: "500" }}>
-          Settings
-        </Text>
-      </View>
-      <View style={{ paddingVertical: 20, gap: 20 }}>
-        <View>
-          <ProfileCard />
+      <ScrollView showsVerticalScrollIndicator={false} style={{ marginBottom: 50 }}>
+        <View style={{ flexDirection: "row", justifyContent: "center" }}>
+          <Text style={{ fontSize: responsiveFontSize(3), fontWeight: "500" }}>
+            Settings
+          </Text>
         </View>
-        <View
-          style={{
-            backgroundColor: COLORS.white,
-            borderRadius: 40,
-            paddingVertical: 20,
-            paddingHorizontal: 20,
-          }}
-        >
-          <SettingButton
-            icon={ICONS.SETTINGS.kid_face}
-            text={"Kid profiles"}
-            onPress={() => {
-              router.push("/screens/settings/kid-profiles" as any);
-            }}
-          />
-          <SettingButton
-            icon={ICONS.SETTINGS.wallet}
-            text={"Wallet"}
-            onPress={() => {
-              router.push("/screens/settings/wallet" as any);
-            }}
-          />
-          <SettingButton
-            icon={ICONS.SETTINGS.lock}
-            text={"Password"}
-            onPress={() => {
-              router.push("/screens/settings/update-password" as any);
-            }}
-          />
-          <SettingButton
-            icon={ICONS.SETTINGS.bell}
-            text={"Notifications"}
-            onPress={() => {
-              router.push("/screens/settings/notifications" as any);
-            }}
-          />
-          <Text
+        <View style={{ paddingVertical: 20, gap: 20 }}>
+          <View>
+            <ProfileCard />
+          </View>
+          <View
             style={{
+              backgroundColor: COLORS.white,
+              borderRadius: 40,
               paddingVertical: 20,
-              fontSize: responsiveFontSize(2),
-              fontWeight: "500",
-              color: COLORS.grey,
+              paddingHorizontal: 20,
             }}
           >
-            Help & Support
-          </Text>
-          <SettingButton
-            icon={ICONS.SETTINGS.get_help}
-            text={"Get Help"}
-            onPress={() => {}}
-          />
-          <SettingButton
-            icon={ICONS.SETTINGS.user}
-            text={"Terms and Conditions"}
-            onPress={() => {}}
-          />
-          <SettingButton
-            icon={ICONS.SETTINGS.terms}
-            text={"Who We Are"}
-            onPress={() => {}}
-          />
+            <SettingButton
+              icon={ICONS.SETTINGS.kid_face}
+              text={"Kid profiles"}
+              onPress={() => {
+                router.push("/(parent)/(app)/screens/profile" as any);
+              }}
+            />
+            <SettingButton
+              icon={ICONS.SETTINGS.wallet}
+              text={"Wallet"}
+              onPress={() => {
+                router.push("/screens/settings/wallet" as any);
+              }}
+            />
+            <SettingButton
+              icon={ICONS.SETTINGS.lock}
+              text={"Password"}
+              onPress={() => {
+                router.push("/screens/settings/update-password" as any);
+              }}
+            />
+            <SettingButton
+              icon={ICONS.SETTINGS.bell}
+              text={"Notifications"}
+              onPress={() => {
+                router.push("/screens/settings/notifications" as any);
+              }}
+            />
+            <Text
+              style={{
+                paddingVertical: 20,
+                fontSize: responsiveFontSize(2),
+                fontWeight: "500",
+                color: COLORS.grey,
+              }}
+            >
+              Help & Support
+            </Text>
+            <SettingButton
+              icon={ICONS.SETTINGS.get_help}
+              text={"Get Help"}
+              onPress={() => {}}
+            />
+            <SettingButton
+              icon={ICONS.SETTINGS.user}
+              text={"Terms and Conditions"}
+              onPress={() => {}}
+            />
+            <SettingButton
+              icon={ICONS.SETTINGS.terms}
+              text={"Who We Are"}
+              onPress={() => {}}
+            />
+            <SettingButton
+              icon={<MaterialIcons name="logout" size={24} color="red" />}
+              text={"Sign Out"}
+              onPress={handleSignOut}
+            />
+          </View>
         </View>
-      </View>
+      </ScrollView>
     </SafeAreaView>
   );
 };
