@@ -1,266 +1,145 @@
 import * as dotenv from 'dotenv';
-import express, {json} from 'express';
+import express, { json } from 'express';
 import cors from 'cors';
 import {
-  authenticateUser,
-  connectWallet,
-  createChildUID,
-  deletedUserAccount,
-  forgotPassword,
-  linkChild,
   profileUpdate,
-  saveUserEvent,
-  saveUserInteraction,
-  verifyUser,
+  deletedUserAccount,
+  generateInviteCode,
+  linkChildAccount,
+  getLinkedChildren,
+  getUserProfile,
 } from './fb_functions.js';
-import {UserEvent, getSchema, linkChildSchema} from './schema.js';
 import {
   createUserWithPassword,
-  signUserOut,
   loginWithEmailAndPassword,
-  getUser,
 } from './auth/email_password_auth.js';
+import { authMiddleware } from './auth/middleware.js';
 
 dotenv.config();
 const app = express();
-const origins = ['https://user-management-api-us-8l3obb9a.uc.gateway.dev', 'https://task-coin-384722.web.app'];
-
-// # TODO: Split mainnet and test new. Create Staging, Testing and Production Environments.
+const origins = [
+  'https://user-management-api-us-8l3obb9a.uc.gateway.dev',
+  'https://task-coin-384722.web.app',
+  'http://localhost:8081', // For Expo Go
+];
 
 app.use(
   cors({
     origin: origins,
-    credentials: false,
-    methods: ['GET', 'POST', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
   })
 );
 
-// Handle preflight requests
-app.options('*', cors()); 
-
+app.options('*', cors());
 app.use(json());
 
-// Get user
-app.get('/getCurrentUser', async (req, res) => {
+// Get current user's profile
+app.get('/users/me', authMiddleware, async (req, res) => {
   try {
-    const uid = getUser();
-    return {message: uid};
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({error: 'No user found'});
-  }
-});
-// Create a new UserEvent
-app.post('/events/', async (req, res) => {
-  try {
-    const eventData = req.body;
-    const eventType = eventData.event_type;
-    console.log(req.body);
-
-    // Get the appropriate event model based on the event type
-    const EventModel = getSchema(eventType);
-    if (!EventModel) {
-      res.status(400).json({error: 'Invalid event type'});
-      return;
+    const uid = req.user.uid;
+    const userProfile = await getUserProfile(uid);
+    if (!userProfile) {
+      return res.status(404).json({ error: 'User profile not found.' });
     }
-
-    // Create a new event of the specified type
-    const userEvent = new UserEvent({
-      event_id: eventData.event_id,
-      event_type: eventType,
-      user_id: eventData.user_id,
-      timestamp: eventData.timestamp,
-      additional_data: eventData.additional_data,
-    });
-
-    // Save the user event to Firestore
-    saveUserEvent(eventType, userEvent);
-    res.status(201).json('Successful created UserEvent');
+    res.status(200).json(userProfile);
   } catch (error) {
-    console.error(error);
-    res.status(500).json({error: 'Failed to create UserEvent'});
+    res.status(500).json({ error: error.message });
   }
 });
 
-// Registered user.
-app.post('/userRegister', async (req, res) => {
-  res.status(201).json({message: 'Successful user register'});
-});
-
-// User signed in successfully
-app.post('/signIn', async (req, res) => {
-  res.status(201).json({message: 'Successful user sign in'});
-});
-
-// User wallet connected
-app.post('/walletConnected', async (req, res) => {
+// Update user profile
+app.put('/profileUpdate', authMiddleware, async (req, res) => {
   try {
-    const result = await connectWallet();
-    res.status(201).json({message: 'Successful wallet connection:', result});
+    const uid = req.user.uid;
+    const result = await profileUpdate(uid, req.body);
+    res.status(200).json({ message: 'Successful profile update:', result });
   } catch (error) {
-    console.log;
-    'Error: ', error;
-    res.status(500).json({error: 'Failed to sign user out.'});
+    res.status(500).json({ error: 'Failed to update profile.' });
   }
 });
 
-// User forgot password
-app.post('/forgotPassword', async (req, res) => {
+// Delete user account
+app.delete('/deleteAccount', authMiddleware, async (req, res) => {
   try {
-    const result = await forgotPassword();
-    res.status(201).json({message: 'Successful:', result});
+    const uid = req.user.uid;
+    const result = await deletedUserAccount(uid);
+    res.status(200).json({ message: 'Successful user account deletion:', result });
   } catch (error) {
-    console.log;
-    'Error: ', error;
-    res.status(500).json({error: 'Failed.'});
+    res.status(500).json({ error: 'Failed to delete account.' });
   }
 });
 
-// User Authenticated
-app.post('/authenticate', async (req, res) => {
+// Generate invite code (for kids)
+app.post('/users/generate-invite-code', authMiddleware, async (req, res) => {
   try {
-    const result = await authenticateUser();
-    res.status(201).json({message: 'Successful', result});
+    const uid = req.user.uid; // The child's UID
+    const result = await generateInviteCode(uid);
+    res.status(200).json(result);
   } catch (error) {
-    console.log;
-    'Error: ', error;
-    res.status(500).json({error: 'Failed.'});
+    res.status(500).json({ error: error.message });
   }
 });
 
-// User updated profile
-app.post('/profileUpdate', async (req, res) => {
+// Link child account (for parents)
+app.post('/users/link-child', authMiddleware, async (req, res) => {
   try {
-    const response = req.body;
-    const result = await profileUpdate(response);
-    res.status(201).json({message: 'Successful profile update:', result});
+    const uid = req.user.uid; // The parent's UID
+    const { inviteCode } = req.body;
+    if (!inviteCode) {
+      return res.status(400).json({ error: 'Invite code is required.' });
+    }
+    const result = await linkChildAccount(uid, inviteCode);
+    res.status(200).json(result);
   } catch (error) {
-    console.log;
-    'Error: ', error;
-    res.status(500).json({error: 'Failed to update profile.'});
+    res.status(400).json({ error: error.message });
   }
 });
 
-// User deleted account
-app.post('/deleteAccount', async (req, res) => {
+// Get linked children (for parents)
+app.get('/users/me/children', authMiddleware, async (req, res) => {
   try {
-    const response = req.body;
-    const result = await deletedUserAccount(response);
-    res
-      .status(201)
-      .json({message: 'Successful user account deletion:', result});
+    const uid = req.user.uid; // The parent's UID
+    const children = await getLinkedChildren(uid);
+    res.status(200).json(children);
   } catch (error) {
-    console.log;
-    'Error: ', error;
-    res.status(500).json({error: 'Failed to delete account.'});
+    res.status(500).json({ error: error.message });
   }
 });
 
-// User interaction
-app.post('/userInteraction', async (req, res) => {
-  try {
-    const response = req.body;
-    const result = await saveUserInteraction(response);
-    res
-      .status(201)
-      .json({message: 'Successful user interaction saved:', result});
-  } catch (error) {
-    console.log;
-    'Error: ', error;
-    res.status(500).json({error: 'Failed to save user interaction:'});
-  }
-});
-
-//User verified
-app.post('/userVerified', async (req, res) => {
-  try {
-    const response = req.body;
-    const result = await verifyUser(response);
-    res.status(201).json({message: 'Successful user verification:', result});
-  } catch (error) {
-    console.log;
-    'Error: ', error;
-    res.status(500).json({error: 'Failed to verify user.'});
-  }
-});
-
-// Sign in with email and password
-app.post('/signout', async (req, res) => {
-  try {
-    const response = req.body;
-    const result = await signUserOut(response);
-    res.status(201).json({message: 'Successful user signout:', result});
-  } catch (error) {
-    console.log;
-    'Error: ', error;
-    res.status(500).json({error: 'Failed to sign user out.'});
-  }
-});
-
-// Sign user out
+// Register with email and password
 app.post('/registerWithPassword', async (req, res) => {
   try {
-    const response = req.body;
-    const email = response.email;
-    const password = response.password;
-    const uid = await createUserWithPassword(email, password);
-    res.status(201).json({message: uid});
+    const { email, password, displayName, role } = req.body;
+    const result = await createUserWithPassword(email, password, displayName, role);
+    res.status(201).json(result);
   } catch (error) {
-    console.log('Error: ', error);
-    res.status(500).json({error: 'Failed to create User'});
+    res.status(400).json({ error: error.message });
   }
 });
 
-// Login in with password
+// Login with email and password
 app.post('/loginWithPassword', async (req, res) => {
   try {
-    const response = req.body;
-    const email = response.email;
-    const password = response.password;
-    const uid = await loginWithEmailAndPassword(email, password);
-    res.status(201).json({message: uid});
+    const { email, password } = req.body;
+    const result = await loginWithEmailAndPassword(email, password);
+    res.status(200).json(result);
   } catch (error) {
-    console.log('Error: ', error);
-    res.status(500).json({error: 'Failed to login'});
+    res.status(401).json({ error: 'Invalid credentials.' });
   }
 });
 
-// Create child UID
-app.post('/createChildAccount', async (req, res) => {
-  try {
-    const response = req.body;
-    const parentUID = response.parentUID;
-
-    const uid = await createChildUID(parentUID);
-    res.status(201).json({message: uid});
-  } catch (error) {
-    console.log('Error: ', error);
-    res.status(500).json({error: 'Failed to create child UID'});
-  }
-});
-
-// Link child to parent
-app.post('/linkChild', async (req, res) => {
-  try {
-    const response = req.body;
-    const data = linkChildSchema(response);
-    const status = await linkChild(data);
-    res.status(201).json({message: status});
-  } catch (error) {
-    console.log('Error: ', error);
-    res.status(500).json({error: 'Failed to link child to parent'});
-  }
-});
-
-// Delete a specific User
 app.get('/', (req, res) => {
-  res.send('Welcome to my service. Service is running successfully.');
+  res.send('Welcome to the User Management Service. Service is running successfully.');
 });
 
 const PORT = process.env.PORT || 8080;
 app.listen(PORT, () => {
   console.log(
-    `Hello from Cloud Run! The container started successfully and is listening for HTTP requests on ${PORT}`
+    `User Management service started successfully and is listening for HTTP requests on ${PORT}`
   );
 });
+
+export default app;
+

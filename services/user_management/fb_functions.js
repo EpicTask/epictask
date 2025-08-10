@@ -1,135 +1,140 @@
 import * as dotenv from 'dotenv';
-import {db} from './firebase_config.js';
+import { db } from './firebase_config.js';
 import {
-  addDoc,
   doc,
   setDoc,
   updateDoc,
   deleteDoc,
   collection,
   serverTimestamp,
+  addDoc,
+  getDoc,
+  query,
+  where,
+  getDocs,
+  arrayUnion,
 } from 'firebase/firestore';
+import { getAuth } from 'firebase-admin/auth';
+import { customAlphabet } from 'nanoid';
 
 dotenv.config();
 
-const ref = collection(db, 'test_user_events');
+const usersRef = collection(db, 'users');
+const invitesRef = collection(db, 'invites');
 
-async function saveUserEvent(eventType, eventData) {
+async function getUserProfile(uid) {
   try {
-    await addDoc(ref, {
-      event_id: ref.id,
-      event_type: eventType,
-      user_id: eventData.user_id,
-      timestamp: serverTimestamp(),
-      additional_data: eventData.additional_data || {},
+    const userDoc = await getDoc(doc(usersRef, uid));
+    if (!userDoc.exists()) {
+      return null;
+    }
+    return { uid, ...userDoc.data() };
+  } catch (error) {
+    console.error('Failed to get user profile:', error);
+    throw new Error('Failed to get user profile.');
+  }
+}
+
+async function profileUpdate(uid, profileData) {
+  try {
+    const userRef = doc(usersRef, uid);
+    await updateDoc(userRef, profileData);
+    // Also update Firebase Auth user
+    await getAuth().updateUser(uid, {
+      displayName: profileData.displayName,
+      photoURL: profileData.photoURL,
     });
-
-    console.log('Event saved successfully');
+    console.log('Profile updated successfully for user:', uid);
     return true;
   } catch (error) {
-    console.error('Failed to save event:', error);
+    console.error('Failed to update profile:', error);
     return false;
   }
 }
 
-// Save user interaction
-async function saveUserInteraction(response) {
+async function deletedUserAccount(uid) {
   try {
-    await addDoc(ref, response);
-
-    console.log('Interaction saved successfully');
+    await deleteDoc(doc(usersRef, uid));
+    await getAuth().deleteUser(uid);
+    console.log('Deleted account for user:', uid);
     return true;
-  } catch (error) {
-    console.error('Failed to save interaction:', error);
-    return false;
-  }
-}
-
-async function profileUpdate(eventData) {
-  try {
-    const userRef = doc(db, 'users', eventData.user_id);
-    // Save the update to Firestore
-    await updateDoc(userRef, eventData.fields);
-    console.log('Event saved successfully');
-    return true;
-  } catch (error) {
-    console.error('Failed to save event:', error);
-    return false;
-  }
-}
-
-// User Authenticated
-async function authenticateUser(response) {
-  console.log('Authenticated' + response);
-  return 'Successful';
-}
-
-// Delete user account
-async function deletedUserAccount(response) {
-  try {
-    const userRef = doc(db, 'users', response);
-    await deleteDoc(userRef);
-    console.log('Deleted account' + response);
-    return 'Successful';
   } catch (error) {
     console.error('Error deleting user account:', error);
-    return 'Error deleting user account';
+    return false;
   }
 }
 
-
-// Verify User
-async function verifyUser(response) {
-  console.log('User Verified' + response);
-  return 'Successful';
-}
-
-// Connect Wallet
-async function connectWallet(response) {
-  console.log('Wallet Connected' + response);
-  return 'Successful';
-}
-
-// Forgot password
-async function forgotPassword(response) {
-  console.log('Password Reset' + response);
-  return 'Successful';
-}
-async function createChildUID(parentUID) {
-  // try {
-  const parentRef = collection(db, 'users', parentUID);
-  //   // const uid = userRef.id;
-  //   await updateDoc(parentRef, {children: arrayUnion(uid)});
-  //   return uid;
-  // } catch (error) {
-  console.error('Failed to create child uid:', parentRef);
-  // }
-}
-
-async function linkChild(data) {
+async function generateInviteCode(childId) {
   try {
-    const parentUID = data.parentUID;
-    const childUID = data.childUID;
-    const parentRef = collection(db, 'users', parentUID);
-    const childCollectionRef = collection(parentRef, 'linked');
-    const childDocRef = doc(childCollectionRef, childUID);
+    const nanoid = customAlphabet('ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789', 6);
+    const inviteCode = nanoid();
+    const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours from now
 
-    await setDoc(childDocRef, data);
-    return 'Successful';
+    await setDoc(doc(invitesRef, inviteCode), {
+      childId,
+      expiresAt,
+    });
+
+    return { inviteCode, expiresAt };
   } catch (error) {
-    console.error('Failed to create child uid:', error);
+    console.error('Failed to generate invite code:', error);
+    throw new Error('Failed to generate invite code.');
   }
 }
+
+async function linkChildAccount(parentUID, inviteCode) {
+  try {
+    const inviteDocRef = doc(invitesRef, inviteCode);
+    const inviteDoc = await getDoc(inviteDocRef);
+
+    if (!inviteDoc.exists() || inviteDoc.data().expiresAt.toDate() < new Date()) {
+      throw new Error('Invalid or expired invite code.');
+    }
+
+    const childId = inviteDoc.data().childId;
+
+    // Add child to parent's list and parent to child's list
+    const parentRef = doc(usersRef, parentUID);
+    const childRef = doc(usersRef, childId);
+
+    await updateDoc(parentRef, { children: arrayUnion(childId) });
+    await updateDoc(childRef, { parent: parentUID });
+
+    // Delete the invite code after use
+    await deleteDoc(inviteDocRef);
+
+    return { message: 'Child linked successfully.' };
+  } catch (error) {
+    console.error('Failed to link child account:', error);
+    throw error;
+  }
+}
+
+async function getLinkedChildren(parentUID) {
+  try {
+    const parentDoc = await getDoc(doc(usersRef, parentUID));
+    if (!parentDoc.exists()) {
+      throw new Error('Parent not found.');
+    }
+    const childIds = parentDoc.data().children || [];
+    if (childIds.length === 0) {
+      return [];
+    }
+    const childrenQuery = query(usersRef, where('__name__', 'in', childIds));
+    const childrenSnapshot = await getDocs(childrenQuery);
+    return childrenSnapshot.docs.map(doc => ({ uid: doc.id, ...doc.data() }));
+  } catch (error) {
+    console.error('Failed to get linked children:', error);
+    throw error;
+  }
+}
+
 
 export {
-  saveUserEvent,
+  getUserProfile,
   profileUpdate,
-  createChildUID,
-  linkChild,
-  saveUserInteraction,
-  authenticateUser,
   deletedUserAccount,
-  verifyUser,
-  connectWallet,
-  forgotPassword,
+  generateInviteCode,
+  linkChildAccount,
+  getLinkedChildren,
 };

@@ -1,55 +1,71 @@
-import {auth} from '../firebase_config.js';
 import {
+  getAuth,
   createUserWithEmailAndPassword,
-  signOut,
   signInWithEmailAndPassword,
+  signOut,
 } from 'firebase/auth';
+import { auth } from '../firebase_config.js';
+import { getFirestore, doc, setDoc } from 'firebase/firestore';
+import { getAuth as getAdminAuth } from 'firebase-admin/auth';
 
-// Function to create a new user with email and password
-async function createUserWithPassword(email, password) {
+const db = getFirestore();
+
+async function createUserWithPassword(email, password, displayName, role) {
   try {
-    const userRecord = await createUserWithEmailAndPassword(
-      auth,
-      email,
-      password
-    );
-    console.log('User found:', userRecord.uid);
-    // Perform your sign-in logic here
-    return userRecord.uid;
+    const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+    const { user } = userCredential;
+
+    // Set display name in Firebase Auth
+    await getAdminAuth().updateUser(user.uid, { displayName });
+
+    // Create user profile in Firestore
+    const userRef = doc(db, 'users', user.uid);
+    const userProfile = {
+      uid: user.uid,
+      email: user.email,
+      displayName,
+      role,
+      createdAt: new Date().toISOString(),
+    };
+    await setDoc(userRef, userProfile);
+
+    const token = await user.getIdToken();
+    return { token, user: userProfile };
   } catch (error) {
-    console.error('Failed to create user:', error);
+    console.error('Error creating user:', error);
     throw error;
   }
 }
 
-// Function to sign in an existing user with email and password
 async function loginWithEmailAndPassword(email, password) {
   try {
-    const userRecord = await signInWithEmailAndPassword(auth, email, password);
-    console.log('User found:', userRecord.user.uid);
-    // Perform your sign-in logic here
-    return userRecord.user.uid;
+    const userCredential = await signInWithEmailAndPassword(auth, email, password);
+    const { user } = userCredential;
+
+    const token = await user.getIdToken();
+
+    // Get user profile from Firestore
+    const userRef = doc(db, 'users', user.uid);
+    const userDoc = await getDoc(userRef);
+    const userProfile = userDoc.exists() ? { uid: user.uid, ...userDoc.data() } : null;
+
+    return { token, user: userProfile };
   } catch (error) {
-    console.error('Failed to sign in user:', error);
+    console.error('Error logging in:', error);
     throw error;
   }
 }
 
-// Get user authentificaion
-function getUser() {
-  // User is signed in, see docs for a list of available properties
-  // https://firebase.google.com/docs/reference/js/auth.user
-  const uid = auth.currentUser.uid;
-  return uid;
+function signUserOut() {
+  return signOut(auth);
 }
 
-// Sign out user
-async function signUserOut() {
-  try {
-    const result = await signOut(auth);
-    return result;
-  } catch (error) {
-    console.error('Failed to sign out user:', error);
+function getUser() {
+  const user = getAuth().currentUser;
+  if (user) {
+    return user.uid;
+  } else {
+    return 'No user is signed in.';
   }
 }
 
