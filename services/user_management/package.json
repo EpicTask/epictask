@@ -12,14 +12,14 @@
   },
   "author": "Randy Nolden",
   "engines": {
-    "node": ">=18.0.0"
+    "node": ">=20.0.0"
   },
   "dependencies": {
     "cors": "^2.8.5",
     "dotenv": "^16.0.3",
     "express": "^4.17.1",
-    "firebase": "^9.22.0",
-    "firebase-admin": "11.8.0",
+    "firebase": "^12.1.0",
+    "firebase-admin": "^13.4.0",
     "handlebars": "^4.7.4",
     "mongoose": "^7.6.3"
   },
@@ -32,7 +32,7 @@
     "eslint-plugin-prettier": "4.2.1",
     "eslint-plugin-promise": "6.1.1",
     "gaxios": "5.0.2",
-    "mocha": "10.1.0",
+    "mocha": "^10.8.2",
     "prettier": "2.8.1"
   }
 }
