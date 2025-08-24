@@ -37,12 +37,35 @@ function RootLayout() {
     if (loaded && !loading) {
       SplashScreen.hideAsync();
       const inAuthGroup = segments[0] === 'auth';
+      const inParentGroup = segments[0] === '(parent)';
+      const inKidGroup = segments[0] === '(kid)';
 
-      // If the user is not signed in and the initial segment is not the auth group, redirect to the auth group.
-      if (user && inAuthGroup) {
-        // If the user is signed in and in the auth group, redirect to their respective dashboard.
-        const targetPath = user.role === 'parent' ? '/(parent)' : '/(kid)';
-        router.replace(targetPath);
+      if (user) {
+        // User is authenticated
+        const userRole = user.role || (user.user && user.user.role);
+        console.log("User authenticated with role:", userRole);
+        
+        if (inAuthGroup) {
+          // If user is authenticated but in auth screens, redirect to their dashboard
+          const targetPath = userRole === 'parent' ? '/(parent)/(app)/(tabs)' : '/(kid)/(app)/(tabs)';
+          console.log("Redirecting authenticated user to:", targetPath);
+          router.replace(targetPath as any);
+        } else if (userRole === 'parent' && !inParentGroup) {
+          // Parent user not in parent section, redirect to parent dashboard
+          console.log("Redirecting parent to parent dashboard");
+          router.replace('/(parent)/(app)/(tabs)' as any);
+        } else if (userRole === 'child' && !inKidGroup) {
+          // Child user not in kid section, redirect to kid dashboard
+          console.log("Redirecting child to kid dashboard");
+          router.replace('/(kid)/(app)/(tabs)' as any);
+        }
+      } else {
+        // User is not authenticated
+        if (!inAuthGroup && segments[0] !== undefined) {
+          // If user is not authenticated and not in auth group or index, redirect to index
+          console.log("Redirecting unauthenticated user to index");
+          router.replace('/');
+        }
       }
     }
   }, [loaded, user, loading, segments, router]);
