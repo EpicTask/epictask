@@ -17,6 +17,7 @@
       "supportsTablet": true,
       "buildNumber": "1.0.0",
       "bundleIdentifier": "com.kaitechcorp.epictask",
+      "googleServicesFile": "./GoogleService-Info.plist",
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false
       }
@@ -26,6 +27,7 @@
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
+      "googleServicesFile": "./google-services.json",
       "package": "com.kaitechcorp.epictask"
     },
     "web": {
@@ -35,6 +37,9 @@
     },
     "plugins": [
       "expo-router",
+      "@react-native-firebase/app",
+      "@react-native-firebase/auth",
+      // "@react-native-firebase/crashlytics",
       [
         "expo-splash-screen",
         {
@@ -42,6 +47,12 @@
           "imageWidth": 200,
           "resizeMode": "contain",
           "backgroundColor": "#ffffff"
+        },
+        "expo-build-properties",
+        {
+          "ios": {
+            "useFrameworks": "static"
+          }
         }
       ]
     ],
