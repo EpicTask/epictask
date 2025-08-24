@@ -16,9 +16,10 @@ import {
 
 import { router } from "expo-router";
 import { COLORS } from "@/constants/Colors";
-import { StyleSheet, TextInput, View } from "react-native";
+import { Alert, StyleSheet, TextInput, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import AuthButton from "@/components/buttons/AuthButton";
+import { useAuth } from "@/context/AuthContext";
 
 const Login = () => {
   const CELL_COUNT = 4;
@@ -28,6 +29,21 @@ const Login = () => {
     value,
     setValue,
   });
+  const { linkChild, loading, error } = useAuth();
+
+  const handleLogin = async () => {
+    if (value.length !== CELL_COUNT) {
+      Alert.alert('Invalid Code', 'Please enter a complete invite code');
+      return;
+    }
+    
+    try {
+      await linkChild(value);
+      // Navigation will be handled automatically by the AuthContext and _layout.tsx
+    } catch (error) {
+      Alert.alert('Login Failed', error instanceof Error ? error.message : 'Invalid invite code');
+    }
+  };
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -106,10 +122,8 @@ const Login = () => {
           </View>
           <AuthButton
             fill={true}
-            onPress={() => {
-          router.replace("/(kid)/(app)/(tabs)");
-            }}
-            text="Login"
+            onPress={loading ? () => {} : handleLogin}
+            text={loading ? "Joining..." : "Join Account"}
             height={responsiveHeight(6)}
           />
         </View>

@@ -9,6 +9,7 @@ import { ICONS } from "@/assets";
 import { router } from "expo-router";
 import { COLORS } from "@/constants/Colors";
 import {
+  Alert,
   ScrollView,
   StyleSheet,
   Text,
@@ -17,10 +18,21 @@ import {
 } from "react-native";
 import { responsiveFontSize } from "react-native-responsive-dimensions";
 import CustomText from "@/components/CustomText";
+import { useAuth } from "@/context/AuthContext";
 
 const Login = () => {
   const [password, setPassword] = useState("");
   const [email, setEmail] = useState("");
+  const { login, loading, error } = useAuth();
+
+  const handleLogin = async () => {
+    try {
+      await login(email, password);
+      // Navigation will be handled automatically by the AuthContext and _layout.tsx
+    } catch (error) {
+      Alert.alert('Login Failed', error instanceof Error ? error.message : 'Login failed');
+    }
+  };
 
   return (
     <SafeArea>
@@ -69,10 +81,8 @@ const Login = () => {
             <View style={{ paddingTop: 28 }}>
               <AuthButton
                 fill={true}
-                onPress={() => {
-              router.replace("/(app)/(tabs)" as any);
-                }}
-                text="Login"
+                onPress={loading ? () => {} : handleLogin}
+                text={loading ? "Logging in..." : "Login"}
               />
             </View>
           </View>

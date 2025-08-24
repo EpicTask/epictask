@@ -12,8 +12,6 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { Image, StyleSheet, Text, TouchableOpacity, View, Alert, ScrollView } from "react-native";
 import CustomText from "@/components/CustomText";
 import { AuthContext } from "@/context/AuthContext";
-import { signOut } from "firebase/auth";
-import { auth } from "../../../../firebaseConfig";
 
 const ProfileCard = () => {
   const { user } = useContext(AuthContext);
@@ -89,15 +87,14 @@ const SettingButton = ({
 };
 
 const SettingsScreen = () => {
-  const { setUser } = useContext(AuthContext);
+  const { logout } = useContext(AuthContext);
 
   const handleSignOut = async () => {
     try {
-      await signOut(auth);
-      setUser(null);
-      router.replace('/auth');
+      await logout();
+      router.replace('/(parent)/auth/login' as any);
     } catch (error) {
-      Alert.alert("Sign Out Failed", error.message);
+      Alert.alert("Sign Out Failed", error instanceof Error ? error.message : 'Sign out failed');
     }
   };
 

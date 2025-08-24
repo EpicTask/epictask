@@ -22,8 +22,6 @@ import CustomText from "@/components/CustomText";
 import LinkIcon from "@/assets/icons/Link";
 import TaskIcon from "@/assets/icons/tab-bar/Task";
 import { AuthContext } from "@/context/AuthContext";
-import { signOut } from "firebase/auth";
-import { auth } from "../../../../firebaseConfig";
 
 const ProfileCard = () => {
   const { user } = useContext(AuthContext);
@@ -93,15 +91,14 @@ const SettingButton = ({
 };
 
 const ProfileScreen = () => {
-  const { setUser } = useContext(AuthContext);
+  const { logout } = useContext(AuthContext);
 
   const handleSignOut = async () => {
     try {
-      await signOut(auth);
-      setUser(null);
-      router.replace('/auth');
+      await logout();
+      router.replace('/(kid)/auth/login' as any);
     } catch (error) {
-      Alert.alert("Sign Out Failed", error.message);
+      Alert.alert("Sign Out Failed", error instanceof Error ? error.message : 'Sign out failed');
     }
   };
 

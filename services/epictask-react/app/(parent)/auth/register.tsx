@@ -5,7 +5,7 @@ import Divider from "@/components/Divider/Divider";
 import AuthButton from "@/components/buttons/AuthButton";
 import CustomInput from "@/components/custom-input/CustomInput";
 
-import { ScrollView, StyleSheet, TouchableOpacity, View } from "react-native";
+import { Alert, ScrollView, StyleSheet, TouchableOpacity, View } from "react-native";
 import {
   responsiveFontSize,
   responsiveHeight,
@@ -16,12 +16,40 @@ import { router } from "expo-router";
 import { COLORS } from "@/constants/Colors";
 import { Fontisto } from "@expo/vector-icons";
 import CustomText from "@/components/CustomText";
+import { useAuth } from "@/context/AuthContext";
 
 const Register = () => {
   const [radio, toggleRadio] = useState(false);
   const [password, setPassword] = useState("");
   const [email, setEmail] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [displayName, setDisplayName] = useState("");
+  const { register, loading, error } = useAuth();
+
+  const handleRegister = async () => {
+    // Validation
+    if (!email || !password || !confirmPassword || !displayName) {
+      Alert.alert('Error', 'Please fill in all fields');
+      return;
+    }
+
+    if (password !== confirmPassword) {
+      Alert.alert('Error', 'Passwords do not match');
+      return;
+    }
+
+    if (!radio) {
+      Alert.alert('Error', 'Please agree to the Terms & Conditions');
+      return;
+    }
+
+    try {
+      await register(email, password, displayName, 'parent');
+      // Navigation will be handled automatically by the AuthContext and _layout.tsx
+    } catch (error) {
+      Alert.alert('Registration Failed', error instanceof Error ? error.message : 'Registration failed');
+    }
+  };
 
   return (
     <SafeArea>
@@ -67,6 +95,12 @@ const Register = () => {
             </CustomText>
           </View>
           <View style={{}}>
+            <CustomInput
+              label="Full Name"
+              placeholder="Enter Your Full Name"
+              value={displayName}
+              onChangeText={setDisplayName}
+            />
             <CustomInput
               label="Your Email"
               placeholder="Enter Your Email"
@@ -127,11 +161,9 @@ const Register = () => {
             <View style={{ width: "100%", paddingVertical: 10 }}>
               <AuthButton
                 fill={true}
-                text="Sign Up"
+                text={loading ? "Creating Account..." : "Sign Up"}
                 height={responsiveHeight(6)}
-                onPress={() => {
-                  router.push("/(app)/screens/create-profile" as any);
-                }}
+                onPress={loading ? () => {} : handleRegister}
               />
             </View>
             <TouchableOpacity

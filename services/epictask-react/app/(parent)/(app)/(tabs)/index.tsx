@@ -35,7 +35,7 @@ export default function HomeScreen() {
               alignItems: "center",
             }}
           >
-            <Link href="/screens/settings/personal-info" asChild>
+            <Link href="/(parent)/(app)/screens/profile-display" asChild>
               <Pressable>
                 <Image
                   source={IMAGES.profile}

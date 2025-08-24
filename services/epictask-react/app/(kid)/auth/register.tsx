@@ -17,11 +17,11 @@ import {
 import { router } from "expo-router";
 import { COLORS } from "@/constants/Colors";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { StyleSheet, Text, TextInput, View } from "react-native";
+import { Alert, StyleSheet, Text, TextInput, View } from "react-native";
 import AuthButton from "@/components/buttons/AuthButton";
+import { useAuth } from "@/context/AuthContext";
 
 const Register = () => {
-
   const CELL_COUNT = 4;
   const [value, setValue] = useState("");
   const ref = useBlurOnFulfill({ value, cellCount: CELL_COUNT });
@@ -29,6 +29,21 @@ const Register = () => {
     value,
     setValue,
   });
+  const { linkChild, loading, error } = useAuth();
+
+  const handleRegister = async () => {
+    if (value.length !== CELL_COUNT) {
+      Alert.alert('Invalid Code', 'Please enter a complete invite code');
+      return;
+    }
+    
+    try {
+      await linkChild(value);
+      // Navigation will be handled automatically by the AuthContext and _layout.tsx
+    } catch (error) {
+      Alert.alert('Registration Failed', error instanceof Error ? error.message : 'Invalid invite code');
+    }
+  };
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -86,8 +101,8 @@ const Register = () => {
           </View>
           <AuthButton
             fill={true}
-            onPress={() => router.back()}
-            text="Register"
+            onPress={loading ? () => {} : handleRegister}
+            text={loading ? "Joining..." : "Register"}
             height={responsiveHeight(6)}
           />
         </View>
