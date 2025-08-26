@@ -14,15 +14,25 @@ from schema import schema
 
 app = FastAPI()
 
-baseUrl = os.getenv("_BASEURL")
-defaultUrl = os.getenv("_DEFAULT_URL")
-origins = [baseUrl, defaultUrl]
+# Get CORS origins from environment variable, fallback to allow all
+cors_origins_env = os.getenv("CORS_ORIGINS")
+if cors_origins_env:
+    origins = [origin.strip() for origin in cors_origins_env.split(",")]
+else:
+    # Fallback to specific origins instead of allowing all
+    origins = [
+        "https://task-coin-384722.web.app",
+        "http://localhost:8080",
+        "http://localhost:3000",
+        "http://localhost:19006"
+    ]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=origins,
     allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allow_headers=["Content-Type", "Authorization"],
 )
 templates = Jinja2Templates(directory="app/templates")
 

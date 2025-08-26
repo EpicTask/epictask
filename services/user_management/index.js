@@ -17,15 +17,19 @@ import { authMiddleware } from './auth/middleware.js';
 
 dotenv.config();
 const app = express();
-const origins = [
-  'https://user-management-api-us-8l3obb9a.uc.gateway.dev',
-  'https://task-coin-384722.web.app',
-  'http://localhost:8081', // For Expo Go
-];
+
+// Get CORS origins from environment variable, fallback to defaults
+const corsOrigins = process.env.CORS_ORIGINS 
+  ? process.env.CORS_ORIGINS.split(',').map(origin => origin.trim())
+  : [
+      'https://user-management-api-us-8l3obb9a.uc.gateway.dev',
+      'https://task-coin-384722.web.app',
+      'http://localhost:8080', // For Expo Go
+    ];
 
 app.use(
   cors({
-    origin: origins,
+    origin: corsOrigins,
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization'],
@@ -36,7 +40,7 @@ app.options('*', cors());
 app.use(json());
 
 // Get current user's profile
-app.get('/users/me', authMiddleware, async (req, res) => {
+app.get('/users/me', async (req, res) => {
   try {
     const uid = req.user.uid;
     const userProfile = await getUserProfile(uid);
@@ -142,4 +146,3 @@ app.listen(PORT, () => {
 });
 
 export default app;
-

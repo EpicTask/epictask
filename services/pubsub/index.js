@@ -10,11 +10,21 @@ const pubsub = new PubSub({projectId: 'task-coin-384722'});
 dotenv.config();
 const app = express();
 
+// Get CORS origins from environment variable, fallback to defaults
+const corsOrigins = process.env.CORS_ORIGINS 
+  ? process.env.CORS_ORIGINS.split(',').map(origin => origin.trim())
+  : [
+      'https://task-coin-384722.web.app',
+      'http://localhost:8080',
+      'http://localhost:3000',
+      'http://localhost:19006'
+    ];
+
 app.use(
   cors({
-    origin: '*',
+    origin: corsOrigins,
     credentials: true,
-    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization'],
   })
 );
