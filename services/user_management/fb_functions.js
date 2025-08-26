@@ -13,9 +13,9 @@ import {
   where,
   getDocs,
   arrayUnion,
+  documentId,
 } from 'firebase/firestore';
 import { getAuth } from 'firebase-admin/auth';
-import { customAlphabet } from 'nanoid';
 
 dotenv.config();
 
@@ -66,8 +66,7 @@ async function deletedUserAccount(uid) {
 
 async function generateInviteCode(childId) {
   try {
-    const nanoid = customAlphabet('ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789', 6);
-    const inviteCode = nanoid();
+    const inviteCode = getDoc().id; // Generate a unique ID
     const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours from now
 
     await setDoc(doc(invitesRef, inviteCode), {
