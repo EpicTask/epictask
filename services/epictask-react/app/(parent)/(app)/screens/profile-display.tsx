@@ -1,4 +1,4 @@
-import React, { useContext } from 'react';
+import React, { useContext, useEffect, useState } from 'react';
 import { View, StyleSheet, ScrollView, TouchableOpacity, Image } from 'react-native';
 import { AuthContext } from '@/context/AuthContext';
 import CustomText from '@/components/CustomText';
@@ -6,7 +6,7 @@ import SafeArea from '@/components/SafeArea';
 import AuthButton from '@/components/buttons/AuthButton';
 import { COLORS } from '@/constants/Colors';
 import { ICONS, IMAGES } from '@/assets';
-import { router } from 'expo-router';
+import { router, useFocusEffect } from 'expo-router';
 import {
   responsiveFontSize,
   responsiveHeight,
@@ -15,6 +15,14 @@ import {
 
 const ProfileDisplayScreen = () => {
   const { user } = useContext(AuthContext);
+  const [currentUser, setCurrentUser] = useState(user);
+
+  // Update local user state when the context user changes
+  useFocusEffect(
+    React.useCallback(() => {
+      setCurrentUser(user);
+    }, [user])
+  );
 
   const formatDate = (dateString: string) => {
     if (!dateString) return 'Not available';
@@ -60,14 +68,14 @@ const ProfileDisplayScreen = () => {
         <View style={styles.profileCard}>
           <View style={styles.profileImageContainer}>
             <Image
-              source={user?.photoURL ? { uri: user.photoURL } : IMAGES.profile}
+              source={currentUser?.photoURL ? { uri: currentUser.photoURL } : IMAGES.profile}
               style={styles.profileImage}
             />
           </View>
           
           <View style={styles.profileInfo}>
             <CustomText variant="semiBold" style={styles.profileName}>
-              {user?.displayName || 'User Name'}
+              {currentUser?.displayName || 'User Name'}
             </CustomText>
             <CustomText variant="regular" style={styles.profileRole}>
               Parent Account
@@ -83,12 +91,12 @@ const ProfileDisplayScreen = () => {
           <View style={styles.card}>
             <ProfileDetailItem 
               label="Full Name" 
-              value={user?.displayName || 'Not provided'} 
+              value={currentUser?.displayName || 'Not provided'} 
             />
             <View style={styles.separator} />
             <ProfileDetailItem 
               label="Email Address" 
-              value={user?.email || 'Not provided'} 
+              value={currentUser?.email || 'Not provided'} 
             />
             <View style={styles.separator} />
             <ProfileDetailItem 
@@ -98,7 +106,7 @@ const ProfileDisplayScreen = () => {
             <View style={styles.separator} />
             <ProfileDetailItem 
               label="Member Since" 
-              value={formatDate(user?.metadata?.creationTime)} 
+              value={formatDate(currentUser?.metadata?.creationTime)} 
             />
           </View>
         </View>

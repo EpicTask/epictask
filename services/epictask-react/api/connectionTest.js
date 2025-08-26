@@ -115,6 +115,105 @@ export const connectionTest = {
     }
   },
 
+  // Test User Management Service specifically
+  testUserManagementService: async () => {
+    try {
+      const response = await fetch('https://user-management-5wpxgn35iq-uc.a.run.app/health', {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        return {
+          success: true,
+          message: 'User Management Service is healthy',
+          data
+        };
+      } else {
+        return {
+          success: false,
+          message: `User Management Service unhealthy: ${response.status}`,
+          error: response.statusText
+        };
+      }
+    } catch (error) {
+      return {
+        success: false,
+        message: 'User Management Service connection failed',
+        error: error.message
+      };
+    }
+  },
+
+  // Test Task Management Service specifically
+  testTaskManagementService: async () => {
+    try {
+      const response = await fetch('https://task-management-5wpxgn35iq-uc.a.run.app/health', {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        return {
+          success: true,
+          message: 'Task Management Service is healthy',
+          data
+        };
+      } else {
+        return {
+          success: false,
+          message: `Task Management Service unhealthy: ${response.status}`,
+          error: response.statusText
+        };
+      }
+    } catch (error) {
+      return {
+        success: false,
+        message: 'Task Management Service connection failed',
+        error: error.message
+      };
+    }
+  },
+
+  // Test XRPL Service specifically
+  testXRPLService: async () => {
+    try {
+      const response = await fetch('https://xrpl-service-5wpxgn35iq-uc.a.run.app/health', {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        return {
+          success: true,
+          message: 'XRPL Service is healthy',
+          data
+        };
+      } else {
+        return {
+          success: false,
+          message: `XRPL Service unhealthy: ${response.status}`,
+          error: response.statusText
+        };
+      }
+    } catch (error) {
+      return {
+        success: false,
+        message: 'XRPL Service connection failed',
+        error: error.message
+      };
+    }
+  },
+
   // Run comprehensive connection tests
   runAllTests: async () => {
     console.log('🔍 Starting connection tests...');
@@ -122,6 +221,9 @@ export const connectionTest = {
     const results = {
       apiConnection: await connectionTest.testApiConnection(),
       firebaseConnection: await connectionTest.testFirebaseConnection(),
+      userManagementService: await connectionTest.testUserManagementService(),
+      taskManagementService: await connectionTest.testTaskManagementService(),
+      xrplService: await connectionTest.testXRPLService(),
       authenticatedApiCall: null
     };
 

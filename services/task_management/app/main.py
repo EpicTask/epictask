@@ -158,6 +158,67 @@ async def get_task(task_id: str):
     response = db.get_task(task_id)
 
     return {"response": response}
+
+@app.get("/user/{user_id}/task-summary")
+async def get_task_summary(user_id: str):
+    """Get task summary for a user"""
+    summary = db.get_task_summary(user_id)
+    return summary
+
+@app.get("/user/{user_id}/recent-tasks")
+async def get_recent_tasks(user_id: str, limit: int = 5, days: int = 7):
+    """Get recent tasks for a user"""
+    tasks = db.get_recent_tasks(user_id, limit, days)
+    return tasks
+
+@app.get("/user/{user_id}/rewards")
+async def get_user_rewards(user_id: str):
+    """Get rewards for a user"""
+    rewards = db.get_user_rewards(user_id)
+    return rewards
+
+@app.get("/leaderboard/global")
+async def get_global_leaderboard():
+    """Get the global leaderboard"""
+    leaderboard = db.get_global_leaderboard()
+    return leaderboard
+
+@app.get("/parent/{parent_id}/children-rewards")
+async def get_children_rewards(parent_id: str):
+    """Get rewards for a parent's children"""
+    rewards = db.get_children_rewards(parent_id)
+    return rewards
+
+# Admin/Metrics Endpoints
+@app.get("/admin/metrics/users")
+async def get_user_metrics():
+    """Get user metrics for admin dashboard"""
+    metrics = db.get_user_metrics()
+    return metrics
+
+@app.get("/admin/metrics/tasks")
+async def get_task_metrics():
+    """Get task metrics for admin dashboard"""
+    metrics = db.get_task_metrics()
+    return metrics
+
+@app.get("/admin/metrics/events")
+async def get_event_metrics():
+    """Get event metrics for admin dashboard"""
+    metrics = db.get_event_metrics()
+    return metrics
+
+@app.get("/admin/metrics/performance")
+async def get_performance_metrics():
+    """Get performance metrics for admin dashboard"""
+    metrics = db.get_performance_metrics()
+    return metrics
+
+@app.post("/admin/clear-test-data")
+async def clear_test_data():
+    """Clear test data (test environment only)"""
+    result = db.clear_test_data()
+    return result
 # Execute the application when the script is run
 if __name__ == "__main__":
     # Get the server port from the environment variable

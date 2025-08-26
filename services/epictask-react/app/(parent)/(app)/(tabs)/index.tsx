@@ -3,12 +3,10 @@ import KidsCard from "@/components/cards/KidsCard";
 import TaskCard from "@/components/cards/TaskCard";
 import Heading from "@/components/headings/Heading";
 import ProgressCard from "@/components/cards/ProgressCard";
-
 import {
   responsiveHeight,
   responsiveWidth,
 } from "react-native-responsive-dimensions";
-
 import { ICONS, IMAGES } from "@/assets";
 import { COLORS } from "@/constants/Colors";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -17,87 +15,143 @@ import {
   Pressable,
   ScrollView,
   StyleSheet,
-  TouchableOpacity,
   View,
+  Text,
+  ActivityIndicator,
 } from "react-native";
-import { Link, router } from "expo-router";
-import React from "react";
+import { Link } from "expo-router";
+import React, { useEffect, useState } from "react";
+import { useAuth } from "@/context/AuthContext";
+import taskService from "@/api/taskService";
+import authService from "@/api/authService";
+
+// Type definitions
+interface TaskSummary {
+  completed: number;
+  in_progress: number;
+  total: number;
+}
+
+interface RecentTask {
+  task_id: string;
+  task_title: string;
+  reward_amount: number;
+}
+
+interface Kid {
+  uid: string;
+  displayName: string;
+  level?: number;
+  tokens_earned?: number;
+  tasks_completed?: number;
+  tasks_pending?: number;
+}
 
 export default function HomeScreen() {
+  const { user } = useAuth();
+  const [taskSummary, setTaskSummary] = useState<TaskSummary>({ completed: 0, in_progress: 0, total: 0 });
+  const [recentTasks, setRecentTasks] = useState<RecentTask[]>([]);
+  const [kids, setKids] = useState<Kid[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      if (user) {
+        try {
+          setLoading(true);
+          const summary = await taskService.getTaskSummary(user.uid);
+          setTaskSummary(summary);
+
+          const tasks = await taskService.getRecentTasks(user.uid);
+          setRecentTasks(tasks);
+
+          const linkedKids = await authService.getLinkedChildren(user.uid);
+          setKids(linkedKids);
+        } catch (error) {
+          console.error("Failed to fetch dashboard data:", error);
+        } finally {
+          setLoading(false);
+        }
+      }
+    };
+
+    fetchData();
+  }, [user]);
+
+  if (loading) {
+    return (
+      <SafeAreaView style={styles.safeArea}>
+        <ActivityIndicator size="large" color={COLORS.primary} />
+      </SafeAreaView>
+    );
+  }
+
   return (
     <SafeAreaView style={styles.safeArea}>
       <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
         <View style={{ gap: 20 }}>
-          <View
-            style={{
-              flexDirection: "row",
-              justifyContent: "space-between",
-              alignItems: "center",
-            }}
-          >
+          {/* Header */}
+          <View style={styles.header}>
             <Link href="/(parent)/(app)/screens/profile-display" asChild>
               <Pressable>
                 <Image
-                  source={IMAGES.profile}
-                  style={{
-                    height: responsiveHeight(8),
-                    width: responsiveHeight(8),
-                  }}
+                  source={user?.photoURL ? { uri: user.photoURL } : IMAGES.profile}
+                  style={styles.profileImage}
                 />
               </Pressable>
             </Link>
-            <View
-              style={{
-                padding: 14,
-                backgroundColor: "white",
-                borderRadius: responsiveWidth(100),
-              }}
-            >
+            <View style={styles.notificationIcon}>
               <Link href="/screens/notification-screen" asChild>
                 <Pressable>{ICONS.SETTINGS.bell}</Pressable>
               </Link>
             </View>
           </View>
+
+          {/* Tasks Overview */}
           <View style={{ gap: 10 }}>
             <Heading title="Tasks Overview" />
             <View style={{ flexDirection: "row", gap: 10 }}>
               <ProgressCard
                 tab={true}
-                progress={0.7}
-                completed={7}
-                total={10}
+                progress={taskSummary.total > 0 ? taskSummary.completed / taskSummary.total : 0}
+                completed={taskSummary.completed}
+                total={taskSummary.total}
                 text="Completed"
                 color={COLORS.purple}
               />
               <ProgressCard
                 tab={true}
-                progress={0.2}
-                completed={2}
+                progress={taskSummary.total > 0 ? taskSummary.in_progress / taskSummary.total : 0}
+                completed={taskSummary.in_progress}
                 text="In Progress"
-                total={10}
+                total={taskSummary.total}
                 color={COLORS.grey}
               />
             </View>
           </View>
+
+          {/* Kids Profiles */}
           <View style={{ gap: 10 }}>
             <Heading title="Kids Profiles" icon={<HomeIcon fill="black" />} />
-            <View style={{ flexDirection: "row", gap: 10, flex: 1 }}>
-              <KidsCard
-                name="Wisteria"
-                level={1}
-                stars={55}
-                completed={9}
-                pending={2}
-              />
-              <KidsCard
-                name="Wisteria"
-                level={1}
-                stars={55}
-                completed={9}
-                pending={2}
-              />
-            </View>
+            {kids.length > 0 ? (
+              <View style={{ flexDirection: "row", gap: 10, flex: 1 }}>
+                {kids.map((kid) => (
+                  <KidsCard
+                    key={kid.uid}
+                    name={kid.displayName}
+                    level={kid.level || 1}
+                    stars={kid.tokens_earned || 0}
+                    completed={kid.tasks_completed || 0}
+                    pending={kid.tasks_pending || 0}
+                  />
+                ))}
+              </View>
+            ) : (
+              <Text>No kids linked yet. Link your first child to get started!</Text>
+            )}
           </View>
+
+          {/* Recent Tasks */}
           <View style={{ gap: 10, paddingVertical: 20 }}>
             <Heading
               title="Recent tasks"
@@ -109,17 +163,17 @@ export default function HomeScreen() {
                 </Link>
               }
             />
-
-            <View style={{ flexDirection: "row", gap: 10 }}></View>
-            {Array(3)
-              .fill(0)
-              .map((_, index) => (
+            {recentTasks.length > 0 ? (
+              recentTasks.map((task) => (
                 <TaskCard
-                  key={index}
-                  name="Prepare your breakfast"
-                  stars={55}
+                  key={task.task_id}
+                  name={task.task_title}
+                  stars={task.reward_amount}
                 />
-              ))}
+              ))
+            ) : (
+              <Text>No recent activity. Create tasks to see them here!</Text>
+            )}
           </View>
         </View>
       </ScrollView>
@@ -138,5 +192,20 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     marginBottom: 50,
+  },
+  header: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+  },
+  profileImage: {
+    height: responsiveHeight(8),
+    width: responsiveHeight(8),
+    borderRadius: responsiveHeight(4),
+  },
+  notificationIcon: {
+    padding: 14,
+    backgroundColor: "white",
+    borderRadius: responsiveWidth(100),
   },
 });

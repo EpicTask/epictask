@@ -12,6 +12,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { Image, StyleSheet, Text, TouchableOpacity, View, Alert, ScrollView } from "react-native";
 import CustomText from "@/components/CustomText";
 import { AuthContext } from "@/context/AuthContext";
+import { isAuthorizedTestUser } from "@/constants/TestingConfig";
 
 const ProfileCard = () => {
   const { user } = useContext(AuthContext);
@@ -87,7 +88,7 @@ const SettingButton = ({
 };
 
 const SettingsScreen = () => {
-  const { logout } = useContext(AuthContext);
+  const { logout, user } = useContext(AuthContext);
 
   const handleSignOut = async () => {
     try {
@@ -97,6 +98,8 @@ const SettingsScreen = () => {
       Alert.alert("Sign Out Failed", error instanceof Error ? error.message : 'Sign out failed');
     }
   };
+
+  const isAdmin = user?.uid && isAuthorizedTestUser(user.uid);
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -146,6 +149,15 @@ const SettingsScreen = () => {
                 router.push("/screens/settings/notifications" as any);
               }}
             />
+            {isAdmin && (
+              <SettingButton
+                icon={<MaterialIcons name="dashboard" size={24} color={COLORS.primary} />}
+                text={"Admin Dashboard"}
+                onPress={() => {
+                  router.push("/(admin)/testing-dashboard/" as any);
+                }}
+              />
+            )}
             <Text
               style={{
                 paddingVertical: 20,

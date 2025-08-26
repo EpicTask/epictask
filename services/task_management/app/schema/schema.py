@@ -95,6 +95,20 @@ class TaskVerified(BaseModel):
 class LeaderboardEntry(BaseModel):
     """Leaderboard entry schema"""
     user_id: str
+    display_name: str
     tasks_completed: int
-    xrp_earned: float
-    eTask_earned: float
+    tokens_earned: float
+    rank: int
+
+class UserRewards(BaseModel):
+    """User rewards schema"""
+    user_id: str
+    tokens_earned: float
+    level: int
+    rank: int
+
+class TaskSummary(BaseModel):
+    """Task summary schema"""
+    completed: int
+    in_progress: int
+    total: int
