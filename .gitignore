@@ -1,20 +1,56 @@
-services/frontend_nuxt3
-services/frontend_nuxt/nuxt.config.js
-services/frontend_nuxt/.env
-services/frontend_mobile/
+# General
+.DS_Store
+.env
+.env.*
+.idea/
+.vscode/
+*.log
+*.apk
+*.ipa
+
+# Node.js
+node_modules/
+npm-debug.log
+yarn-error.log
+package-lock.json
+yarn.lock
+
+# Python
+__pycache__/
+*.pyc
+.pytest_cache/
+venv/
+instance/
+
+# Docker
+docker-compose.override.yml
+
+# React Native / Expo
+.expo/
+dist/
+*.jks
+*.p12
+*.keystore
+google-services.json
+GoogleService-Info.plist
+
+# Service-specific
+services/epictask-react/firebaseConfig.js
+services/epictask-react/node_modules/
+services/epictask-react/ios/build/
+services/epictask-react/android/build/
+services/epictask-react/android/app/build/
+services/epictask-react/web-build/
+services/user_management/node_modules/
+services/pubsub/node_modules/
+services/xrpl_management/node_modules/
+services/xrpl_management/dist/
+services/xrpl_management/.yarn/
 services/task_management/.env
 services/xrpl/.env
-services/xrpl_management/.yarn
 services/xrpl_management/.env
-Complete_Overview.txt
-Technical_Specification.txt
 
-.env
-.idea
-.pytest_cache
-.readmes
-.vscode
-.task-management-api.yaml
-__pycache__
-
-application-74642a80-c740-4eb0-85f1-1b2403081695.apk
+# Other
+resources/developmentDocs/
+services/epictask-react/constants/Microservices.ts
+services/epictask-react/constants/CollectionNames.ts
