@@ -91,7 +91,7 @@ This document details the XRPL Microservice, responsible for all interactions wi
 * **XRPL SDK**: `xrpl.js` for direct ledger communications
 * **Backend**: Node.js with TypeScript
 * **WebSockets**: Native WebSocket or gRPC streams to `rippled`
-* **Database**: PostgreSQL, Redis
+* **Database**: Firebase Firestore
 * **Containerization**: Docker, Kubernetes
 * **Security**: Hardware Security Modules (HSM) or KMS for emergency key storage
 
