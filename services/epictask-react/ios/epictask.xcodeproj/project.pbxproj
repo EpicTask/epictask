@@ -7,31 +7,31 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		08FDE9FD625B44B48506F552 /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = 05BD3B43774F4006947AE12B /* GoogleService-Info.plist */; };
 		13B07FBF1A68108700A75B9A /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 13B07FB51A68108700A75B9A /* Images.xcassets */; };
 		3E461D99554A48A4959DE609 /* SplashScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = AA286B85B6C04FC6940260E9 /* SplashScreen.storyboard */; };
-		7FBAA3972B2CDA32854FF14D /* Pods_epictask.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 5F8A5AA437C573FF9D200C4D /* Pods_epictask.framework */; };
-		924F4470A3F64CA88CA45F87 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 9145D895CE2C2690ECD77423 /* PrivacyInfo.xcprivacy */; };
+		650B57564DB1161D07498B7F /* Pods_epictask.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 5E4B312201EAC6D5986A18A2 /* Pods_epictask.framework */; };
+		71D3E7411A87D332A8D8CEE8 /* ExpoModulesProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = 06F669EC3C82DA049FF6DCEC /* ExpoModulesProvider.swift */; };
+		9680AE99B25745A4A2E96D6B /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = 274DA40DEF084A2D96F2AB7C /* GoogleService-Info.plist */; };
 		BB2F792D24A3F905000567C9 /* Expo.plist in Resources */ = {isa = PBXBuildFile; fileRef = BB2F792C24A3F905000567C9 /* Expo.plist */; };
-		D8F27B06CBF1F898C597DDEC /* ExpoModulesProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0040BC12B084289970973FBC /* ExpoModulesProvider.swift */; };
+		D3FC05E8694F6128D0498B0A /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 4FE26480CC6E793A9AAFE2FD /* PrivacyInfo.xcprivacy */; };
 		F11748422D0307B40044C1D9 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = F11748412D0307B40044C1D9 /* AppDelegate.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
-		0040BC12B084289970973FBC /* ExpoModulesProvider.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = ExpoModulesProvider.swift; path = "Pods/Target Support Files/Pods-epictask/ExpoModulesProvider.swift"; sourceTree = "<group>"; };
-		05BD3B43774F4006947AE12B /* GoogleService-Info.plist */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 4; includeInIndex = 0; lastKnownFileType = text.plist.xml; name = "GoogleService-Info.plist"; path = "epictask/GoogleService-Info.plist"; sourceTree = "<group>"; };
+		06F669EC3C82DA049FF6DCEC /* ExpoModulesProvider.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = ExpoModulesProvider.swift; path = "Pods/Target Support Files/Pods-epictask/ExpoModulesProvider.swift"; sourceTree = "<group>"; };
 		13B07F961A680F5B00A75B9A /* epictask.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = epictask.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		13B07FB51A68108700A75B9A /* Images.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; name = Images.xcassets; path = epictask/Images.xcassets; sourceTree = "<group>"; };
 		13B07FB61A68108700A75B9A /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = Info.plist; path = epictask/Info.plist; sourceTree = "<group>"; };
-		5F8A5AA437C573FF9D200C4D /* Pods_epictask.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_epictask.framework; sourceTree = BUILT_PRODUCTS_DIR; };
-		7CF3F70FD14D2A0BB600C07C /* Pods-epictask.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-epictask.release.xcconfig"; path = "Target Support Files/Pods-epictask/Pods-epictask.release.xcconfig"; sourceTree = "<group>"; };
-		9145D895CE2C2690ECD77423 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; includeInIndex = 1; name = PrivacyInfo.xcprivacy; path = epictask/PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
+		274DA40DEF084A2D96F2AB7C /* GoogleService-Info.plist */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 4; includeInIndex = 0; lastKnownFileType = text.plist.xml; name = "GoogleService-Info.plist"; path = "epictask/GoogleService-Info.plist"; sourceTree = "<group>"; };
+		4FE26480CC6E793A9AAFE2FD /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; includeInIndex = 1; name = PrivacyInfo.xcprivacy; path = epictask/PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
+		5E4B312201EAC6D5986A18A2 /* Pods_epictask.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_epictask.framework; sourceTree = BUILT_PRODUCTS_DIR; };
+		7628E1F827169A2ECA66745D /* Pods-epictask.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-epictask.release.xcconfig"; path = "Target Support Files/Pods-epictask/Pods-epictask.release.xcconfig"; sourceTree = "<group>"; };
 		AA286B85B6C04FC6940260E9 /* SplashScreen.storyboard */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.storyboard; name = SplashScreen.storyboard; path = epictask/SplashScreen.storyboard; sourceTree = "<group>"; };
 		BB2F792C24A3F905000567C9 /* Expo.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = Expo.plist; sourceTree = "<group>"; };
-		C7C76C6ABA3D05122331CFE8 /* Pods-epictask.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-epictask.debug.xcconfig"; path = "Target Support Files/Pods-epictask/Pods-epictask.debug.xcconfig"; sourceTree = "<group>"; };
 		ED297162215061F000B7C4FE /* JavaScriptCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = JavaScriptCore.framework; path = System/Library/Frameworks/JavaScriptCore.framework; sourceTree = SDKROOT; };
 		F11748412D0307B40044C1D9 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = AppDelegate.swift; path = epictask/AppDelegate.swift; sourceTree = "<group>"; };
 		F11748442D0722820044C1D9 /* epictask-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = "epictask-Bridging-Header.h"; path = "epictask/epictask-Bridging-Header.h"; sourceTree = "<group>"; };
+		FF5845F46A35159A3024686C /* Pods-epictask.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-epictask.debug.xcconfig"; path = "Target Support Files/Pods-epictask/Pods-epictask.debug.xcconfig"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -39,23 +39,13 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				7FBAA3972B2CDA32854FF14D /* Pods_epictask.framework in Frameworks */,
+				650B57564DB1161D07498B7F /* Pods_epictask.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
-		11BC3A5AC1F90E17BA6C1ED3 /* Pods */ = {
-			isa = PBXGroup;
-			children = (
-				C7C76C6ABA3D05122331CFE8 /* Pods-epictask.debug.xcconfig */,
-				7CF3F70FD14D2A0BB600C07C /* Pods-epictask.release.xcconfig */,
-			);
-			name = Pods;
-			path = Pods;
-			sourceTree = "<group>";
-		};
 		13B07FAE1A68108700A75B9A /* epictask */ = {
 			isa = PBXGroup;
 			children = (
@@ -65,8 +55,8 @@
 				13B07FB51A68108700A75B9A /* Images.xcassets */,
 				13B07FB61A68108700A75B9A /* Info.plist */,
 				AA286B85B6C04FC6940260E9 /* SplashScreen.storyboard */,
-				05BD3B43774F4006947AE12B /* GoogleService-Info.plist */,
-				9145D895CE2C2690ECD77423 /* PrivacyInfo.xcprivacy */,
+				274DA40DEF084A2D96F2AB7C /* GoogleService-Info.plist */,
+				4FE26480CC6E793A9AAFE2FD /* PrivacyInfo.xcprivacy */,
 			);
 			name = epictask;
 			sourceTree = "<group>";
@@ -75,17 +65,9 @@
 			isa = PBXGroup;
 			children = (
 				ED297162215061F000B7C4FE /* JavaScriptCore.framework */,
-				5F8A5AA437C573FF9D200C4D /* Pods_epictask.framework */,
+				5E4B312201EAC6D5986A18A2 /* Pods_epictask.framework */,
 			);
 			name = Frameworks;
-			sourceTree = "<group>";
-		};
-		43C89EBB2A73058B4B607756 /* epictask */ = {
-			isa = PBXGroup;
-			children = (
-				0040BC12B084289970973FBC /* ExpoModulesProvider.swift */,
-			);
-			name = epictask;
 			sourceTree = "<group>";
 		};
 		832341AE1AAA6A7D00B99B32 /* Libraries */ = {
@@ -102,8 +84,8 @@
 				832341AE1AAA6A7D00B99B32 /* Libraries */,
 				83CBBA001A601CBA00E9B192 /* Products */,
 				2D16E6871FA4F8E400B85C8A /* Frameworks */,
-				11BC3A5AC1F90E17BA6C1ED3 /* Pods */,
-				D045D37D1F819C4BF2511055 /* ExpoModulesProviders */,
+				DEC4611B79A12D0E5B9BF805 /* Pods */,
+				C593B8EFAA544BFB23F689FC /* ExpoModulesProviders */,
 			);
 			indentWidth = 2;
 			sourceTree = "<group>";
@@ -127,12 +109,30 @@
 			path = epictask/Supporting;
 			sourceTree = "<group>";
 		};
-		D045D37D1F819C4BF2511055 /* ExpoModulesProviders */ = {
+		C593B8EFAA544BFB23F689FC /* ExpoModulesProviders */ = {
 			isa = PBXGroup;
 			children = (
-				43C89EBB2A73058B4B607756 /* epictask */,
+				EE4DA880E918218C0DD1B216 /* epictask */,
 			);
 			name = ExpoModulesProviders;
+			sourceTree = "<group>";
+		};
+		DEC4611B79A12D0E5B9BF805 /* Pods */ = {
+			isa = PBXGroup;
+			children = (
+				FF5845F46A35159A3024686C /* Pods-epictask.debug.xcconfig */,
+				7628E1F827169A2ECA66745D /* Pods-epictask.release.xcconfig */,
+			);
+			name = Pods;
+			path = Pods;
+			sourceTree = "<group>";
+		};
+		EE4DA880E918218C0DD1B216 /* epictask */ = {
+			isa = PBXGroup;
+			children = (
+				06F669EC3C82DA049FF6DCEC /* ExpoModulesProvider.swift */,
+			);
+			name = epictask;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -143,14 +143,14 @@
 			buildConfigurationList = 13B07F931A680F5B00A75B9A /* Build configuration list for PBXNativeTarget "epictask" */;
 			buildPhases = (
 				08A4A3CD28434E44B6B9DE2E /* [CP] Check Pods Manifest.lock */,
-				139CEF80B3CC2D5AA5454096 /* [Expo] Configure project */,
+				7E2412F26AB31EDE6B07B1AE /* [Expo] Configure project */,
 				13B07F871A680F5B00A75B9A /* Sources */,
 				13B07F8C1A680F5B00A75B9A /* Frameworks */,
 				13B07F8E1A680F5B00A75B9A /* Resources */,
 				00DD1BFF1BD5951E006B06BC /* Bundle React Native code and images */,
 				800E24972A6A228C8D4807E9 /* [CP] Copy Pods Resources */,
-				41548DFA2944DECABE5D3BB0 /* [CP] Embed Pods Frameworks */,
-				BAEF1290CB00A35D7E8B5258 /* [CP-User] [RNFB] Core Configuration */,
+				18ADE1C81161C01C0F99C829 /* [CP] Embed Pods Frameworks */,
+				F94FF3BCC3135BC21213023B /* [CP-User] [RNFB] Core Configuration */,
 			);
 			buildRules = (
 			);
@@ -200,8 +200,8 @@
 				BB2F792D24A3F905000567C9 /* Expo.plist in Resources */,
 				13B07FBF1A68108700A75B9A /* Images.xcassets in Resources */,
 				3E461D99554A48A4959DE609 /* SplashScreen.storyboard in Resources */,
-				08FDE9FD625B44B48506F552 /* GoogleService-Info.plist in Resources */,
-				924F4470A3F64CA88CA45F87 /* PrivacyInfo.xcprivacy in Resources */,
+				9680AE99B25745A4A2E96D6B /* GoogleService-Info.plist in Resources */,
+				D3FC05E8694F6128D0498B0A /* PrivacyInfo.xcprivacy in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -245,7 +245,25 @@
 			shellScript = "diff \"${PODS_PODFILE_DIR_PATH}/Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [ $? != 0 ] ; then\n    # print error to STDERR\n    echo \"error: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\" >&2\n    exit 1\nfi\n# This output is used by Xcode 'outputs' to avoid re-running this script phase.\necho \"SUCCESS\" > \"${SCRIPT_OUTPUT_FILE_0}\"\n";
 			showEnvVarsInLog = 0;
 		};
-		139CEF80B3CC2D5AA5454096 /* [Expo] Configure project */ = {
+		18ADE1C81161C01C0F99C829 /* [CP] Embed Pods Frameworks */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+				"${PODS_ROOT}/Target Support Files/Pods-epictask/Pods-epictask-frameworks.sh",
+				"${PODS_XCFRAMEWORKS_BUILD_DIR}/hermes-engine/Pre-built/hermes.framework/hermes",
+			);
+			name = "[CP] Embed Pods Frameworks";
+			outputPaths = (
+				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/hermes.framework",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-epictask/Pods-epictask-frameworks.sh\"\n";
+			showEnvVarsInLog = 0;
+		};
+		7E2412F26AB31EDE6B07B1AE /* [Expo] Configure project */ = {
 			isa = PBXShellScriptBuildPhase;
 			alwaysOutOfDate = 1;
 			buildActionMask = 2147483647;
@@ -263,24 +281,6 @@
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
 			shellScript = "# This script configures Expo modules and generates the modules provider file.\nbash -l -c \"./Pods/Target\\ Support\\ Files/Pods-epictask/expo-configure-project.sh\"\n";
-		};
-		41548DFA2944DECABE5D3BB0 /* [CP] Embed Pods Frameworks */ = {
-			isa = PBXShellScriptBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			inputPaths = (
-				"${PODS_ROOT}/Target Support Files/Pods-epictask/Pods-epictask-frameworks.sh",
-				"${PODS_XCFRAMEWORKS_BUILD_DIR}/hermes-engine/Pre-built/hermes.framework/hermes",
-			);
-			name = "[CP] Embed Pods Frameworks";
-			outputPaths = (
-				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/hermes.framework",
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-			shellPath = /bin/sh;
-			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-epictask/Pods-epictask-frameworks.sh\"\n";
-			showEnvVarsInLog = 0;
 		};
 		800E24972A6A228C8D4807E9 /* [CP] Copy Pods Resources */ = {
 			isa = PBXShellScriptBuildPhase;
@@ -354,7 +354,7 @@
 			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-epictask/Pods-epictask-resources.sh\"\n";
 			showEnvVarsInLog = 0;
 		};
-		BAEF1290CB00A35D7E8B5258 /* [CP-User] [RNFB] Core Configuration */ = {
+		F94FF3BCC3135BC21213023B /* [CP-User] [RNFB] Core Configuration */ = {
 			isa = PBXShellScriptBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -375,7 +375,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				F11748422D0307B40044C1D9 /* AppDelegate.swift in Sources */,
-				D8F27B06CBF1F898C597DDEC /* ExpoModulesProvider.swift in Sources */,
+				71D3E7411A87D332A8D8CEE8 /* ExpoModulesProvider.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -384,7 +384,7 @@
 /* Begin XCBuildConfiguration section */
 		13B07F941A680F5B00A75B9A /* Debug */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = C7C76C6ABA3D05122331CFE8 /* Pods-epictask.debug.xcconfig */;
+			baseConfigurationReference = FF5845F46A35159A3024686C /* Pods-epictask.debug.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_MODULES = YES;
@@ -420,7 +420,7 @@
 		};
 		13B07F951A680F5B00A75B9A /* Release */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = 7CF3F70FD14D2A0BB600C07C /* Pods-epictask.release.xcconfig */;
+			baseConfigurationReference = 7628E1F827169A2ECA66745D /* Pods-epictask.release.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_MODULES = YES;
