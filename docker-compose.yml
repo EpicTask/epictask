@@ -1,0 +1,222 @@
+version: '3.8'
+
+services:
+  # User Management Service
+  user-management:
+    build:
+      context: ./services/user_management
+      dockerfile: Dockerfile
+    ports:
+      - "8080:8080"
+    environment:
+      - PORT=8080
+      - NODE_ENV=production
+    networks:
+      - epictask-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Task Management Service
+  task-management:
+    build:
+      context: ./services/task_management
+      dockerfile: Dockerfile
+    ports:
+      - "8081:8080"
+    environment:
+      - PORT=8080
+      - PYTHONPATH=/app
+    networks:
+      - epictask-network
+    restart: unless-stopped
+    depends_on:
+      - user-management
+
+  # PubSub Service
+  pubsub:
+    build:
+      context: ./services/pubsub
+      dockerfile: Dockerfile
+    ports:
+      - "8082:8080"
+    environment:
+      - PORT=8080
+      - NODE_ENV=production
+    networks:
+      - epictask-network
+    restart: unless-stopped
+    depends_on:
+      - user-management
+
+  # XRPL Service
+  xrpl:
+    build:
+      context: ./services/xrpl
+      dockerfile: Dockerfile
+    ports:
+      - "8083:8080"
+    environment:
+      - PORT=8080
+      - PYTHONPATH=/app
+    networks:
+      - epictask-network
+    restart: unless-stopped
+
+  # XRPL Management Service (TypeScript/Node.js)
+  xrpl-management:
+    build:
+      context: ./services/xrpl_management
+      dockerfile: Dockerfile
+    ports:
+      - "8084:3000"
+    environment:
+      - PORT=3000
+      - NODE_ENV=production
+    env_file:
+      - ./services/xrpl_management/.env
+    networks:
+      - epictask-network
+    restart: unless-stopped
+    depends_on:
+      - xrpl
+
+  # EpicTask React Frontend (Development)
+  epictask-react:
+    build:
+      context: ./services/epictask-react
+      dockerfile: Dockerfile
+      target: development
+    ports:
+      - "19006:19006"  # Expo Metro bundler
+      - "19001:19001"  # Expo DevTools
+      - "19002:19002"  # Expo Tunnel
+    environment:
+      - EXPO_DEVTOOLS_LISTEN_ADDRESS=0.0.0.0
+      - NODE_ENV=development
+    volumes:
+      - ./services/epictask-react:/app
+      - /app/node_modules
+    networks:
+      - epictask-network
+    restart: unless-stopped
+    depends_on:
+      - user-management
+      - task-management
+    stdin_open: true
+    tty: true
+
+  # EpicTask React Frontend (Production Build)
+  epictask-react-prod:
+    build:
+      context: ./services/epictask-react
+      dockerfile: Dockerfile
+      target: production
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+    networks:
+      - epictask-network
+    restart: unless-stopped
+    depends_on:
+      - user-management
+      - task-management
+    profiles:
+      - production
+
+  # Verification OpenAI Service
+  verification-openai:
+    build:
+      context: ./services/verification/openai-svc
+      dockerfile: Dockerfile
+    ports:
+      - "8085:8080"
+    environment:
+      - PORT=8080
+    networks:
+      - epictask-network
+    restart: unless-stopped
+
+  # Verification Service
+  verification:
+    build:
+      context: ./services/verification/verifi/app
+      dockerfile: Dockerfile
+    ports:
+      - "8086:8080"
+    environment:
+      - PORT=8080
+    networks:
+      - epictask-network
+    restart: unless-stopped
+    depends_on:
+      - verification-openai
+
+  # Nginx Reverse Proxy (Optional)
+  nginx:
+    image: nginx:alpine
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./ssl:/etc/nginx/ssl:ro
+    networks:
+      - epictask-network
+    restart: unless-stopped
+    depends_on:
+      - user-management
+      - task-management
+      - pubsub
+      - xrpl
+      - xrpl-management
+      - epictask-react
+    profiles:
+      - production
+
+  # Redis (for caching and session management)
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    networks:
+      - epictask-network
+    restart: unless-stopped
+    command: redis-server --appendonly yes
+
+  # PostgreSQL Database (if needed for future services)
+  postgres:
+    image: postgres:15-alpine
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_DB=epictask
+      - POSTGRES_USER=epictask
+      - POSTGRES_PASSWORD=epictask_password
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - ./init-db.sql:/docker-entrypoint-initdb.d/init-db.sql:ro
+    networks:
+      - epictask-network
+    restart: unless-stopped
+    profiles:
+      - database
+
+networks:
+  epictask-network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16
+
+volumes:
+  redis-data:
+    driver: local
+  postgres-data:
+    driver: local
