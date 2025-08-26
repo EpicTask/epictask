@@ -1,4 +1,5 @@
 import datetime
+import os
 from google.cloud import firestore
 
 from schema.schema import TaskCreated, LeaderboardEntry, TaskEvent
@@ -6,16 +7,21 @@ from config.error_handler import (
     FirestoreOperationException,
     handle_firestore_exception,
 )
+from config.collection_names import get_collections
 
 # Initialize Firestore client
 db = firestore.Client()
+
+# Get environment from environment variable, default to 'test'
+ENVIRONMENT = os.getenv('ENVIRONMENT', 'test')
+collections = get_collections(ENVIRONMENT)
 
 
 def create_task(response: TaskCreated):
     """Store new task in Firestore database"""
     try:
-        # Create a reference to the "test_task_events" collection
-        collection_ref = db.collection("test_tasks")
+        # Create a reference to the tasks collection
+        collection_ref = db.collection(collections.TASKS)
 
         # Generate a custom document ID
         doc_ref = collection_ref.document()
@@ -49,8 +55,8 @@ def create_task(response: TaskCreated):
 def update_task(response):
     """Update the fields of a task"""
     try:
-        # Create a reference to the "test_task_events" collection
-        collection_ref = db.collection("test_tasks")
+        # Create a reference to the tasks collection
+        collection_ref = db.collection(collections.TASKS)
 
         # Convert the TaskEvent object to a JSON string
         data = response.dict()
@@ -71,8 +77,8 @@ def update_task(response):
 def update_task_fields(response):
     """Update the fields of a task"""
     try:
-        # Create a reference to the "test_task_events" collection
-        collection_ref = db.collection("test_tasks")
+        # Create a reference to the tasks collection
+        collection_ref = db.collection(collections.TASKS)
 
         # Convert the TaskEvent object to a JSON string
         data = response.dict()
@@ -94,8 +100,8 @@ def update_task_fields(response):
 def assign_task(response):
     """Assign a task to a user"""
     try:
-        # Create a reference to the "test_task_events" collection
-        collection_ref = db.collection("test_tasks")
+        # Create a reference to the tasks collection
+        collection_ref = db.collection(collections.TASKS)
 
         # Convert the TaskEvent object to a JSON string
         data = response.dict()
@@ -120,8 +126,8 @@ def assign_task(response):
 def delete_task(response):
     """Delete a task from the Firestore database"""
     try:
-        # Create a reference to the "test_task_events" collection
-        collection_ref = db.collection("test_tasks")
+        # Create a reference to the tasks collection
+        collection_ref = db.collection(collections.TASKS)
 
         # Convert the TaskEvent object to a JSON string
         data = response.dict()
@@ -150,8 +156,8 @@ def delete_task(response):
 def completed_task(response):
     """Mark a task as completed"""
     try:
-        # Create a reference to the "test_task_events" collection
-        collection_ref = db.collection("test_tasks")
+        # Create a reference to the tasks collection
+        collection_ref = db.collection(collections.TASKS)
 
         # Convert the TaskEvent object to a JSON string
         data = response.dict()
@@ -177,7 +183,7 @@ def get_tasks(user_id: str):
     """Get all tasks"""
     doc_output = []
     try:
-        task_events = db.collection("test_tasks").where("user_id", "==", user_id)
+        task_events = db.collection(collections.TASKS).where("user_id", "==", user_id)
         docs = task_events.stream()
 
         for doc in docs:
@@ -192,7 +198,7 @@ def get_tasks(user_id: str):
 def get_task(task_id: str):
     """Get task by task ID"""
     try:
-        task_event = db.collection("test_tasks").document(task_id)
+        task_event = db.collection(collections.TASKS).document(task_id)
         doc = task_event.get()
 
         if doc.exists:
@@ -210,8 +216,8 @@ def get_task(task_id: str):
 def write_comment(response):
     """Add comment to the Firestore database"""
     try:
-        # Create a reference to the "test_task_events" collection
-        collection_ref = db.collection("test_task_comments")
+        # Create a reference to the task comments collection
+        collection_ref = db.collection(collections.TASK_COMMENTS)
 
         # Convert the TaskEvent object to a JSON string
         data = response.dict()
@@ -234,8 +240,8 @@ def write_comment(response):
 def write_event_to_firestore(response: TaskEvent):
     """Store the event in Firestore database"""
     try:
-        # Create a reference to the "test_task_events" collection
-        collection_ref = db.collection("test_task_events")
+        # Create a reference to the task events collection
+        collection_ref = db.collection(collections.TASK_EVENTS)
 
         # Convert the TaskEvent object to a JSON string
         data = response.dict()
@@ -268,7 +274,7 @@ def update_leaderboard(response):
         assigned_to_id = task_data.assigned_to_ids[0]
 
         # Increment the task count for the user in the leaderboard
-        leaderboard_ref = db.collection("test_leaderboard").document(assigned_to_id)
+        leaderboard_ref = db.collection(collections.LEADERBOARD).document(assigned_to_id)
 
         leaderboard_entry = leaderboard_ref.get()
 
@@ -318,7 +324,7 @@ def update_leaderboard(response):
 def get_task_summary(user_id):
     """Get task summary for a user."""
     try:
-        tasks_ref = db.collection('tasks')
+        tasks_ref = db.collection(collections.TASKS)
         
         # Get all tasks for user
         all_tasks_query = tasks_ref.where('assigned_to_ids', 'array_contains', user_id)
@@ -347,7 +353,7 @@ def get_task_summary(user_id):
 
 def get_recent_tasks(user_id, limit, days):
     """Get recent tasks for a user."""
-    tasks_ref = db.collection('tasks')
+    tasks_ref = db.collection(collections.TASKS)
     start_date = datetime.now() - datetime.timedelta(days=days)
     
     query = tasks_ref.where('assigned_to_ids', 'array_contains', user_id) \
@@ -361,7 +367,7 @@ def get_recent_tasks(user_id, limit, days):
 def get_user_rewards(user_id):
     """Get rewards for a user."""
     try:
-        rewards_ref = db.collection('rewards').document(user_id)
+        rewards_ref = db.collection(collections.REWARDS).document(user_id)
         rewards = rewards_ref.get()
         
         if not rewards.exists:
@@ -388,7 +394,7 @@ def get_user_rewards(user_id):
 def get_user_rank(user_id, tokens_earned):
     """Calculate user's rank based on tokens earned."""
     try:
-        leaderboard_ref = db.collection('leaderboard')
+        leaderboard_ref = db.collection(collections.LEADERBOARD)
         # Count users with more tokens
         higher_users = leaderboard_ref.where('tokens_earned', '>', tokens_earned).get()
         return len(higher_users) + 1
@@ -398,7 +404,7 @@ def get_user_rank(user_id, tokens_earned):
 
 def get_global_leaderboard():
     """Get the global leaderboard."""
-    leaderboard_ref = db.collection('leaderboard')
+    leaderboard_ref = db.collection(collections.LEADERBOARD)
     query = leaderboard_ref.order_by('tokens_earned', direction=firestore.Query.DESCENDING).limit(100)
     
     leaderboard = [doc.to_dict() for doc in query.get()]
@@ -406,7 +412,7 @@ def get_global_leaderboard():
 
 def get_children_rewards(parent_id):
     """Get rewards for a parent's children."""
-    users_ref = db.collection('users').document(parent_id)
+    users_ref = db.collection(collections.USERS).document(parent_id)
     parent = users_ref.get()
     
     if not parent.exists:
@@ -417,7 +423,7 @@ def get_children_rewards(parent_id):
     if not child_ids:
         return []
         
-    rewards_ref = db.collection('rewards')
+    rewards_ref = db.collection(collections.REWARDS)
     query = rewards_ref.where('user_id', 'in', child_ids)
     
     rewards = [doc.to_dict() for doc in query.get()]
@@ -427,7 +433,7 @@ def get_children_rewards(parent_id):
 def get_user_metrics():
     """Get comprehensive user metrics."""
     try:
-        users_ref = db.collection('users')
+        users_ref = db.collection(collections.USERS)
         all_users = users_ref.get()
         
         total_users = len(all_users)
@@ -473,7 +479,7 @@ def get_user_metrics():
 def get_task_metrics():
     """Get comprehensive task metrics."""
     try:
-        tasks_ref = db.collection('tasks')
+        tasks_ref = db.collection(collections.TASKS)
         all_tasks = tasks_ref.get()
         
         total_tasks = len(all_tasks)
@@ -532,7 +538,7 @@ def get_task_metrics():
 def get_event_metrics():
     """Get system event metrics."""
     try:
-        events_ref = db.collection('events')
+        events_ref = db.collection(collections.EVENTS)
         all_events = events_ref.get()
         
         total_events = len(all_events)
