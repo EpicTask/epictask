@@ -11,6 +11,8 @@ services:
     environment:
       - PORT=8080
       - NODE_ENV=production
+    env_file:
+      - ./services/user_management/.env
     networks:
       - epictask-network
     restart: unless-stopped
@@ -30,6 +32,8 @@ services:
     environment:
       - PORT=8080
       - PYTHONPATH=/app
+    env_file:
+      - ./services/task_management/.env
     networks:
       - epictask-network
     restart: unless-stopped
