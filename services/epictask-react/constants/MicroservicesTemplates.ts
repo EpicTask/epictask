@@ -3,10 +3,10 @@ import { use } from "react";
 const MicroserviceUrls = {
   // Add your microservice URLs here for local development
   taskManagement: '',
-  xrplManagement: '',
   userManagement: '',
+  xrplManagement: '',
   // Production
-  pubsub: '',
+  apiGateway: '',
 };
 
 export default MicroserviceUrls;
