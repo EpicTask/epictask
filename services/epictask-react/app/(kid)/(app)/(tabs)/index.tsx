@@ -9,7 +9,7 @@ import {
   ActivityIndicator,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { useQuery } from '@tanstack/react-query';
+import { useQuery } from "@tanstack/react-query";
 import { router } from "expo-router";
 import * as Progress from "react-native-progress";
 
@@ -27,7 +27,9 @@ import apiClient from "@/api/apiClient";
 import MicroserviceUrls from "@/constants/Microservices";
 
 const fetchTasks = async () => {
-  const { data } = await apiClient.get(`${MicroserviceUrls.taskManagement}/tasks?user_id=kid_user_id`); // Replace with actual user_id
+  const { data } = await apiClient.get(
+    `${MicroserviceUrls.taskManagement}/tasks?user_id=kid_user_id`
+  ); // Replace with actual user_id
   if (Array.isArray(data)) {
     return data;
   }
@@ -39,8 +41,13 @@ const fetchTasks = async () => {
 };
 
 export default function HomeScreen() {
-  const { data: tasks = [], isLoading, isError, error } = useQuery({
-    queryKey: ['tasks'],
+  const {
+    data: tasks = [],
+    isLoading,
+    isError,
+    error,
+  } = useQuery({
+    queryKey: ["tasks"],
     queryFn: fetchTasks,
   });
 
@@ -52,7 +59,9 @@ export default function HomeScreen() {
     return <Text style={styles.centered}>Error: {error.message}</Text>;
   }
 
-  const completedTasks = tasks.filter(task => task.status === 'completed').length;
+  const completedTasks = tasks.filter(
+    (task) => task.status === "completed"
+  ).length;
   const progress = tasks.length > 0 ? completedTasks / tasks.length : 0;
 
   return (
@@ -60,12 +69,20 @@ export default function HomeScreen() {
       <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
         <View style={{ gap: 10 }}>
           {/* Header */}
-          <View style={{ flexDirection: "row", justifyContent: "space-between" }}>
+          <View
+            style={{ flexDirection: "row", justifyContent: "space-between" }}
+          >
             <View style={{ flex: 1 }}>
-              <CustomText variant="semiBold" style={{ fontSize: responsiveFontSize(4) }}>
+              <CustomText
+                variant="semiBold"
+                style={{ fontSize: responsiveFontSize(4) }}
+              >
                 Hello,
               </CustomText>
-              <CustomText variant="semiBold" style={{ fontSize: responsiveFontSize(3.7), fontWeight: "500" }}>
+              <CustomText
+                variant="semiBold"
+                style={{ fontSize: responsiveFontSize(3.7), fontWeight: "500" }}
+              >
                 Kai Kai! 👋
               </CustomText>
               <CustomText style={{ paddingRight: 40, color: COLORS.grey }}>
@@ -73,7 +90,13 @@ export default function HomeScreen() {
               </CustomText>
             </View>
             <View>
-              <View style={{ padding: 14, backgroundColor: "white", borderRadius: responsiveWidth(100) }}>
+              <View
+                style={{
+                  padding: 14,
+                  backgroundColor: "white",
+                  borderRadius: responsiveWidth(100),
+                }}
+              >
                 {ICONS.SETTINGS.bell}
               </View>
             </View>
@@ -86,7 +109,9 @@ export default function HomeScreen() {
               <View style={{ width: responsiveWidth(44), height: 165 }}>
                 <View>{ICONS.kidCard}</View>
                 <View style={styles.cardOverlay}>
-                  <CustomText variant="semiBold">You have {tasks.length} tasks today!</CustomText>
+                  <CustomText variant="semiBold">
+                    You have {tasks.length} tasks today!
+                  </CustomText>
                   <Progress.Circle
                     size={40}
                     progress={progress}
@@ -96,13 +121,22 @@ export default function HomeScreen() {
                     borderWidth={0}
                     showsText={true}
                     formatText={() => `${Math.round(progress * 100)}%`}
-                    textStyle={{ fontSize: 12, fontWeight: "600", color: COLORS.purple }}
+                    textStyle={{
+                      fontSize: 12,
+                      fontWeight: "600",
+                      color: COLORS.purple,
+                    }}
                   />
                   <View>
-                    <CustomText variant="semiBold" style={[styles.completedText, { fontSize: 10 }]}>
+                    <CustomText
+                      variant="semiBold"
+                      style={[styles.completedText, { fontSize: 10 }]}
+                    >
                       Completed
                     </CustomText>
-                    <Text style={styles.fractionText}>{`${completedTasks}/${tasks.length}`}</Text>
+                    <Text
+                      style={styles.fractionText}
+                    >{`${completedTasks}/${tasks.length}`}</Text>
                   </View>
                 </View>
                 <TouchableOpacity style={styles.arrow}>
@@ -116,9 +150,16 @@ export default function HomeScreen() {
                 <View style={[styles.cardOverlay, { gap: 20 }]}>
                   <CustomText variant="semiBold">You've Earned!</CustomText>
                   <View>
-                    <Image source={IMAGES.reward} style={{ width: 50, height: 50 }} />
-                    <CustomText variant="semiBold" style={[styles.completedText, { fontSize: 14 }]}>
-                      {tasks.reduce((acc, task) => acc + task.reward_amount, 0)} Stars!
+                    <Image
+                      source={IMAGES.reward}
+                      style={{ width: 50, height: 50 }}
+                    />
+                    <CustomText
+                      variant="semiBold"
+                      style={[styles.completedText, { fontSize: 14 }]}
+                    >
+                      {tasks.reduce((acc, task) => acc + task.reward_amount, 0)}{" "}
+                      Stars!
                     </CustomText>
                   </View>
                 </View>
@@ -131,12 +172,31 @@ export default function HomeScreen() {
 
           {/* Upcoming Tasks */}
           <View style={{ gap: 10, paddingVertical: 6 }}>
-            <View style={{ flexDirection: "row", justifyContent: "space-between", paddingHorizontal: 4 }}>
-              <CustomText style={{ fontSize: responsiveFontSize(2.7), color: COLORS.black, fontWeight: "500" }} variant="semiBold">
+            <View
+              style={{
+                flexDirection: "row",
+                justifyContent: "space-between",
+                paddingHorizontal: 4,
+              }}
+            >
+              <CustomText
+                style={{
+                  fontSize: responsiveFontSize(2.7),
+                  color: COLORS.black,
+                  fontWeight: "500",
+                }}
+                variant="semiBold"
+              >
                 Upcoming Tasks
               </CustomText>
               <TouchableOpacity onPress={() => router.push("/screens/task")}>
-                <CustomText style={{ fontSize: responsiveFontSize(2), color: COLORS.grey, fontWeight: "400" }}>
+                <CustomText
+                  style={{
+                    fontSize: responsiveFontSize(2),
+                    color: COLORS.grey,
+                    fontWeight: "400",
+                  }}
+                >
                   See All
                 </CustomText>
               </TouchableOpacity>
@@ -144,7 +204,13 @@ export default function HomeScreen() {
             {tasks.length > 0 ? (
               tasks.map((task, index) => (
                 <TaskCard
-                  bg={index % 3 === 0 ? COLORS.light_purple : index % 3 === 1 ? COLORS.light_green : COLORS.light_yellow}
+                  bg={
+                    index % 3 === 0
+                      ? COLORS.light_purple
+                      : index % 3 === 1
+                      ? COLORS.light_green
+                      : COLORS.light_yellow
+                  }
                   key={index}
                   name={task.task_title}
                   stars={task.reward_amount}
@@ -174,8 +240,8 @@ const styles = StyleSheet.create({
   },
   centered: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
   },
   cardOverlay: {
     position: "absolute",

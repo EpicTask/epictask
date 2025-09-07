@@ -39,6 +39,7 @@ function RootLayout() {
       const inAuthGroup = segments[0] === 'auth';
       const inParentGroup = segments[0] === '(parent)';
       const inKidGroup = segments[0] === '(kid)';
+      const inAdminGroup = segments[0] === '(admin)';
 
       if (user) {
         // User is authenticated
@@ -50,12 +51,15 @@ function RootLayout() {
           const targetPath = userRole === 'parent' ? '/(parent)/(app)/(tabs)' : '/(kid)/(app)/(tabs)';
           console.log("Redirecting authenticated user to:", targetPath);
           router.replace(targetPath as any);
+        } else if (inAdminGroup) {
+          // User is in admin section, don't redirect - let admin layout handle authorization
+          console.log("User in admin section, allowing navigation");
         } else if (userRole === 'parent' && !inParentGroup) {
-          // Parent user not in parent section, redirect to parent dashboard
+          // Parent user not in parent section (and not in admin), redirect to parent dashboard
           console.log("Redirecting parent to parent dashboard");
           router.replace('/(parent)/(app)/(tabs)' as any);
         } else if (userRole === 'child' && !inKidGroup) {
-          // Child user not in kid section, redirect to kid dashboard
+          // Child user not in kid section (and not in admin), redirect to kid dashboard
           console.log("Redirecting child to kid dashboard");
           router.replace('/(kid)/(app)/(tabs)' as any);
         }
@@ -64,7 +68,7 @@ function RootLayout() {
         if (!inAuthGroup && segments[0] !== undefined) {
           // If user is not authenticated and not in auth group or index, redirect to index
           console.log("Redirecting unauthenticated user to index");
-          router.replace('/');
+          router.replace('/(parent)/auth/login' as any);
         }
       }
     }
@@ -80,6 +84,7 @@ function RootLayout() {
         <Stack.Screen name="index" options={{ headerShown: false }} />
         <Stack.Screen name="(kid)" options={{ headerShown: false }} />
         <Stack.Screen name="(parent)" options={{ headerShown: false }} />
+        <Stack.Screen name="(admin)" options={{ headerShown: false }} />
         <Stack.Screen name="auth" options={{ headerShown: false }} />
         <Stack.Screen name="+not-found" />
       </Stack>

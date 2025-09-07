@@ -65,8 +65,8 @@ export default function HomeScreen() {
           const tasks = await taskService.getRecentTasks(user.uid);
           setRecentTasks(tasks);
 
-          const linkedKids = await authService.getLinkedChildren();
-          setKids(linkedKids);
+          const linkedKids = await authService.getLinkedChildren(user.uid);
+          setKids(linkedKids.children || []);
         } catch (error) {
           console.error("Failed to fetch dashboard data:", error);
         } finally {

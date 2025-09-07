@@ -4,37 +4,61 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { firestoreService } from "../api/firestoreService";
 
 export const authService = {
-  // Register a new user
+  // Register a new user - now handles registration directly with Firebase
   register: async (email, password, displayName, role = "child") => {
     try {
-      // First register with the user management service
-      const response = await apiClient.post("/registerWithPassword", {
-        email,
-        password,
-        displayName,
-        role,
+      // Register directly with Firebase Auth
+      const userCredential = await auth().createUserWithEmailAndPassword(email, password);
+      const user = userCredential.user;
+      
+      // Update the user's display name
+      await user.updateProfile({
+        displayName: displayName,
       });
 
-      if (response.data.success) {
-        // Then sign in with Firebase to get the token
-        const userCredential = await auth().signInWithEmailAndPassword(
-          email,
-          password
-        );
-        const token = await userCredential.user.getIdToken();
-        await AsyncStorage.setItem("authToken", token);
+      // Get the ID token
+      const token = await user.getIdToken();
+      await AsyncStorage.setItem("authToken", token);
 
-        return {
-          success: true,
-          user: response.data.user,
-          token,
-        };
-      }
+      // Create user document in Firestore
+      const userData = {
+        email: user.email,
+        displayName: displayName,
+        role: role,
+      };
+      
+      await firestoreService.createUserProfile(user.uid, userData);
 
-      return response.data;
+      return {
+        success: true,
+        user: {
+          uid: user.uid,
+          email: user.email,
+          displayName: displayName,
+          role: role,
+        },
+        token,
+      };
     } catch (error) {
       console.error("Registration error:", error);
-      throw new Error(error.response?.data?.error || "Registration failed");
+      
+      // Handle Firebase Auth specific errors
+      if (error.code) {
+        switch (error.code) {
+          case 'auth/email-already-in-use':
+            throw new Error("An account with this email already exists");
+          case 'auth/invalid-email':
+            throw new Error("Invalid email address");
+          case 'auth/weak-password':
+            throw new Error("Password should be at least 6 characters");
+          case 'auth/network-request-failed':
+            throw new Error("Network error. Please check your connection");
+          default:
+            throw new Error(error.message || "Registration failed");
+        }
+      }
+      
+      throw new Error(error.message || "Registration failed");
     }
   },
 
@@ -160,11 +184,11 @@ export const authService = {
     }
   },
 
-  // Get linked children (for parents)
-  getLinkedChildren: async () => {
+  // Get linked children (for parents) - now uses Firestore directly
+  getLinkedChildren: async (parentUid) => {
     try {
-      const response = await apiClient.get("/users/me/children");
-      return response.data;
+      const response = await firestoreService.getLinkedChildren(parentUid);
+      return response;
     } catch (error) {
       console.error("Get linked children error:", error);
       throw new Error("Failed to get linked children");

@@ -18,8 +18,12 @@ import {
 } from 'react-native-responsive-dimensions';
 
 const fetchLinkedChildren = async () => {
-  const { data } = await apiClient.get('/users/me/children');
-  return data;
+  try {
+    const { data } = await apiClient.get('/users/me/children');
+  } catch (error) {
+    
+  }
+  return [];
 };
 
 const ProfileScreen = () => {

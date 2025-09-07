@@ -17,7 +17,9 @@ import {
   Text,
   TouchableOpacity,
   View,
+  ActivityIndicator,
 } from "react-native";
+import { useAuth } from "@/context/AuthContext";
 
 const CustomButton = ({
   title,
@@ -59,6 +61,51 @@ const CustomButton = ({
 };
 
 const RolesScreen = () => {
+  const { user, loading } = useAuth();
+
+  const handleParentPress = () => {
+    if (user) {
+      // User is authenticated, check their role
+      if (user.role === 'parent') {
+        // Navigate to parent main app
+        router.push("/(parent)/(app)" as any);
+      } else {
+        // User is authenticated but not a parent, go to onboarding
+        router.push("/(parent)/on-boarding" as any);
+      }
+    } else {
+      // User is not authenticated, go to parent auth
+      router.push("/(parent)/auth" as any);
+    }
+  };
+
+  const handleKidPress = () => {
+    if (user) {
+      // User is authenticated, check their role
+      if (user.role === 'child') {
+        // Navigate to kid main app
+        router.push("/(kid)/(app)" as any);
+      } else {
+        // User is authenticated but not a child, go to onboarding
+        router.push("/(kid)/on-boarding" as any);
+      }
+    } else {
+      // User is not authenticated, go to kid auth
+      router.push("/(kid)/auth" as any);
+    }
+  };
+
+  if (loading) {
+    return (
+      <View style={[styles.container, styles.loadingContainer]}>
+        <ActivityIndicator size="large" color={COLORS.white} />
+        <Text style={[styles.screenText, { fontSize: responsiveFontSize(2.5), marginTop: 20 }]}>
+          Loading...
+        </Text>
+      </View>
+    );
+  }
+
   return (
     <ImageBackground
       source={IMAGES.role}
@@ -79,17 +126,13 @@ const RolesScreen = () => {
           <View style={styles.gp_10}>
             <CustomButton
               icon={ICONS.SPLASH.parent}
-              onPress={() => {
-                router.push("/(parent)/on-boarding" as any);
-              }}
+              onPress={handleParentPress}
               title={"Parent"}
               desc={"Manages tasks, sets rewards, and tracks progress."}
             />
             <CustomButton
               icon={ICONS.SPLASH.kid}
-              onPress={() => {
-                router.push("/(kid)/on-boarding" as any);
-              }}
+              onPress={handleKidPress}
               title={"Teen/Child"}
               desc={
                 "Completes tasks, earns rewards, and learns financial skills."
@@ -111,6 +154,10 @@ const styles = StyleSheet.create({
     height: responsiveHeight(110),
     width: responsiveWidth(100),
     padding: responsiveWidth(4),
+  },
+  loadingContainer: {
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   main: {
     flex: 1,

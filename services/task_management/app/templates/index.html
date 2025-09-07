@@ -1,73 +1,625 @@
 <!doctype html>
-<html lang=en>
+<html lang="en">
 <head>
-<meta charset=utf-8>
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Congratulations | Cloud Run</title>
-<link href="https://fonts.googleapis.com/css?family=Roboto" rel="preload" as="font">
-<link href="/static/cloud-run-32-color.png" rel="icon" type="image/png" />
-<link href="/static/style.css" rel="stylesheet" type="text/css" />
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Task Management API Tester</title>
+    <link href="https://fonts.googleapis.com/css?family=Roboto" rel="preload" as="font">
+    <style>
+        body {
+            font-family: 'Roboto', sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .endpoint-section {
+            margin-bottom: 30px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 20px;
+        }
+        .endpoint-section h2 {
+            color: #4285f4;
+            margin-top: 0;
+            border-bottom: 2px solid #4285f4;
+            padding-bottom: 10px;
+        }
+        .endpoint {
+            margin-bottom: 20px;
+            padding: 15px;
+            border: 1px solid #eee;
+            border-radius: 4px;
+            background-color: #fafafa;
+        }
+        .endpoint h3 {
+            margin: 0 0 10px 0;
+            color: #333;
+        }
+        .method {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-weight: bold;
+            font-size: 12px;
+            margin-right: 10px;
+        }
+        .get { background-color: #61affe; color: white; }
+        .post { background-color: #49cc90; color: white; }
+        .form-group {
+            margin-bottom: 10px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        input, textarea, select {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        textarea {
+            height: 100px;
+            resize: vertical;
+        }
+        button {
+            background-color: #4285f4;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-right: 10px;
+        }
+        button:hover {
+            background-color: #3367d6;
+        }
+        .response {
+            margin-top: 15px;
+            padding: 10px;
+            border-radius: 4px;
+            background-color: #f8f9fa;
+            border-left: 4px solid #4285f4;
+            white-space: pre-wrap;
+            font-family: monospace;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        .error {
+            border-left-color: #ea4335;
+            background-color: #fce8e6;
+        }
+        .success {
+            border-left-color: #34a853;
+            background-color: #e6f4ea;
+        }
+        .clear-btn {
+            background-color: #ea4335;
+        }
+        .clear-btn:hover {
+            background-color: #d33b2c;
+        }
+    </style>
 </head>
-
 <body>
-	<div class="container">
-		<div class="hero">
-			<div style="text-align:center;">
-				<picture>
-					<source srcset="/static/celebration-dark.svg" media="(prefers-color-scheme: dark)">
-					<img src="/static/celebration.svg" alt="A group celebrating" width="427" height="231">
-				</picture>
-			</div>
+    <div class="container">
+        <h1>Task Management API Tester</h1>
+        <p style="text-align: center; color: #666;">{{response}}</p>
 
-			<div class="message">
-				<h1>{{message}}</h1>
-				<h2>Congratulations, you successfully deployed a container image to Cloud Run</h2>
-			</div>
-		</div>
+        <!-- GET Endpoints Section -->
+        <div class="endpoint-section">
+            <h2>GET Endpoints</h2>
 
-		<div class="details">
-			<p>
-                This created the revision <code>{{Revision}}</code> of the Cloud Run service <code>{{Service}}</code>.
-            </p>
+            <div class="endpoint">
+                <h3><span class="method get">GET</span>/tasks</h3>
+                <div class="form-group">
+                    <label for="get-tasks-user-id">User ID:</label>
+                    <input type="text" id="get-tasks-user-id" placeholder="Enter user ID">
+                </div>
+                <button onclick="testGetTasks()">Test Get All Tasks</button>
+                <div id="get-tasks-response" class="response" style="display: none;"></div>
+            </div>
 
-			<p class="callout">
-				You can deploy any container to Cloud Run that listens for HTTP requests on the port defined by the
-				<code>PORT</code> environment variable.
-				Cloud Run will scale automatically based on requests and you never have to worry about
-				infrastructure.
-			</p>
+            <div class="endpoint">
+                <h3><span class="method get">GET</span>/get_task/{task_id}</h3>
+                <div class="form-group">
+                    <label for="get-task-id">Task ID:</label>
+                    <input type="text" id="get-task-id" placeholder="Enter task ID">
+                </div>
+                <button onclick="testGetTask()">Test Get Task</button>
+                <div id="get-task-response" class="response" style="display: none;"></div>
+            </div>
 
-			<h3>What's next?</h3>
-			<ul>
-				<li class="next">Try out live debugging in Cloud Code for <a href="https://cloud.google.com/code/docs/vscode/debugging-a-cloud-run-service" target="_blank" rel="noopener">VS Code</a> or <a href="https://cloud.google.com/code/docs/intellij/debugger" target="_blank" rel="noopener">IntelliJ</a></li>
-				<li class="next">Make your application more secure with Secret Manager for <a href="https://cloud.google.com/code/docs/vscode/secret-manager" target="_blank" rel="noopener">VS Code</a> or <a href="https://cloud.google.com/code/docs/intellij/secret-manager" target="_blank" rel="noopener">IntelliJ</a></li>
-				<li class="next">Explore the features of Cloud Run with <a href="https://cloud.google.com/run/docs/tutorials" target="_blank" rel="noopener">Cloud Run tutorials</a> </li>
-			</ul>
-			
-			<h3>Want to help shape the future of Cloud Code?</h3>
-			<ul>
-				<li class="next">
-				Sign up for the chance to participate in our ongoing research studies 
-					<a href="https://google.qualtrics.com/jfe/form/SV_4Me7SiMewdvVYhL?reserved=1&utm_source=In-product&Q_Language=en&utm_medium=own_prd&utm_campaign=Q1&productTag=clou&campaignDate=January2021&referral_code=UXlX318928" target="_blank" rel="noopener">
-						here!
-					</a>
-				</li>
-				<li class="next">Join the <b>#cloud-code</b> channel in the <a href="https://join.slack.com/t/googlecloud-community/shared_invite/zt-erdf4ity-8ZMUQ18DYV~5hkbZ~gCswg" target="_blank" rel="noopener">Google Cloud Platform Slack community</a> to ask questions, provide feedback, and get the latest Cloud Code news</li>
-			</ul>
+            <div class="endpoint">
+                <h3><span class="method get">GET</span>/user/{user_id}/task-summary</h3>
+                <div class="form-group">
+                    <label for="task-summary-user-id">User ID:</label>
+                    <input type="text" id="task-summary-user-id" placeholder="Enter user ID">
+                </div>
+                <button onclick="testTaskSummary()">Test Task Summary</button>
+                <div id="task-summary-response" class="response" style="display: none;"></div>
+            </div>
 
-			<h3>Learn more with our documentation</h3>
-			<p class="cta">
-				<a href="https://cloud.google.com/code/docs" target="_blank" rel="noopener">
-					CLOUD CODE DOCS
-				</a>
-				<a href="https://cloud.google.com/run/docs" target="_blank" rel="noopener">
-					CLOUD RUN
-				</a>
-				<a href="https://cloud.google.com/shell/docs/editor-overview#cloud_code_integration" target="_blank" rel="noopener">
-					CLOUD CODE ON CLOUD SHELL
-				</a>
-			</p>
-		</div>
-	</div>
+            <div class="endpoint">
+                <h3><span class="method get">GET</span>/user/{user_id}/recent-tasks</h3>
+                <div class="form-group">
+                    <label for="recent-tasks-user-id">User ID:</label>
+                    <input type="text" id="recent-tasks-user-id" placeholder="Enter user ID">
+                </div>
+                <div class="form-group">
+                    <label for="recent-tasks-limit">Limit (optional):</label>
+                    <input type="number" id="recent-tasks-limit" placeholder="5" value="5">
+                </div>
+                <div class="form-group">
+                    <label for="recent-tasks-days">Days (optional):</label>
+                    <input type="number" id="recent-tasks-days" placeholder="7" value="7">
+                </div>
+                <button onclick="testRecentTasks()">Test Recent Tasks</button>
+                <div id="recent-tasks-response" class="response" style="display: none;"></div>
+            </div>
+
+            <div class="endpoint">
+                <h3><span class="method get">GET</span>/user/{user_id}/rewards</h3>
+                <div class="form-group">
+                    <label for="user-rewards-user-id">User ID:</label>
+                    <input type="text" id="user-rewards-user-id" placeholder="Enter user ID">
+                </div>
+                <button onclick="testUserRewards()">Test User Rewards</button>
+                <div id="user-rewards-response" class="response" style="display: none;"></div>
+            </div>
+
+            <div class="endpoint">
+                <h3><span class="method get">GET</span>/leaderboard/global</h3>
+                <button onclick="testGlobalLeaderboard()">Test Global Leaderboard</button>
+                <div id="global-leaderboard-response" class="response" style="display: none;"></div>
+            </div>
+
+            <div class="endpoint">
+                <h3><span class="method get">GET</span>/parent/{parent_id}/children-rewards</h3>
+                <div class="form-group">
+                    <label for="children-rewards-parent-id">Parent ID:</label>
+                    <input type="text" id="children-rewards-parent-id" placeholder="Enter parent ID">
+                </div>
+                <button onclick="testChildrenRewards()">Test Children Rewards</button>
+                <div id="children-rewards-response" class="response" style="display: none;"></div>
+            </div>
+        </div>
+
+        <!-- POST Endpoints Section -->
+        <div class="endpoint-section">
+            <h2>POST Endpoints - Task Operations</h2>
+
+            <div class="endpoint">
+                <h3><span class="method post">POST</span>/TaskCreated</h3>
+                <div class="form-group">
+                    <label for="create-task-data">Task Data (JSON):</label>
+                    <textarea id="create-task-data" placeholder='{"task_description": "Test task", "task_id": "test-123", "expiration_date": 1640995200, "payment_method": "Pay Directly", "reward_amount": 10.0, "reward_currency": "USD", "user_id": "user-123", "task_title": "Test Task"}'></textarea>
+                </div>
+                <button onclick="testCreateTask()">Test Create Task</button>
+                <div id="create-task-response" class="response" style="display: none;"></div>
+            </div>
+
+            <div class="endpoint">
+                <h3><span class="method post">POST</span>/TaskAssigned</h3>
+                <div class="form-group">
+                    <label for="assign-task-data">Assignment Data (JSON):</label>
+                    <textarea id="assign-task-data" placeholder='{"task_id": "test-123", "assigned_to_id": "user-456"}'></textarea>
+                </div>
+                <button onclick="testAssignTask()">Test Assign Task</button>
+                <div id="assign-task-response" class="response" style="display: none;"></div>
+            </div>
+
+            <div class="endpoint">
+                <h3><span class="method post">POST</span>/TaskCompleted</h3>
+                <div class="form-group">
+                    <label for="complete-task-data">Completion Data (JSON):</label>
+                    <textarea id="complete-task-data" placeholder='{"task_id": "test-123", "completed_by_id": "user-456"}'></textarea>
+                </div>
+                <button onclick="testCompleteTask()">Test Complete Task</button>
+                <div id="complete-task-response" class="response" style="display: none;"></div>
+            </div>
+
+            <div class="endpoint">
+                <h3><span class="method post">POST</span>/TaskCommentAdded</h3>
+                <div class="form-group">
+                    <label for="comment-task-data">Comment Data (JSON):</label>
+                    <textarea id="comment-task-data" placeholder='{"task_id": "test-123", "user_id": "user-456", "comment": "This is a test comment"}'></textarea>
+                </div>
+                <button onclick="testAddComment()">Test Add Comment</button>
+                <div id="comment-task-response" class="response" style="display: none;"></div>
+            </div>
+
+            <div class="endpoint">
+                <h3><span class="method post">POST</span>/TaskVerified</h3>
+                <div class="form-group">
+                    <label for="verify-task-data">Verification Data (JSON):</label>
+                    <textarea id="verify-task-data" placeholder='{"task_id": "test-123", "verified": true, "verification_method": "user"}'></textarea>
+                </div>
+                <button onclick="testVerifyTask()">Test Verify Task</button>
+                <div id="verify-task-response" class="response" style="display: none;"></div>
+            </div>
+
+            <div class="endpoint">
+                <h3><span class="method post">POST</span>/TaskUpdated</h3>
+                <div class="form-group">
+                    <label for="update-task-data">Update Data (JSON):</label>
+                    <textarea id="update-task-data" placeholder='{"task_id": "test-123", "updated_fields": {"task_description": "Updated description"}}'></textarea>
+                </div>
+                <button onclick="testUpdateTask()">Test Update Task</button>
+                <div id="update-task-response" class="response" style="display: none;"></div>
+            </div>
+
+            <div class="endpoint">
+                <h3><span class="method post">POST</span>/TaskRewarded</h3>
+                <div class="form-group">
+                    <label for="reward-task-data">Reward Data (JSON):</label>
+                    <textarea id="reward-task-data" placeholder='{"task_id": "test-123", "user_id": "user-456"}'></textarea>
+                </div>
+                <button onclick="testRewardTask()">Test Reward Task</button>
+                <div id="reward-task-response" class="response" style="display: none;"></div>
+            </div>
+
+            <div class="endpoint">
+                <h3><span class="method post">POST</span>/TaskCancelled</h3>
+                <div class="form-group">
+                    <label for="cancel-task-data">Cancel Data (JSON):</label>
+                    <textarea id="cancel-task-data" placeholder='{"task_id": "test-123"}'></textarea>
+                </div>
+                <button onclick="testCancelTask()">Test Cancel Task</button>
+                <div id="cancel-task-response" class="response" style="display: none;"></div>
+            </div>
+
+            <div class="endpoint">
+                <h3><span class="method post">POST</span>/TaskExpired</h3>
+                <div class="form-group">
+                    <label for="expire-task-data">Expire Data (JSON):</label>
+                    <textarea id="expire-task-data" placeholder='{"task_id": "test-123"}'></textarea>
+                </div>
+                <button onclick="testExpireTask()">Test Expire Task</button>
+                <div id="expire-task-response" class="response" style="display: none;"></div>
+            </div>
+
+            <div class="endpoint">
+                <h3><span class="method post">POST</span>/TaskRatingUpdate</h3>
+                <div class="form-group">
+                    <label for="rating-task-data">Rating Data (JSON):</label>
+                    <textarea id="rating-task-data" placeholder='{"task_id": "test-123", "user_id": "user-456"}'></textarea>
+                </div>
+                <button onclick="testRatingUpdate()">Test Rating Update</button>
+                <div id="rating-task-response" class="response" style="display: none;"></div>
+            </div>
+
+            <div class="endpoint">
+                <h3><span class="method post">POST</span>/UpdateLeaderboard</h3>
+                <div class="form-group">
+                    <label for="leaderboard-data">Leaderboard Data (JSON):</label>
+                    <textarea id="leaderboard-data" placeholder='{"task_description": "Test task", "task_id": "test-123", "expiration_date": 1640995200, "payment_method": "Pay Directly", "reward_amount": 10.0, "reward_currency": "USD", "user_id": "user-123"}'></textarea>
+                </div>
+                <button onclick="testUpdateLeaderboard()">Test Update Leaderboard</button>
+                <div id="leaderboard-response" class="response" style="display: none;"></div>
+            </div>
+        </div>
+
+        <!-- Admin Endpoints Section -->
+        <div class="endpoint-section">
+            <h2>Admin Endpoints</h2>
+
+            <div class="endpoint">
+                <h3><span class="method get">GET</span>/admin/metrics/users</h3>
+                <button onclick="testUserMetrics()">Test User Metrics</button>
+                <div id="user-metrics-response" class="response" style="display: none;"></div>
+            </div>
+
+            <div class="endpoint">
+                <h3><span class="method get">GET</span>/admin/metrics/tasks</h3>
+                <button onclick="testTaskMetrics()">Test Task Metrics</button>
+                <div id="task-metrics-response" class="response" style="display: none;"></div>
+            </div>
+
+            <div class="endpoint">
+                <h3><span class="method get">GET</span>/admin/metrics/events</h3>
+                <button onclick="testEventMetrics()">Test Event Metrics</button>
+                <div id="event-metrics-response" class="response" style="display: none;"></div>
+            </div>
+
+            <div class="endpoint">
+                <h3><span class="method get">GET</span>/admin/metrics/performance</h3>
+                <button onclick="testPerformanceMetrics()">Test Performance Metrics</button>
+                <div id="performance-metrics-response" class="response" style="display: none;"></div>
+            </div>
+
+            <div class="endpoint">
+                <h3><span class="method post">POST</span>/admin/clear-test-data</h3>
+                <button onclick="testClearTestData()" class="clear-btn">Test Clear Test Data</button>
+                <div id="clear-test-data-response" class="response" style="display: none;"></div>
+            </div>
+        </div>
+
+        <div style="text-align: center; margin-top: 30px;">
+            <button onclick="clearAllResponses()" class="clear-btn">Clear All Responses</button>
+        </div>
+    </div>
+
+    <script>
+        // Helper function to make API calls
+        async function makeRequest(method, url, data = null) {
+            const options = {
+                method: method,
+                headers: {
+                    'Content-Type': 'application/json',
+                }
+            };
+            
+            if (data) {
+                options.body = JSON.stringify(data);
+            }
+            
+            try {
+                const response = await fetch(url, options);
+                const result = await response.json();
+                return {
+                    status: response.status,
+                    data: result,
+                    success: response.ok
+                };
+            } catch (error) {
+                return {
+                    status: 0,
+                    data: { error: error.message },
+                    success: false
+                };
+            }
+        }
+
+        // Helper function to display response
+        function displayResponse(elementId, response) {
+            const element = document.getElementById(elementId);
+            element.style.display = 'block';
+            element.className = 'response ' + (response.success ? 'success' : 'error');
+            element.textContent = `Status: ${response.status}\n\n${JSON.stringify(response.data, null, 2)}`;
+        }
+
+        // GET endpoint tests
+        async function testGetTasks() {
+            const userId = document.getElementById('get-tasks-user-id').value;
+            if (!userId) {
+                alert('Please enter a user ID');
+                return;
+            }
+            const response = await makeRequest('GET', `/tasks?user_id=${userId}`);
+            displayResponse('get-tasks-response', response);
+        }
+
+        async function testGetTask() {
+            const taskId = document.getElementById('get-task-id').value;
+            if (!taskId) {
+                alert('Please enter a task ID');
+                return;
+            }
+            const response = await makeRequest('GET', `/get_task/${taskId}`);
+            displayResponse('get-task-response', response);
+        }
+
+        async function testTaskSummary() {
+            const userId = document.getElementById('task-summary-user-id').value;
+            if (!userId) {
+                alert('Please enter a user ID');
+                return;
+            }
+            const response = await makeRequest('GET', `/user/${userId}/task-summary`);
+            displayResponse('task-summary-response', response);
+        }
+
+        async function testRecentTasks() {
+            const userId = document.getElementById('recent-tasks-user-id').value;
+            const limit = document.getElementById('recent-tasks-limit').value || 5;
+            const days = document.getElementById('recent-tasks-days').value || 7;
+            if (!userId) {
+                alert('Please enter a user ID');
+                return;
+            }
+            const response = await makeRequest('GET', `/user/${userId}/recent-tasks?limit=${limit}&days=${days}`);
+            displayResponse('recent-tasks-response', response);
+        }
+
+        async function testUserRewards() {
+            const userId = document.getElementById('user-rewards-user-id').value;
+            if (!userId) {
+                alert('Please enter a user ID');
+                return;
+            }
+            const response = await makeRequest('GET', `/user/${userId}/rewards`);
+            displayResponse('user-rewards-response', response);
+        }
+
+        async function testGlobalLeaderboard() {
+            const response = await makeRequest('GET', '/leaderboard/global');
+            displayResponse('global-leaderboard-response', response);
+        }
+
+        async function testChildrenRewards() {
+            const parentId = document.getElementById('children-rewards-parent-id').value;
+            if (!parentId) {
+                alert('Please enter a parent ID');
+                return;
+            }
+            const response = await makeRequest('GET', `/parent/${parentId}/children-rewards`);
+            displayResponse('children-rewards-response', response);
+        }
+
+        // POST endpoint tests
+        async function testCreateTask() {
+            const data = document.getElementById('create-task-data').value;
+            try {
+                const jsonData = JSON.parse(data);
+                const response = await makeRequest('POST', '/TaskCreated', jsonData);
+                displayResponse('create-task-response', response);
+            } catch (error) {
+                alert('Invalid JSON data');
+            }
+        }
+
+        async function testAssignTask() {
+            const data = document.getElementById('assign-task-data').value;
+            try {
+                const jsonData = JSON.parse(data);
+                const response = await makeRequest('POST', '/TaskAssigned', jsonData);
+                displayResponse('assign-task-response', response);
+            } catch (error) {
+                alert('Invalid JSON data');
+            }
+        }
+
+        async function testCompleteTask() {
+            const data = document.getElementById('complete-task-data').value;
+            try {
+                const jsonData = JSON.parse(data);
+                const response = await makeRequest('POST', '/TaskCompleted', jsonData);
+                displayResponse('complete-task-response', response);
+            } catch (error) {
+                alert('Invalid JSON data');
+            }
+        }
+
+        async function testAddComment() {
+            const data = document.getElementById('comment-task-data').value;
+            try {
+                const jsonData = JSON.parse(data);
+                const response = await makeRequest('POST', '/TaskCommentAdded', jsonData);
+                displayResponse('comment-task-response', response);
+            } catch (error) {
+                alert('Invalid JSON data');
+            }
+        }
+
+        async function testVerifyTask() {
+            const data = document.getElementById('verify-task-data').value;
+            try {
+                const jsonData = JSON.parse(data);
+                const response = await makeRequest('POST', '/TaskVerified', jsonData);
+                displayResponse('verify-task-response', response);
+            } catch (error) {
+                alert('Invalid JSON data');
+            }
+        }
+
+        async function testUpdateTask() {
+            const data = document.getElementById('update-task-data').value;
+            try {
+                const jsonData = JSON.parse(data);
+                const response = await makeRequest('POST', '/TaskUpdated', jsonData);
+                displayResponse('update-task-response', response);
+            } catch (error) {
+                alert('Invalid JSON data');
+            }
+        }
+
+        async function testRewardTask() {
+            const data = document.getElementById('reward-task-data').value;
+            try {
+                const jsonData = JSON.parse(data);
+                const response = await makeRequest('POST', '/TaskRewarded', jsonData);
+                displayResponse('reward-task-response', response);
+            } catch (error) {
+                alert('Invalid JSON data');
+            }
+        }
+
+        async function testCancelTask() {
+            const data = document.getElementById('cancel-task-data').value;
+            try {
+                const jsonData = JSON.parse(data);
+                const response = await makeRequest('POST', '/TaskCancelled', jsonData);
+                displayResponse('cancel-task-response', response);
+            } catch (error) {
+                alert('Invalid JSON data');
+            }
+        }
+
+        async function testExpireTask() {
+            const data = document.getElementById('expire-task-data').value;
+            try {
+                const jsonData = JSON.parse(data);
+                const response = await makeRequest('POST', '/TaskExpired', jsonData);
+                displayResponse('expire-task-response', response);
+            } catch (error) {
+                alert('Invalid JSON data');
+            }
+        }
+
+        async function testRatingUpdate() {
+            const data = document.getElementById('rating-task-data').value;
+            try {
+                const jsonData = JSON.parse(data);
+                const response = await makeRequest('POST', '/TaskRatingUpdate', jsonData);
+                displayResponse('rating-task-response', response);
+            } catch (error) {
+                alert('Invalid JSON data');
+            }
+        }
+
+        async function testUpdateLeaderboard() {
+            const data = document.getElementById('leaderboard-data').value;
+            try {
+                const jsonData = JSON.parse(data);
+                const response = await makeRequest('POST', '/UpdateLeaderboard', jsonData);
+                displayResponse('leaderboard-response', response);
+            } catch (error) {
+                alert('Invalid JSON data');
+            }
+        }
+
+        // Admin endpoint tests
+        async function testUserMetrics() {
+            const response = await makeRequest('GET', '/admin/metrics/users');
+            displayResponse('user-metrics-response', response);
+        }
+
+        async function testTaskMetrics() {
+            const response = await makeRequest('GET', '/admin/metrics/tasks');
+            displayResponse('task-metrics-response', response);
+        }
+
+        async function testEventMetrics() {
+            const response = await makeRequest('GET', '/admin/metrics/events');
+            displayResponse('event-metrics-response', response);
+        }
+
+        async function testPerformanceMetrics() {
+            const response = await makeRequest('GET', '/admin/metrics/performance');
+            displayResponse('performance-metrics-response', response);
+        }
+
+        async function testClearTestData() {
+            if (confirm('Are you sure you want to clear test data? This action cannot be undone.')) {
+                const response = await makeRequest('POST', '/admin/clear-test-data');
+                displayResponse('clear-test-data-response', response);
+            }
+        }
+
+        // Utility function
+        function clearAllResponses() {
+            const responses = document.querySelectorAll('.response');
+            responses.forEach(response => {
+                response.style.display = 'none';
+                response.textContent = '';
+            });
+        }
+    </script>
 </body>
 </html>

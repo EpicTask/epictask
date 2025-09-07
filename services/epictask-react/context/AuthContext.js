@@ -137,10 +137,10 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  const getLinkedChildren = async () => {
+  const getLinkedChildren = async (parentUid) => {
     try {
       setError(null);
-      return await authService.getLinkedChildren();
+      return await authService.getLinkedChildren(parentUid || user?.uid);
     } catch (error) {
       setError(error.message);
       throw error;

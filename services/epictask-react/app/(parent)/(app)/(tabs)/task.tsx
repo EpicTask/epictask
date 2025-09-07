@@ -1,7 +1,13 @@
 import React from "react";
-import { ScrollView, StyleSheet, View, ActivityIndicator, Text } from "react-native";
+import {
+  ScrollView,
+  StyleSheet,
+  View,
+  ActivityIndicator,
+  Text,
+} from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { useQuery } from '@tanstack/react-query';
+import { useQuery } from "@tanstack/react-query";
 import { router } from "expo-router";
 
 import Search from "@/components/search/Search";
@@ -17,7 +23,9 @@ import apiClient from "@/api/apiClient";
 import MicroserviceUrls from "@/constants/Microservices";
 
 const fetchTasks = async () => {
-  const { data } = await apiClient.get(`${MicroserviceUrls.taskManagement}/tasks?user_id=parent_user_id`); // Replace with actual user_id
+  const { data } = await apiClient.get(
+    `${MicroserviceUrls.taskManagement}/tasks?user_id=parent_user_id`
+  ); // Replace with actual user_id
   if (Array.isArray(data)) {
     return data;
   }
@@ -29,8 +37,13 @@ const fetchTasks = async () => {
 };
 
 const ManageTasks = () => {
-  const { data: tasks = [], isLoading, isError, error } = useQuery({
-    queryKey: ['tasks'],
+  const {
+    data: tasks = [],
+    isLoading,
+    isError,
+    error,
+  } = useQuery({
+    queryKey: ["tasks"],
     queryFn: fetchTasks,
   });
 
@@ -73,16 +86,30 @@ const ManageTasks = () => {
               <ProgressCard
                 color={COLORS.purple}
                 row={true}
-                completed={tasks.filter(task => task.status === 'completed').length}
-                progress={tasks.length > 0 ? tasks.filter(task => task.status === 'completed').length / tasks.length : 0}
+                completed={
+                  tasks.filter((task) => task.status === "completed").length
+                }
+                progress={
+                  tasks.length > 0
+                    ? tasks.filter((task) => task.status === "completed")
+                        .length / tasks.length
+                    : 0
+                }
                 total={tasks.length}
               />
               <ProgressCard
                 text="In Progress"
                 color={COLORS.grey}
                 row={true}
-                completed={tasks.filter(task => task.status === 'in_progress').length}
-                progress={tasks.length > 0 ? tasks.filter(task => task.status === 'in_progress').length / tasks.length : 0}
+                completed={
+                  tasks.filter((task) => task.status === "in_progress").length
+                }
+                progress={
+                  tasks.length > 0
+                    ? tasks.filter((task) => task.status === "in_progress")
+                        .length / tasks.length
+                    : 0
+                }
                 total={tasks.length}
               />
             </View>
@@ -91,8 +118,15 @@ const ManageTasks = () => {
                 text="Overdue"
                 color={"#AB0A0A"}
                 row={true}
-                completed={tasks.filter(task => task.status === 'overdue').length}
-                progress={tasks.length > 0 ? tasks.filter(task => task.status === 'overdue').length / tasks.length : 0}
+                completed={
+                  tasks.filter((task) => task.status === "overdue").length
+                }
+                progress={
+                  tasks.length > 0
+                    ? tasks.filter((task) => task.status === "overdue").length /
+                      tasks.length
+                    : 0
+                }
                 total={tasks.length}
               />
             </View>
@@ -100,7 +134,11 @@ const ManageTasks = () => {
         </View>
         <View style={{ gap: 10, flex: 1, paddingVertical: 10 }}>
           {tasks.map((task, index) => (
-            <TaskCard key={index} name={task.task_title} stars={task.reward_amount} />
+            <TaskCard
+              key={index}
+              name={task.task_title}
+              stars={task.reward_amount}
+            />
           ))}
         </View>
       </ScrollView>
@@ -120,8 +158,7 @@ const styles = StyleSheet.create({
   },
   centered: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
   },
 });
-
