@@ -46,16 +46,6 @@ async def hello(request: Request):
         "index.html", {"request": request, "response": response}
     )
 
-
-# Create Task Event
-@app.post("/TaskEvent")
-async def task_func(request: schema.TaskEvent):
-    """Store the event"""
-
-    response = db.write_event_to_firestore(request)
-    return {"response": response}
-
-
 @app.post("/TaskCreated")
 async def task_created_func(request: schema.TaskCreated):
     """Create and store a new task"""

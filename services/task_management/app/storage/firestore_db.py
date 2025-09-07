@@ -1,6 +1,6 @@
-import datetime
+from datetime import datetime, timedelta
 import os
-from google.cloud import firestore
+from firebase_admin import firestore
 
 from schema.schema import TaskCreated, LeaderboardEntry, TaskEvent
 from config.error_handler import (
@@ -8,9 +8,8 @@ from config.error_handler import (
     handle_firestore_exception,
 )
 from config.collection_names import get_collections
+from config.firebase_config import db
 
-# Initialize Firestore client
-db = firestore.Client()
 
 # Get environment from environment variable, default to 'test'
 ENVIRONMENT = os.getenv('ENVIRONMENT', 'test')
@@ -44,6 +43,23 @@ def create_task(response: TaskCreated):
                 "timestamp": firestore.SERVER_TIMESTAMP,
             }
         )
+
+        # Create TaskEvent for task creation
+        task_event = TaskEvent(
+            event_id="",  # Will be set by write_event_to_firestore
+            event_type="TaskCreated",
+            timestamp="",  # Will be set by write_event_to_firestore
+            task_id=doc_id,
+            user_id=response.user_id,
+            status="created",
+            additional_data={
+                "task_title": response.task_title,
+                "reward_amount": response.reward_amount,
+                "reward_currency": response.reward_currency,
+                "payment_method": response.payment_method
+            }
+        )
+        write_event_to_firestore(task_event)
 
         # Return the custom document ID
         return doc_id
@@ -114,8 +130,28 @@ def assign_task(response):
         # Generate a custom document ID
         doc_ref = collection_ref.document(doc_id)
 
+        # Get the task data to extract user info for event
+        task_doc = doc_ref.get()
+        task_data = task_doc.to_dict() if task_doc.exists else {}
+
         # Update the document with the generated ID
         doc_ref.update({"assigned_to_ids": firestore.ArrayUnion([assigned_to_id])})
+
+        # Create TaskEvent for task assignment
+        task_event = TaskEvent(
+            event_id="",  # Will be set by write_event_to_firestore
+            event_type="TaskAssigned",
+            timestamp="",  # Will be set by write_event_to_firestore
+            task_id=doc_id,
+            user_id=assigned_to_id,
+            status="assigned",
+            additional_data={
+                "assigned_to_id": assigned_to_id,
+                "task_creator": task_data.get("user_id"),
+                "task_title": task_data.get("task_title")
+            }
+        )
+        write_event_to_firestore(task_event)
 
         # Return the custom document ID
         return doc_id
@@ -144,6 +180,22 @@ def delete_task(response):
         ):
             return "Unable to delete Task due to active smart contract"
 
+        # Create TaskEvent for task cancellation before deletion
+        task_event = TaskEvent(
+            event_id="",  # Will be set by write_event_to_firestore
+            event_type="TaskCancelled",
+            timestamp="",  # Will be set by write_event_to_firestore
+            task_id=doc_id,
+            user_id=doc.get("user_id", ""),
+            status="cancelled",
+            additional_data={
+                "task_title": doc.get("task_title"),
+                "reason": "Task deleted by user",
+                "smart_contract_enabled": doc.get("smart_contract_enabled", False)
+            }
+        )
+        write_event_to_firestore(task_event)
+
         # Delete document
         doc_ref.delete()
 
@@ -165,13 +217,30 @@ def completed_task(response):
         doc_id = data["task_id"]
         doc_ref = collection_ref.document(doc_id)
 
-        # Get the user_id field from the document
-        # doc_data = doc_ref.get().to_dict()
-        # doc_user_id = doc_data["user_id"]
+        # Get the task data to extract user info for event
+        task_doc = doc_ref.get()
+        task_data = task_doc.to_dict() if task_doc.exists else {}
 
         # Check if the user_id is task owner
         if data["verified"] is None or data["verified"] is False:
             doc_ref.update({"marked_completed": data["marked_completed"]})
+
+        # Create TaskEvent for task completion
+        task_event = TaskEvent(
+            event_id="",  # Will be set by write_event_to_firestore
+            event_type="TaskCompleted",
+            timestamp="",  # Will be set by write_event_to_firestore
+            task_id=doc_id,
+            user_id=data["completed_by_id"],
+            status="completed",
+            additional_data={
+                "marked_completed": data.get("marked_completed"),
+                "verified": data.get("verified"),
+                "verification_method": data.get("verification_method"),
+                "attachments": data.get("attachments", [])
+            }
+        )
+        write_event_to_firestore(task_event)
 
         # Return the custom document ID
         return doc_id
@@ -354,7 +423,7 @@ def get_task_summary(user_id):
 def get_recent_tasks(user_id, limit, days):
     """Get recent tasks for a user."""
     tasks_ref = db.collection(collections.TASKS)
-    start_date = datetime.now() - datetime.timedelta(days=days)
+    start_date = datetime.now() - timedelta(days=days)
     
     query = tasks_ref.where('assigned_to_ids', 'array_contains', user_id) \
                      .where('created_at', '>=', start_date) \
@@ -367,7 +436,7 @@ def get_recent_tasks(user_id, limit, days):
 def get_user_rewards(user_id):
     """Get rewards for a user."""
     try:
-        rewards_ref = db.collection(collections.REWARDS).document(user_id)
+        rewards_ref = db.collection(collections.PAID_TASKS).document(user_id)
         rewards = rewards_ref.get()
         
         if not rewards.exists:
@@ -538,7 +607,7 @@ def get_task_metrics():
 def get_event_metrics():
     """Get system event metrics."""
     try:
-        events_ref = db.collection(collections.EVENTS)
+        events_ref = db.collection(collections.TASK_EVENTS)
         all_events = events_ref.get()
         
         total_events = len(all_events)
@@ -554,7 +623,7 @@ def get_event_metrics():
                 event_types[event_type] = 1
         
         # Calculate events in last 24 hours
-        yesterday = datetime.now() - datetime.timedelta(days=1)
+        yesterday = datetime.now() - timedelta(days=1)
         recent_events = events_ref.where('timestamp', '>=', yesterday).get()
         events_last_24h = len(recent_events)
         
