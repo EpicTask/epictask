@@ -1,0 +1,438 @@
+<!doctype html>
+<html lang=en>
+<head>
+<meta charset=utf-8>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>User Management Service - API Testing</title>
+<link href="https://fonts.googleapis.com/css?family=Roboto" rel="preload" as="font">
+<link href="/assets/cloud-run-32-color.png" rel="icon" type="image/png" />
+<style>
+  body {
+    font-family: 'Roboto', Arial, sans-serif;
+    margin: 0;
+    padding: 20px;
+    background-color: #f5f5f5;
+  }
+  .container {
+    max-width: 1200px;
+    margin: 0 auto;
+    background: white;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+  }
+  .header {
+    text-align: center;
+    margin-bottom: 30px;
+    padding-bottom: 20px;
+    border-bottom: 2px solid #4285f4;
+  }
+  .endpoint-section {
+    margin: 20px 0;
+    padding: 20px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    background: #fafafa;
+  }
+  .endpoint-title {
+    color: #4285f4;
+    margin-bottom: 10px;
+  }
+  .method {
+    display: inline-block;
+    padding: 4px 8px;
+    border-radius: 4px;
+    color: white;
+    font-weight: bold;
+    margin-right: 10px;
+  }
+  .get { background-color: #61affe; }
+  .post { background-color: #49cc90; }
+  .put { background-color: #fca130; }
+  .delete { background-color: #f93e3e; }
+  .form-group {
+    margin: 10px 0;
+  }
+  label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: bold;
+  }
+  input, textarea {
+    width: 100%;
+    padding: 8px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    box-sizing: border-box;
+  }
+  textarea {
+    height: 100px;
+    resize: vertical;
+  }
+  button {
+    background-color: #4285f4;
+    color: white;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    margin: 5px;
+  }
+  button:hover {
+    background-color: #3367d6;
+  }
+  .response {
+    margin-top: 15px;
+    padding: 10px;
+    border-radius: 4px;
+    background: #f8f9fa;
+    border-left: 4px solid #4285f4;
+    white-space: pre-wrap;
+    font-family: monospace;
+    max-height: 300px;
+    overflow-y: auto;
+  }
+  .error {
+    border-left-color: #f93e3e;
+    background: #ffeaea;
+  }
+  .success {
+    border-left-color: #49cc90;
+    background: #eafaf1;
+  }
+  .auth-section {
+    background: #e8f0fe;
+    padding: 15px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+  }
+  .token-display {
+    background: #f1f3f4;
+    padding: 10px;
+    border-radius: 4px;
+    font-family: monospace;
+    word-break: break-all;
+    margin-top: 10px;
+  }
+</style>
+</head>
+
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>User Management Service</h1>
+      <p>API Testing Interface</p>
+      <p><strong>Service Status:</strong> Running successfully</p>
+    </div>
+
+    <!-- Authentication Section -->
+    <div class="auth-section">
+      <h3>Authentication</h3>
+      <p>For protected endpoints, you need to authenticate first. The token will be automatically used for subsequent requests.</p>
+      <div class="form-group">
+        <label for="authToken">Current Auth Token:</label>
+        <div class="token-display" id="tokenDisplay">No token set</div>
+      </div>
+      <button onclick="clearToken()">Clear Token</button>
+    </div>
+
+    <!-- GET / -->
+    <div class="endpoint-section">
+      <h3 class="endpoint-title">
+        <span class="method get">GET</span>
+        / - Welcome Message
+      </h3>
+      <p>Test the basic service endpoint</p>
+      <button onclick="testWelcome()">Test Welcome</button>
+      <div id="welcomeResponse" class="response" style="display:none;"></div>
+    </div>
+
+    <!-- POST /registerWithPassword -->
+    <div class="endpoint-section">
+      <h3 class="endpoint-title">
+        <span class="method post">POST</span>
+        /registerWithPassword - Register User
+      </h3>
+      <div class="form-group">
+        <label for="regEmail">Email:</label>
+        <input type="email" id="regEmail" placeholder="user@example.com">
+      </div>
+      <div class="form-group">
+        <label for="regPassword">Password:</label>
+        <input type="password" id="regPassword" placeholder="password123">
+      </div>
+      <div class="form-group">
+        <label for="regDisplayName">Display Name:</label>
+        <input type="text" id="regDisplayName" placeholder="John Doe">
+      </div>
+      <div class="form-group">
+        <label for="regRole">Role:</label>
+        <input type="text" id="regRole" placeholder="user" value="user">
+      </div>
+      <button onclick="testRegister()">Register User</button>
+      <div id="registerResponse" class="response" style="display:none;"></div>
+    </div>
+
+    <!-- POST /loginWithPassword -->
+    <div class="endpoint-section">
+      <h3 class="endpoint-title">
+        <span class="method post">POST</span>
+        /loginWithPassword - Login User
+      </h3>
+      <div class="form-group">
+        <label for="loginEmail">Email:</label>
+        <input type="email" id="loginEmail" placeholder="user@example.com">
+      </div>
+      <div class="form-group">
+        <label for="loginPassword">Password:</label>
+        <input type="password" id="loginPassword" placeholder="password123">
+      </div>
+      <button onclick="testLogin()">Login</button>
+      <div id="loginResponse" class="response" style="display:none;"></div>
+    </div>
+
+    <!-- GET /users/me -->
+    <div class="endpoint-section">
+      <h3 class="endpoint-title">
+        <span class="method get">GET</span>
+        /users/me - Get Current User Profile
+      </h3>
+      <p><em>Requires authentication</em></p>
+      <button onclick="testGetProfile()">Get Profile</button>
+      <div id="profileResponse" class="response" style="display:none;"></div>
+    </div>
+
+    <!-- PUT /profileUpdate -->
+    <div class="endpoint-section">
+      <h3 class="endpoint-title">
+        <span class="method put">PUT</span>
+        /profileUpdate - Update Profile
+      </h3>
+      <p><em>Requires authentication</em></p>
+      <div class="form-group">
+        <label for="updateDisplayName">Display Name:</label>
+        <input type="text" id="updateDisplayName" placeholder="Updated Name">
+      </div>
+      <div class="form-group">
+        <label for="updateData">Additional Data (JSON):</label>
+        <textarea id="updateData" placeholder='{"key": "value"}'></textarea>
+      </div>
+      <button onclick="testUpdateProfile()">Update Profile</button>
+      <div id="updateResponse" class="response" style="display:none;"></div>
+    </div>
+
+    <!-- POST /users/generate-invite-code -->
+    <div class="endpoint-section">
+      <h3 class="endpoint-title">
+        <span class="method post">POST</span>
+        /users/generate-invite-code - Generate Invite Code
+      </h3>
+      <p><em>Requires authentication (for child accounts)</em></p>
+      <button onclick="testGenerateInvite()">Generate Invite Code</button>
+      <div id="inviteResponse" class="response" style="display:none;"></div>
+    </div>
+
+    <!-- POST /users/link-child -->
+    <div class="endpoint-section">
+      <h3 class="endpoint-title">
+        <span class="method post">POST</span>
+        /users/link-child - Link Child Account
+      </h3>
+      <p><em>Requires authentication (for parent accounts)</em></p>
+      <div class="form-group">
+        <label for="inviteCode">Invite Code:</label>
+        <input type="text" id="inviteCode" placeholder="INVITE123">
+      </div>
+      <button onclick="testLinkChild()">Link Child</button>
+      <div id="linkResponse" class="response" style="display:none;"></div>
+    </div>
+
+    <!-- GET /users/me/children -->
+    <div class="endpoint-section">
+      <h3 class="endpoint-title">
+        <span class="method get">GET</span>
+        /users/me/children - Get Linked Children
+      </h3>
+      <p><em>Requires authentication (for parent accounts)</em></p>
+      <button onclick="testGetChildren()">Get Children</button>
+      <div id="childrenResponse" class="response" style="display:none;"></div>
+    </div>
+
+    <!-- DELETE /deleteAccount -->
+    <div class="endpoint-section">
+      <h3 class="endpoint-title">
+        <span class="method delete">DELETE</span>
+        /deleteAccount - Delete Account
+      </h3>
+      <p><em>Requires authentication - WARNING: This will delete the account!</em></p>
+      <button onclick="testDeleteAccount()" style="background-color: #f93e3e;">Delete Account</button>
+      <div id="deleteResponse" class="response" style="display:none;"></div>
+    </div>
+  </div>
+
+  <script>
+    let authToken = '';
+
+    function updateTokenDisplay() {
+      const display = document.getElementById('tokenDisplay');
+      display.textContent = authToken || 'No token set';
+    }
+
+    function clearToken() {
+      authToken = '';
+      updateTokenDisplay();
+    }
+
+    function showResponse(elementId, response, isError = false) {
+      const element = document.getElementById(elementId);
+      element.style.display = 'block';
+      element.className = 'response ' + (isError ? 'error' : 'success');
+      element.textContent = JSON.stringify(response, null, 2);
+    }
+
+    async function makeRequest(url, options = {}) {
+      try {
+        const headers = {
+          'Content-Type': 'application/json',
+          ...options.headers
+        };
+        
+        if (authToken && options.requiresAuth !== false) {
+          headers['Authorization'] = `Bearer ${authToken}`;
+        }
+
+        const response = await fetch(url, {
+          ...options,
+          headers
+        });
+
+        const data = await response.text();
+        let jsonData;
+        try {
+          jsonData = JSON.parse(data);
+        } catch {
+          jsonData = data;
+        }
+
+        return {
+          status: response.status,
+          data: jsonData,
+          ok: response.ok
+        };
+      } catch (error) {
+        return {
+          status: 0,
+          data: { error: error.message },
+          ok: false
+        };
+      }
+    }
+
+    async function testWelcome() {
+      const result = await makeRequest('/', { requiresAuth: false });
+      showResponse('welcomeResponse', result, !result.ok);
+    }
+
+    async function testRegister() {
+      const email = document.getElementById('regEmail').value;
+      const password = document.getElementById('regPassword').value;
+      const displayName = document.getElementById('regDisplayName').value;
+      const role = document.getElementById('regRole').value;
+
+      const result = await makeRequest('/registerWithPassword', {
+        method: 'POST',
+        requiresAuth: false,
+        body: JSON.stringify({ email, password, displayName, role })
+      });
+
+      showResponse('registerResponse', result, !result.ok);
+    }
+
+    async function testLogin() {
+      const email = document.getElementById('loginEmail').value;
+      const password = document.getElementById('loginPassword').value;
+
+      const result = await makeRequest('/loginWithPassword', {
+        method: 'POST',
+        requiresAuth: false,
+        body: JSON.stringify({ email, password })
+      });
+
+      if (result.ok && result.data.token) {
+        authToken = result.data.token;
+        updateTokenDisplay();
+      }
+
+      showResponse('loginResponse', result, !result.ok);
+    }
+
+    async function testGetProfile() {
+      const result = await makeRequest('/users/me');
+      showResponse('profileResponse', result, !result.ok);
+    }
+
+    async function testUpdateProfile() {
+      const displayName = document.getElementById('updateDisplayName').value;
+      const additionalData = document.getElementById('updateData').value;
+
+      let body = {};
+      if (displayName) body.displayName = displayName;
+      
+      if (additionalData) {
+        try {
+          const parsed = JSON.parse(additionalData);
+          body = { ...body, ...parsed };
+        } catch (e) {
+          showResponse('updateResponse', { error: 'Invalid JSON in additional data' }, true);
+          return;
+        }
+      }
+
+      const result = await makeRequest('/profileUpdate', {
+        method: 'PUT',
+        body: JSON.stringify(body)
+      });
+
+      showResponse('updateResponse', result, !result.ok);
+    }
+
+    async function testGenerateInvite() {
+      const result = await makeRequest('/users/generate-invite-code', {
+        method: 'POST'
+      });
+      showResponse('inviteResponse', result, !result.ok);
+    }
+
+    async function testLinkChild() {
+      const inviteCode = document.getElementById('inviteCode').value;
+      
+      const result = await makeRequest('/users/link-child', {
+        method: 'POST',
+        body: JSON.stringify({ inviteCode })
+      });
+
+      showResponse('linkResponse', result, !result.ok);
+    }
+
+    async function testGetChildren() {
+      const result = await makeRequest('/users/me/children');
+      showResponse('childrenResponse', result, !result.ok);
+    }
+
+    async function testDeleteAccount() {
+      if (!confirm('Are you sure you want to delete this account? This action cannot be undone!')) {
+        return;
+      }
+
+      const result = await makeRequest('/deleteAccount', {
+        method: 'DELETE'
+      });
+
+      showResponse('deleteResponse', result, !result.ok);
+    }
+
+    // Initialize
+    updateTokenDisplay();
+  </script>
+</body>
+</html>
