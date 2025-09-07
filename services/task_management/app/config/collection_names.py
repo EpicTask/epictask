@@ -17,7 +17,6 @@ class TestCollections:
     XUMM_CALLBACKS = 'test_xumm_callbacks'
     USERS = 'users'
     REWARDS = 'test_rewards'
-    EVENTS = 'test_events'
 
 
 class ProdCollections:
@@ -34,7 +33,6 @@ class ProdCollections:
     XUMM_CALLBACKS = 'xumm_callbacks'
     USERS = 'users'
     REWARDS = 'rewards'
-    EVENTS = 'events'
 
 
 def get_collections(environment='test'):
