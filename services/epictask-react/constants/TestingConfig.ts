@@ -1,4 +1,4 @@
-import TestCollections, { ProdCollections } from './CollectionNames';
+import {TestCollections, ProdCollections} from './CollectionNames';
 
 // Testing Dashboard Configuration
 export const TESTING_CONFIG = {

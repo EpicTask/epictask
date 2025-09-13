@@ -1,89 +1,100 @@
 import React, { useState } from "react";
-import * as DocumentPicker from "expo-document-picker";
-import ToggleButton from "@/components/toggle/ToggleButton";
 import CustomButton from "@/components/buttons/CustomButton";
 import CustomInput from "@/components/custom-input/CustomInput";
 import ScreenHeading from "@/components/headings/ScreenHeading";
+import { ChildSelector } from "@/components/forms/ChildSelector";
+import { useAuth } from "@/context/AuthContext";
 
 import {
-  responsiveFontSize,
   responsiveHeight,
   responsiveWidth,
 } from "react-native-responsive-dimensions";
 
-import { ICONS } from "@/assets";
 import { router } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 import {
-  Image,
-  ImageProps,
   ScrollView,
   StyleSheet,
-  Text,
-  TouchableOpacity,
   View,
 } from "react-native";
 import CustomText from "@/components/CustomText";
 import DateInput from "@/components/DateInput";
-
-const Attatchment = ({
-  onPress,
-  file,
-}: {
-  onPress: () => void;
-  file: ImageProps;
-}) => {
-  return (
-    <View style={{ gap: 10 }}>
-      <CustomText variant="semiBold" style={{ fontWeight: "500" }}>
-        Attatchment
-      </CustomText>
-      <TouchableOpacity onPress={onPress}>
-        {file ? (
-          <Image
-            source={file}
-            style={{ width: "100%", height: 120, borderRadius: 12 }}
-          />
-        ) : (
-          <View
-            style={{
-              width: "100%",
-              height: 120,
-              borderWidth: 1,
-              borderColor: "#00000030",
-              borderStyle: "dashed",
-              borderRadius: 20,
-              alignItems: "center",
-              justifyContent: "center",
-            }}
-          >
-            {ICONS.SETTINGS.user}
-            <CustomText variant="medium">Images, PDF, etc.</CustomText>
-          </View>
-        )}
-      </TouchableOpacity>
-    </View>
-  );
-};
+import taskService from "@/api/taskService";
 
 const AssignTask = () => {
-  const [file, setFile] = useState<any>(null);
+  const { user } = useAuth();
+  const [loading, setLoading] = useState(false);
+  const [taskData, setTaskData] = useState({
+    task_title: "Clean Your Room",
+    task_description: "Make sure to tidy up and organize everything.",
+    reward_amount: "25",
+    assigned_to_ids: [] as string[],
+    expiration_date: "",
+  });
 
-  const pickDocument = async () => {
+  const handleInputChange = (field: string, value: string) => {
+    setTaskData(prev => ({
+      ...prev,
+      [field]: value
+    }));
+  };
+
+  const handleChildSelectionChange = (selectedIds: string[]) => {
+    setTaskData(prev => ({
+      ...prev,
+      assigned_to_ids: selectedIds
+    }));
+  };
+
+  const handleAssignTask = async () => {
+    // Validate required fields
+    if (!taskData.task_title.trim()) {
+      alert("Please enter a task title");
+      return;
+    }
+    
+    if (!taskData.task_description.trim()) {
+      alert("Please enter a task description");
+      return;
+    }
+    
+    if (taskData.assigned_to_ids.length === 0) {
+      alert("Please select at least one child");
+      return;
+    }
+
+    if (!taskData.reward_amount.trim()) {
+      alert("Please enter a reward amount");
+      return;
+    }
+
     try {
-      const result = await DocumentPicker.getDocumentAsync({
-        type: "*/*",
-        copyToCacheDirectory: true,
-        multiple: false,
-      });
+      setLoading(true);
+      
+      // Create task data object matching TaskCreated model
+      const newTask = {
+        task_description: taskData.task_description,
+        task_id: "", // Generated on backend
+        expiration_date: taskData.expiration_date ? new Date(taskData.expiration_date).getTime() : Date.now() + (3 * 24 * 60 * 60 * 1000), // Default 7 days from now
+        payment_method: "Pay Directly",
+        reward_amount: parseFloat(taskData.reward_amount),
+        reward_currency: "eTask",
+        user_id: user?.uid || "",
+        assigned_to_ids: taskData.assigned_to_ids,
+        task_title: taskData.task_title,
+      };
 
-      if (result?.assets && result.assets.length > 0) {
-        setFile(result.assets[0]);
-      } else if (result.canceled) {
-        console.log("User cancelled the picker");
-      }
-    } catch (err) {
-      console.error("Document pick error: ", err);
+      console.log("Creating task:", newTask);
+      
+      await taskService.createTask(newTask);
+      
+      alert("Task created successfully!");
+      router.back();
+    } catch (error) {
+      console.error("Failed to create task:", error);
+      alert("Failed to create task. Please try again.");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -94,68 +105,42 @@ const AssignTask = () => {
         <View style={{ gap: 6 }}>
           <CustomInput
             label="Task Title"
-            value={"Clean Your room"}
-            onChangeText={() => {}}
+            value={taskData.task_title}
+            onChangeText={(value) => handleInputChange("task_title", value)}
+            placeholder="Enter task title"
           />
           <CustomInput
             label="Task Description"
-            value={"Clean  your room"}
-            onChangeText={() => {}}
+            value={taskData.task_description}
+            onChangeText={(value) => handleInputChange("task_description", value)}
           />
-          <DateInput title="Age/Date of Birth" />
-          <CustomInput label="Reward" value={`25`} onChangeText={() => {}} />
-          <CustomInput
-            label="Select Child"
-            value={"Select Child"}
-            onChangeText={() => {}}
+          <DateInput title="Due Date (Optional)" />
+          <CustomInput 
+            label="Reward Amount" 
+            value={taskData.reward_amount} 
+            onChangeText={(value) => handleInputChange("reward_amount", value)} 
           />
-          <Attatchment onPress={pickDocument} file={file} />
-          <View style={{ gap: 8, paddingVertical: 10 }}>
-            <View style={{ paddingVertical: 10 }}>
-              <CustomText
-                variant="semiBold"
-                style={{ fontSize: responsiveFontSize(2) }}
-              >
-                Repeat Task
-              </CustomText>
-            </View>
-            <View style={{ gap: 10 }}>
-              <View
-                style={{
-                  flexDirection: "row",
-                  justifyContent: "space-between",
-                }}
-              >
-                <CustomText>One Only</CustomText>
-                <ToggleButton />
-              </View>
-              <View
-                style={{
-                  flexDirection: "row",
-                  justifyContent: "space-between",
-                }}
-              >
-                <CustomText>Daily</CustomText>
-                <ToggleButton />
-              </View>
-              <View
-                style={{
-                  flexDirection: "row",
-                  justifyContent: "space-between",
-                }}
-              >
-                <CustomText>Weekly</CustomText>
-                <ToggleButton />
-              </View>
-            </View>
+          
+          <View style={{ gap: 6, marginVertical: 8 }}>
+            <CustomText variant="semiBold" style={{ fontWeight: "500" }}>
+              Select Child
+            </CustomText>
+            <ChildSelector
+              parentId={user?.uid || ''}
+              selectedChildren={taskData.assigned_to_ids}
+              onSelectionChange={handleChildSelectionChange}
+              placeholder="Select children for this task"
+              allowMultiple={true}
+              showAllOption={true}
+              style={{ marginVertical: 0 }}
+            />
           </View>
+          
           <View>
             <CustomButton
               fill={true}
-              onPress={() => {
-                router.back();
-              }}
-              text="Assign"
+              onPress={handleAssignTask}
+              text={loading ? "Creating Task..." : "Assign Task"}
               height={responsiveHeight(8)}
             />
           </View>

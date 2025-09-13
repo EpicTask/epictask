@@ -18,6 +18,7 @@ import {
   View,
   Text,
   ActivityIndicator,
+  TouchableOpacity,
 } from "react-native";
 import { Link } from "expo-router";
 import React, { useEffect, useState } from "react";
@@ -143,6 +144,7 @@ export default function HomeScreen() {
                     stars={kid.tokens_earned || 0}
                     completed={kid.tasks_completed || 0}
                     pending={kid.tasks_pending || 0}
+                    uid={kid.uid}
                   />
                 ))}
               </View>
@@ -156,11 +158,11 @@ export default function HomeScreen() {
             <Heading
               title="Recent tasks"
               icon={
-                <Link href="/screens/manage-tasks/assign-task" asChild>
-                  <Pressable>
-                    <HomeIcon fill="black" />
-                  </Pressable>
-                </Link>
+            <Link href="/screens/manage-tasks/assign-task" asChild>
+              <TouchableOpacity>
+                <HomeIcon fill="black" />
+              </TouchableOpacity>
+            </Link>
               }
             />
             {recentTasks.length > 0 ? (

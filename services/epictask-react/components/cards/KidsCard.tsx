@@ -15,6 +15,7 @@ interface KidsCardProps {
   stars: number;
   completed: number;
   pending: number;
+  uid?: string;
 }
 
 const KidsCard: React.FC<KidsCardProps> = ({
@@ -23,13 +24,22 @@ const KidsCard: React.FC<KidsCardProps> = ({
   stars,
   completed,
   pending,
+  uid,
 }) => {
   const router = useRouter();
   return (
     <TouchableOpacity
       style={{ flex: 1 }}
       onPress={() => {
-        router.push("/screens/kid-profile" as any);
+        const params = new URLSearchParams({
+          name: name,
+          level: level.toString(),
+          stars: stars.toString(),
+          completed: completed.toString(),
+          pending: pending.toString(),
+          ...(uid && { uid: uid })
+        });
+        router.push(`/screens/kid-profile?${params.toString()}` as any);
       }}
     >
       <View style={styles.card}>

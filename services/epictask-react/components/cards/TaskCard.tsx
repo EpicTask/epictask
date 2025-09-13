@@ -16,10 +16,12 @@ import { router } from "expo-router";
 interface TaskCardProps {
   name: string;
   stars: number;
+  taskData?: any;
+  kidName?: string;
   onPress?: () => void;
 }
 
-const TaskCard: React.FC<TaskCardProps> = ({ name, stars, onPress }) => {
+const TaskCard: React.FC<TaskCardProps> = ({ name, stars, taskData, kidName, onPress }) => {
   return (
     <View style={styles.card}>
       <View style={{ gap: 10 }}>
@@ -43,7 +45,7 @@ const TaskCard: React.FC<TaskCardProps> = ({ name, stars, onPress }) => {
         <View style={styles.statsContainer}>
           <View style={{ flexDirection: "row", gap: 2, alignItems: "center" }}>
             <Image source={IMAGES.bhalu} style={{ width: 20, height: 20 }} />
-            <CustomText variant="medium" style={styles.statText}>To Wisteria</CustomText>
+            <CustomText variant="medium" style={styles.statText}>{kidName}</CustomText>
             <View
               style={{
                 width: 4,
@@ -53,13 +55,19 @@ const TaskCard: React.FC<TaskCardProps> = ({ name, stars, onPress }) => {
                 borderRadius: responsiveWidth(100),
               }}
             />
-            <CustomText variant="medium" style={styles.statText}>Today 08:30 AM - 10:30 AM</CustomText>
+            <CustomText variant="medium" style={styles.statText}>{new Date(taskData.expiration_date).toDateString()}</CustomText>
           </View>
           <View style={styles.statRow}>
             {ICONS.progress}
+            {taskData.rewarded ? (
+              <CustomText variant="semiBold" style={[styles.statText, { color: COLORS.green }]}>
+                Completed
+              </CustomText>
+            ):  (
             <CustomText variant="medium" style={[styles.statText, { color: "black" }]}>
               In Progress
             </CustomText>
+            )}
           </View>
         </View>
         <View

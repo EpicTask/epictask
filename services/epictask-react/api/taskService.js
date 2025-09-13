@@ -1,6 +1,7 @@
 import axios from "axios";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import MicroserviceUrls from "@/constants/Microservices";
+import { create } from "react-test-renderer";
 
 // Create a separate API client for Task Management Service
 const taskApiClient = axios.create({
@@ -21,6 +22,36 @@ taskApiClient.interceptors.request.use(
 );
 
 export const taskService = {
+  createTask: async (taskData) => {
+    try {
+      const response = await taskApiClient.post("/TaskCreated", taskData);
+      return response.data;
+    } catch (error) {
+      console.error("Create task error:", error);
+      throw new Error("Failed to create task");
+    }
+  },
+
+  taskAssigned: async (assignmentData) => {
+    try {
+      const response = await taskApiClient.post("/TaskAssigned", assignmentData);
+      return response.data;
+    } catch (error) {
+      console.error("Task assigned error:", error);
+      throw new Error("Failed to assign task");
+    }
+  },
+
+  taskCanceled: async (cancellationData) => {
+    try {
+      const response = await taskApiClient.post("/TaskCanceled", cancellationData);
+      return response.data;
+    } catch (error) {
+      console.error("Task canceled error:", error);
+      throw new Error("Failed to cancel task");
+    }
+  },
+
   getTaskSummary: async (userId) => {
     try {
       const response = await taskApiClient.get(`/user/${userId}/task-summary`);
