@@ -426,8 +426,8 @@ def get_recent_tasks(user_id, limit, days):
     start_date = datetime.now() - timedelta(days=days)
     
     query = tasks_ref.where('assigned_to_ids', 'array_contains', user_id) \
-                     .where('created_at', '>=', start_date) \
-                     .order_by('created_at', direction=firestore.Query.DESCENDING) \
+                     .where('timestamp', '>=', start_date) \
+                     .order_by('timestamp', direction=firestore.Query.DESCENDING) \
                      .limit(limit)
                      
     tasks = [doc.to_dict() for doc in query.get()]
