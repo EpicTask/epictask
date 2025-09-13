@@ -96,7 +96,7 @@ export default function HomeScreen() {
             <Link href="/(parent)/(app)/screens/profile-display" asChild>
               <Pressable>
                 <Image
-                  source={user?.photoURL ? { uri: user.photoURL } : IMAGES.profile}
+                  source={user?.imageUrl ? { uri: user.imageUrl } : IMAGES.profile}
                   style={styles.profileImage}
                 />
               </Pressable>

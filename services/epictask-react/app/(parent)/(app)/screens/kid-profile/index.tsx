@@ -22,18 +22,28 @@ import TaskCard from "@/components/cards/TaskCard";
 import CustomText from "@/components/CustomText";
 import { firestoreService } from "@/api/firestoreService";
 import HomeIcon from "@/assets/icons/Home";
+import { TaskActionModal } from "@/components/modals/TaskActionModal";
 
 // Task interface
 interface Task {
   id: string;
   title?: string;
+  task_title?: string;
   name?: string;
   reward?: number;
+  reward_amount?: number;
   rewardAmount?: number;
   taskId?: string;
   assignedTo?: string;
+  assigned_to_ids?: string[];
   status?: string;
   description?: string;
+  task_description?: string;
+  due_date?: string;
+  created_at?: string;
+  user_id?: string;
+  rewarded?: boolean;
+  marked_completed?: boolean;
 }
 
 const KidProfile = () => {
@@ -48,14 +58,29 @@ const KidProfile = () => {
   const kidPending = parseInt(params.pending as string) || 0;
   const kidUid = params.uid as string;
   
-  // State for tasks
+  // State for tasks and modal
   const [tasks, setTasks] = useState<Task[]>([]);
   const [loading, setLoading] = useState(true);
+  const [modalVisible, setModalVisible] = useState(false);
+  const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   
-  // Calculate total tasks and progress
-  const totalTasks = kidCompleted + kidPending;
-  const completedProgress = totalTasks > 0 ? kidCompleted / totalTasks : 0;
-  const pendingProgress = totalTasks > 0 ? kidPending / totalTasks : 0;
+  // Calculate real-time metrics from actual task data
+  // Completed: Tasks that have been rewarded
+  // Pending: Tasks that have been marked complete but not yet rewarded
+  const completedTasks = tasks.filter(task => 
+    task.rewarded === true
+  ).length;
+  const pendingTasks = tasks.filter(task => 
+    task.marked_completed === true && task.rewarded !== true
+  ).length;
+  const totalTasks = tasks.length;
+  const totalRewardPoints = tasks
+    .filter(task => task.rewarded === true)
+    .reduce((sum, task) => sum + (task.reward_amount || task.reward || 0), 0);
+  
+  // Calculate progress percentages
+  const completedProgress = totalTasks > 0 ? completedTasks / totalTasks : 0;
+  const pendingProgress = totalTasks > 0 ? pendingTasks / totalTasks : 0;
 
   // Fetch tasks for the specific kid
   useEffect(() => {
@@ -80,6 +105,54 @@ const KidProfile = () => {
 
     fetchKidTasks();
   }, [kidUid]);
+
+  // Handle task actions
+  const handleTaskView = (task: Task) => {
+    setSelectedTask(task);
+    setModalVisible(true);
+  };
+
+  const handleTaskSave = async (updatedTask: Task) => {
+    try {
+      // TODO: Implement task update API call
+      console.log('Updating task:', updatedTask);
+      
+      // Update local state
+      setTasks(prevTasks => 
+        prevTasks.map(task => 
+          task.id === updatedTask.id ? updatedTask : task
+        )
+      );
+      
+      // Refresh tasks from server
+      if (kidUid) {
+        const result = await firestoreService.getTasksForUser(kidUid);
+        if (result.success) {
+          setTasks(result.tasks || []);
+        }
+      }
+    } catch (error) {
+      console.error('Error updating task:', error);
+      throw error;
+    }
+  };
+
+  const handleTaskDelete = async (taskId: string) => {
+    try {
+      // TODO: Implement task delete API call
+      console.log('Deleting task:', taskId);
+      
+      // Update local state
+      setTasks(prevTasks => prevTasks.filter(task => task.id !== taskId));
+    } catch (error) {
+      console.error('Error deleting task:', error);
+    }
+  };
+
+  const closeModal = () => {
+    setModalVisible(false);
+    setSelectedTask(null);
+  };
   return (
     <SafeAreaView style={styles.safeArea}>
       <View style={{ flex: 1, gap: 10, backgroundColor: COLORS.bg }}>
@@ -106,7 +179,7 @@ const KidProfile = () => {
                 textAlign: "center",
               }}
             >
-              Kid Profile
+              {kidName} Profile
             </CustomText>
           </View>
           <View
@@ -166,7 +239,7 @@ const KidProfile = () => {
                     text={"Completed"}
                     color={COLORS.purple}
                     row={true}
-                    completed={kidCompleted}
+                    completed={completedTasks}
                     progress={completedProgress}
                     total={totalTasks}
                   />
@@ -174,7 +247,7 @@ const KidProfile = () => {
                     text={"Pending"}
                     color={COLORS.grey}
                     row={true}
-                    completed={kidPending}
+                    completed={pendingTasks}
                     progress={pendingProgress}
                     total={totalTasks}
                   />
@@ -198,7 +271,7 @@ const KidProfile = () => {
                           width: responsiveHeight(2),
                         }}
                       />
-                      <CustomText style={{}}> {kidStars}</CustomText>
+                      <CustomText style={{}}> {totalRewardPoints}</CustomText>
                     </View>
                   </View>
                 </View>
@@ -233,10 +306,11 @@ const KidProfile = () => {
               renderItem={({ item }) => (
                 <View style={{ marginHorizontal: 6, width: responsiveWidth(70), height: 180 }}>
                   <TaskCard 
-                    name={item.task_title || item.tast_description || "Untitled Task"} 
-                    stars={item.reward || item.rewardAmount || 0} 
+                    name={item.task_title || item.title || item.task_description || item.description || "Untitled Task"} 
+                    stars={item.reward_amount || item.reward || item.rewardAmount || 0} 
                     taskData={item}
                     kidName={kidName}
+                    onPress={() => handleTaskView(item)}
                   />
                 </View>
               )}
@@ -250,6 +324,16 @@ const KidProfile = () => {
             </View>
           )}
         </View>
+
+        {/* Task Action Modal */}
+        <TaskActionModal
+          visible={modalVisible}
+          task={selectedTask}
+          kidName={kidName}
+          onClose={closeModal}
+          onSave={handleTaskSave}
+          onDelete={handleTaskDelete}
+        />
       </View>
     </SafeAreaView>
   );

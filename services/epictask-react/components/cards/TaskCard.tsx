@@ -19,9 +19,10 @@ interface TaskCardProps {
   taskData?: any;
   kidName?: string;
   onPress?: () => void;
+  onModify?: () => void;
 }
 
-const TaskCard: React.FC<TaskCardProps> = ({ name, stars, taskData, kidName, onPress }) => {
+const TaskCard: React.FC<TaskCardProps> = ({ name, stars, taskData, kidName, onPress, onModify }) => {
   return (
     <View style={styles.card}>
       <View style={{ gap: 10 }}>
@@ -59,14 +60,18 @@ const TaskCard: React.FC<TaskCardProps> = ({ name, stars, taskData, kidName, onP
           </View>
           <View style={styles.statRow}>
             {ICONS.progress}
-            {taskData.rewarded ? (
-              <CustomText variant="semiBold" style={[styles.statText, { color: COLORS.green }]}>
+            {taskData.rewarded === true ? (
+              <CustomText variant="semiBold" style={[styles.statText, { color: COLORS.light_green || '#4CAF50' }]}>
                 Completed
               </CustomText>
-            ):  (
-            <CustomText variant="medium" style={[styles.statText, { color: "black" }]}>
-              In Progress
-            </CustomText>
+            ) : taskData.marked_completed === true ? (
+              <CustomText variant="semiBold" style={[styles.statText, { color: COLORS.black || 'black' }]}>
+                Pending
+              </CustomText>
+            ) : (
+              <CustomText variant="medium" style={[styles.statText, { color: "black" }]}>
+                In Progress
+              </CustomText>
             )}
           </View>
         </View>
@@ -76,7 +81,7 @@ const TaskCard: React.FC<TaskCardProps> = ({ name, stars, taskData, kidName, onP
             alignItems: "center",
             gap: 10,
             width: "100%",
-            justifyContent: "space-between",
+            justifyContent: "center",
             borderTopColor: "#00000010",
             borderTopWidth: 1,
             paddingTop: 10,
@@ -84,16 +89,7 @@ const TaskCard: React.FC<TaskCardProps> = ({ name, stars, taskData, kidName, onP
         >
           <View style={{ flex: 1 }}>
             <CustomButton
-              onPress={onPress!}
-              text="MODIFY"
-              fill={false}
-            />
-          </View>
-          <View style={{ flex: 1 }}>
-            <CustomButton
-              onPress={() => {
-                router.push("/screens/task" as any);
-              }}
+              onPress={onPress || (() => console.log('View pressed'))}
               text="VIEW"
               fill={true}
             />

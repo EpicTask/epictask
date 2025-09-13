@@ -68,7 +68,7 @@ const ProfileDisplayScreen = () => {
         <View style={styles.profileCard}>
           <View style={styles.profileImageContainer}>
             <Image
-              source={currentUser?.photoURL ? { uri: currentUser.photoURL } : IMAGES.profile}
+              source={currentUser?.imageUrl ? { uri: currentUser.imageUrl } : IMAGES.profile}
               style={styles.profileImage}
             />
           </View>

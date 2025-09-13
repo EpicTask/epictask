@@ -16,14 +16,19 @@ import {
   responsiveHeight,
   responsiveWidth,
 } from 'react-native-responsive-dimensions';
+import { firestoreService } from '@/api/firestoreService';
 
-const fetchLinkedChildren = async () => {
+const fetchLinkedChildren = async (uid: string) => {
   try {
-    const { data } = await apiClient.get('/users/me/children');
+    const result = await firestoreService.getLinkedChildren(uid);
+    if (result.success) {
+      return result.children || [];
+    }
+    return [];
   } catch (error) {
-    
+    console.error('Error fetching linked children:', error);
+    return [];
   }
-  return [];
 };
 
 const ProfileScreen = () => {
@@ -31,15 +36,16 @@ const ProfileScreen = () => {
   const queryClient = useQueryClient();
   const [displayName, setDisplayName] = useState(user?.displayName || '');
   const [inviteCode, setInviteCode] = useState('');
-  const [profileImage, setProfileImage] = useState(user?.photoURL || null);
+  const [profileImage, setProfileImage] = useState(user?.imageUrl || null);
 
   const { data: children, isLoading: isLoadingChildren } = useQuery({
-    queryKey: ['linkedChildren'],
-    queryFn: fetchLinkedChildren,
+    queryKey: ['linkedChildren', user?.uid],
+    queryFn: () => fetchLinkedChildren(user?.uid || ''),
+    enabled: !!user?.uid,
   });
 
   const updateProfileMutation = useMutation({
-    mutationFn: (updatedProfile: { displayName: string; photoURL?: string }) => apiClient.put('/profileUpdate', updatedProfile),
+    mutationFn: (updatedProfile: { displayName: string; imageUrl?: string }) => apiClient.put('/profileUpdate', updatedProfile),
     onSuccess: (data) => {
       setUser({ ...user, ...data.data });
       Alert.alert('Success', 'Profile updated successfully.');
@@ -67,11 +73,11 @@ const ProfileScreen = () => {
       Alert.alert('Error', 'Please enter a display name');
       return;
     }
-    const updateData: { displayName: string; photoURL?: string } = { 
+    const updateData: { displayName: string; imageUrl?: string } = { 
       displayName: displayName.trim() 
     };
-    if (profileImage && profileImage !== user?.photoURL) {
-      updateData.photoURL = profileImage;
+    if (profileImage && profileImage !== user?.imageUrl) {
+      updateData.imageUrl = profileImage;
     }
     updateProfileMutation.mutate(updateData);
   };
@@ -151,7 +157,7 @@ const ProfileScreen = () => {
     <View style={styles.childItem}>
       <View style={styles.childInfo}>
         <Image
-          source={item.photoURL ? { uri: item.photoURL } : IMAGES.profile}
+          source={item.imageUrl ? { uri: item.imageUrl } : IMAGES.profile}
           style={styles.childAvatar}
         />
         <CustomText variant="medium" style={styles.childName}>
