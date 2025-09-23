@@ -23,28 +23,8 @@ import CustomText from "@/components/CustomText";
 import { firestoreService } from "@/api/firestoreService";
 import HomeIcon from "@/assets/icons/Home";
 import { TaskActionModal } from "@/components/modals/TaskActionModal";
+import { Task } from "@/constants/Interfaces";
 
-// Task interface
-interface Task {
-  id: string;
-  title?: string;
-  task_title?: string;
-  name?: string;
-  reward?: number;
-  reward_amount?: number;
-  rewardAmount?: number;
-  taskId?: string;
-  assignedTo?: string;
-  assigned_to_ids?: string[];
-  status?: string;
-  description?: string;
-  task_description?: string;
-  due_date?: string;
-  created_at?: string;
-  user_id?: string;
-  rewarded?: boolean;
-  marked_completed?: boolean;
-}
 
 const KidProfile = () => {
   const router = useRouter();
@@ -120,7 +100,7 @@ const KidProfile = () => {
       // Update local state
       setTasks(prevTasks => 
         prevTasks.map(task => 
-          task.id === updatedTask.id ? updatedTask : task
+          task.task_id === updatedTask.task_id ? updatedTask : task
         )
       );
       
@@ -143,9 +123,25 @@ const KidProfile = () => {
       console.log('Deleting task:', taskId);
       
       // Update local state
-      setTasks(prevTasks => prevTasks.filter(task => task.id !== taskId));
+      setTasks(prevTasks => prevTasks.filter(task => task.task_id !== taskId));
     } catch (error) {
       console.error('Error deleting task:', error);
+    }
+  };
+
+  const handleRewardTask = async (taskId: string) => {
+    try {
+      await firestoreService.rewardTask(taskId);
+      // Refresh tasks from server
+      if (kidUid) {
+        const result = await firestoreService.getTasksForUser(kidUid);
+        if (result.success) {
+          setTasks(result.tasks || []);
+        }
+      }
+      closeModal();
+    } catch (error) {
+      console.error('Error rewarding task:', error);
     }
   };
 
@@ -306,15 +302,16 @@ const KidProfile = () => {
               renderItem={({ item }) => (
                 <View style={{ marginHorizontal: 6, width: responsiveWidth(70), height: 180 }}>
                   <TaskCard 
-                    name={item.task_title || item.title || item.task_description || item.description || "Untitled Task"} 
-                    stars={item.reward_amount || item.reward || item.rewardAmount || 0} 
+                    name={item.task_title || item.task_description || "Untitled Task"} 
+                    stars={item.reward_amount || 0} 
                     taskData={item}
                     kidName={kidName}
                     onPress={() => handleTaskView(item)}
+                    onReward={() => handleRewardTask(item.task_id)}
                   />
                 </View>
               )}
-              keyExtractor={(item) => item.id || item.taskId || Math.random().toString()}
+              keyExtractor={(item) => item.task_id || Math.random().toString()}
             />
           ) : (
             <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
@@ -333,6 +330,7 @@ const KidProfile = () => {
           onClose={closeModal}
           onSave={handleTaskSave}
           onDelete={handleTaskDelete}
+          onReward={handleRewardTask}
         />
       </View>
     </SafeAreaView>

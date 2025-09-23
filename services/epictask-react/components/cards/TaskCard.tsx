@@ -20,9 +20,10 @@ interface TaskCardProps {
   kidName?: string;
   onPress?: () => void;
   onModify?: () => void;
+  onReward?: () => void;
 }
 
-const TaskCard: React.FC<TaskCardProps> = ({ name, stars, taskData, kidName, onPress, onModify }) => {
+const TaskCard: React.FC<TaskCardProps> = ({ name, stars, taskData, kidName, onPress, onModify, onReward }) => {
   return (
     <View style={styles.card}>
       <View style={{ gap: 10 }}>
@@ -66,7 +67,7 @@ const TaskCard: React.FC<TaskCardProps> = ({ name, stars, taskData, kidName, onP
               </CustomText>
             ) : taskData.marked_completed === true ? (
               <CustomText variant="semiBold" style={[styles.statText, { color: COLORS.black || 'black' }]}>
-                Pending
+                Pending Reward
               </CustomText>
             ) : (
               <CustomText variant="medium" style={[styles.statText, { color: "black" }]}>
@@ -94,6 +95,15 @@ const TaskCard: React.FC<TaskCardProps> = ({ name, stars, taskData, kidName, onP
               fill={true}
             />
           </View>
+          {taskData.marked_completed === true && !taskData.rewarded && (
+            <View style={{ flex: 1 }}>
+              <CustomButton
+                onPress={onReward || (() => console.log('Reward pressed'))}
+                text="REWARD"
+                fill={true}
+              />
+            </View>
+          )}
         </View>
       </View>
     </View>

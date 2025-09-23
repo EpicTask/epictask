@@ -18,19 +18,22 @@ import {
   responsiveHeight,
   responsiveWidth,
 } from 'react-native-responsive-dimensions';
+import { Timestamp } from '@react-native-firebase/firestore';
 
 interface Task {
-  id: string;
-  title?: string;
   task_title?: string;
-  description?: string;
-  task_description?: string;
-  reward_amount?: number;
+  name?: string;
   reward?: number;
-  due_date?: string;
-  status?: string;
-  created_at?: string;
+  reward_amount?: number;
+  task_id: string;
   assigned_to_ids?: string[];
+  status?: string;
+  task_description?: string;
+  expiration_date?: string;
+  timestamp?: Timestamp;
+  user_id?: string;
+  rewarded?: boolean;
+  marked_completed?: boolean;
 }
 
 interface TaskActionModalProps {
@@ -40,6 +43,7 @@ interface TaskActionModalProps {
   onClose: () => void;
   onSave?: (updatedTask: Task) => void;
   onDelete?: (taskId: string) => void;
+  onReward?: (taskId: string) => void;
 }
 
 export const TaskActionModal: React.FC<TaskActionModalProps> = ({
@@ -49,6 +53,7 @@ export const TaskActionModal: React.FC<TaskActionModalProps> = ({
   onClose,
   onSave,
   onDelete,
+  onReward,
 }) => {
   const [activeTab, setActiveTab] = useState<'view' | 'modify'>('view');
   const [editedTask, setEditedTask] = useState<Task | null>(null);
@@ -63,18 +68,19 @@ export const TaskActionModal: React.FC<TaskActionModalProps> = ({
 
   if (!task) return null;
 
-  const taskTitle = task.task_title || task.title || 'Untitled Task';
-  const taskDescription = task.task_description || task.description || 'No description';
+  const taskTitle = task.task_title || 'Untitled Task';
+  const taskDescription = task.task_description || 'No description';
   const taskReward = task.reward_amount || task.reward || 0;
-  const taskDueDate = task.due_date ? new Date(task.due_date).toLocaleDateString() : 'No due date';
+  const taskDueDate = task.expiration_date ? new Date(task.expiration_date).toLocaleDateString() : 'No due date';
   const taskStatus = task.status || 'pending';
-  const taskCreated = task.created_at ? new Date(task.created_at).toLocaleDateString() : 'Unknown';
+  const isPending = task.marked_completed === true && !task.rewarded;
+  const taskCreated = task.timestamp ? new Date(task.timestamp.nanoseconds).toLocaleDateString() : 'Unknown';
 
   const handleSave = async () => {
     if (!editedTask || !onSave) return;
 
     // Validate required fields
-    const title = editedTask.task_title || editedTask.title || '';
+    const title = editedTask.task_title || '';
     if (!title.trim()) {
       Alert.alert('Validation Error', 'Task title is required');
       return;
@@ -105,7 +111,7 @@ export const TaskActionModal: React.FC<TaskActionModalProps> = ({
           text: 'Delete',
           style: 'destructive',
           onPress: () => {
-            onDelete(task.id);
+            onDelete(task.task_id);
             onClose();
           },
         },
@@ -163,6 +169,15 @@ export const TaskActionModal: React.FC<TaskActionModalProps> = ({
           <Text style={styles.detailValue}>{taskCreated}</Text>
         </View>
       </View>
+      {isPending && (
+        <View style={{ marginTop: 20 }}>
+          <CustomButton
+            text="Reward Task"
+            onPress={() => onReward && onReward(task.task_id)}
+            fill
+          />
+        </View>
+      )}
     </ScrollView>
   );
 
@@ -175,7 +190,7 @@ export const TaskActionModal: React.FC<TaskActionModalProps> = ({
           <Text style={styles.inputLabel}>Title *</Text>
           <TextInput
             style={styles.textInput}
-            value={editedTask?.task_title || editedTask?.title || ''}
+            value={editedTask?.task_title || ''}
             onChangeText={(value) => updateEditedTask('task_title', value)}
             placeholder="Enter task title"
             maxLength={100}
@@ -186,7 +201,7 @@ export const TaskActionModal: React.FC<TaskActionModalProps> = ({
           <Text style={styles.inputLabel}>Description</Text>
           <TextInput
             style={[styles.textInput, styles.multilineInput]}
-            value={editedTask?.task_description || editedTask?.description || ''}
+            value={editedTask?.task_description || ''}
             onChangeText={(value) => updateEditedTask('task_description', value)}
             placeholder="Enter task description"
             multiline
