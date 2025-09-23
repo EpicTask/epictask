@@ -40,7 +40,6 @@ export const useChildTasks = (childId, options = {}) => {
       setError(null);
 
       if (realTime) {
-        // Setup real-time subscription
         cleanup(); // Clean up any existing subscription
         
         const unsubscribe = firestoreService.subscribeToUserTasks(
@@ -48,6 +47,7 @@ export const useChildTasks = (childId, options = {}) => {
           (result) => {
             if (result.success) {
               setTasks(result.tasks);
+              setFromCache(false);
               setError(null);
             } else {
               setError(result.error);
@@ -55,13 +55,25 @@ export const useChildTasks = (childId, options = {}) => {
             }
             setLoading(false);
           },
-          { limitCount, includeCompleted }
+          { 
+            limitCount, 
+            includeCompleted,
+            orderField: "created_at",
+            orderDirection: "desc"
+          }
         );
         
         unsubscribeRef.current = unsubscribe;
       } else {
-        // One-time fetch
-        const result = await firestoreService.getTasksForUser(childId, useCache);
+        // One-time fetch with enhanced options
+        const result = await firestoreService.getTasksForUser(childId, {
+          useCache,
+          limitCount,
+          includeCompleted,
+          orderField: "expiration_date",
+          orderDirection: "desc"
+        });
+        
         if (result.success) {
           setTasks(result.tasks);
           setFromCache(result.fromCache || false);
@@ -80,22 +92,32 @@ export const useChildTasks = (childId, options = {}) => {
     }
   }, [childId, realTime, limitCount, includeCompleted, useCache, cleanup]);
 
-  // Refresh tasks manually
+  // Refresh tasks manually with cache invalidation
   const refreshTasks = useCallback(async () => {
     if (!childId) return;
     
     try {
-      // Force refresh without cache
-      const result = await firestoreService.getTasksForUser(childId, false);
+      // Invalidate cache first, then fetch fresh data
+      firestoreService.cache.invalidateUserTasks(childId);
+      
+      const result = await firestoreService.getTasksForUser(childId, {
+        useCache: false,
+        limitCount,
+        includeCompleted,
+        orderField: "expiration_date",
+        orderDirection: "desc"
+      });
+      
       if (result.success) {
         setTasks(result.tasks);
+        setFromCache(false);
         setError(null);
       }
     } catch (err) {
       console.error('Error refreshing tasks:', err);
       setError(err.message);
     }
-  }, [childId]);
+  }, [childId, limitCount, includeCompleted]);
 
   // Setup effect
   useEffect(() => {
@@ -156,7 +178,7 @@ export const useFamilyTasks = (parentId, options = {}) => {
       }
 
       if (realTime) {
-        // Setup real-time subscription for family
+        // Setup real-time subscription for family with enhanced options
         cleanup(); // Clean up any existing subscription
         
         const unsubscribe = firestoreService.subscribeToFamilyTasks(
@@ -170,13 +192,26 @@ export const useFamilyTasks = (parentId, options = {}) => {
               setFamilyTasks({});
             }
             setLoading(false);
+          },
+          {
+            limitCount: 50,
+            includeCompleted: true,
+            orderField: "created_at",
+            orderDirection: "desc"
           }
         );
         
         unsubscribeRef.current = unsubscribe;
       } else {
-        // One-time fetch
-        const result = await firestoreService.getTasksForFamily(parentId);
+        // One-time fetch with enhanced options
+        const result = await firestoreService.getTasksForFamily(parentId, {
+          useCache: true,
+          limitCount: 50,
+          includeCompleted: true,
+          orderField: "expiration_date",
+          orderDirection: "desc"
+        });
+        
         if (result.success) {
           setFamilyTasks(result.familyTasks);
           setError(null);
@@ -194,14 +229,22 @@ export const useFamilyTasks = (parentId, options = {}) => {
     }
   }, [parentId, realTime, cleanup]);
 
-  // Refresh family tasks manually
+  // Refresh family tasks manually with enhanced cache management
   const refreshFamilyTasks = useCallback(async () => {
     if (!parentId) return;
     
     try {
-      // Clear cache and fetch fresh data
-      firestoreService.clearTaskCache();
-      const result = await firestoreService.getTasksForFamily(parentId);
+      // Clear specific cache patterns and fetch fresh data
+      firestoreService.cache.clearTasks();
+      
+      const result = await firestoreService.getTasksForFamily(parentId, {
+        useCache: false,
+        limitCount: 50,
+        includeCompleted: true,
+        orderField: "expiration_date",
+        orderDirection: "desc"
+      });
+      
       if (result.success) {
         setFamilyTasks(result.familyTasks);
         setError(null);
@@ -301,7 +344,11 @@ export const usePaginatedTasks = (userId, pageSize = 20) => {
       setLoading(true);
       setError(null);
       
-      const result = await firestoreService.getTasksWithPagination(userId, null, pageSize);
+      const result = await firestoreService.getTasksWithPagination(userId, null, {
+        limitCount: pageSize,
+        orderField: "created_at",
+        orderDirection: "desc"
+      });
       
       if (result.success) {
         setTasks(result.tasks);
@@ -326,7 +373,11 @@ export const usePaginatedTasks = (userId, pageSize = 20) => {
       setLoading(true);
       setError(null);
       
-      const result = await firestoreService.getTasksWithPagination(userId, lastDocument, pageSize);
+      const result = await firestoreService.getTasksWithPagination(userId, lastDocument, {
+        limitCount: pageSize,
+        orderField: "created_at",
+        orderDirection: "desc"
+      });
       
       if (result.success) {
         setTasks(prevTasks => [...prevTasks, ...result.tasks]);
@@ -369,22 +420,40 @@ export const usePaginatedTasks = (userId, pageSize = 20) => {
 };
 
 /**
- * Hook for task cache management
- * Provides utilities for managing the task cache
+ * Hook for enhanced task cache management
+ * Provides utilities for managing the task cache with granular control
  */
 export const useTaskCache = () => {
   const clearCache = useCallback(() => {
-    firestoreService.clearTaskCache();
+    firestoreService.cache.clearTasks();
   }, []);
 
   const clearCacheForUser = useCallback((userId) => {
-    // This would require extending the cache to support selective clearing
-    // For now, we clear all cache
-    firestoreService.clearTaskCache();
+    firestoreService.cache.invalidateUserTasks(userId);
+  }, []);
+
+  const clearUserCache = useCallback((userId) => {
+    firestoreService.cache.invalidateUser(userId);
+  }, []);
+
+  const clearAllCache = useCallback(() => {
+    firestoreService.cache.clear();
+  }, []);
+
+  const getCacheStats = useCallback(() => {
+    return firestoreService.cache.getStats();
+  }, []);
+
+  const getPerformanceStats = useCallback(() => {
+    return firestoreService.performance.getStats();
   }, []);
 
   return {
     clearCache,
-    clearCacheForUser
+    clearCacheForUser,
+    clearUserCache,
+    clearAllCache,
+    getCacheStats,
+    getPerformanceStats
   };
 };

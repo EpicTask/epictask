@@ -20,14 +20,17 @@ export const authService = {
       const token = await user.getIdToken();
       await AsyncStorage.setItem("authToken", token);
 
-      // Create user document in Firestore
+      // Create user document in Firestore with enhanced error handling
       const userData = {
         email: user.email,
         displayName: displayName,
         role: role,
       };
       
-      await firestoreService.createUserProfile(user.uid, userData);
+      const createProfileResult = await firestoreService.createUserProfile(user.uid, userData);
+      if (!createProfileResult.success) {
+        throw new Error("Failed to create user profile in database");
+      }
 
       return {
         success: true,
@@ -75,8 +78,8 @@ export const authService = {
       const token = await userCredential.user.getIdToken();
       await AsyncStorage.setItem("authToken", token);
 
-      // Then get user profile from user management service
-      const profileResponse = await firestoreService.getUserProfile(uid);
+      // Then get user profile from user management service with caching
+      const profileResponse = await firestoreService.getUserProfile(uid, true);
       console.log("Fetched user profile from Firestore:", profileResponse);
 
       if (profileResponse.success) {
@@ -84,9 +87,11 @@ export const authService = {
           success: true,
           user: profileResponse.user,
           token,
+          fromCache: profileResponse.fromCache || false,
         };
       } else {
         // If profile fetch fails, return basic Firebase user info
+        console.warn("Profile fetch failed, using basic Firebase user info:", profileResponse.error);
         return {
           success: true,
           user: {
@@ -125,26 +130,34 @@ export const authService = {
     }
   },
 
-  // Logout user
+  // Logout user with cache cleanup
   logout: async () => {
     try {
       await auth().signOut();
       await AsyncStorage.removeItem("authToken");
+      
+      // Clear all caches on logout to prevent data leakage
+      firestoreService.cache.clear();
+      
       return { success: true };
     } catch (error) {
       console.error("Logout error:", error);
+      // Still clear cache even if logout fails
+      firestoreService.cache.clear();
       throw new Error("Logout failed");
     }
   },
 
-  // Get current user profile
-  getCurrentUser: async (uid) => {
+  // Get current user profile with enhanced caching
+  getCurrentUser: async (uid, useCache = true) => {
     try {
-      const response = (await firestoreService.getUserProfile(uid));
+      const response = await firestoreService.getUserProfile(uid, useCache);
       console.log("Get current user authService:", response);
       return response;
     } catch (error) {
       console.error("Get current user error:", error);
+      // Clear user cache on error to prevent stale data
+      firestoreService.cache.invalidateUser(uid);
       throw new Error("Failed to get user profile");
     }
   },
@@ -184,13 +197,15 @@ export const authService = {
     }
   },
 
-  // Get linked children (for parents) - now uses Firestore directly
-  getLinkedChildren: async (parentUid) => {
+  // Get linked children (for parents) with enhanced caching
+  getLinkedChildren: async (parentUid, useCache = true) => {
     try {
-      const response = await firestoreService.getLinkedChildren(parentUid);
+      const response = await firestoreService.getLinkedChildren(parentUid, useCache);
       return response;
     } catch (error) {
       console.error("Get linked children error:", error);
+      // Clear related cache on error
+      firestoreService.cache.invalidateUser(parentUid);
       throw new Error("Failed to get linked children");
     }
   },
