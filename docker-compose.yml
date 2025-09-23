@@ -56,20 +56,6 @@ services:
     depends_on:
       - user-management
 
-  # XRPL Service
-  xrpl:
-    build:
-      context: ./services/xrpl
-      dockerfile: Dockerfile
-    ports:
-      - "8083:8080"
-    environment:
-      - PORT=8080
-      - PYTHONPATH=/app
-    networks:
-      - epictask-network
-    restart: unless-stopped
-
   # XRPL Management Service (TypeScript/Node.js)
   xrpl-management:
     build:
@@ -85,8 +71,7 @@ services:
     networks:
       - epictask-network
     restart: unless-stopped
-    depends_on:
-      - xrpl
+
 
   # EpicTask React Frontend (Development)
   epictask-react:
