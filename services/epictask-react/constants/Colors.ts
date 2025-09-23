@@ -35,5 +35,6 @@ export const COLORS = {
   black: "#000",
   light_purple:"#E7E3F9",
   light_green: "#E2F2E3",
-  light_yellow:"#FEF3E2"
+  light_yellow:"#FEF3E2",
+  red: "#FF0000"
 };
