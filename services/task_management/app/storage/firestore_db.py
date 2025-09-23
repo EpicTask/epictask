@@ -61,8 +61,7 @@ def create_task(response: TaskCreated):
         )
         write_event_to_firestore(task_event)
 
-        # Return the custom document ID
-        return doc_id
+        return "Task successfully created"
     # Handle any errors that occur during the Firestore operation
     except FirestoreOperationException as e:
         return handle_firestore_exception(e)
@@ -84,13 +83,12 @@ def update_task(response):
         # Update the document with the generated ID
         doc_ref.update(data)
 
-        # Return the custom document ID
-        return doc_id
+        return "Task successfully updated"
     except FirestoreOperationException as e:
         return handle_firestore_exception(e)
 
 
-def update_task_fields(response):
+def update_task_fields(task_event, response):
     """Update the fields of a task"""
     try:
         # Create a reference to the tasks collection
@@ -107,13 +105,24 @@ def update_task_fields(response):
         # Update the document with the generated ID
         doc_ref.update(fields)
 
-        # Return the custom document ID
-        return doc_id
+                # Create TaskEvent for task update
+        task_event = TaskEvent(
+            event_id="",  # Will be set by write_event_to_firestore
+            event_type="TaskUpdated",
+            timestamp="",  # Will be set by write_event_to_firestore
+            task_id=doc_id,
+            user_id=response.updated_fields["user_id"],
+            status="updated",
+            additional_data=response.updated_fields
+        )
+        write_event_to_firestore(task_event)
+
+        return "Task successfully updated"
     except FirestoreOperationException as e:
         return handle_firestore_exception(e)
 
 
-def assign_task(response):
+def assign_task(task_event, response):
     """Assign a task to a user"""
     try:
         # Create a reference to the tasks collection
@@ -154,12 +163,12 @@ def assign_task(response):
         write_event_to_firestore(task_event)
 
         # Return the custom document ID
-        return doc_id
+        return "Task successfully assigned"
     except FirestoreOperationException as e:
         return handle_firestore_exception(e)
 
 
-def delete_task(response):
+def delete_task(task_event, response):
     """Delete a task from the Firestore database"""
     try:
         # Create a reference to the tasks collection
@@ -199,7 +208,7 @@ def delete_task(response):
         # Delete document
         doc_ref.delete()
 
-        return doc_id
+        return "Task successfully deleted"
 
     except FirestoreOperationException as e:
         return handle_firestore_exception(e)
@@ -242,8 +251,7 @@ def completed_task(response):
         )
         write_event_to_firestore(task_event)
 
-        # Return the custom document ID
-        return doc_id
+        return "Congratulations on completing the task!"
     except FirestoreOperationException as e:
         return handle_firestore_exception(e)
 
@@ -300,8 +308,7 @@ def write_comment(response):
         # Update the document with the generated ID
         doc_ref.update({"timestamp": firestore.SERVER_TIMESTAMP})
 
-        # Return the custom document ID
-        return doc_id
+        return "Comment successfully added"
     except FirestoreOperationException as e:
         return handle_firestore_exception(e)
 
