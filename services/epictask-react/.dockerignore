@@ -1,0 +1,42 @@
+# Ignore dependencies and logs
+node_modules
+npm-debug.log*
+yarn.lock
+pnpm-lock.yaml
+
+# Docker artifacts
+Dockerfile
+.dockerignore
+
+# VCS
+.git
+.gitignore
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Expo caches and outputs
+.expo
+.expo-shared
+.expo-packager-cache
+.expo-dev-server
+dist
+web-build
+
+# Android/iOS build outputs
+android/app/build
+android/build
+ios/build
+ios/Pods
+*.apk
+*.aab
+*.app
+*.ipa
+
+# IDE/editor
+.vscode
+.idea
+
+# Tests/coverage
+coverage
