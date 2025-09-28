@@ -26,6 +26,20 @@ const ManageTasks = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [modalVisible, setModalVisible] = useState(false);
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
+  const [childrenMap, setChildrenMap] = useState<Map<string, string>>(new Map());
+
+  // Deduplication function to handle tasks assigned to multiple children
+  const deduplicateTasks = (tasks: Task[]): Task[] => {
+    const taskMap = new Map<string, Task>();
+    
+    tasks.forEach(task => {
+      if (task.task_id && !taskMap.has(task.task_id)) {
+        taskMap.set(task.task_id, task);
+      }
+    });
+    
+    return Array.from(taskMap.values());
+  };
 
   // Fetch family tasks (all tasks for children)
   useEffect(() => {
@@ -38,6 +52,13 @@ const ManageTasks = () => {
           const result = await firestoreService.getTasksForFamily(user.uid);
           console.log("Fetched family tasks:", result);
           if (result.success) {
+            // Build children map for name lookup
+            const childMap = new Map<string, string>();
+            Object.entries(result.familyTasks || {}).forEach(([childId, childData]: [string, any]) => {
+              childMap.set(childId, childData.childName || "Child");
+            });
+            setChildrenMap(childMap);
+            
             // Flatten all tasks from all children into a single array
             const allTasks: Task[] = [];
             Object.values(result.familyTasks || {}).forEach((childData: any) => {
@@ -45,7 +66,10 @@ const ManageTasks = () => {
                 allTasks.push(...childData.tasks);
               }
             });
-            setTasks(allTasks);
+            
+            // Deduplicate tasks to handle tasks assigned to multiple children
+            const uniqueTasks = deduplicateTasks(allTasks);
+            setTasks(uniqueTasks);
           }
         } catch (error) {
           console.error("Failed to fetch family tasks:", error);
@@ -125,13 +149,23 @@ const ManageTasks = () => {
       if (user?.uid) {
         const result = await firestoreService.getTasksForFamily(user.uid);
         if (result.success) {
+          // Update children map
+          const childMap = new Map<string, string>();
+          Object.entries(result.familyTasks || {}).forEach(([childId, childData]: [string, any]) => {
+            childMap.set(childId, childData.childName || "Child");
+          });
+          setChildrenMap(childMap);
+          
           const allTasks: Task[] = [];
           Object.values(result.familyTasks || {}).forEach((childData: any) => {
             if (childData.tasks) {
               allTasks.push(...childData.tasks);
             }
           });
-          setTasks(allTasks);
+          
+          // Deduplicate tasks to handle tasks assigned to multiple children
+          const uniqueTasks = deduplicateTasks(allTasks);
+          setTasks(uniqueTasks);
         }
       }
     } catch (error) {
@@ -159,13 +193,23 @@ const ManageTasks = () => {
       if (user?.uid) {
         const result = await firestoreService.getTasksForFamily(user.uid);
         if (result.success) {
+          // Update children map
+          const childMap = new Map<string, string>();
+          Object.entries(result.familyTasks || {}).forEach(([childId, childData]: [string, any]) => {
+            childMap.set(childId, childData.childName || "Child");
+          });
+          setChildrenMap(childMap);
+          
           const allTasks: Task[] = [];
           Object.values(result.familyTasks || {}).forEach((childData: any) => {
             if (childData.tasks) {
               allTasks.push(...childData.tasks);
             }
           });
-          setTasks(allTasks);
+          
+          // Deduplicate tasks to handle tasks assigned to multiple children
+          const uniqueTasks = deduplicateTasks(allTasks);
+          setTasks(uniqueTasks);
         }
       }
       closeModal();
@@ -180,8 +224,28 @@ const ManageTasks = () => {
   };
 
   const getChildName = (task: Task) => {
-    // TODO: Get actual child name from assigned_to_ids
-    return "Child";
+    if (!task.assigned_to_ids || task.assigned_to_ids.length === 0) {
+      return "Unassigned";
+    }
+    
+    if (task.assigned_to_ids.length === 1) {
+      return childrenMap.get(task.assigned_to_ids[0]) || "Child";
+    }
+    
+    // Multiple children assigned - show count or first few names
+    const childNames = task.assigned_to_ids
+      .map(id => childrenMap.get(id) || "Child")
+      .filter(name => name !== "Child");
+    
+    if (childNames.length === 0) {
+      return `${task.assigned_to_ids.length} Children`;
+    }
+    
+    if (childNames.length <= 2) {
+      return childNames.join(" & ");
+    }
+    
+    return `${childNames[0]} & ${childNames.length - 1} more`;
   };
 
   return (

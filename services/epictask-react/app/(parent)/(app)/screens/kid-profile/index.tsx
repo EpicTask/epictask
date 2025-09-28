@@ -21,7 +21,7 @@ import { useRouter, useLocalSearchParams, Link } from "expo-router";
 import TaskCard from "@/components/cards/TaskCard";
 import CustomText from "@/components/CustomText";
 import { firestoreService } from "@/api/firestoreService";
-import HomeIcon from "@/assets/icons/Home";
+import PlusButton from "@/components/PlusButton";
 import { TaskActionModal } from "@/components/modals/TaskActionModal";
 import { Task } from "@/constants/Interfaces";
 
@@ -281,11 +281,7 @@ const KidProfile = () => {
             <CustomText variant="semiBold" style={{ fontSize: responsiveFontSize(2.5) }}>
               {kidName}'s Tasks
             </CustomText>
-            <Link href="/screens/manage-tasks/assign-task" asChild>
-              <TouchableOpacity>
-                <HomeIcon fill="black" />
-              </TouchableOpacity>
-            </Link>
+            <PlusButton onPress={() =>{router.push("/screens/manage-tasks/assign-task" as any)}} />
           </View>
           
           {/* Tasks List */}

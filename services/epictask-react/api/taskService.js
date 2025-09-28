@@ -1,7 +1,7 @@
 import axios from "axios";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import MicroserviceUrls from "@/constants/Microservices";
-import Task  from "@/constants/Interfaces";
+import Task from "@/constants/Interfaces";
 import { Alert } from "react-native";
 
 // Create a separate API client for Task Management Service
@@ -35,7 +35,10 @@ export const taskService = {
 
   taskAssigned: async (assignmentData) => {
     try {
-      const response = await taskApiClient.post("/TaskAssigned", assignmentData);
+      const response = await taskApiClient.post(
+        "/TaskAssigned",
+        assignmentData
+      );
       return response.data;
     } catch (error) {
       console.error("Task assigned error:", error);
@@ -47,7 +50,6 @@ export const taskService = {
     try {
       const cancelData = { task_id: taskId };
       const response = await taskApiClient.post("/TaskCancelled", cancelData);
-      console.log("Task canceled response:", response.data);
       Alert.alert(response.data.response || "Task canceled successfully");
       return response.data;
     } catch (error) {
@@ -59,6 +61,18 @@ export const taskService = {
   getTaskSummary: async (userId) => {
     try {
       const response = await taskApiClient.get(`/user/${userId}/task-summary`);
+      return response.data;
+    } catch (error) {
+      console.error("Get task summary error:", error);
+      throw new Error("Failed to get task summary");
+    }
+  },
+
+  getKidTaskSummary: async (userId) => {
+    try {
+      const response = await taskApiClient.get(
+        `/user/${userId}/kid-task-summary`
+      );
       return response.data;
     } catch (error) {
       console.error("Get task summary error:", error);
@@ -111,8 +125,10 @@ export const taskService = {
   },
   updateTask: async (taskData) => {
     try {
-      const updatedData = { task_id: taskData.task_id, updated_fields: taskData };
-      console.log("Updating task with data:", updatedData);
+      const updatedData = {
+        task_id: taskData.task_id,
+        updated_fields: taskData,
+      };
       const response = await taskApiClient.post("/TaskUpdated", updatedData);
       return response.data;
     } catch (error) {

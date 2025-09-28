@@ -74,13 +74,11 @@ export const authService = {
         password
       );
       const uid = userCredential.user.uid;
-      console.log("Logged in Firebase UID:", uid);
       const token = await userCredential.user.getIdToken();
       await AsyncStorage.setItem("authToken", token);
 
       // Then get user profile from user management service with caching
       const profileResponse = await firestoreService.getUserProfile(uid, true);
-      console.log("Fetched user profile from Firestore:", profileResponse);
 
       if (profileResponse.success) {
         return {
@@ -152,7 +150,6 @@ export const authService = {
   getCurrentUser: async (uid, useCache = true) => {
     try {
       const response = await firestoreService.getUserProfile(uid, useCache);
-      console.log("Get current user authService:", response);
       return response;
     } catch (error) {
       console.error("Get current user error:", error);

@@ -23,22 +23,35 @@ import { Task } from "@/constants/Interfaces";
 const ManageTasks = () => {
   const { user } = useAuth();
   const [tasks, setTasks] = useState<Task[]>([]);
+  const [children, setChildren] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [modalVisible, setModalVisible] = useState(false);
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
 
-  // Fetch family tasks (all tasks for children)
+  // Fetch family tasks (all tasks for children) and children data
   useEffect(() => {
     const fetchTasks = async () => {
       if (user?.uid) {
         try {
           setLoading(true);
-          const result = await firestoreService.getTasksForFamily(user.uid);
-          if (result.success) {
+          
+          // Fetch children data and family tasks in parallel
+          const [childrenResult, tasksResult] = await Promise.all([
+            firestoreService.getLinkedChildren(user.uid),
+            firestoreService.getTasksForFamily(user.uid)
+          ]);
+          
+          // Set children data
+          if (childrenResult.success) {
+            setChildren(childrenResult.children || []);
+          }
+          
+          // Set tasks data
+          if (tasksResult.success) {
             // Flatten all tasks from all children into a single array
             const allTasks: Task[] = [];
-            Object.values(result.familyTasks || {}).forEach((childData: any) => {
+            Object.values(tasksResult.familyTasks || {}).forEach((childData: any) => {
               if (childData.tasks) {
                 allTasks.push(...childData.tasks);
               }
@@ -46,8 +59,9 @@ const ManageTasks = () => {
             setTasks(allTasks);
           }
         } catch (error) {
-          console.error("Failed to fetch family tasks:", error);
+          console.error("Failed to fetch family data:", error);
           setTasks([]);
+          setChildren([]);
         } finally {
           setLoading(false);
         }
@@ -84,6 +98,7 @@ const ManageTasks = () => {
 
   // Calculate metrics from filtered tasks with improved logic
   const totalTasks = filteredTasks.length;
+  console.log("Total Tasks:", totalTasks);
   const completedTasks = filteredTasks.filter(task => task.rewarded === true).length;
   const pendingTasks = filteredTasks.filter(task => 
     task.marked_completed === true && task.rewarded !== true && task.rewarded !== false
@@ -180,8 +195,20 @@ const ManageTasks = () => {
   };
 
   const getChildName = (task: Task) => {
-    // TODO: Get actual child name from assigned_to_ids
-    return "Child";
+    if (!task.assigned_to_ids || task.assigned_to_ids.length === 0) {
+      return "Unassigned";
+    }
+
+    // Get names for all assigned children
+    const childNames = task.assigned_to_ids
+      .map(childId => {
+        const child = children.find(c => c.uid === childId);
+        return child ? (child.displayName || child.email) : "Unknown Child";
+      })
+      .filter(name => name !== "Unknown Child"); // Filter out unknown children
+
+    // Return comma-separated list of names, or fallback if none found
+    return childNames.length > 0 ? childNames.join(", ") : "Unknown Child";
   };
 
   const renderHeader = () => (
@@ -190,7 +217,7 @@ const ManageTasks = () => {
         <CustomText style={{flex:1, textAlign:"center", fontSize: responsiveFontSize(3), fontWeight: 500, paddingVertical: 10}}>
           Manage Tasks
         </CustomText>
-        <PlusButton onPress={() =>{router.push("/screens/parent/manage-tasks/assign-task" as any)}} />
+        <PlusButton onPress={() =>{router.push("/screens/manage-tasks/assign-task" as any)}} />
       </View>
       <View style={{ gap: 10 }}>
         <View>
@@ -309,7 +336,7 @@ const ManageTasks = () => {
     <SafeAreaView style={styles.safeArea}>
       <FlatList
         data={filteredTasks}
-        keyExtractor={(item) => item.task_id || Math.random().toString()}
+        keyExtractor={(item) => item.task_id + Math.random().toString() || Math.random().toString()}
         renderItem={({ item }) => (
           <View style={{ marginBottom: 10 }}>
             <TaskCard 

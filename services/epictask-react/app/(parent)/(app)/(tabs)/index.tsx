@@ -7,6 +7,8 @@ import {
   responsiveHeight,
   responsiveWidth,
 } from "react-native-responsive-dimensions";
+import PlusButton from "@/components/PlusButton";
+import { router } from "expo-router";
 import { ICONS, IMAGES } from "@/assets";
 import { COLORS } from "@/constants/Colors";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -52,7 +54,7 @@ export default function HomeScreen() {
   const { user } = useAuth();
   const [taskSummary, setTaskSummary] = useState<TaskSummary>({ completed: 0, in_progress: 0, total: 0 });
   const [recentTasks, setRecentTasks] = useState<RecentTask[]>([]);
-  const [kids, setKids] = useState<Kid[]>([]);
+  const [kidsWithTaskData, setKidsWithTaskData] = useState<Kid[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -67,7 +69,29 @@ export default function HomeScreen() {
           setRecentTasks(tasks);
 
           const linkedKids = await authService.getLinkedChildren(user.uid);
-          setKids(linkedKids.children || []);
+          const children = linkedKids.children || [];
+
+          const kidsWithTaskSummary = await Promise.all(
+            children.map(async (kid: Kid) => {
+              try {
+                const kidTaskSummary = await taskService.getKidTaskSummary(kid.uid);
+                return {
+                  ...kid,
+                  tasks_completed: kidTaskSummary.completed || 0,
+                  tasks_pending: kidTaskSummary.in_progress || 0,
+                };
+              } catch (error) {
+                console.error(`Failed to fetch task summary for kid ${kid.uid}:`, error);
+                return {
+                  ...kid,
+                  tasks_completed: 0,
+                  tasks_pending: 0,
+                };
+              }
+            })
+          );
+          
+          setKidsWithTaskData(kidsWithTaskSummary);
         } catch (error) {
           console.error("Failed to fetch dashboard data:", error);
         } finally {
@@ -134,9 +158,9 @@ export default function HomeScreen() {
           {/* Kids Profiles */}
           <View style={{ gap: 10 }}>
             <Heading title="Kids Profiles" icon={<HomeIcon fill="black" />} />
-            {kids.length > 0 ? (
+            {kidsWithTaskData.length > 0 ? (
               <View style={{ flexDirection: "row", gap: 10, flex: 1 }}>
-                {kids.map((kid) => (
+                {kidsWithTaskData.map((kid) => (
                   <KidsCard
                     key={kid.uid}
                     name={kid.displayName}
@@ -158,11 +182,7 @@ export default function HomeScreen() {
             <Heading
               title="Recent tasks"
               icon={
-            <Link href="/screens/manage-tasks/assign-task" asChild>
-              <TouchableOpacity>
-                <HomeIcon fill="black" />
-              </TouchableOpacity>
-            </Link>
+            <PlusButton onPress={() =>{router.push("/screens/manage-tasks/assign-task" as any)}} />
               }
             />
             {recentTasks.length > 0 ? (
