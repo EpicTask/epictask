@@ -252,6 +252,7 @@ class TestAdminEndpoints:
         response = client.post("/admin/clear-test-data")
         assert response.status_code == 200
 
+
 # Run the tests
 if __name__ == "__main__":
     pytest.main([__file__])
