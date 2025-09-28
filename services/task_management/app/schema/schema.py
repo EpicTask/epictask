@@ -33,6 +33,7 @@ class TaskCreated(BaseModel):
     terms_blob: str = None
     terms_id: str = None
     smart_contract_enabled: bool = None
+    status: str = None # pending, completed, verified, expired, cancelled
 
 
 class TaskAssigned(BaseModel):
@@ -84,12 +85,14 @@ class TaskUpdated(BaseModel):
     """Task updated schema"""
     task_id: str
     updated_fields: dict
+    user_id: str
 
 class TaskVerified(BaseModel):
     """Task verified schema"""
     task_id: str
     verified: bool
     verification_method: str # user or verifi
+    user_id: str
 
 # Leaderboard entry schema
 class LeaderboardEntry(BaseModel):

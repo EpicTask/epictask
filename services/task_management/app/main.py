@@ -9,8 +9,8 @@ from fastapi import FastAPI, Request
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
 from starlette.middleware.cors import CORSMiddleware
-import storage.firestore_db as db
-from schema import schema
+from .storage import firestore_db as db
+from .schema import schema
 
 app = FastAPI()
 
@@ -76,8 +76,7 @@ async def task_cancelled_func(request: schema.TaskCancelled):
 async def task_comment_func(request: schema.TaskCommentAdded):
     """Add a comment to a task"""
 
-    event_type = "TaskCommentAdded"
-    response = db.update_task(event_type, request)
+    response = db.add_comment(request)
     return {"response": response}
 
 
@@ -85,8 +84,7 @@ async def task_comment_func(request: schema.TaskCommentAdded):
 async def task_completed_func(request: schema.TaskCompleted):
     """Mark a task as completed"""
 
-    event_type = "TaskCompleted"
-    response = db.completed_task(event_type, request)
+    response = db.completed_task(request)
     return {"response": response}
 
 
@@ -94,8 +92,7 @@ async def task_completed_func(request: schema.TaskCompleted):
 async def task_expired_func(request: schema.TaskExpired):
     """Mark a task as expired"""
 
-    event_type = "TaskExpired"
-    response = db.update_task(event_type, request)
+    response = db.task_expired(request)
     return {"response": response}
 
 
@@ -103,8 +100,7 @@ async def task_expired_func(request: schema.TaskExpired):
 async def task_rating_func(request: schema.TaskRatingUpdate):
     """Update the rating of a task"""
 
-    event_type = "TaskRatingUpdate"
-    response = db.update_task(event_type, request)
+    response = db.task_rating_update(request)
     return {"response": response}
 
 

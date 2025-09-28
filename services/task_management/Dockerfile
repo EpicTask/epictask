@@ -1,5 +1,5 @@
 # Python image to use.
-FROM python:3.10.12-bullseye
+FROM python:3.10.18-bookworm
 
 # Set the working directory to /app
 WORKDIR /app
@@ -16,5 +16,5 @@ COPY . .
 # Set PYTHONPATH to include the app directory
 ENV PYTHONPATH=/app
 
-# Run main.py from the app directory when the container launches
-ENTRYPOINT ["python3", "app/main.py"]
+# Run main.py as a module when the container launches
+ENTRYPOINT ["python3", "-m", "app.main"]

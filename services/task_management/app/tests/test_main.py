@@ -1,5 +1,5 @@
 """Test the main.py file"""
-
+import pytest
 import time
 from fastapi.testclient import TestClient
 
@@ -152,3 +152,7 @@ def test_task_cancelled():
     payload = {"task_id": DOC_ID}
     response = client.post("/TaskCancelled", json=payload)
     assert response.status_code == 200
+
+# Run the tests
+if __name__ == "__main__":
+    pytest.main()
