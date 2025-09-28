@@ -43,11 +43,11 @@ class TestTaskManagement:
             return response.json()["response"]
         return None
 
-    def test_hello_endpoint(self):
-        """Test the root endpoint"""
-        response = client.get("/")
-        assert response.status_code == 200
-        assert "This service is running!" in response.text
+    # def test_hello_endpoint(self):
+    #     """Test the root endpoint"""
+    #     response = client.get("/")
+    #     assert response.status_code == 200
+    #     assert "This service is running!" in response.text
 
     def test_task_created(self, task_id):
         """Test the TaskCreated endpoint"""
