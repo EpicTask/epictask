@@ -41,6 +41,8 @@ services/epictask-react/ios/build/
 services/epictask-react/android/build/
 services/epictask-react/android/app/build/
 services/epictask-react/web-build/
+services/epictask-react/api/tests/
+services/epictask-react/app/(admin)
 services/user_management/node_modules/
 services/pubsub/node_modules/
 services/xrpl_management/node_modules/
@@ -49,8 +51,18 @@ services/xrpl_management/.yarn/
 services/task_management/.env
 services/xrpl/.env
 services/xrpl_management/.env
+services/pubsub/.env
 
 # Other
 resources/developmentDocs/
 services/epictask-react/constants/Microservices.ts
 services/epictask-react/constants/CollectionNames.ts
+
+
+
+.clineRules
+
+services/task_management/app/config/service_accounts/
+
+services/epictask-react/constants/Microservices.ts
+services/epictask-react/api/metricsService.js
