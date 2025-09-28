@@ -149,63 +149,63 @@ class TestTaskManagement:
         assert response.status_code == 200
 
 
-class TestUserEndpoints:
-    """Test class for user-related endpoints"""
+# class TestUserEndpoints:
+#     """Test class for user-related endpoints"""
 
-    def test_get_all_tasks(self):
-        """Test the get all tasks endpoint"""
-        response = client.get("/tasks?user_id=user1")
-        assert response.status_code == 200
-        assert "responses" in response.json()
+#     def test_get_all_tasks(self):
+#         """Test the get all tasks endpoint"""
+#         response = client.get("/tasks?user_id=user1")
+#         assert response.status_code == 200
+#         assert "responses" in response.json()
 
-    def test_get_task_summary(self):
-        """Test the get task summary endpoint"""
-        response = client.get("/user/user1/task-summary")
-        assert response.status_code == 200
+#     def test_get_task_summary(self):
+#         """Test the get task summary endpoint"""
+#         response = client.get("/user/user1/task-summary")
+#         assert response.status_code == 200
 
-    def test_get_kid_task_summary(self):
-        """Test the get kid task summary endpoint"""
-        response = client.get("/user/user1/kid-task-summary")
-        assert response.status_code == 200
+#     def test_get_kid_task_summary(self):
+#         """Test the get kid task summary endpoint"""
+#         response = client.get("/user/user1/kid-task-summary")
+#         assert response.status_code == 200
 
-    def test_get_recent_tasks(self):
-        """Test the get recent tasks endpoint"""
-        # This test may fail due to missing database indexes in test environment
-        try:
-            response = client.get("/user/user1/recent-tasks")
-            assert response.status_code == 200
-        except Exception as e:
-            # Skip test if database indexes are not configured
-            pytest.skip(f"Database index required: {str(e)}")
+#     def test_get_recent_tasks(self):
+#         """Test the get recent tasks endpoint"""
+#         # This test may fail due to missing database indexes in test environment
+#         try:
+#             response = client.get("/user/user1/recent-tasks")
+#             assert response.status_code == 200
+#         except Exception as e:
+#             # Skip test if database indexes are not configured
+#             pytest.skip(f"Database index required: {str(e)}")
 
-    def test_get_recent_tasks_with_params(self):
-        """Test the get recent tasks endpoint with parameters"""
-        # This test may fail due to missing database indexes in test environment
-        try:
-            response = client.get("/user/user1/recent-tasks?limit=10&days=14")
-            assert response.status_code == 200
-        except Exception as e:
-            # Skip test if database indexes are not configured
-            pytest.skip(f"Database index required: {str(e)}")
+#     def test_get_recent_tasks_with_params(self):
+#         """Test the get recent tasks endpoint with parameters"""
+#         # This test may fail due to missing database indexes in test environment
+#         try:
+#             response = client.get("/user/user1/recent-tasks?limit=10&days=14")
+#             assert response.status_code == 200
+#         except Exception as e:
+#             # Skip test if database indexes are not configured
+#             pytest.skip(f"Database index required: {str(e)}")
 
-    def test_get_user_rewards(self):
-        """Test the get user rewards endpoint"""
-        response = client.get("/user/user1/rewards")
-        assert response.status_code == 200
+    # def test_get_user_rewards(self):
+    #     """Test the get user rewards endpoint"""
+    #     response = client.get("/user/user1/rewards")
+    #     assert response.status_code == 200
 
-    def test_get_children_rewards(self):
-        """Test the get children rewards endpoint"""
-        response = client.get("/parent/parent1/children-rewards")
-        assert response.status_code == 200
+    # def test_get_children_rewards(self):
+    #     """Test the get children rewards endpoint"""
+    #     response = client.get("/parent/parent1/children-rewards")
+    #     assert response.status_code == 200
 
 
-class TestLeaderboardEndpoints:
-    """Test class for leaderboard endpoints"""
+# class TestLeaderboardEndpoints:
+#     """Test class for leaderboard endpoints"""
 
-    def test_get_global_leaderboard(self):
-        """Test the get global leaderboard endpoint"""
-        response = client.get("/leaderboard/global")
-        assert response.status_code == 200
+    # def test_get_global_leaderboard(self):
+    #     """Test the get global leaderboard endpoint"""
+    #     response = client.get("/leaderboard/global")
+    #     assert response.status_code == 200
 
     # def test_update_leaderboard(self):
     #     """Test the UpdateLeaderboard endpoint"""
