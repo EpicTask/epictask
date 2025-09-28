@@ -6,6 +6,7 @@ from firebase_admin import credentials, firestore
 # credentials_path = os.getenv('CREDENTIALS_PATH')
 # cred = credentials.Certificate(credentials_path)
 
+
 # Initialize Firestore client
 app = firebase_admin.initialize_app()
 db = firestore.client()
