@@ -398,7 +398,37 @@ def update_leaderboard(response):
         return handle_firestore_exception(e)
 
 def get_task_summary(user_id):
-    """Get task summary for a user."""
+    """Get task summary for a user that created them."""
+    try:
+        tasks_ref = db.collection(collections.TASKS)
+        
+        # Get all tasks for user
+        all_tasks_query = tasks_ref.where('user_id', '==', user_id)
+        all_tasks = all_tasks_query.get()
+        
+        # Count by status
+        completed_count = 0
+        in_progress_count = 0
+        
+        for task in all_tasks:
+            task_data = task.to_dict()
+            status = task_data.get('rewarded', '')
+            if status == True:
+                completed_count += 1
+            else:
+                in_progress_count += 1
+        
+        return {
+            "completed": completed_count,
+            "in_progress": in_progress_count,
+            "total": len(all_tasks)
+        }
+    except Exception as e:
+        print(f"Error getting task summary: {e}")
+        return {"completed": 0, "in_progress": 0, "total": 0}
+
+def get_kid_task_summary(user_id):
+    """Get task summary for a user that created them."""
     try:
         tasks_ref = db.collection(collections.TASKS)
         
@@ -412,10 +442,10 @@ def get_task_summary(user_id):
         
         for task in all_tasks:
             task_data = task.to_dict()
-            status = task_data.get('status', '').lower()
-            if status == 'completed':
+            status = task_data.get('rewarded', '')
+            if status == True:
                 completed_count += 1
-            elif status == 'in_progress' or status == 'assigned':
+            else:
                 in_progress_count += 1
         
         return {

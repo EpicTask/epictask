@@ -165,6 +165,12 @@ async def get_task_summary(user_id: str):
     summary = db.get_task_summary(user_id)
     return summary
 
+@app.get("/user/{user_id}/kid-task-summary")
+async def get_kid_task_summary(user_id: str):
+    """Get task summary for a user"""
+    summary = db.get_kid_task_summary(user_id)
+    return summary
+
 @app.get("/user/{user_id}/recent-tasks")
 async def get_recent_tasks(user_id: str, limit: int = 5, days: int = 7):
     """Get recent tasks for a user"""
