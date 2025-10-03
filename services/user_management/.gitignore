@@ -23,4 +23,4 @@ build/Release
 .readmes
 .idea
 
-firebase_config.js
+/config

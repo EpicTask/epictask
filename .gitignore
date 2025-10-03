@@ -44,6 +44,7 @@ services/epictask-react/web-build/
 services/epictask-react/api/tests/
 services/epictask-react/app/(admin)
 services/user_management/node_modules/
+services/user_management/src/config/
 services/pubsub/node_modules/
 services/xrpl_management/node_modules/
 services/xrpl_management/dist/

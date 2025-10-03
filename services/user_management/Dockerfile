@@ -3,7 +3,7 @@
 FROM node:20-alpine
 
 # Create and change to the app directory.
-WORKDIR /usr/src
+WORKDIR /usr/
 
 # Copy application dependency manifests to the container image.
 # A wildcard is used to ensure both package.json AND package-lock.json are copied.
@@ -12,8 +12,8 @@ COPY package*.json ./
 
 # Install dependencies.
 # If you add a package-lock.json speed your build by switching to 'npm ci'.
-RUN npm ci --only=production
-# RUN npm install --production
+RUN npm ci  
+# RUN npm install --omit=dev
 
 # Copy local code to the container image.
 COPY src/ ./src/
