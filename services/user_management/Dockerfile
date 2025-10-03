@@ -3,7 +3,7 @@ FROM node:20-alpine
 # Create and change to the app directory.
 WORKDIR /usr/
 
-# Copy application dependency manifests to the container image.
+# Copy application dependencies to the container image.
 COPY package*.json ./
 
 # Install dependencies.
