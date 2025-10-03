@@ -1,5 +1,3 @@
-# Use the official lightweight Node.js 18 image.
-# https://hub.docker.com/_/node
 FROM node:20-alpine
 
 # Create and change to the app directory.
@@ -18,6 +16,8 @@ RUN npm ci
 # Copy local code to the container image.
 COPY src/ ./src/
 # COPY public/ ./public/
+
+COPY firebase_config.json ./src/config/
 
 # Run the web service on container startup.
 CMD ["node", "src/index.js"]
