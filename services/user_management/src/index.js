@@ -1,4 +1,4 @@
-import * as dotenv from 'dotenv';
+
 import express, { json } from 'express';
 import exphbs from 'express-handlebars';
 import cors from 'cors';
@@ -12,13 +12,11 @@ import {
 } from './api/fb_functions.js';
 import { authMiddleware } from './middleware/auth/middleware.js';
 
-dotenv.config();
+
 const app = express();
 
 // Get CORS origins from environment variable, fallback to defaults
-const corsOrigins = process.env.CORS_ORIGINS 
-  ? process.env.CORS_ORIGINS.split(',').map(origin => origin.trim())
-  : [
+const corsOrigins =  [
       'https://user-management-api-us-8l3obb9a.uc.gateway.dev',
       'https://task-coin-384722.web.app',
       'http://localhost:8080', // For Expo Go
@@ -58,7 +56,7 @@ app.put('/profileUpdate', authMiddleware, async (req, res) => {
     const result = await profileUpdate(uid, req.body);
     res.status(200).json({ message: 'Successful profile update:', result });
   } catch (error) {
-    res.status(500).json({error: 'Failed to update profile.:' });
+    res.status(500).json({error: 'Failed to update profile.:' + error.message});
   }
 });
 
@@ -69,7 +67,7 @@ app.delete('/deleteAccount', authMiddleware, async (req, res) => {
     const result = await deletedUserAccount(uid);
     res.status(200).json({ message: 'Successful user account deletion:', result });
   } catch (error) {
-    res.status(500).json({ error: 'Failed to delete account.' });
+    res.status(500).json({ error: 'Failed to delete account.' + error.message } );
   }
 });
 

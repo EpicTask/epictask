@@ -16,7 +16,6 @@
   },
   "dependencies": {
     "cors": "^2.8.5",
-    "dotenv": "^17.2.1",
     "express": "^5.1.0",
     "express-handlebars": "^8.0.1",
     "firebase": "^12.2.1",

@@ -1,4 +1,4 @@
-import * as dotenv from 'dotenv';
+
 import { db } from '../config/firebase_config.js';
 import {
   doc,
@@ -14,7 +14,6 @@ import {
 } from 'firebase/firestore';
 import { getAuth } from 'firebase-admin/auth';
 
-dotenv.config();
 
 const usersRef = collection(db, 'users');
 const invitesRef = collection(db, 'invites');
