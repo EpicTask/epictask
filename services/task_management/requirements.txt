@@ -1,7 +1,7 @@
 fastapi==0.116.1
 requests==2.32.5
 ptvsd==4.3.2 # Required for debugging.
-uvicorn==0.35.0
+uvicorn[standard]==0.35.0
 Jinja2==3.1.6
 firebase-admin==7.1.0
 python-dotenv==1.1.1
