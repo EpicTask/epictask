@@ -19,19 +19,15 @@ export const AuthProvider = ({ children }) => {
           
           // Fetch user profile from user management service
           const userProfileResponse = await authService.getCurrentUser(firebaseUser.uid);
-          console.log("Fetched user profile response:", userProfileResponse);
           
           // Handle the response structure properly
           if (userProfileResponse && userProfileResponse.success && userProfileResponse.user) {
-            console.log("Setting user with profile data:", userProfileResponse.user);
             setUser(userProfileResponse.user);
           } else if (userProfileResponse && userProfileResponse.user) {
             // Handle case where response doesn't have success flag but has user data
-            console.log("Setting user with direct user data:", userProfileResponse.user);
             setUser(userProfileResponse.user);
           } else {
             // If profile fetch fails, still set basic user info from Firebase
-            console.log("Profile fetch failed, using Firebase user data");
             setUser({
               uid: firebaseUser.uid,
               email: firebaseUser.email,
