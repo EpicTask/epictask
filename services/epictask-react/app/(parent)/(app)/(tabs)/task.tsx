@@ -98,7 +98,6 @@ const ManageTasks = () => {
 
   // Calculate metrics from filtered tasks with improved logic
   const totalTasks = filteredTasks.length;
-  console.log("Total Tasks:", totalTasks);
   const completedTasks = filteredTasks.filter(task => task.rewarded === true).length;
   const pendingTasks = filteredTasks.filter(task => 
     task.marked_completed === true && task.rewarded !== true && task.rewarded !== false
@@ -157,7 +156,6 @@ const ManageTasks = () => {
   const handleTaskDelete = async (taskId: string) => {
     try {
       // TODO: Implement task delete API call
-      console.log('Deleting task:', taskId);
       await taskService.taskCanceled(taskId);
       
       // Update local state

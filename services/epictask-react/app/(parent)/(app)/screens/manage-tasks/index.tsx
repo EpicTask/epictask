@@ -43,14 +43,11 @@ const ManageTasks = () => {
 
   // Fetch family tasks (all tasks for children)
   useEffect(() => {
-    console.log("Fetching family tasks...");
     const fetchTasks = async () => {
-      console.log("User ID:", user?.uid);
       if (user?.uid) {
         try {
           setLoading(true);
           const result = await firestoreService.getTasksForFamily(user.uid);
-          console.log("Fetched family tasks:", result);
           if (result.success) {
             // Build children map for name lookup
             const childMap = new Map<string, string>();
@@ -136,7 +133,6 @@ const ManageTasks = () => {
   const handleTaskSave = async (updatedTask: Task) => {
     try {
       // TODO: Implement task update API call
-      console.log('Updating task:', updatedTask);
       
       // Update local state
       setTasks(prevTasks => 
@@ -177,7 +173,6 @@ const ManageTasks = () => {
   const handleTaskDelete = async (taskId: string) => {
     try {
       // TODO: Implement task delete API call
-      console.log('Deleting task:', taskId);
       
       // Update local state
       setTasks(prevTasks => prevTasks.filter(task => task.task_id !== taskId));

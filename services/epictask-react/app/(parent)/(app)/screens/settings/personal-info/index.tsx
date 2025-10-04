@@ -31,7 +31,6 @@ const PersonalInformation = () => {
       if (result?.assets && result.assets.length > 0) {
         setFile(result.assets[0]);
       } else if (result.canceled) {
-        console.log("User cancelled the picker");
       }
     } catch (err) {
       console.error("Document pick error: ", err);

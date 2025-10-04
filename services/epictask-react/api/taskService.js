@@ -23,6 +23,8 @@ taskApiClient.interceptors.request.use(
 );
 
 export const taskService = {
+  // Task Management Service API Calls Only
+  
   createTask: async (taskData) => {
     try {
       const response = await taskApiClient.post("/TaskCreated", taskData);
@@ -58,71 +60,40 @@ export const taskService = {
     }
   },
 
-  getTaskSummary: async (userId) => {
+  // Enhanced Rewards and Leaderboard API Calls
+
+  getFamilyLeaderboard: async (parentId) => {
     try {
-      const response = await taskApiClient.get(`/user/${userId}/task-summary`);
+      const response = await taskApiClient.get(`/leaderboard/family/${parentId}`);
       return response.data;
     } catch (error) {
-      console.error("Get task summary error:", error);
-      throw new Error("Failed to get task summary");
+      console.error("Get family leaderboard error:", error);
+      throw new Error("Failed to get family leaderboard");
     }
   },
 
-  getKidTaskSummary: async (userId) => {
+  getKidLeaderboardView: async (kidId) => {
     try {
-      const response = await taskApiClient.get(
-        `/user/${userId}/kid-task-summary`
-      );
+      const response = await taskApiClient.get(`/leaderboard/kid/${kidId}`);
       return response.data;
     } catch (error) {
-      console.error("Get task summary error:", error);
-      throw new Error("Failed to get task summary");
+      console.error("Get kid leaderboard view error:", error);
+      throw new Error("Failed to get kid leaderboard view");
     }
   },
 
-  getRecentTasks: async (userId, limit = 5, days = 7) => {
+
+  getEnhancedGlobalLeaderboard: async (limit = 100) => {
     try {
-      const response = await taskApiClient.get(
-        `/user/${userId}/recent-tasks?limit=${limit}&days=${days}`
-      );
+      const response = await taskApiClient.get(`/leaderboard/enhanced-global?limit=${limit}`);
       return response.data;
     } catch (error) {
-      console.error("Get recent tasks error:", error);
-      throw new Error("Failed to get recent tasks");
+      console.error("Get enhanced global leaderboard error:", error);
+      throw new Error("Failed to get enhanced global leaderboard");
     }
   },
 
-  getUserRewards: async (userId) => {
-    try {
-      const response = await taskApiClient.get(`/user/${userId}/rewards`);
-      return response.data;
-    } catch (error) {
-      console.error("Get user rewards error:", error);
-      throw new Error("Failed to get user rewards");
-    }
-  },
 
-  getGlobalLeaderboard: async () => {
-    try {
-      const response = await taskApiClient.get("/leaderboard/global");
-      return response.data;
-    } catch (error) {
-      console.error("Get global leaderboard error:", error);
-      throw new Error("Failed to get global leaderboard");
-    }
-  },
-
-  getChildrenRewards: async (parentId) => {
-    try {
-      const response = await taskApiClient.get(
-        `/parent/${parentId}/children-rewards`
-      );
-      return response.data;
-    } catch (error) {
-      console.error("Get children rewards error:", error);
-      throw new Error("Failed to get children rewards");
-    }
-  },
   updateTask: async (taskData) => {
     try {
       const updatedData = {
@@ -136,6 +107,91 @@ export const taskService = {
       throw new Error("Failed to update task");
     }
   },
+
+  // Additional Task Management Service endpoints
+  
+  taskCommentAdded: async (commentData) => {
+    try {
+      const response = await taskApiClient.post("/TaskCommentAdded", commentData);
+      return response.data;
+    } catch (error) {
+      console.error("Task comment added error:", error);
+      throw new Error("Failed to add task comment");
+    }
+  },
+
+  taskCompleted: async (completionData) => {
+    try {
+      const response = await taskApiClient.post("/TaskCompleted", completionData);
+      return response.data;
+    } catch (error) {
+      console.error("Task completed error:", error);
+      throw new Error("Failed to mark task as completed");
+    }
+  },
+
+  taskExpired: async (expirationData) => {
+    try {
+      const response = await taskApiClient.post("/TaskExpired", expirationData);
+      return response.data;
+    } catch (error) {
+      console.error("Task expired error:", error);
+      throw new Error("Failed to mark task as expired");
+    }
+  },
+
+  taskRatingUpdate: async (ratingData) => {
+    try {
+      const response = await taskApiClient.post("/TaskRatingUpdate", ratingData);
+      return response.data;
+    } catch (error) {
+      console.error("Task rating update error:", error);
+      throw new Error("Failed to update task rating");
+    }
+  },
+
+  taskRewarded: async (rewardData) => {
+    try {
+      const response = await taskApiClient.post("/TaskRewarded", rewardData);
+      return response.data;
+    } catch (error) {
+      console.error("Task rewarded error:", error);
+      throw new Error("Failed to reward task");
+    }
+  },
+
+  taskVerified: async (verificationData) => {
+    try {
+      const response = await taskApiClient.post("/TaskVerified", verificationData);
+      return response.data;
+    } catch (error) {
+      console.error("Task verified error:", error);
+      throw new Error("Failed to verify task");
+    }
+  },
+
+
+  // Get endpoints that call the backend API
+  
+  getAllTasks: async (userId) => {
+    try {
+      const response = await taskApiClient.get(`/tasks?user_id=${userId}`);
+      return response.data;
+    } catch (error) {
+      console.error("Get all tasks error:", error);
+      throw new Error("Failed to get all tasks");
+    }
+  },
+
+  getTask: async (taskId) => {
+    try {
+      const response = await taskApiClient.get(`/get_task/${taskId}`);
+      return response.data;
+    } catch (error) {
+      console.error("Get task error:", error);
+      throw new Error("Failed to get task");
+    }
+  }
 };
 
 export default taskService;

@@ -25,7 +25,7 @@ import {
 import { Link } from "expo-router";
 import React, { useEffect, useState } from "react";
 import { useAuth } from "@/context/AuthContext";
-import taskService from "@/api/taskService";
+import { firestoreService } from "@/api/firestoreService";
 import authService from "@/api/authService";
 
 // Type definitions
@@ -62,10 +62,10 @@ export default function HomeScreen() {
       if (user) {
         try {
           setLoading(true);
-          const summary = await taskService.getTaskSummary(user.uid);
+          const summary = await firestoreService.getTaskSummary(user.uid) as TaskSummary;
           setTaskSummary(summary);
 
-          const tasks = await taskService.getRecentTasks(user.uid);
+          const tasks = await firestoreService.getRecentTasks(user.uid) as RecentTask[];
           setRecentTasks(tasks);
 
           const linkedKids = await authService.getLinkedChildren(user.uid);
@@ -74,7 +74,7 @@ export default function HomeScreen() {
           const kidsWithTaskSummary = await Promise.all(
             children.map(async (kid: Kid) => {
               try {
-                const kidTaskSummary = await taskService.getKidTaskSummary(kid.uid);
+                const kidTaskSummary = await firestoreService.getKidTaskSummary(kid.uid) as TaskSummary;
                 return {
                   ...kid,
                   tasks_completed: kidTaskSummary.completed || 0,

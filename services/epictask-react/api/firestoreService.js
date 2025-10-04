@@ -815,5 +815,381 @@ export const firestoreService = {
   performance: {
     getStats: () => PerformanceMonitor.timers.size,
     clearTimers: () => PerformanceMonitor.timers.clear()
+  },
+
+  // Task Summary Functions (moved from backend)
+  
+  /**
+   * Get task summary for a user that created tasks (parent view)
+   * @param {string} userId - The user ID who created the tasks
+   * @param {object} options - Options for caching and filtering
+   * @returns {Promise<object>} Task summary with completed, in_progress, and total counts
+   */
+  getTaskSummary: async (userId, options = {}) => {
+    const operation = 'getTaskSummary';
+    PerformanceMonitor.start(operation);
+    
+    try {
+      if (!userId) {
+        throw new Error('User ID is required');
+      }
+
+      const { useCache = true } = options;
+      const cacheKey = `task-summary:${userId}`;
+      
+      // Check cache first
+      if (useCache) {
+        const cachedSummary = TaskCache.get(cacheKey);
+        if (cachedSummary) {
+          PerformanceMonitor.end(operation);
+          return cachedSummary;
+        }
+      }
+
+      // Query all tasks created by this user
+      const tasksQuery = query(
+        collection(db, TestCollections.Tasks),
+        where("user_id", "==", userId)
+      );
+
+      const tasksSnapshot = await getDocs(tasksQuery);
+      
+      // Count by status
+      let completedCount = 0;
+      let inProgressCount = 0;
+
+      tasksSnapshot.docs.forEach((doc) => {
+        const taskData = doc.data();
+        const rewarded = taskData.rewarded || false;
+        
+        if (rewarded === true) {
+          completedCount++;
+        } else {
+          inProgressCount++;
+        }
+      });
+
+      const summary = {
+        completed: completedCount,
+        in_progress: inProgressCount,
+        total: tasksSnapshot.docs.length
+      };
+
+      // Cache the results
+      if (useCache) {
+        TaskCache.set(cacheKey, summary, 300000); // 5 minutes
+      }
+
+      PerformanceMonitor.end(operation);
+      return summary;
+    } catch (error) {
+      ErrorHandler.logError(operation, error, { userId });
+      throw new Error(`Failed to get task summary: ${error.message}`);
+    }
+  },
+
+  /**
+   * Get task summary for a user that was assigned tasks (child view)
+   * @param {string} userId - The user ID who was assigned the tasks
+   * @param {object} options - Options for caching and filtering
+   * @returns {Promise<object>} Task summary with completed, in_progress, and total counts
+   */
+  getKidTaskSummary: async (userId, options = {}) => {
+    const operation = 'getKidTaskSummary';
+    PerformanceMonitor.start(operation);
+    
+    try {
+      if (!userId) {
+        throw new Error('User ID is required');
+      }
+
+      const { useCache = true } = options;
+      const cacheKey = `kid-task-summary:${userId}`;
+      
+      // Check cache first
+      if (useCache) {
+        const cachedSummary = TaskCache.get(cacheKey);
+        if (cachedSummary) {
+          PerformanceMonitor.end(operation);
+          return cachedSummary;
+        }
+      }
+
+      // Query all tasks assigned to this user
+      const tasksQuery = query(
+        collection(db, TestCollections.Tasks),
+        where("assigned_to_ids", "array-contains", userId)
+      );
+
+      const tasksSnapshot = await getDocs(tasksQuery);
+      
+      // Count by status
+      let completedCount = 0;
+      let inProgressCount = 0;
+
+      tasksSnapshot.docs.forEach((doc) => {
+        const taskData = doc.data();
+        const rewarded = taskData.rewarded || false;
+        
+        if (rewarded === true) {
+          completedCount++;
+        } else {
+          inProgressCount++;
+        }
+      });
+
+      const summary = {
+        completed: completedCount,
+        in_progress: inProgressCount,
+        total: tasksSnapshot.docs.length
+      };
+
+      // Cache the results
+      if (useCache) {
+        TaskCache.set(cacheKey, summary, 300000); // 5 minutes
+      }
+
+      PerformanceMonitor.end(operation);
+      return summary;
+    } catch (error) {
+      ErrorHandler.logError(operation, error, { userId });
+      throw new Error(`Failed to get kid task summary: ${error.message}`);
+    }
+  },
+
+  /**
+   * Get recent tasks assigned to a user within specified days
+   * @param {string} userId - The user ID
+   * @param {number} limitCount - Maximum number of tasks to return (default: 5)
+   * @param {number} days - Number of days to look back (default: 7)
+   * @param {object} options - Options for caching
+   * @returns {Promise<Array>} Recent tasks array
+   */
+  getRecentTasks: async (userId, limitCount = 5, days = 7, options = {}) => {
+    const operation = 'getRecentTasks';
+    PerformanceMonitor.start(operation);
+    
+    try {
+      if (!userId) {
+        throw new Error('User ID is required');
+      }
+
+      const { useCache = true } = options;
+      const cacheKey = `recent-tasks:${userId}:${limitCount}:${days}`;
+      
+      // Check cache first
+      if (useCache) {
+        const cachedTasks = TaskCache.get(cacheKey);
+        if (cachedTasks) {
+          PerformanceMonitor.end(operation);
+          return cachedTasks;
+        }
+      }
+
+      // Calculate start date
+      const startDate = new Date();
+      startDate.setDate(startDate.getDate() - days);
+
+      // Query recent tasks assigned to this user
+      const tasksQuery = query(
+        collection(db, TestCollections.Tasks),
+        where("assigned_to_ids", "array-contains", userId),
+        where("timestamp", ">=", startDate),
+        orderBy("timestamp", "desc"),
+        limit(limitCount)
+      );
+
+      const tasksSnapshot = await getDocs(tasksQuery);
+      const tasks = tasksSnapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...doc.data()
+      }));
+
+      // Cache the results
+      if (useCache) {
+        TaskCache.set(cacheKey, tasks, 180000); // 3 minutes for recent data
+      }
+
+      PerformanceMonitor.end(operation);
+      return tasks;
+    } catch (error) {
+      ErrorHandler.logError(operation, error, { userId, limitCount, days });
+      throw new Error(`Failed to get recent tasks: ${error.message}`);
+    }
+  },
+
+  /**
+   * Get rewards information for a user
+   * @param {string} userId - The user ID
+   * @param {object} options - Options for caching
+   * @returns {Promise<object>} User rewards with tokens_earned, level, and rank
+   */
+  getUserRewards: async (userId, options = {}) => {
+    const operation = 'getUserRewards';
+    PerformanceMonitor.start(operation);
+    
+    try {
+      if (!userId) {
+        throw new Error('User ID is required');
+      }
+
+      const { useCache = true } = options;
+      const cacheKey = `user-rewards:${userId}`;
+      
+      // Check cache first
+      if (useCache) {
+        const cachedRewards = UserCache.get(cacheKey);
+        if (cachedRewards) {
+          PerformanceMonitor.end(operation);
+          return cachedRewards;
+        }
+      }
+
+      // Get user rewards from paid_tasks collection
+      const rewardsRef = doc(db, TestCollections.PAID_TASKS, userId);
+      const rewardsDoc = await getDoc(rewardsRef);
+
+      let rewards;
+      if (!rewardsDoc.exists()) {
+        rewards = {
+          tokens_earned: 0,
+          level: 1,
+          rank: 0
+        };
+      } else {
+        const rewardData = rewardsDoc.data();
+        const tokensEarned = rewardData.tokens_earned || 0;
+
+        // Calculate level: Level = floor(tokens_earned / 1000) + 1
+        const level = Math.floor(tokensEarned / 1000) + 1;
+
+        // Get rank from leaderboard (simplified calculation)
+        const rank = await firestoreService.getUserRank(userId, tokensEarned);
+
+        rewards = {
+          tokens_earned: tokensEarned,
+          level: level,
+          rank: rank
+        };
+      }
+
+      // Cache the results
+      if (useCache) {
+        UserCache.set(cacheKey, rewards, 600000); // 10 minutes
+      }
+
+      PerformanceMonitor.end(operation);
+      return rewards;
+    } catch (error) {
+      ErrorHandler.logError(operation, error, { userId });
+      throw new Error(`Failed to get user rewards: ${error.message}`);
+    }
+  },
+
+  /**
+   * Calculate user's rank based on tokens earned
+   * @param {string} userId - The user ID
+   * @param {number} tokensEarned - The user's tokens earned
+   * @returns {Promise<number>} User's rank
+   */
+  getUserRank: async (userId, tokensEarned) => {
+    const operation = 'getUserRank';
+    
+    try {
+      // Count users with more tokens
+      const leaderboardQuery = query(
+        collection(db, TestCollections.LEADERBOARD),
+        where("tokens_earned", ">", tokensEarned)
+      );
+
+      const higherUsersSnapshot = await getDocs(leaderboardQuery);
+      return higherUsersSnapshot.docs.length + 1;
+    } catch (error) {
+      ErrorHandler.logError(operation, error, { userId, tokensEarned });
+      return 0;
+    }
+  },
+
+  /**
+   * Get rewards for all children of a parent
+   * @param {string} parentId - The parent user ID
+   * @param {object} options - Options for caching
+   * @returns {Promise<Array>} Array of children rewards
+   */
+  getChildrenRewards: async (parentId, options = {}) => {
+    const operation = 'getChildrenRewards';
+    PerformanceMonitor.start(operation);
+    
+    try {
+      if (!parentId) {
+        throw new Error('Parent ID is required');
+      }
+
+      const { useCache = true } = options;
+      const cacheKey = `children-rewards:${parentId}`;
+      
+      // Check cache first
+      if (useCache) {
+        const cachedRewards = UserCache.get(cacheKey);
+        if (cachedRewards) {
+          PerformanceMonitor.end(operation);
+          return cachedRewards;
+        }
+      }
+
+      // Get parent user to find children
+      const parentRef = doc(db, "users", parentId);
+      const parentDoc = await getDoc(parentRef);
+
+      if (!parentDoc.exists()) {
+        throw new Error("Parent user not found");
+      }
+
+      const parentData = parentDoc.data();
+      const childIds = parentData.children || [];
+
+      if (childIds.length === 0) {
+        const emptyResult = [];
+        if (useCache) {
+          UserCache.set(cacheKey, emptyResult, 300000); // 5 minutes
+        }
+        PerformanceMonitor.end(operation);
+        return emptyResult;
+      }
+
+      // Get rewards for all children
+      const rewardsPromises = childIds.map(async (childId) => {
+        try {
+          const rewards = await firestoreService.getUserRewards(childId, { useCache });
+          return {
+            user_id: childId,
+            ...rewards,
+            error: null
+          };
+        } catch (error) {
+          ErrorHandler.logError(`getUserRewards-${childId}`, error);
+          return {
+            user_id: childId,
+            tokens_earned: 0,
+            level: 1,
+            rank: 0,
+            error: error.message
+          };
+        }
+      });
+
+      const rewards = await Promise.all(rewardsPromises);
+
+      // Cache the results
+      if (useCache) {
+        UserCache.set(cacheKey, rewards, 300000); // 5 minutes
+      }
+
+      PerformanceMonitor.end(operation);
+      return rewards;
+    } catch (error) {
+      ErrorHandler.logError(operation, error, { parentId });
+      throw new Error(`Failed to get children rewards: ${error.message}`);
+    }
   }
 };

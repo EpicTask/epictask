@@ -1,15 +1,10 @@
 import { ICONS, IMAGES } from "@/assets";
-import HomeIcon from "@/assets/icons/Home";
-import Search from "@/components/search/Search";
-
+import KidRewardsView from "@/components/rewards/KidRewardsView";
 import {
   StyleSheet,
   View,
-  Text,
-  TouchableOpacity,
-  Image,
-  ScrollView,
-  ImageBackground,
+  ActivityIndicator,
+  RefreshControl,
 } from "react-native";
 import {
   responsiveFontSize,
@@ -17,149 +12,81 @@ import {
   responsiveWidth,
 } from "react-native-responsive-dimensions";
 import { COLORS } from "@/constants/Colors";
-import { AntDesign } from "@expo/vector-icons";
 import { SafeAreaView } from "react-native-safe-area-context";
-import ScreenHeading from "@/components/headings/ScreenHeading";
 import CustomText from "@/components/CustomText";
-
-
-const RewardHistoryComponent = () => {
-  return (
-    <View style={{ gap: 4, width: responsiveWidth(70) }}>
-      <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
-        <AntDesign name="checkcircle" size={20} color="#0ECC44" />
-        <CustomText style={{ color: "#000", fontSize: responsiveFontSize(1.7) }} variant="medium">
-          The child has completed their assigned tasks and received rewards.
-        </CustomText>
-      </View>
-      <View style={{ gap: responsiveWidth(2), marginLeft: 28 }}>
-        <CustomText style={{ color: COLORS.grey, fontSize: 12 }} variant="medium">
-          April 3rd at 6:35 PM
-        </CustomText>
-      </View>
-    </View>
-  );
-};
-
-const Achievement = () => {
-  return (
-    <View
-      style={{
-        flexDirection: "row",
-        backgroundColor: COLORS.primary,
-        borderRadius: 25,
-        paddingVertical: 14,
-        paddingHorizontal: 20,
-        alignItems: "center",
-        width: responsiveWidth(85),
-        gap: 14,
-      }}
-    >
-      {ICONS.achievement}
-      <View style={{ paddingRight: 35 }}>
-        <CustomText
-          style={{
-            color: COLORS.white,
-            fontWeight: "500",
-            fontSize: responsiveFontSize(2.3),
-          }}
-          variant="semiBold"
-        >
-          Achievements
-        </CustomText>
-        <CustomText variant="medium" style={{ color: COLORS.white, fontSize: responsiveFontSize(1.6), flexWrap:'wrap' }}>
-          You get Prepare Your Breakfast Completion Task points - 300pts
-        </CustomText>
-      </View>
-    </View>
-  );
-};
+import React, { useEffect, useState, useCallback } from "react";
+import { useAuth } from "@/context/AuthContext";
+import taskService from "@/api/taskService";
 
 export default function TabTwoScreen() {
+  const { user } = useAuth();
+  const [kidLeaderboardData, setKidLeaderboardData] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+
+  const fetchData = useCallback(async () => {
+    if (!user) return;
+
+    try {
+      setLoading(true);
+      
+      // Fetch kid's leaderboard view
+      const kidData = await taskService.getKidLeaderboardView(user.uid);
+      setKidLeaderboardData(kidData);
+
+    } catch (error) {
+      console.error("Failed to fetch kid rewards data:", error);
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
+  }, [user]);
+
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
+
+  const onRefresh = useCallback(() => {
+    setRefreshing(true);
+    fetchData();
+  }, [fetchData]);
+
+  const handleAchievementPress = (achievement: string) => {
+    // Show achievement details or celebration animation
+    console.log('Achievement pressed:', achievement);
+  };
+
+  if (loading) {
+    return (
+      <SafeAreaView style={styles.safeArea}>
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color={COLORS.primary} />
+          <CustomText variant="medium" style={styles.loadingText}>
+            Loading your rewards...
+          </CustomText>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  if (!kidLeaderboardData) {
+    return (
+      <SafeAreaView style={styles.safeArea}>
+        <View style={styles.errorContainer}>
+          <CustomText variant="medium" style={styles.errorText}>
+            Unable to load rewards data. Please try again.
+          </CustomText>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
   return (
     <SafeAreaView style={styles.safeArea}>
-      <ScrollView showsVerticalScrollIndicator={false} style={{marginBottom: 50}}>
-        <ImageBackground source={IMAGES.img_bg} style={{}}>
-          <ScreenHeading back={false} plus={false} text="Rewards"  />
-          <View
-            style={{
-              paddingVertical: responsiveWidth(2),
-              justifyContent: "center",
-              alignItems: "center",
-              gap: 10,
-            }}
-          >
-            <Image
-              source={IMAGES.reward}
-              style={{
-                height: responsiveWidth(25),
-                width: responsiveWidth(25),
-              }}
-            />
-            <View
-              style={{
-                justifyContent: "center",
-                alignItems: "center",
-                gap: responsiveWidth(4),
-              }}
-            >
-              <View style={{ gap: 4, alignItems: "center" }}>
-                <CustomText
-                variant="bold"
-                  style={{
-                    fontSize: responsiveFontSize(3),
-                  }}
-                >
-                  My Reward Points
-                </CustomText>
-                <CustomText style={{ fontSize: responsiveFontSize(1.7) }}>
-                  Earned Points
-                </CustomText>
-              </View>
-              <View style={{ gap: 4, alignItems: "center" }}>
-                <CustomText
-                variant="bold"
-                  style={{ fontSize: responsiveFontSize(5) }}
-                >
-                  3222
-                </CustomText>
-                <CustomText style={{ fontSize: responsiveFontSize(1.7) }}>
-                  Level 1
-                </CustomText>
-              </View>
-            </View>
-            <Achievement />
-          </View>
-        </ImageBackground>
-        <View style={{ gap: 10, paddingVertical: 30 }}>
-          <View
-            style={{
-              flexDirection: "row",
-              justifyContent: "space-between",
-              alignItems: "center",
-            }}
-          >
-            <CustomText
-            variant="semiBold"
-              style={{ fontSize: responsiveFontSize(2.5), fontWeight: "500" }}
-            >
-              Child Reward History
-            </CustomText>
-            <TouchableOpacity>
-              <CustomText style={{ fontSize: responsiveFontSize(1) }}>
-                View All Rewards
-              </CustomText>
-            </TouchableOpacity>
-          </View>
-          <View style={{ gap: 12 }}>
-            <RewardHistoryComponent />
-            <RewardHistoryComponent />
-            <RewardHistoryComponent />
-            <RewardHistoryComponent />
-            <RewardHistoryComponent />
-          </View>
-        </View>
-      </ScrollView>
+      <KidRewardsView 
+        kidData={kidLeaderboardData}
+        onAchievementPress={handleAchievementPress}
+      />
     </SafeAreaView>
   );
 }
@@ -171,5 +98,28 @@ const styles = StyleSheet.create({
     height: responsiveHeight(100),
     width: responsiveWidth(100),
     padding: responsiveWidth(4),
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  loadingText: {
+    marginTop: responsiveHeight(2),
+    fontSize: responsiveFontSize(1.6),
+    color: COLORS.grey,
+    textAlign: 'center',
+  },
+  errorContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: responsiveWidth(8),
+  },
+  errorText: {
+    fontSize: responsiveFontSize(1.6),
+    color: COLORS.grey,
+    textAlign: 'center',
+    lineHeight: 24,
   },
 });

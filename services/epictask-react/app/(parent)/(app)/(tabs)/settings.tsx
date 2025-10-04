@@ -154,7 +154,6 @@ const SettingsScreen = () => {
                 icon={<MaterialIcons name="dashboard" size={24} color={COLORS.primary} />}
                 text={"Admin Dashboard"}
                 onPress={() => {
-                  console.log("Navigating to Admin Dashboard");
                   router.push("/(admin)/testing-dashboard" as any);
                 }}
               />

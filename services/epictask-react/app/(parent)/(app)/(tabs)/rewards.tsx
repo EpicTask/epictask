@@ -1,6 +1,7 @@
 import { ICONS, IMAGES } from "@/assets";
 import Search from "@/components/search/Search";
 import CustomText from "@/components/CustomText";
+import FamilyLeaderboardCard from "@/components/rewards/FamilyLeaderboardCard";
 import {
   StyleSheet,
   View,
@@ -10,6 +11,7 @@ import {
   ImageBackground,
   ActivityIndicator,
   Text,
+  RefreshControl,
 } from "react-native";
 import {
   responsiveFontSize,
@@ -17,10 +19,11 @@ import {
   responsiveWidth,
 } from "react-native-responsive-dimensions";
 import { COLORS } from "@/constants/Colors";
-import { AntDesign } from "@expo/vector-icons";
+import { AntDesign, MaterialIcons } from "@expo/vector-icons";
 import { SafeAreaView } from "react-native-safe-area-context";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import { useAuth } from "@/context/AuthContext";
+import { firestoreService } from "@/api/firestoreService";
 import taskService from "@/api/taskService";
 
 // Type definitions
@@ -79,95 +82,220 @@ const Achievement: React.FC<{ achievement: AchievementData }> = ({ achievement }
 
 export default function TabTwoScreen() {
   const { user } = useAuth();
-  const [rewards, setRewards] = useState<UserRewards | null>(null);
-  const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
+  const [familyLeaderboard, setFamilyLeaderboard] = useState<any>(null);
+  const [globalLeaderboard, setGlobalLeaderboard] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+
+  const fetchData = useCallback(async () => {
+    if (!user) return;
+
+    try {
+      setLoading(true);
+      
+      // Fetch family leaderboard
+      const familyData = await taskService.getFamilyLeaderboard(user.uid);
+      setFamilyLeaderboard(familyData);
+
+      // Fetch enhanced global leaderboard
+      const globalData = await taskService.getEnhancedGlobalLeaderboard(50);
+      setGlobalLeaderboard(globalData.leaderboard || []);
+
+    } catch (error) {
+      console.error("Failed to fetch rewards data:", error);
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
+  }, [user]);
 
   useEffect(() => {
-    const fetchData = async () => {
-      if (user) {
-        try {
-          setLoading(true);
-          const userRewards = await taskService.getUserRewards(user.uid);
-          setRewards(userRewards);
-
-          const globalLeaderboard = await taskService.getGlobalLeaderboard();
-          setLeaderboard(globalLeaderboard);
-        } catch (error) {
-          console.error("Failed to fetch rewards data:", error);
-        } finally {
-          setLoading(false);
-        }
-      }
-    };
-
     fetchData();
-  }, [user]);
+  }, [fetchData]);
+
+  const onRefresh = useCallback(() => {
+    setRefreshing(true);
+    fetchData();
+  }, [fetchData]);
+
+  const handleChildPress = (childId: string) => {
+    // Navigate to child detail view or show modal
+    console.log('Child pressed:', childId);
+  };
+
+  const handleViewAllGlobal = () => {
+    // Navigate to full global leaderboard
+    console.log('View all global leaderboard');
+  };
 
   if (loading) {
     return (
       <SafeAreaView style={styles.safeArea}>
-        <ActivityIndicator size="large" color={COLORS.primary} />
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color={COLORS.primary} />
+          <CustomText variant="medium" style={styles.loadingText}>
+            Loading rewards data...
+          </CustomText>
+        </View>
       </SafeAreaView>
     );
   }
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      <ScrollView showsVerticalScrollIndicator={false} style={{ marginBottom: 50 }}>
-        <ImageBackground source={IMAGES.img_bg}>
+      <ScrollView 
+        showsVerticalScrollIndicator={false} 
+        style={styles.scrollView}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+        }
+      >
+        {/* Header */}
+        <ImageBackground source={IMAGES.img_bg} style={styles.headerBackground}>
           <View style={styles.header}>
-            <CustomText variant="semiBold" style={{ fontSize: responsiveFontSize(3) }}>
-              Kids rewards
+            <CustomText variant="semiBold" style={styles.headerTitle}>
+              Family Rewards Dashboard
+            </CustomText>
+            <CustomText variant="medium" style={styles.headerSubtitle}>
+              Track your children's progress and achievements
             </CustomText>
           </View>
-          <View>
-            <Search />
-          </View>
-          <View style={styles.rewardsContainer}>
-            <Image source={IMAGES.reward} style={styles.rewardImage} />
-            <View style={styles.rewardPointsContainer}>
-              <View style={{ gap: 4, alignItems: "center" }}>
-                <CustomText style={{ fontWeight: "bold", fontSize: responsiveFontSize(3) }}>
-                  My Reward Tokens
+        </ImageBackground>
+
+        {/* Family Overview Stats */}
+        {familyLeaderboard && (
+          <View style={styles.overviewSection}>
+            <View style={styles.statsGrid}>
+              <View style={styles.statCard}>
+                <MaterialIcons name="family-restroom" size={32} color={COLORS.primary} />
+                <CustomText variant="bold" style={styles.statNumber}>
+                  {familyLeaderboard.children?.length || 0}
                 </CustomText>
-                <CustomText style={{ fontSize: responsiveFontSize(1.7) }}>
-                  Earned Tokens
+                <CustomText variant="medium" style={styles.statLabel}>
+                  Children
                 </CustomText>
               </View>
-              <View style={{ gap: 4, alignItems: "center" }}>
-                <CustomText style={{ fontSize: responsiveFontSize(5), fontWeight: "700" }}>
-                  {rewards?.tokens_earned || 0}
+              
+              <View style={styles.statCard}>
+                <MaterialIcons name="stars" size={32} color="#4CAF50" />
+                <CustomText variant="bold" style={styles.statNumber}>
+                  {familyLeaderboard.family_total_tasks || 0}
                 </CustomText>
-                <CustomText style={{ fontSize: responsiveFontSize(1.7) }}>
-                  Level {rewards?.level || 1}
+                <CustomText variant="medium" style={styles.statLabel}>
+                  Tasks Done
+                </CustomText>
+              </View>
+              
+              <View style={styles.statCard}>
+                <MaterialIcons name="emoji-events" size={32} color="#FF9800" />
+                <CustomText variant="bold" style={styles.statNumber}>
+                  #{familyLeaderboard.family_global_rank || 0}
+                </CustomText>
+                <CustomText variant="medium" style={styles.statLabel}>
+                  Family Rank
                 </CustomText>
               </View>
             </View>
-            {/* Achievement component can be dynamic */}
           </View>
-        </ImageBackground>
-        <View style={{ gap: 10, paddingVertical: 30 }}>
-          <View style={styles.historyHeader}>
-            <CustomText variant="semiBold" style={{ fontSize: responsiveFontSize(2.5) }}>
-              Global Leaderboard
+        )}
+
+        {/* Family Leaderboard */}
+        {familyLeaderboard && (
+          <FamilyLeaderboardCard 
+            familyData={familyLeaderboard}
+            onChildPress={handleChildPress}
+          />
+        )}
+
+        {/* Global Leaderboard Preview */}
+        <View style={styles.globalSection}>
+          <View style={styles.sectionHeader}>
+            <CustomText variant="semiBold" style={styles.sectionTitle}>
+              🌍 Global Leaderboard
             </CustomText>
-            <TouchableOpacity>
-              <CustomText variant="medium" style={{ fontSize: responsiveFontSize(1.1) }}>
+            <TouchableOpacity onPress={handleViewAllGlobal}>
+              <CustomText variant="medium" style={styles.viewAllButton}>
                 View All
               </CustomText>
             </TouchableOpacity>
           </View>
-          <View style={{ gap: 12 }}>
-            {leaderboard.length > 0 ? (
-              leaderboard.map((entry) => (
-                <Text key={entry.user_id}>
-                  {entry.rank}. {entry.display_name} - {entry.tokens_earned} tokens
-                </Text>
+          
+          <View style={styles.globalLeaderboardCard}>
+            {globalLeaderboard.length > 0 ? (
+              globalLeaderboard.slice(0, 5).map((entry, index) => (
+                <View key={entry.user_id} style={styles.globalEntry}>
+                  <View style={styles.globalRank}>
+                    <CustomText variant="semiBold" style={styles.rankNumber}>
+                      #{index + 1}
+                    </CustomText>
+                  </View>
+                  <View style={styles.globalInfo}>
+                    <CustomText variant="medium" style={styles.globalName}>
+                      {entry.display_name || `User ${index + 1}`}
+                    </CustomText>
+                    <View style={styles.tokenDisplay}>
+                      {entry.xrp_earned > 0 && (
+                        <CustomText variant="medium" style={styles.tokenAmount}>
+                          {entry.xrp_earned} XRP
+                        </CustomText>
+                      )}
+                      {entry.rlusd_earned > 0 && (
+                        <CustomText variant="medium" style={styles.tokenAmount}>
+                          {entry.rlusd_earned} RLUSD
+                        </CustomText>
+                      )}
+                      {entry.etask_earned > 0 && (
+                        <CustomText variant="medium" style={styles.tokenAmount}>
+                          {entry.etask_earned} eTask
+                        </CustomText>
+                      )}
+                      <CustomText variant="medium" style={styles.taskCount}>
+                        • {entry.tasks_completed} tasks
+                      </CustomText>
+                    </View>
+                  </View>
+                  <View style={styles.globalLevel}>
+                    <CustomText variant="semiBold" style={styles.levelBadge}>
+                      L{entry.level}
+                    </CustomText>
+                  </View>
+                </View>
               ))
             ) : (
-              <Text>Start completing tasks to earn tokens!</Text>
+              <View style={styles.emptyGlobal}>
+                <MaterialIcons name="leaderboard" size={48} color={COLORS.grey} />
+                <CustomText variant="medium" style={styles.emptyText}>
+                  Global leaderboard will appear here
+                </CustomText>
+              </View>
             )}
+          </View>
+        </View>
+
+        {/* Tips Section */}
+        <View style={styles.tipsSection}>
+          <CustomText variant="semiBold" style={styles.sectionTitle}>
+            💡 Parent Tips
+          </CustomText>
+          <View style={styles.tipsCard}>
+            <View style={styles.tip}>
+              <Text style={styles.tipEmoji}>🎯</Text>
+              <CustomText variant="medium" style={styles.tipText}>
+                Set clear, achievable goals for your children to keep them motivated
+              </CustomText>
+            </View>
+            <View style={styles.tip}>
+              <Text style={styles.tipEmoji}>🏆</Text>
+              <CustomText variant="medium" style={styles.tipText}>
+                Celebrate achievements to build confidence and encourage progress
+              </CustomText>
+            </View>
+            <View style={styles.tip}>
+              <Text style={styles.tipEmoji}>📊</Text>
+              <CustomText variant="medium" style={styles.tipText}>
+                Review progress regularly and adjust task difficulty as needed
+              </CustomText>
+            </View>
           </View>
         </View>
       </ScrollView>
@@ -183,11 +311,207 @@ const styles = StyleSheet.create({
     width: responsiveWidth(100),
     padding: responsiveWidth(4),
   },
-  header: {
-    flexDirection: "row",
-    paddingVertical: responsiveWidth(4),
-    justifyContent: "center",
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
+  loadingText: {
+    marginTop: responsiveHeight(2),
+    fontSize: responsiveFontSize(1.6),
+    color: COLORS.grey,
+  },
+  scrollView: {
+    marginBottom: 50,
+  },
+  headerBackground: {
+    paddingBottom: responsiveHeight(2),
+  },
+  header: {
+    alignItems: "center",
+    paddingVertical: responsiveWidth(4),
+    paddingHorizontal: responsiveWidth(4),
+  },
+  headerTitle: {
+    fontSize: responsiveFontSize(2.8),
+    color: '#333',
+    marginBottom: 8,
+    textAlign: 'center',
+  },
+  headerSubtitle: {
+    fontSize: responsiveFontSize(1.5),
+    color: COLORS.grey,
+    textAlign: 'center',
+  },
+  overviewSection: {
+    paddingHorizontal: responsiveWidth(4),
+    marginBottom: responsiveHeight(2),
+  },
+  statsGrid: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  statCard: {
+    backgroundColor: COLORS.white,
+    borderRadius: 16,
+    padding: responsiveWidth(4),
+    alignItems: 'center',
+    flex: 1,
+    marginHorizontal: responsiveWidth(1),
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 5,
+  },
+  statNumber: {
+    fontSize: responsiveFontSize(2.2),
+    color: '#333',
+    marginVertical: 8,
+  },
+  statLabel: {
+    fontSize: responsiveFontSize(1.3),
+    color: COLORS.grey,
+    textAlign: 'center',
+  },
+  currencySection: {
+    paddingHorizontal: responsiveWidth(4),
+    marginBottom: responsiveHeight(2),
+  },
+  sectionTitle: {
+    fontSize: responsiveFontSize(2),
+    color: '#333',
+    marginBottom: responsiveHeight(1.5),
+  },
+  currencyRatesCard: {
+    backgroundColor: COLORS.white,
+    borderRadius: 16,
+    padding: responsiveWidth(4),
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 5,
+  },
+  currencyRate: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  currencyDot: {
+    width: 12,
+    height: 12,
+    borderRadius: 6,
+    marginRight: 12,
+  },
+  currencyRateText: {
+    fontSize: responsiveFontSize(1.5),
+    color: '#333',
+  },
+  globalSection: {
+    paddingHorizontal: responsiveWidth(4),
+    marginBottom: responsiveHeight(2),
+  },
+  sectionHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: responsiveHeight(1.5),
+  },
+  viewAllButton: {
+    fontSize: responsiveFontSize(1.4),
+    color: COLORS.primary,
+  },
+  globalLeaderboardCard: {
+    backgroundColor: COLORS.white,
+    borderRadius: 16,
+    padding: responsiveWidth(4),
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 5,
+  },
+  globalEntry: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F0F0F0',
+  },
+  globalRank: {
+    width: responsiveWidth(12),
+    alignItems: 'center',
+  },
+  rankNumber: {
+    fontSize: responsiveFontSize(1.6),
+    color: COLORS.primary,
+  },
+  globalInfo: {
+    flex: 1,
+    marginLeft: responsiveWidth(3),
+  },
+  globalName: {
+    fontSize: responsiveFontSize(1.6),
+    color: '#333',
+    marginBottom: 4,
+  },
+  globalStats: {
+    fontSize: responsiveFontSize(1.3),
+    color: COLORS.grey,
+  },
+  globalLevel: {
+    alignItems: 'center',
+  },
+  levelBadge: {
+    fontSize: responsiveFontSize(1.4),
+    color: COLORS.primary,
+    backgroundColor: '#E3F2FD',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 12,
+  },
+  emptyGlobal: {
+    alignItems: 'center',
+    paddingVertical: responsiveHeight(4),
+  },
+  emptyText: {
+    fontSize: responsiveFontSize(1.6),
+    color: COLORS.grey,
+    marginTop: responsiveHeight(1),
+    textAlign: 'center',
+  },
+  tipsSection: {
+    paddingHorizontal: responsiveWidth(4),
+    marginBottom: responsiveHeight(3),
+  },
+  tipsCard: {
+    backgroundColor: COLORS.white,
+    borderRadius: 16,
+    padding: responsiveWidth(4),
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 5,
+  },
+  tip: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    marginBottom: responsiveHeight(2),
+  },
+  tipEmoji: {
+    fontSize: responsiveFontSize(2),
+    marginRight: responsiveWidth(3),
+    marginTop: 2,
+  },
+  tipText: {
+    flex: 1,
+    fontSize: responsiveFontSize(1.5),
+    color: '#333',
+    lineHeight: 22,
+  },
+  // Legacy styles (keeping for compatibility)
   rewardsContainer: {
     paddingVertical: responsiveWidth(2),
     justifyContent: "center",
@@ -226,5 +550,20 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
+  },
+  tokenDisplay: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    alignItems: 'center',
+  },
+  tokenAmount: {
+    fontSize: responsiveFontSize(1.2),
+    color: COLORS.primary,
+    marginRight: 8,
+    fontWeight: '600',
+  },
+  taskCount: {
+    fontSize: responsiveFontSize(1.3),
+    color: COLORS.grey,
   },
 });

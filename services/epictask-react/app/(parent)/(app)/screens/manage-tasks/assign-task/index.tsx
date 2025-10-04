@@ -83,8 +83,6 @@ const AssignTask = () => {
         assigned_to_ids: taskData.assigned_to_ids,
         task_title: taskData.task_title,
       };
-
-      console.log("Creating task:", newTask);
       
       await taskService.createTask(newTask);
       

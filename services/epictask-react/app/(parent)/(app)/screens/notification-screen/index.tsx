@@ -34,7 +34,6 @@ const NotificationItem: React.FC<NotificationItemProps> = ({
 }) => {
   const handlers = useSwipeable({
     onSwipedLeft: () => {
-      console.log(`Swiped left on: ${notification.id}`);
       onDelete(notification.id);
     },
     preventScrollOnSwipe: true,
@@ -102,7 +101,6 @@ const NotificationList: React.FC = () => {
   }, []);
 
   const handleDeleteNotification = (id: string) => {
-    console.log(`Deleting: ${id}`);
     setNotifications((prev) => prev.filter((n) => n.id !== id));
   };
 

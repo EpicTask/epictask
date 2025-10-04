@@ -95,7 +95,6 @@ const KidProfile = () => {
   const handleTaskSave = async (updatedTask: Task) => {
     try {
       // TODO: Implement task update API call
-      console.log('Updating task:', updatedTask);
       
       // Update local state
       setTasks(prevTasks => 
@@ -120,7 +119,6 @@ const KidProfile = () => {
   const handleTaskDelete = async (taskId: string) => {
     try {
       // TODO: Implement task delete API call
-      console.log('Deleting task:', taskId);
       
       // Update local state
       setTasks(prevTasks => prevTasks.filter(task => task.task_id !== taskId));
