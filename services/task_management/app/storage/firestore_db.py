@@ -7,6 +7,9 @@ from ..schema.schema import (
     TaskCompleted,
     TaskCreated,
     LeaderboardEntry,
+    ComprehensiveRewards,
+    FamilyLeaderboard,
+    KidLeaderboardView,
     TaskEvent,
     TaskUpdated,
 )
@@ -866,3 +869,456 @@ def clear_test_data():
             "message": f"Failed to clear test data: {str(e)}",
             "timestamp": datetime.now().isoformat(),
         }
+
+
+# Enhanced Rewards and Leaderboard Functions
+
+def calculate_total_token_score(xrp_earned, rlusd_earned, etask_earned):
+    """Calculate total token score for ranking (without USD conversion)"""
+    total_score = (xrp_earned * .3) + (rlusd_earned) + (etask_earned)
+    return round(total_score, 2)
+
+
+def calculate_user_level(total_tokens, tasks_completed):
+    """Calculate user level based on token amounts and tasks completed"""
+    # Level formula: (total_token_score / 1000) + (tasks_completed / 50)
+    total_token_score = calculate_total_token_score(
+        total_tokens.get('xrp_earned', 0),
+        total_tokens.get('rlusd_earned', 0), 
+        total_tokens.get('etask_earned', 0)
+    )
+    level = int((total_token_score / 1000) + (tasks_completed / 50)) + 1
+    return max(1, level)  # Minimum level is 1
+
+
+def get_comprehensive_rewards(user_id):
+    """Get comprehensive rewards data for a user - token-only"""
+    try:
+        leaderboard_ref = db.collection(collections.LEADERBOARD).document(user_id)
+        leaderboard_doc = leaderboard_ref.get()
+        
+        if not leaderboard_doc.exists:
+            # Return default data for new users
+            return ComprehensiveRewards(
+                user_id=user_id,
+                display_name="",
+                currencies={
+                    "xrp_earned": 0.0,
+                    "rlusd_earned": 0.0,
+                    "etask_earned": 0.0
+                },
+                tasks_completed=0,
+                level=1,
+                family_rank=0,
+                global_rank=0,
+                token_score=0.0,
+                achievements=[],
+                next_level_progress=0.0
+            )
+        
+        data = leaderboard_doc.to_dict()
+        xrp_earned = data.get("xrp_earned", 0.0)
+        rlusd_earned = data.get("rlusd_earned", 0.0)
+        etask_earned = data.get("eTask_earned", 0.0)
+        tasks_completed = data.get("tasks_completed", 0)
+        
+        # Calculate token score
+        token_score = calculate_total_token_score(xrp_earned, rlusd_earned, etask_earned)
+        
+        # Calculate level based on tokens
+        tokens_dict = {
+            'xrp_earned': xrp_earned,
+            'rlusd_earned': rlusd_earned,
+            'etask_earned': etask_earned
+        }
+        level = calculate_user_level(tokens_dict, tasks_completed)
+        
+        # Calculate next level progress based on token score
+        current_level_threshold = (level - 1) * 1000
+        next_level_threshold = level * 1000
+        progress = ((token_score - current_level_threshold) / (next_level_threshold - current_level_threshold)) * 100
+        next_level_progress = min(100, max(0, progress))
+        
+        # Get global rank
+        global_rank = get_user_global_rank_by_tokens(user_id, token_score, tasks_completed)
+        
+        # Get achievements based on token amounts
+        achievements = calculate_achievements_by_tokens(xrp_earned, rlusd_earned, etask_earned, tasks_completed, level)
+        
+        return ComprehensiveRewards(
+            user_id=user_id,
+            display_name=data.get("display_name", ""),
+            currencies={
+                "xrp_earned": xrp_earned,
+                "rlusd_earned": rlusd_earned,
+                "etask_earned": etask_earned
+            },
+            tasks_completed=tasks_completed,
+            level=level,
+            family_rank=0,  # Will be calculated in family context
+            global_rank=global_rank,
+            token_score=token_score,
+            achievements=achievements,
+            next_level_progress=next_level_progress
+        )
+        
+    except Exception as e:
+        print(f"Error getting comprehensive rewards: {e}")
+        return ComprehensiveRewards(
+            user_id=user_id,
+            display_name="",
+            currencies={
+                "xrp_earned": 0.0,
+                "rlusd_earned": 0.0,
+                "etask_earned": 0.0
+            },
+            tasks_completed=0,
+            level=1,
+            family_rank=0,
+            global_rank=0,
+            token_score=0.0,
+            achievements=[],
+            next_level_progress=0.0
+        )
+
+
+
+
+def get_family_leaderboard(parent_id):
+    """Get family leaderboard for parent view - token-only"""
+    try:
+        # Get parent's children from users collection
+        users_ref = db.collection(collections.USERS).document(parent_id)
+        parent_doc = users_ref.get()
+        
+        if not parent_doc.exists:
+            return FamilyLeaderboard(
+                family_id=parent_id,
+                parent_id=parent_id,
+                children=[],
+                family_total_tokens=0.0,
+                family_total_tasks=0,
+                family_global_rank=0
+            )
+        
+        parent_data = parent_doc.to_dict()
+        child_ids = parent_data.get("children", [])
+        
+        if not child_ids:
+            return FamilyLeaderboard(
+                family_id=parent_id,
+                parent_id=parent_id,
+                children=[],
+                family_total_tokens=0.0,
+                family_total_tasks=0,
+                family_global_rank=0
+            )
+        
+        # Get comprehensive rewards for each child
+        children_rewards = []
+        family_total_tokens = 0.0
+        family_total_tasks = 0
+        
+        for i, child_id in enumerate(child_ids):
+            child_rewards = get_comprehensive_rewards(child_id)
+            child_rewards.family_rank = i + 1  # Will be recalculated after sorting
+            children_rewards.append(child_rewards)
+            family_total_tokens += child_rewards.token_score
+            family_total_tasks += child_rewards.tasks_completed
+        
+        # Sort children by token score and assign family ranks
+        children_rewards.sort(
+            key=lambda x: (x.token_score * 0.7) + (x.tasks_completed * 0.3),
+            reverse=True
+        )
+        
+        for i, child in enumerate(children_rewards):
+            child.family_rank = i + 1
+        
+        # Calculate family global rank based on token score
+        family_global_rank = max(1, int(family_total_tokens / 100))
+        
+        return FamilyLeaderboard(
+            family_id=parent_id,
+            parent_id=parent_id,
+            children=children_rewards,
+            family_total_tokens=family_total_tokens,
+            family_total_tasks=family_total_tasks,
+            family_global_rank=family_global_rank
+        )
+        
+    except Exception as e:
+        print(f"Error getting family leaderboard: {e}")
+        return FamilyLeaderboard(
+            family_id=parent_id,
+            parent_id=parent_id,
+            children=[],
+            family_total_tokens=0.0,
+            family_total_tasks=0,
+            family_global_rank=0
+        )
+
+
+def get_kid_leaderboard_view(kid_id):
+    """Get kid-specific leaderboard view"""
+    try:
+        # Get kid's comprehensive rewards
+        kid_data = get_comprehensive_rewards(kid_id)
+        
+        # Find parent to get family context
+        users_ref = db.collection(collections.USERS)
+        parent_query = users_ref.where("children", "array_contains", kid_id).limit(1)
+        parent_docs = parent_query.get()
+        
+        if not parent_docs:
+            # No family context, show individual progress
+            return KidLeaderboardView(
+                kid_data=kid_data,
+                family_position=1,
+                family_total_kids=1,
+                encouragement_message="You're doing great! Keep completing tasks to earn more rewards!",
+                next_milestone={
+                    "type": "level",
+                    "current": kid_data.level,
+                    "next": kid_data.level + 1,
+                    "progress": kid_data.next_level_progress
+                },
+                global_context={
+                    "rank": kid_data.global_rank,
+                    "message": f"You're ranked #{kid_data.global_rank} globally!"
+                }
+            )
+        
+        parent_doc = parent_docs[0]
+        parent_id = parent_doc.id
+        
+        # Get family leaderboard to determine position
+        family_leaderboard = get_family_leaderboard(parent_id)
+        
+        family_position = 1
+        family_total_kids = len(family_leaderboard.children)
+        
+        for i, child in enumerate(family_leaderboard.children):
+            if child.user_id == kid_id:
+                family_position = i + 1
+                break
+        
+        # Generate encouragement message
+        encouragement_messages = [
+            "Amazing work! You're crushing those tasks! 🌟",
+            "Keep it up, superstar! Every task makes you stronger! 💪",
+            "You're on fire! Your hard work is paying off! 🔥",
+            "Fantastic job! You're building great habits! 🎯",
+            "Way to go! You're earning your way to success! 🏆"
+        ]
+        
+        if family_position == 1:
+            encouragement_message = f"🥇 You're #1 in your family! {encouragement_messages[0]}"
+        elif family_position <= 3:
+            encouragement_message = f"🥉 You're in the top 3! {encouragement_messages[1]}"
+        else:
+            encouragement_message = encouragement_messages[family_position % len(encouragement_messages)]
+        
+        # Calculate next milestone
+        next_milestone = {
+            "type": "level",
+            "current": kid_data.level,
+            "next": kid_data.level + 1,
+            "progress": kid_data.next_level_progress
+        }
+        
+        # Global context
+        global_context = {
+            "rank": kid_data.global_rank,
+            "message": f"You're ranked #{kid_data.global_rank} among all kids!"
+        }
+        
+        return KidLeaderboardView(
+            kid_data=kid_data,
+            family_position=family_position,
+            family_total_kids=family_total_kids,
+            encouragement_message=encouragement_message,
+            next_milestone=next_milestone,
+            global_context=global_context
+        )
+        
+    except Exception as e:
+        print(f"Error getting kid leaderboard view: {e}")
+        kid_data = get_comprehensive_rewards(kid_id)
+        return KidLeaderboardView(
+            kid_data=kid_data,
+            family_position=1,
+            family_total_kids=1,
+            encouragement_message="You're doing great! Keep completing tasks to earn more rewards!",
+            next_milestone={
+                "type": "level",
+                "current": kid_data.level,
+                "next": kid_data.level + 1,
+                "progress": kid_data.next_level_progress
+            },
+            global_context={
+                "rank": kid_data.global_rank,
+                "message": f"You're ranked #{kid_data.global_rank} globally!"
+            }
+        )
+
+
+def get_user_global_rank_by_tokens(user_id, token_score, tasks_completed):
+    """Calculate user's global rank based on token score"""
+    try:
+        leaderboard_ref = db.collection(collections.LEADERBOARD)
+        all_users = leaderboard_ref.get()
+        
+        user_score = (token_score * 0.7) + (tasks_completed * 0.3)
+        higher_users = 0
+        
+        for user_doc in all_users:
+            if user_doc.id == user_id:
+                continue
+                
+            user_data = user_doc.to_dict()
+            other_xrp = user_data.get("xrp_earned", 0.0)
+            other_rlusd = user_data.get("rlusd_earned", 0.0)
+            other_etask = user_data.get("eTask_earned", 0.0)
+            other_tasks = user_data.get("tasks_completed", 0)
+            
+            other_token_score = calculate_total_token_score(other_xrp, other_rlusd, other_etask)
+            other_score = (other_token_score * 0.7) + (other_tasks * 0.3)
+            
+            if other_score > user_score:
+                higher_users += 1
+        
+        return higher_users + 1
+        
+    except Exception as e:
+        print(f"Error calculating global rank by tokens: {e}")
+        return 0
+
+
+def calculate_achievements_by_tokens(xrp_earned, rlusd_earned, etask_earned, tasks_completed, level):
+    """Calculate achievements based on token amounts and user progress"""
+    achievements = []
+    
+    # Task-based achievements
+    if tasks_completed >= 1:
+        achievements.append("First Task Completed")
+    if tasks_completed >= 10:
+        achievements.append("Task Master")
+    if tasks_completed >= 50:
+        achievements.append("Task Champion")
+    if tasks_completed >= 100:
+        achievements.append("Task Legend")
+    
+    # Token-based achievements
+    total_tokens = xrp_earned + rlusd_earned + (etask_earned / 100)  # Normalize eTask for comparison
+    
+    if total_tokens >= 1:
+        achievements.append("First Earnings")
+    if total_tokens >= 10:
+        achievements.append("Token Collector")
+    if total_tokens >= 50:
+        achievements.append("Token Master")
+    if total_tokens >= 100:
+        achievements.append("Token Legend")
+    
+    # XRP-specific achievements
+    if xrp_earned >= 1:
+        achievements.append("XRP Earner")
+    if xrp_earned >= 10:
+        achievements.append("XRP Collector")
+    
+    # RLUSD-specific achievements
+    if rlusd_earned >= 1:
+        achievements.append("RLUSD Earner")
+    if rlusd_earned >= 10:
+        achievements.append("RLUSD Collector")
+    
+    # eTask-specific achievements
+    if etask_earned >= 100:
+        achievements.append("eTask Earner")
+    if etask_earned >= 1000:
+        achievements.append("eTask Collector")
+    
+    # Level-based achievements
+    if level >= 5:
+        achievements.append("Rising Star")
+    if level >= 10:
+        achievements.append("Expert Level")
+    if level >= 20:
+        achievements.append("Master Level")
+    
+    return achievements
+
+
+def update_enhanced_leaderboard(task_data):
+    """Update the enhanced leaderboard with token-based scoring for multiple users"""
+    try:
+        if not task_data.assigned_to_ids or len(task_data.assigned_to_ids) == 0:
+            return "No assigned users to update leaderboard"
+        
+        updated_users = []
+        
+        # Loop through all assigned users
+        for assigned_to_id in task_data.assigned_to_ids:
+            try:
+                leaderboard_ref = db.collection(collections.LEADERBOARD).document(assigned_to_id)
+                leaderboard_entry = leaderboard_ref.get()
+                
+                # Initialize currency values
+                xrp_earned = 0.0
+                rlusd_earned = 0.0
+                etask_earned = 0.0
+                tasks_completed = 1
+                
+                if leaderboard_entry.exists:
+                    # Update existing entry
+                    current_data = leaderboard_entry.to_dict()
+                    tasks_completed = current_data.get("tasks_completed", 0) + 1
+                    xrp_earned = current_data.get("xrp_earned", 0.0)
+                    rlusd_earned = current_data.get("rlusd_earned", 0.0)
+                    etask_earned = current_data.get("eTask_earned", 0.0)
+                
+                # Add new reward based on currency
+                if task_data.reward_currency.upper() == "XRP":
+                    xrp_earned += task_data.reward_amount
+                elif task_data.reward_currency.upper() == "RLUSD":
+                    rlusd_earned += task_data.reward_amount
+                elif task_data.reward_currency.upper() == "ETASK":
+                    etask_earned += task_data.reward_amount
+                
+                # Calculate token score and level
+                token_score = calculate_total_token_score(xrp_earned, rlusd_earned, etask_earned)
+                tokens_dict = {
+                    'xrp_earned': xrp_earned,
+                    'rlusd_earned': rlusd_earned,
+                    'etask_earned': etask_earned
+                }
+                level = calculate_user_level(tokens_dict, tasks_completed)
+                
+                # Update leaderboard entry (no more USD values)
+                leaderboard_data = {
+                    "user_id": assigned_to_id,
+                    "tasks_completed": tasks_completed,
+                    "xrp_earned": xrp_earned,
+                    "rlusd_earned": rlusd_earned,
+                    "eTask_earned": etask_earned,
+                    "token_score": token_score,
+                    "level": level,
+                    "last_updated": firestore.SERVER_TIMESTAMP
+                }
+                
+                leaderboard_ref.set(leaderboard_data, merge=True)
+                updated_users.append(assigned_to_id)
+                
+            except Exception as user_error:
+                print(f"Error updating leaderboard for user {assigned_to_id}: {user_error}")
+                continue
+        
+        if updated_users:
+            return f"Enhanced leaderboard updated for {len(updated_users)} users: {', '.join(updated_users)}"
+        else:
+            return "Failed to update leaderboard for any users"
+        
+    except Exception as e:
+        print(f"Error updating enhanced leaderboard: {e}")
+        return f"Failed to update enhanced leaderboard: {str(e)}"

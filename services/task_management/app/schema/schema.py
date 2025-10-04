@@ -94,17 +94,59 @@ class TaskVerified(BaseModel):
     verification_method: str # user or verifi
     user_id: str
 
-# Leaderboard entry schema
+# Enhanced Leaderboard and Rewards Schemas
 class LeaderboardEntry(BaseModel):
-    """Leaderboard entry schema"""
+    """Enhanced leaderboard entry schema with token-only support"""
     user_id: str
-    display_name: str
+    display_name: str = ""
     tasks_completed: int
-    tokens_earned: float
-    rank: int
+    xrp_earned: float = 0.0
+    rlusd_earned: float = 0.0
+    eTask_earned: float = 0.0
+    token_score: float = 0.0
+    level: int = 1
+    global_rank: int = 0
+    family_rank: int = 0
+    last_updated: Optional[str] = None
+
+class ComprehensiveRewards(BaseModel):
+    """Comprehensive rewards schema for enhanced UI - token-only"""
+    user_id: str
+    display_name: str = ""
+    currencies: dict = {
+        "xrp_earned": 0.0,
+        "rlusd_earned": 0.0,
+        "etask_earned": 0.0
+    }
+    tasks_completed: int = 0
+    level: int = 1
+    family_rank: int = 0
+    global_rank: int = 0
+    token_score: float = 0.0
+    achievements: List[str] = []
+    next_level_progress: float = 0.0
+    family_id: Optional[str] = None
+
+class FamilyLeaderboard(BaseModel):
+    """Family leaderboard schema for parent view - token-only"""
+    family_id: str
+    parent_id: str
+    children: List[ComprehensiveRewards]
+    family_total_tokens: float = 0.0
+    family_total_tasks: int = 0
+    family_global_rank: int = 0
+
+class KidLeaderboardView(BaseModel):
+    """Kid-specific leaderboard view schema"""
+    kid_data: ComprehensiveRewards
+    family_position: int
+    family_total_kids: int
+    encouragement_message: str
+    next_milestone: dict
+    global_context: dict
 
 class UserRewards(BaseModel):
-    """User rewards schema"""
+    """Legacy user rewards schema - maintained for backward compatibility"""
     user_id: str
     tokens_earned: float
     level: int
