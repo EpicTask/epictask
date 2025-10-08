@@ -20,7 +20,6 @@ import { router } from "expo-router";
 import CustomText from "@/components/CustomText";
 import CustomInput from "@/components/custom-input/CustomInput";
 import DateInput from "@/components/DateInput";
-// import RNDateTimePicker from "@react-native-community/datetimepicker";
 
 const AddKid = () => {
   const CELL_COUNT = 4;

@@ -39,7 +39,6 @@ function RootLayout() {
       const inAuthGroup = segments[0] === 'auth';
       const inParentGroup = segments[0] === '(parent)';
       const inKidGroup = segments[0] === '(kid)';
-      const inAdminGroup = segments[0] === '(admin)';
 
       if (user) {
         // User is authenticated
@@ -51,9 +50,6 @@ function RootLayout() {
           const targetPath = userRole === 'parent' ? '/(parent)/(app)/(tabs)' : '/(kid)/(app)/(tabs)';
           console.log("Redirecting authenticated user to:", targetPath);
           router.replace(targetPath as any);
-        } else if (inAdminGroup) {
-          // User is in admin section, don't redirect - let admin layout handle authorization
-          console.log("User in admin section, allowing navigation");
         } else if (userRole === 'parent' && !inParentGroup) {
           // Parent user not in parent section (and not in admin), redirect to parent dashboard
           console.log("Redirecting parent to parent dashboard");
@@ -84,7 +80,6 @@ function RootLayout() {
         <Stack.Screen name="index" options={{ headerShown: false }} />
         <Stack.Screen name="(kid)" options={{ headerShown: false }} />
         <Stack.Screen name="(parent)" options={{ headerShown: false }} />
-        <Stack.Screen name="(admin)" options={{ headerShown: false }} />
         <Stack.Screen name="auth" options={{ headerShown: false }} />
         <Stack.Screen name="+not-found" />
       </Stack>

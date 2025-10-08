@@ -25,6 +25,7 @@ import {
 } from "react-native-responsive-dimensions";
 import apiClient from "@/api/apiClient";
 import MicroserviceUrls from "@/constants/Microservices";
+import { Task } from "@/constants/Interfaces";
 
 const fetchTasks = async () => {
   const { data } = await apiClient.get(
@@ -60,7 +61,7 @@ export default function HomeScreen() {
   }
 
   const completedTasks = tasks.filter(
-    (task) => task.status === "completed"
+    (task: Task) => task.status === "completed"
   ).length;
   const progress = tasks.length > 0 ? completedTasks / tasks.length : 0;
 
@@ -158,7 +159,7 @@ export default function HomeScreen() {
                       variant="semiBold"
                       style={[styles.completedText, { fontSize: 14 }]}
                     >
-                      {tasks.reduce((acc, task) => acc + task.reward_amount, 0)}{" "}
+                      {tasks.reduce((acc, task: Task) => acc + task.reward_amount, 0)}{" "}
                       Stars!
                     </CustomText>
                   </View>
@@ -202,7 +203,7 @@ export default function HomeScreen() {
               </TouchableOpacity>
             </View>
             {tasks.length > 0 ? (
-              tasks.map((task, index) => (
+              tasks.map((task: Task, index: number) => (
                 <TaskCard
                   bg={
                     index % 3 === 0
@@ -212,8 +213,8 @@ export default function HomeScreen() {
                       : COLORS.light_yellow
                   }
                   key={index}
-                  name={task.task_title}
-                  stars={task.reward_amount}
+                  name={task.task_title || "Task Title"}
+                  stars={task.reward_amount || 0}
                 />
               ))
             ) : (
