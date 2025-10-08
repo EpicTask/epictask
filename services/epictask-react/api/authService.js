@@ -1,5 +1,11 @@
 import apiClient from "./apiClient";
-import auth from "@react-native-firebase/auth";
+import { auth } from "../config/firebaseConfig";
+import { 
+  createUserWithEmailAndPassword, 
+  signInWithEmailAndPassword, 
+  signOut, 
+  updateProfile 
+} from "firebase/auth";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { firestoreService } from "../api/firestoreService";
 
@@ -8,11 +14,11 @@ export const authService = {
   register: async (email, password, displayName, role = "child") => {
     try {
       // Register directly with Firebase Auth
-      const userCredential = await auth().createUserWithEmailAndPassword(email, password);
+      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
       const user = userCredential.user;
       
       // Update the user's display name
-      await user.updateProfile({
+      await updateProfile(user, {
         displayName: displayName,
       });
 
@@ -69,7 +75,8 @@ export const authService = {
   login: async (email, password) => {
     try {
       // First authenticate with Firebase
-      const userCredential = await auth().signInWithEmailAndPassword(
+      const userCredential = await signInWithEmailAndPassword(
+        auth,
         email,
         password
       );
@@ -131,7 +138,7 @@ export const authService = {
   // Logout user with cache cleanup
   logout: async () => {
     try {
-      await auth().signOut();
+      await signOut(auth);
       await AsyncStorage.removeItem("authToken");
       
       // Clear all caches on logout to prevent data leakage
@@ -211,7 +218,7 @@ export const authService = {
   deleteAccount: async () => {
     try {
       const response = await apiClient.delete("/deleteAccount");
-      await auth().signOut();
+      await signOut(auth);
       await AsyncStorage.removeItem("authToken");
       return response.data;
     } catch (error) {

@@ -13,11 +13,9 @@ import {
   startAfter,
   updateDoc,
   writeBatch,
-  documentId
-} from "@react-native-firebase/firestore";
+} from "firebase/firestore";
+import { db } from "../config/firebaseConfig";
 import { TestCollections } from "../constants/CollectionNames";
-
-const db = getFirestore();
 
 // Enhanced Cache System with configurable TTL and size limits
 class EnhancedCache {
