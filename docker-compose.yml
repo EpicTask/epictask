@@ -11,16 +11,10 @@ services:
     environment:
       - PORT=8080
       - NODE_ENV=production
-    env_file:
-      - ./services/user_management/.env
     networks:
       - epictask-network
     restart: unless-stopped
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8080/"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
+
 
   # Task Management Service
   task-management:
@@ -39,6 +33,27 @@ services:
     restart: unless-stopped
     depends_on:
       - user-management
+
+  # Admin Management Service
+  admin-management:
+    build:
+      context: ./services/admin_management
+      dockerfile: Dockerfile
+    ports:
+      - "8083:8083"
+    environment:
+      - PORT=8083
+      - PYTHONPATH=/app
+      - ENVIRONMENT=production
+      - ADMIN_SECRET_KEY=your-admin-secret-key-change-in-production
+    env_file:
+      - ./services/admin_management/.env
+    networks:
+      - epictask-network
+    restart: unless-stopped
+    depends_on:
+      - user-management
+      - task-management
 
   # PubSub Service
   pubsub:
