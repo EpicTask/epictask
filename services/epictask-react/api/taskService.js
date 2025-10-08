@@ -1,7 +1,6 @@
 import axios from "axios";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import MicroserviceUrls from "@/constants/Microservices";
-import Task from "@/constants/Interfaces";
 import { Alert } from "react-native";
 
 // Create a separate API client for Task Management Service
