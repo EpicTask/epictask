@@ -44,3 +44,7 @@ android/.gradle/
 android/app/build/
 android/build/
 android
+
+# Config
+config/firebaseConfig.json
+GoogleService-Info.plist

@@ -42,7 +42,6 @@ services/epictask-react/android/build/
 services/epictask-react/android/app/build/
 services/epictask-react/web-build/
 services/epictask-react/api/tests/
-services/epictask-react/app/(admin)
 services/user_management/node_modules/
 services/user_management/src/config/firebase_config.json
 services/pubsub/node_modules/
@@ -53,6 +52,7 @@ services/task_management/.env
 services/xrpl/.env
 services/xrpl_management/.env
 services/pubsub/.env
+services/admin_management/
 
 # Other
 resources/developmentDocs/
