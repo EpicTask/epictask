@@ -1,6 +1,7 @@
 import React, { createContext, useState, useEffect, useContext } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import auth from '@react-native-firebase/auth';
+import { auth } from '../config/firebaseConfig';
+import { onAuthStateChanged } from 'firebase/auth';
 import authService from '../api/authService';
 
 export const AuthContext = createContext();
@@ -11,7 +12,7 @@ export const AuthProvider = ({ children }) => {
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    const unsubscribe = auth().onAuthStateChanged(async (firebaseUser) => {
+    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       if (firebaseUser) {
         try {
           const token = await firebaseUser.getIdToken();
@@ -101,7 +102,7 @@ export const AuthProvider = ({ children }) => {
       setError(null);
       const result = await authService.updateProfile(profileData);
       // Refresh user data - get current Firebase user UID
-      const currentFirebaseUser = auth().currentUser;
+      const currentFirebaseUser = auth.currentUser;
       if (currentFirebaseUser) {
         const updatedUser = await authService.getCurrentUser(currentFirebaseUser.uid);
         setUser(updatedUser);
