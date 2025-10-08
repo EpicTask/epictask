@@ -38,3 +38,9 @@ yarn-error.*
 app-example
 
 # project
+
+# Android
+android/.gradle/
+android/app/build/
+android/build/
+android
