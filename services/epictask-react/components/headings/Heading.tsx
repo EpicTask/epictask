@@ -17,7 +17,7 @@ const Heading = ({
   return (
     <View style={styles.container}>
       <CustomText variant="semiBold" style={styles.headingStyle}>{title}</CustomText>
-      {icon && <PlusButton />}
+      {icon}
     </View>
   );
 };

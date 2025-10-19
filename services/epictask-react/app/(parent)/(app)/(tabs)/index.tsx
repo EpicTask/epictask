@@ -21,12 +21,15 @@ import {
   Text,
   ActivityIndicator,
   TouchableOpacity,
+  Alert,
 } from "react-native";
 import { Link } from "expo-router";
 import React, { useEffect, useState } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { firestoreService } from "@/api/firestoreService";
 import authService from "@/api/authService";
+import ChildSelectionModal from "@/components/modals/ChildSelectionModal";
+import ChildPINModal from "@/components/modals/ChildPINModal";
 
 // Type definitions
 interface TaskSummary {
@@ -44,6 +47,9 @@ interface RecentTask {
 interface Kid {
   uid: string;
   displayName: string;
+  age: number;
+  grade_level: string;
+  device_sharing_enabled?: boolean;
   level?: number;
   tokens_earned?: number;
   tasks_completed?: number;
@@ -56,6 +62,11 @@ export default function HomeScreen() {
   const [recentTasks, setRecentTasks] = useState<RecentTask[]>([]);
   const [kidsWithTaskData, setKidsWithTaskData] = useState<Kid[]>([]);
   const [loading, setLoading] = useState(true);
+
+  // Child switching modals
+  const [childSelectionModalVisible, setChildSelectionModalVisible] = useState(false);
+  const [childPINModalVisible, setChildPINModalVisible] = useState(false);
+  const [selectedChildForPIN, setSelectedChildForPIN] = useState<Kid | null>(null);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -102,6 +113,34 @@ export default function HomeScreen() {
 
     fetchData();
   }, [user]);
+
+  // Handler functions for child switching
+  const handleChildSwitchPress = () => {
+    setChildSelectionModalVisible(true);
+  };
+
+  const handleChildSelected = (child: Kid) => {
+    setChildSelectionModalVisible(false);
+    setSelectedChildForPIN(child);
+    setChildPINModalVisible(true);
+  };
+
+  const handleChildPINSuccess = (child: Kid) => {
+    setChildPINModalVisible(false);
+    setSelectedChildForPIN(null);
+    // Navigate to child interface
+    // For now, we'll show an alert - this would be replaced with actual navigation
+    Alert.alert(
+      'Success!',
+      `Switched to ${child.displayName}'s account. This would normally navigate to the child interface.`
+    );
+  };
+
+  const handleChildModalClose = () => {
+    setChildSelectionModalVisible(false);
+    setChildPINModalVisible(false);
+    setSelectedChildForPIN(null);
+  };
 
   if (loading) {
     return (
@@ -157,21 +196,36 @@ export default function HomeScreen() {
 
           {/* Kids Profiles */}
           <View style={{ gap: 10 }}>
-            <Heading title="Kids Profiles" icon={<HomeIcon fill="black" />} />
+            <Heading title="Kids Profiles" icon={
+              <PlusButton onPress={() =>{router.push("/screens/add-kid" as any)}}/>} />
             {kidsWithTaskData.length > 0 ? (
-              <View style={{ flexDirection: "row", gap: 10, flex: 1 }}>
-                {kidsWithTaskData.map((kid) => (
-                  <KidsCard
-                    key={kid.uid}
-                    name={kid.displayName}
-                    level={kid.level || 1}
-                    stars={kid.tokens_earned || 0}
-                    completed={kid.tasks_completed || 0}
-                    pending={kid.tasks_pending || 0}
-                    uid={kid.uid}
-                  />
-                ))}
-              </View>
+              <>
+                <View style={{ flexDirection: "row", gap: 10, flex: 1 }}>
+                  {kidsWithTaskData.map((kid) => (
+                    <KidsCard
+                      key={kid.uid}
+                      name={kid.displayName}
+                      level={kid.level || 1}
+                      stars={kid.tokens_earned || 0}
+                      completed={kid.tasks_completed || 0}
+                      pending={kid.tasks_pending || 0}
+                      uid={kid.uid}
+                    />
+                  ))}
+                </View>
+                
+                {/* Child Switching Button */}
+                {kidsWithTaskData.some(kid => authService.canSwitchToChild(kid.age)) && (
+                  <TouchableOpacity
+                    style={styles.childSwitchButton}
+                    onPress={handleChildSwitchPress}
+                  >
+                    <Text style={styles.childSwitchButtonText}>
+                      Switch to Child Account
+                    </Text>
+                  </TouchableOpacity>
+                )}
+              </>
             ) : (
               <Text>No kids linked yet. Link your first child to get started!</Text>
             )}
@@ -199,6 +253,20 @@ export default function HomeScreen() {
           </View>
         </View>
       </ScrollView>
+      
+      {/* Child Selection and PIN Modals */}
+      <ChildSelectionModal
+        visible={childSelectionModalVisible}
+        onClose={handleChildModalClose}
+        onChildSelected={handleChildSelected}
+      />
+      
+      <ChildPINModal
+        visible={childPINModalVisible}
+        child={selectedChildForPIN}
+        onClose={handleChildModalClose}
+        onSuccess={handleChildPINSuccess}
+      />
     </SafeAreaView>
   );
 }
@@ -229,5 +297,18 @@ const styles = StyleSheet.create({
     padding: 14,
     backgroundColor: "white",
     borderRadius: responsiveWidth(100),
+  },
+  childSwitchButton: {
+    backgroundColor: COLORS.primary,
+    paddingVertical: responsiveHeight(1.5),
+    paddingHorizontal: responsiveWidth(4),
+    borderRadius: 8,
+    alignItems: 'center',
+    marginTop: 10,
+  },
+  childSwitchButtonText: {
+    color: 'white',
+    fontSize: 16,
+    fontWeight: '600',
   },
 });

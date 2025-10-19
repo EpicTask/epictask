@@ -114,6 +114,14 @@
     word-break: break-all;
     margin-top: 10px;
   }
+  .warning {
+    background: #fff3cd;
+    border: 1px solid #ffeaa7;
+    color: #856404;
+    padding: 15px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+  }
 </style>
 </head>
 
@@ -129,10 +137,16 @@
     <div class="auth-section">
       <h3>Authentication</h3>
       <p>For protected endpoints, you need to authenticate first. The token will be automatically used for subsequent requests.</p>
+      <p><strong>Note:</strong> This service does not have built-in registration or login endpoints. Authentication must be handled externally (e.g., Firebase Auth, OAuth providers).</p>
       <div class="form-group">
         <label for="authToken">Current Auth Token:</label>
         <div class="token-display" id="tokenDisplay">No token set</div>
       </div>
+      <div class="form-group">
+        <label for="tokenInput">Enter Auth Token:</label>
+        <input type="text" id="tokenInput" placeholder="Enter your JWT token here">
+      </div>
+      <button onclick="setToken()">Set Token</button>
       <button onclick="clearToken()">Clear Token</button>
     </div>
 
@@ -142,64 +156,9 @@
         <span class="method get">GET</span>
         / - Welcome Message
       </h3>
-      <p>Test the basic service endpoint</p>
+      <p>Test the basic service endpoint - renders this testing interface</p>
       <button onclick="testWelcome()">Test Welcome</button>
       <div id="welcomeResponse" class="response" style="display:none;"></div>
-    </div>
-
-    <!-- POST /registerWithPassword -->
-    <div class="endpoint-section">
-      <h3 class="endpoint-title">
-        <span class="method post">POST</span>
-        /registerWithPassword - Register User
-      </h3>
-      <div class="form-group">
-        <label for="regEmail">Email:</label>
-        <input type="email" id="regEmail" placeholder="user@example.com">
-      </div>
-      <div class="form-group">
-        <label for="regPassword">Password:</label>
-        <input type="password" id="regPassword" placeholder="password123">
-      </div>
-      <div class="form-group">
-        <label for="regDisplayName">Display Name:</label>
-        <input type="text" id="regDisplayName" placeholder="John Doe">
-      </div>
-      <div class="form-group">
-        <label for="regRole">Role:</label>
-        <input type="text" id="regRole" placeholder="user" value="user">
-      </div>
-      <button onclick="testRegister()">Register User</button>
-      <div id="registerResponse" class="response" style="display:none;"></div>
-    </div>
-
-    <!-- POST /loginWithPassword -->
-    <div class="endpoint-section">
-      <h3 class="endpoint-title">
-        <span class="method post">POST</span>
-        /loginWithPassword - Login User
-      </h3>
-      <div class="form-group">
-        <label for="loginEmail">Email:</label>
-        <input type="email" id="loginEmail" placeholder="user@example.com">
-      </div>
-      <div class="form-group">
-        <label for="loginPassword">Password:</label>
-        <input type="password" id="loginPassword" placeholder="password123">
-      </div>
-      <button onclick="testLogin()">Login</button>
-      <div id="loginResponse" class="response" style="display:none;"></div>
-    </div>
-
-    <!-- GET /users/me -->
-    <div class="endpoint-section">
-      <h3 class="endpoint-title">
-        <span class="method get">GET</span>
-        /users/me - Get Current User Profile
-      </h3>
-      <p><em>Requires authentication</em></p>
-      <button onclick="testGetProfile()">Get Profile</button>
-      <div id="profileResponse" class="response" style="display:none;"></div>
     </div>
 
     <!-- PUT /profileUpdate -->
@@ -247,15 +206,15 @@
       <div id="linkResponse" class="response" style="display:none;"></div>
     </div>
 
-    <!-- GET /users/me/children -->
+    <!-- GET /admin/metrics/users/FDxFKcGFi2ecjojXKQTKGtJ38FF2 -->
     <div class="endpoint-section">
       <h3 class="endpoint-title">
         <span class="method get">GET</span>
-        /users/me/children - Get Linked Children
+        /admin/metrics/users/FDxFKcGFi2ecjojXKQTKGtJ38FF2 - Get User Metrics
       </h3>
-      <p><em>Requires authentication (for parent accounts)</em></p>
-      <button onclick="testGetChildren()">Get Children</button>
-      <div id="childrenResponse" class="response" style="display:none;"></div>
+      <p>Get user metrics from the system (admin endpoint)</p>
+      <button onclick="testGetUserMetrics()">Get User Metrics</button>
+      <div id="userMetricsResponse" class="response" style="display:none;"></div>
     </div>
 
     <!-- DELETE /deleteAccount -->
@@ -276,6 +235,13 @@
     function updateTokenDisplay() {
       const display = document.getElementById('tokenDisplay');
       display.textContent = authToken || 'No token set';
+    }
+
+    function setToken() {
+      const tokenInput = document.getElementById('tokenInput');
+      authToken = tokenInput.value.trim();
+      updateTokenDisplay();
+      tokenInput.value = '';
     }
 
     function clearToken() {
@@ -333,44 +299,6 @@
       showResponse('welcomeResponse', result, !result.ok);
     }
 
-    async function testRegister() {
-      const email = document.getElementById('regEmail').value;
-      const password = document.getElementById('regPassword').value;
-      const displayName = document.getElementById('regDisplayName').value;
-      const role = document.getElementById('regRole').value;
-
-      const result = await makeRequest('/registerWithPassword', {
-        method: 'POST',
-        requiresAuth: false,
-        body: JSON.stringify({ email, password, displayName, role })
-      });
-
-      showResponse('registerResponse', result, !result.ok);
-    }
-
-    async function testLogin() {
-      const email = document.getElementById('loginEmail').value;
-      const password = document.getElementById('loginPassword').value;
-
-      const result = await makeRequest('/loginWithPassword', {
-        method: 'POST',
-        requiresAuth: false,
-        body: JSON.stringify({ email, password })
-      });
-
-      if (result.ok && result.data.token) {
-        authToken = result.data.token;
-        updateTokenDisplay();
-      }
-
-      showResponse('loginResponse', result, !result.ok);
-    }
-
-    async function testGetProfile() {
-      const result = await makeRequest('/users/me');
-      showResponse('profileResponse', result, !result.ok);
-    }
-
     async function testUpdateProfile() {
       const displayName = document.getElementById('updateDisplayName').value;
       const additionalData = document.getElementById('updateData').value;
@@ -414,9 +342,11 @@
       showResponse('linkResponse', result, !result.ok);
     }
 
-    async function testGetChildren() {
-      const result = await makeRequest('/users/me/children');
-      showResponse('childrenResponse', result, !result.ok);
+    async function testGetUserMetrics() {
+      const result = await makeRequest('/admin/metrics/users/FDxFKcGFi2ecjojXKQTKGtJ38FF2', {
+        requiresAuth: false
+      });
+      showResponse('userMetricsResponse', result, !result.ok);
     }
 
     async function testDeleteAccount() {

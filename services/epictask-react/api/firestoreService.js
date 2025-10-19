@@ -1189,5 +1189,255 @@ export const firestoreService = {
       ErrorHandler.logError(operation, error, { parentId });
       throw new Error(`Failed to get children rewards: ${error.message}`);
     }
+  },
+
+  // Pending Invites Management Functions
+
+  /**
+   * Create a pending invite for a child
+   * @param {object} pendingInvite - The pending invite data
+   * @returns {Promise<object>} Success result with pending invite ID
+   */
+  createPendingInvite: async (pendingInvite) => {
+    const operation = 'createPendingInvite';
+    PerformanceMonitor.start(operation);
+    
+    try {
+      if (!pendingInvite?.parent_id || !pendingInvite?.child_email) {
+        throw new Error('Parent ID and child email are required');
+      }
+
+      // Create document reference with auto-generated ID
+      const pendingInviteRef = doc(collection(db, "pending_invites"));
+      
+      // Add the ID to the pending invite data
+      const inviteData = {
+        ...pendingInvite,
+        id: pendingInviteRef.id,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      };
+
+      await setDoc(pendingInviteRef, inviteData);
+      
+      // Clear parent-related caches
+      UserCache.invalidate(`pending-invites:${pendingInvite.parent_id}`);
+      
+      PerformanceMonitor.end(operation);
+      return { success: true, message: "Pending invite created successfully", pendingInviteId: pendingInviteRef.id };
+    } catch (error) {
+      ErrorHandler.logError(operation, error, { parentId: pendingInvite?.parent_id });
+      throw ErrorHandler.createError(operation, error, { parentId: pendingInvite?.parent_id });
+    }
+  },
+
+  /**
+   * Get pending invites for a parent
+   * @param {string} parentId - The parent user ID
+   * @param {object} options - Options for caching
+   * @returns {Promise<object>} Success result with pending invites array
+   */
+  getPendingInvites: async (parentId, options = {}) => {
+    const operation = 'getPendingInvites';
+    PerformanceMonitor.start(operation);
+    
+    try {
+      if (!parentId) {
+        throw new Error('Parent ID is required');
+      }
+
+      const { useCache = true } = options;
+      const cacheKey = `pending-invites:${parentId}`;
+      
+      // Check cache first
+      if (useCache) {
+        const cachedInvites = UserCache.get(cacheKey);
+        if (cachedInvites) {
+          PerformanceMonitor.end(operation);
+          return { success: true, pendingInvites: cachedInvites, fromCache: true };
+        }
+      }
+
+      // Query pending invites for this parent
+      const invitesQuery = query(
+        collection(db, "pending_invites"),
+        where("parent_id", "==", parentId),
+        orderBy("created_at", "desc")
+      );
+
+      const invitesSnapshot = await getDocs(invitesQuery);
+      const pendingInvites = invitesSnapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...doc.data()
+      }));
+
+      // Cache the results
+      if (useCache) {
+        UserCache.set(cacheKey, pendingInvites, 300000); // 5 minutes
+      }
+
+      PerformanceMonitor.end(operation);
+      return { success: true, pendingInvites };
+    } catch (error) {
+      ErrorHandler.logError(operation, error, { parentId });
+      throw ErrorHandler.createError(operation, error, { parentId });
+    }
+  },
+
+  /**
+   * Get pending invite by invite code
+   * @param {string} inviteCode - The invite code
+   * @returns {Promise<object>} Success result with pending invite data
+   */
+  getPendingInviteByCode: async (inviteCode) => {
+    const operation = 'getPendingInviteByCode';
+    PerformanceMonitor.start(operation);
+    
+    try {
+      if (!inviteCode) {
+        throw new Error('Invite code is required');
+      }
+
+      // Query by invite code
+      const inviteQuery = query(
+        collection(db, "pending_invites"),
+        where("invite_code", "==", inviteCode),
+        limit(1)
+      );
+
+      const inviteSnapshot = await getDocs(inviteQuery);
+      
+      if (inviteSnapshot.empty) {
+        PerformanceMonitor.end(operation);
+        return { success: false, error: "Invite code not found" };
+      }
+
+      const inviteDoc = inviteSnapshot.docs[0];
+      const pendingInvite = {
+        id: inviteDoc.id,
+        ...inviteDoc.data()
+      };
+
+      PerformanceMonitor.end(operation);
+      return { success: true, pendingInvite };
+    } catch (error) {
+      ErrorHandler.logError(operation, error, { inviteCode });
+      throw ErrorHandler.createError(operation, error, { inviteCode });
+    }
+  },
+
+  /**
+   * Update the status of a pending invite
+   * @param {string} inviteId - The invite document ID
+   * @param {string} status - New status (pending, completed, expired)
+   * @returns {Promise<object>} Success result
+   */
+  updateInviteStatus: async (inviteId, status) => {
+    const operation = 'updateInviteStatus';
+    PerformanceMonitor.start(operation);
+    
+    try {
+      if (!inviteId || !status) {
+        throw new Error('Invite ID and status are required');
+      }
+
+      const inviteRef = doc(db, "pending_invites", inviteId);
+      const updateData = {
+        status: status,
+        updated_at: new Date().toISOString()
+      };
+
+      if (status === 'completed') {
+        updateData.completed_at = new Date().toISOString();
+      }
+
+      await updateDoc(inviteRef, updateData);
+      
+      // Clear related caches - we don't know the parent_id so clear all pending invite caches
+      UserCache.invalidate(/pending-invites:.*/);
+      
+      PerformanceMonitor.end(operation);
+      return { success: true, message: "Invite status updated successfully" };
+    } catch (error) {
+      ErrorHandler.logError(operation, error, { inviteId, status });
+      throw ErrorHandler.createError(operation, error, { inviteId, status });
+    }
+  },
+
+  /**
+   * Verify child PIN for device switching
+   * @param {string} childId - The child user ID
+   * @param {string} pin - The PIN to verify
+   * @returns {Promise<object>} Success result with child data
+   */
+  verifyChildPIN: async (childId, pin) => {
+    const operation = 'verifyChildPIN';
+    PerformanceMonitor.start(operation);
+    
+    try {
+      if (!childId || !pin) {
+        throw new Error('Child ID and PIN are required');
+      }
+
+      // Get child user profile
+      const childResult = await firestoreService.getUserProfile(childId);
+      if (!childResult.success) {
+        return { success: false, error: "Child not found" };
+      }
+
+      const child = childResult.user;
+      
+      // Check if device sharing is enabled (age < 16)
+      if (!child.device_sharing_enabled) {
+        return { success: false, error: "Device sharing not allowed for this child" };
+      }
+
+      // Verify PIN (this would use bcrypt in production)
+      // For now, we'll do a simple comparison - in production you'd use bcrypt.compare
+      const bcrypt = require('bcrypt');
+      const pinValid = await bcrypt.compare(pin, child.pin_hash);
+      
+      if (!pinValid) {
+        return { success: false, error: "Invalid PIN" };
+      }
+
+      PerformanceMonitor.end(operation);
+      return { success: true, child: child };
+    } catch (error) {
+      ErrorHandler.logError(operation, error, { childId });
+      throw ErrorHandler.createError(operation, error, { childId });
+    }
+  },
+
+  /**
+   * Enhanced getLinkedChildren to include device sharing capabilities
+   */
+  getLinkedChildrenWithSharing: async (parentUid, useCache = true) => {
+    const operation = 'getLinkedChildrenWithSharing';
+    PerformanceMonitor.start(operation);
+    
+    try {
+      // Get linked children using existing method
+      const result = await firestoreService.getLinkedChildren(parentUid, useCache);
+      
+      if (result.success) {
+        // Add device sharing capability info
+        const childrenWithSharing = result.children.map(child => ({
+          ...child,
+          canSwitchToChild: child.device_sharing_enabled && (child.age < 16)
+        }));
+        
+        PerformanceMonitor.end(operation);
+        return {
+          ...result,
+          children: childrenWithSharing
+        };
+      }
+      
+      return result;
+    } catch (error) {
+      ErrorHandler.logError(operation, error, { parentUid });
+      throw ErrorHandler.createError(operation, error, { parentUid });
+    }
   }
 };
