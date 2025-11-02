@@ -8,7 +8,7 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import Search from "@/components/search/Search";
 import ProgressCard from "@/components/cards/ProgressCard";
-import { COLORS } from "@/constants/Colors";
+import { Colors, COLORS } from "@/constants/Colors";
 import TaskCard from "@/components/cards/TaskCard";
 import PlusButton from "@/components/PlusButton";
 import { router } from "expo-router";
@@ -56,7 +56,14 @@ const ManageTasks = () => {
                 allTasks.push(...childData.tasks);
               }
             });
-            setTasks(allTasks);
+            
+            // Deduplicate tasks by task_id
+            const uniqueTasks = new Map<string, Task>();
+            allTasks.forEach(task => {
+              uniqueTasks.set(task.task_id!, task);
+            });
+            
+            setTasks(Array.from(uniqueTasks.values()));
           }
         } catch (error) {
           console.error("Failed to fetch family data:", error);
@@ -210,7 +217,7 @@ const ManageTasks = () => {
   };
 
   const renderHeader = () => (
-    <View>
+    <View style={{ marginBottom: 20 }}>
       <View style={{flexDirection:'row', alignItems:"center"}}>
         <CustomText style={{flex:1, textAlign:"center", fontSize: responsiveFontSize(3), fontWeight: 500, paddingVertical: 10}}>
           Manage Tasks
@@ -235,7 +242,7 @@ const ManageTasks = () => {
           >
             <ProgressCard
               text="Completed"
-              color="#4CAF50"
+              color={COLORS.light_green}
               row={true}
               completed={completedTasks}
               progress={completedPercentage / 100}

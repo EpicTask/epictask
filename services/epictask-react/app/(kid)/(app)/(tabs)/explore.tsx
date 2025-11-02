@@ -20,6 +20,7 @@ import { router } from "expo-router";
 import { COLORS } from "@/constants/Colors";
 import { MaterialIcons } from "@expo/vector-icons";
 import { SafeAreaView } from "react-native-safe-area-context";
+import DebouncedTouchableOpacity from "@/components/buttons/DebouncedTouchableOpacity";
 
 const ExploreCard = () => {
   return (
@@ -59,7 +60,7 @@ const ExploreCard = () => {
             The Blue Planet
           </CustomText>
         </View>
-        <TouchableOpacity
+        <DebouncedTouchableOpacity
           onPress={() => {
             router.push("/screens/quiz");
           }}
@@ -71,7 +72,7 @@ const ExploreCard = () => {
           }}
         >
           <MaterialIcons name="arrow-right-alt" size={24} color="white" />
-        </TouchableOpacity>
+        </DebouncedTouchableOpacity>
       </View>
     </ImageBackground>
   );

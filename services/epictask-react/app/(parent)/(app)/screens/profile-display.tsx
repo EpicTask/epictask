@@ -12,6 +12,7 @@ import {
   responsiveHeight,
   responsiveWidth,
 } from 'react-native-responsive-dimensions';
+import { Timestamp } from 'firebase/firestore';
 
 const ProfileDisplayScreen = () => {
   const { user } = useContext(AuthContext);
@@ -24,9 +25,9 @@ const ProfileDisplayScreen = () => {
     }, [user])
   );
 
-  const formatDate = (dateString: string) => {
-    if (!dateString) return 'Not available';
-    const date = new Date(dateString);
+  const formatDate = (dateParam: Timestamp) => {
+    if (!dateParam || typeof dateParam.toDate !== 'function') {return 'Not available';}
+    const date = dateParam.toDate();
     return date.toLocaleDateString('en-US', {
       year: 'numeric',
       month: 'long',
@@ -101,12 +102,12 @@ const ProfileDisplayScreen = () => {
             <View style={styles.separator} />
             <ProfileDetailItem 
               label="Account Type" 
-              value="Parent" 
+              value={currentUser?.role || 'Not specified'} 
             />
             <View style={styles.separator} />
             <ProfileDetailItem 
               label="Member Since" 
-              value={formatDate(currentUser?.metadata?.creationTime)} 
+              value={formatDate(currentUser?.dateCreated ? currentUser.dateCreated : '')} 
             />
           </View>
         </View>

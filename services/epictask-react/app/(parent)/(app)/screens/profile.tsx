@@ -11,6 +11,7 @@ import { COLORS } from '@/constants/Colors';
 import { ICONS, IMAGES } from '@/assets';
 import { router } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
+import { MediaType } from 'expo-image-picker';
 import {
   responsiveFontSize,
   responsiveHeight,
@@ -94,7 +95,7 @@ const ProfileScreen = () => {
 
       // Launch image picker
       const result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        mediaTypes: ['images'] as MediaType[],
         allowsEditing: true,
         aspect: [1, 1],
         quality: 0.8,

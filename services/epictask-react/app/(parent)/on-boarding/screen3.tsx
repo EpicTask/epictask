@@ -6,7 +6,6 @@ import {
   ScrollView,
   StyleSheet,
   Text,
-  TouchableOpacity,
   View,
 } from "react-native";
 import {
@@ -19,6 +18,7 @@ import { IMAGES } from "@/assets";
 import { router } from "expo-router";
 import { COLORS } from "@/constants/Colors";
 import { SafeAreaView } from "react-native-safe-area-context";
+import DebouncedTouchableOpacity from "@/components/buttons/DebouncedTouchableOpacity";
 
 const Screen3 = () => {
   return (
@@ -102,7 +102,7 @@ const Screen3 = () => {
                     paddingHorizontal: 20,
                   }}
                 >
-                  <TouchableOpacity
+                  <DebouncedTouchableOpacity
                     onPress={() => {
                       router.push("/(parent)/auth/login");
                     }}
@@ -116,8 +116,8 @@ const Screen3 = () => {
                     >
                       Skip
                     </Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity
+                  </DebouncedTouchableOpacity>
+                  <DebouncedTouchableOpacity
                     onPress={() => {
                       router.push("/(parent)/auth/login");
                     }}
@@ -135,7 +135,7 @@ const Screen3 = () => {
                     >
                       Next
                     </Text>
-                  </TouchableOpacity>
+                  </DebouncedTouchableOpacity>
                 </View>
               </View>
             </View>

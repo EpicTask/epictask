@@ -13,10 +13,10 @@ import {
   FlatList,
   StyleSheet,
   Text,
-  TouchableOpacity,
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import DebouncedTouchableOpacity from "@/components/buttons/DebouncedTouchableOpacity";
 
 const Transaction = ({ type }: { type: string }) => {
   return (
@@ -79,7 +79,7 @@ const Buttoncard = () => {
     >
       <View style={{ flexDirection: "row", justifyContent: "space-between" }}>
         <View style={{ alignItems: "center", gap: 4 }}>
-          <TouchableOpacity>
+          <DebouncedTouchableOpacity>
             <View
               style={{
                 backgroundColor: "#F6F6F6",
@@ -89,11 +89,11 @@ const Buttoncard = () => {
             >
               {ICONS.SETTINGS.WALLET.upload}
             </View>
-          </TouchableOpacity>
+          </DebouncedTouchableOpacity>
           <Text>Send</Text>
         </View>
         <View style={{ alignItems: "center", gap: 4 }}>
-          <TouchableOpacity>
+          <DebouncedTouchableOpacity>
             <View
               style={{
                 backgroundColor: "#F6F6F6",
@@ -103,11 +103,11 @@ const Buttoncard = () => {
             >
               {ICONS.SETTINGS.WALLET.download}
             </View>
-          </TouchableOpacity>
+          </DebouncedTouchableOpacity>
           <Text>Request</Text>
         </View>
         <View style={{ alignItems: "center", gap: 4 }}>
-          <TouchableOpacity>
+          <DebouncedTouchableOpacity>
             <View
               style={{
                 backgroundColor: "#F6F6F6",
@@ -117,7 +117,7 @@ const Buttoncard = () => {
             >
               {ICONS.SETTINGS.WALLET.transfer}
             </View>
-          </TouchableOpacity>
+          </DebouncedTouchableOpacity>
           <Text>Transfer</Text>
         </View>
       </View>

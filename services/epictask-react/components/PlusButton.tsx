@@ -1,11 +1,12 @@
-import { StyleSheet, Text, TouchableOpacity } from "react-native";
+import { StyleSheet, Text } from "react-native";
 import React from "react";
 import { COLORS } from "@/constants/Colors";
 import { responsiveWidth } from "react-native-responsive-dimensions";
+import DebouncedTouchableOpacity from "./buttons/DebouncedTouchableOpacity";
 
 const PlusButton = ({ onPress }: { onPress?: () => void }) => {
   return (
-    <TouchableOpacity
+    <DebouncedTouchableOpacity
       onPress={onPress}
       style={{
         width: 30,
@@ -27,7 +28,7 @@ const PlusButton = ({ onPress }: { onPress?: () => void }) => {
       >
         +
       </Text>
-    </TouchableOpacity>
+    </DebouncedTouchableOpacity>
   );
 };
 

@@ -17,6 +17,7 @@ import { COLORS } from "@/constants/Colors";
 import { Fontisto } from "@expo/vector-icons";
 import CustomText from "@/components/CustomText";
 import { useAuth } from "@/context/AuthContext";
+import DebouncedTouchableOpacity from "@/components/buttons/DebouncedTouchableOpacity";
 
 const Register = () => {
   const [radio, toggleRadio] = useState(false);
@@ -212,14 +213,14 @@ const Register = () => {
                 alignItems: "center",
               }}
             >
-              <TouchableOpacity style={styles.sso}>
+              <DebouncedTouchableOpacity style={styles.sso}>
                 {ICONS.google}
                 <CustomText>Google</CustomText>
-              </TouchableOpacity>
-              <TouchableOpacity style={styles.sso}>
+              </DebouncedTouchableOpacity>
+              <DebouncedTouchableOpacity style={styles.sso}>
                 {ICONS.apple}
                 <CustomText>Apple</CustomText>
-              </TouchableOpacity>
+              </DebouncedTouchableOpacity>
             </View>
           </View>
         </View>

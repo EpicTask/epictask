@@ -7,8 +7,9 @@ import {
 } from "react-native-responsive-dimensions";
 
 import { COLORS } from "@/constants/Colors";
-import { StyleSheet, TouchableOpacity, View } from "react-native";
+import { StyleSheet, View } from "react-native";
 import CustomText from "../CustomText";
+import DebouncedTouchableOpacity from "./DebouncedTouchableOpacity";
 
 const AuthButton = ({
   text,
@@ -22,7 +23,7 @@ const AuthButton = ({
   height?: number;
 }) => {
   return (
-    <TouchableOpacity
+    <DebouncedTouchableOpacity
       onPress={onPress}
       style={{
         flexDirection: "row",
@@ -53,7 +54,7 @@ const AuthButton = ({
           {text}
         </CustomText>
       </View>
-    </TouchableOpacity>
+    </DebouncedTouchableOpacity>
   );
 };
 

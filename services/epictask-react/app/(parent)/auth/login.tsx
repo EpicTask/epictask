@@ -19,6 +19,7 @@ import {
 import { responsiveFontSize } from "react-native-responsive-dimensions";
 import CustomText from "@/components/CustomText";
 import { useAuth } from "@/context/AuthContext";
+import DebouncedTouchableOpacity from "@/components/buttons/DebouncedTouchableOpacity";
 
 const Login = () => {
   const [password, setPassword] = useState("");
@@ -108,7 +109,7 @@ const Login = () => {
                   </CustomText>
                 </TouchableOpacity>
               </View>
-              <TouchableOpacity
+              <DebouncedTouchableOpacity
                 style={{ flexDirection: "row", gap: 4 }}
                 onPress={() => {
                   router.push("/auth/register" as any);
@@ -127,7 +128,7 @@ const Login = () => {
                 >
                   SignUp
                 </CustomText>
-              </TouchableOpacity>
+              </DebouncedTouchableOpacity>
             </View>
             <View style={{ gap: 10, width: "100%" }}>
               <View
@@ -152,14 +153,14 @@ const Login = () => {
                   alignItems: "center",
                 }}
               >
-                <TouchableOpacity style={styles.sso} onPress={() => {}}>
+                <DebouncedTouchableOpacity style={styles.sso} onPress={() => {}}>
                   {ICONS.google}
                   <CustomText>Google</CustomText>
-                </TouchableOpacity>
-                <TouchableOpacity style={styles.sso}>
+                </DebouncedTouchableOpacity>
+                <DebouncedTouchableOpacity style={styles.sso}>
                   {ICONS.apple}
                   <CustomText>Apple</CustomText>
-                </TouchableOpacity>
+                </DebouncedTouchableOpacity>
               </View>
             </View>
           </View>

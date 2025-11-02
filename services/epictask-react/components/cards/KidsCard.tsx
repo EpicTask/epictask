@@ -6,7 +6,8 @@ import { useRouter } from "expo-router";
 import { COLORS } from "@/constants/Colors";
 import { responsiveHeight } from "react-native-responsive-dimensions";
 import { AntDesign, MaterialCommunityIcons } from "@expo/vector-icons";
-import { View, Text, Image, StyleSheet, TouchableOpacity } from "react-native";
+import { View, Text, Image, StyleSheet } from "react-native";
+import DebouncedTouchableOpacity from "../buttons/DebouncedTouchableOpacity";
 import CustomText from "../CustomText";
 
 interface KidsCardProps {
@@ -28,7 +29,7 @@ const KidsCard: React.FC<KidsCardProps> = ({
 }) => {
   const router = useRouter();
   return (
-    <TouchableOpacity
+    <DebouncedTouchableOpacity
       style={{ flex: 1 }}
       onPress={() => {
         const params = new URLSearchParams({
@@ -64,7 +65,7 @@ const KidsCard: React.FC<KidsCardProps> = ({
         <Divider />
         <View style={styles.statsContainer}>
           <View style={styles.statRow}>
-            <AntDesign name="checkcircle" size={14} color="#929292" />
+            <AntDesign name="check-circle" size={14} color="#929292" />
             <CustomText variant="medium" style={styles.statText}>{completed} Completed</CustomText>
           </View>
           <View style={styles.statRow}>
@@ -73,7 +74,7 @@ const KidsCard: React.FC<KidsCardProps> = ({
           </View>
         </View>
       </View>
-    </TouchableOpacity>
+    </DebouncedTouchableOpacity>
   );
 };
 

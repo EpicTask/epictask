@@ -15,6 +15,7 @@ import {
 import { COLORS } from '@/constants/Colors';
 import CustomText from '@/components/CustomText';
 import { MaterialIcons, FontAwesome5, AntDesign } from '@expo/vector-icons';
+import DebouncedTouchableOpacity from '../buttons/DebouncedTouchableOpacity';
 
 interface KidData {
   user_id: string;
@@ -143,7 +144,7 @@ const KidRewardsView: React.FC<Props> = ({ kidData, onAchievementPress }) => {
       {/* Hero Section with Avatar and Level */}
       <View style={styles.heroSection}>
         <View style={styles.avatarContainer}>
-          <TouchableOpacity onPress={handleLevelPress} activeOpacity={0.8}>
+          <DebouncedTouchableOpacity onPress={handleLevelPress} activeOpacity={0.8}>
             <Animated.View
               style={[
                 styles.avatarCircle,
@@ -152,7 +153,7 @@ const KidRewardsView: React.FC<Props> = ({ kidData, onAchievementPress }) => {
             >
               <Text style={styles.levelEmoji}>{getLevelIcon(kidData.kid_data.level)}</Text>
             </Animated.View>
-          </TouchableOpacity>
+          </DebouncedTouchableOpacity>
           <View style={styles.levelBadge}>
             <CustomText variant="bold" style={styles.levelText}>
               {kidData.kid_data.level}

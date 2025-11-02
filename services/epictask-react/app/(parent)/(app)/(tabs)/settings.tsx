@@ -13,6 +13,7 @@ import { Image, StyleSheet, Text, TouchableOpacity, View, Alert, ScrollView } fr
 import CustomText from "@/components/CustomText";
 import { AuthContext } from "@/context/AuthContext";
 import { isAuthorizedTestUser } from "@/constants/TestingConfig";
+import DebouncedTouchableOpacity from "@/components/buttons/DebouncedTouchableOpacity";
 
 const ProfileCard = () => {
   const { user } = useContext(AuthContext);
@@ -40,13 +41,13 @@ const ProfileCard = () => {
           {user?.displayName || 'Joshua Smith'}
         </CustomText>
       </View>
-      <TouchableOpacity
+      <DebouncedTouchableOpacity
         onPress={() => {
           router.push("/(parent)/(app)/screens/profile" as any);
         }}
       >
         {ICONS.edit}
-      </TouchableOpacity>
+      </DebouncedTouchableOpacity>
     </View>
   );
 };
@@ -61,7 +62,7 @@ const SettingButton = ({
   icon: ReactNode;
 }) => {
   return (
-    <TouchableOpacity onPress={onPress}>
+    <DebouncedTouchableOpacity onPress={onPress}>
       <View
         style={{
           flexDirection: "row",
@@ -83,7 +84,7 @@ const SettingButton = ({
         </View>
         <MaterialIcons name="keyboard-arrow-right" size={20} color="black" />
       </View>
-    </TouchableOpacity>
+    </DebouncedTouchableOpacity>
   );
 };
 

@@ -18,7 +18,8 @@ import {
   responsiveHeight,
   responsiveWidth,
 } from 'react-native-responsive-dimensions';
-import { Timestamp } from '@react-native-firebase/firestore';
+import { Timestamp } from 'firebase/firestore';
+import DebouncedTouchableOpacity from '../buttons/DebouncedTouchableOpacity';
 
 interface Task {
   task_title?: string;
@@ -247,15 +248,15 @@ export const TaskActionModal: React.FC<TaskActionModalProps> = ({
         </View>
 
         <View style={styles.actionButtons}>
-          <TouchableOpacity
+          <DebouncedTouchableOpacity
             style={[styles.actionButton, styles.deleteButton]}
             onPress={handleDelete}
           >
             <Ionicons name="trash-outline" size={20} color="#FFFFFF" />
             <Text style={styles.deleteButtonText}>Delete Task</Text>
-          </TouchableOpacity>
+          </DebouncedTouchableOpacity>
 
-          <TouchableOpacity
+          <DebouncedTouchableOpacity
             style={[styles.actionButton, styles.saveButton]}
             onPress={handleSave}
             disabled={loading}
@@ -264,7 +265,7 @@ export const TaskActionModal: React.FC<TaskActionModalProps> = ({
             <Text style={styles.saveButtonText}>
               {loading ? 'Saving...' : 'Save Changes'}
             </Text>
-          </TouchableOpacity>
+          </DebouncedTouchableOpacity>
         </View>
       </View>
     </ScrollView>

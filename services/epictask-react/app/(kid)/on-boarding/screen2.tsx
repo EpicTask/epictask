@@ -10,6 +10,7 @@ import { IMAGES } from "@/assets";
 import CustomText from "@/components/CustomText";
 import { COLORS } from "@/constants/Colors";
 import { router } from "expo-router";
+import DebouncedTouchableOpacity from "@/components/buttons/DebouncedTouchableOpacity";
 
 const Screen2 = () => {
   return (
@@ -81,7 +82,7 @@ const Screen2 = () => {
                 paddingHorizontal: 20,
               }}
             >
-              <TouchableOpacity
+              <DebouncedTouchableOpacity
                 onPress={() => {
                   router.push("/(kid)/auth/login");
                 }}
@@ -95,8 +96,8 @@ const Screen2 = () => {
                 >
                   Skip
                 </Text>
-              </TouchableOpacity>
-              <TouchableOpacity
+              </DebouncedTouchableOpacity>
+              <DebouncedTouchableOpacity
                 onPress={() => {
                   router.push("/(kid)/on-boarding/screen3");
                 }}
@@ -114,7 +115,7 @@ const Screen2 = () => {
                 >
                   Next
                 </Text>
-              </TouchableOpacity>
+              </DebouncedTouchableOpacity>
             </View>
           </View>
         </View>

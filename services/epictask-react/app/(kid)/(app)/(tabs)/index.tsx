@@ -26,6 +26,7 @@ import {
 import apiClient from "@/api/apiClient";
 import MicroserviceUrls from "@/constants/Microservices";
 import { Task } from "@/constants/Interfaces";
+import DebouncedTouchableOpacity from "@/components/buttons/DebouncedTouchableOpacity";
 
 const fetchTasks = async () => {
   const { data } = await apiClient.get(
@@ -190,7 +191,7 @@ export default function HomeScreen() {
               >
                 Upcoming Tasks
               </CustomText>
-              <TouchableOpacity onPress={() => router.push("/screens/task")}>
+              <DebouncedTouchableOpacity onPress={() => router.push("/screens/task")}>
                 <CustomText
                   style={{
                     fontSize: responsiveFontSize(2),
@@ -200,7 +201,7 @@ export default function HomeScreen() {
                 >
                   See All
                 </CustomText>
-              </TouchableOpacity>
+              </DebouncedTouchableOpacity>
             </View>
             {tasks.length > 0 ? (
               tasks.map((task: Task, index: number) => (
