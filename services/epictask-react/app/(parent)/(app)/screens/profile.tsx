@@ -1,23 +1,31 @@
-import React, { useContext, useState } from 'react';
-import { View, StyleSheet, Alert, FlatList, ScrollView, TouchableOpacity, Image } from 'react-native';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { AuthContext } from '@/context/AuthContext';
-import apiClient from '@/api/apiClient';
-import CustomText from '@/components/CustomText';
-import SafeArea from '@/components/SafeArea';
-import CustomInput from '@/components/custom-input/CustomInput';
-import AuthButton from '@/components/buttons/AuthButton';
-import { COLORS } from '@/constants/Colors';
-import { ICONS, IMAGES } from '@/assets';
-import { router } from 'expo-router';
-import * as ImagePicker from 'expo-image-picker';
-import { MediaType } from 'expo-image-picker';
+import React, { useContext, useState } from "react";
+import {
+  View,
+  StyleSheet,
+  Alert,
+  FlatList,
+  ScrollView,
+  TouchableOpacity,
+  Image,
+} from "react-native";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { AuthContext } from "@/context/AuthContext";
+import userApiClient from "@/api/userService";
+import CustomText from "@/components/CustomText";
+import SafeArea from "@/components/SafeArea";
+import CustomInput from "@/components/custom-input/CustomInput";
+import AuthButton from "@/components/buttons/AuthButton";
+import { COLORS } from "@/constants/Colors";
+import { ICONS, IMAGES } from "@/assets";
+import { router } from "expo-router";
+import * as ImagePicker from "expo-image-picker";
+import { MediaType } from "expo-image-picker";
 import {
   responsiveFontSize,
   responsiveHeight,
   responsiveWidth,
-} from 'react-native-responsive-dimensions';
-import { firestoreService } from '@/api/firestoreService';
+} from "react-native-responsive-dimensions";
+import { firestoreService } from "@/api/firestoreService";
 
 const fetchLinkedChildren = async (uid: string) => {
   try {
@@ -27,7 +35,7 @@ const fetchLinkedChildren = async (uid: string) => {
     }
     return [];
   } catch (error) {
-    console.error('Error fetching linked children:', error);
+    console.error("Error fetching linked children:", error);
     return [];
   }
 };
@@ -35,47 +43,55 @@ const fetchLinkedChildren = async (uid: string) => {
 const ProfileScreen = () => {
   const { user, setUser } = useContext(AuthContext);
   const queryClient = useQueryClient();
-  const [displayName, setDisplayName] = useState(user?.displayName || '');
-  const [inviteCode, setInviteCode] = useState('');
+  const [displayName, setDisplayName] = useState(user?.displayName || "");
+  const [inviteCode, setInviteCode] = useState("");
   const [profileImage, setProfileImage] = useState(user?.imageUrl || null);
 
   const { data: children, isLoading: isLoadingChildren } = useQuery({
-    queryKey: ['linkedChildren', user?.uid],
-    queryFn: () => fetchLinkedChildren(user?.uid || ''),
+    queryKey: ["linkedChildren", user?.uid],
+    queryFn: () => fetchLinkedChildren(user?.uid || ""),
     enabled: !!user?.uid,
   });
 
   const updateProfileMutation = useMutation({
-    mutationFn: (updatedProfile: { displayName: string; imageUrl?: string }) => apiClient.put('/profileUpdate', updatedProfile),
+    mutationFn: (updatedProfile: { displayName: string; imageUrl?: string }) =>
+      userApiClient.put("/profileUpdate", updatedProfile),
     onSuccess: (data) => {
       setUser({ ...user, ...data.data });
-      Alert.alert('Success', 'Profile updated successfully.');
-      queryClient.invalidateQueries({ queryKey: ['profile'] });
+      Alert.alert("Success", "Profile updated successfully.");
+      queryClient.invalidateQueries({ queryKey: ["profile"] });
     },
     onError: (error: any) => {
-      Alert.alert('Error', error.response?.data?.error || 'Failed to update profile.');
+      Alert.alert(
+        "Error",
+        error.response?.data?.error || "Failed to update profile."
+      );
     },
   });
 
   const linkChildMutation = useMutation({
-    mutationFn: (code: string) => apiClient.post('/users/link-child', { inviteCode: code }),
+    mutationFn: (code: string) =>
+      userApiClient.post("/users/link-child", { inviteCode: code }),
     onSuccess: () => {
-      Alert.alert('Success', 'Child account linked successfully.');
-      queryClient.invalidateQueries({ queryKey: ['linkedChildren'] });
-      setInviteCode('');
+      Alert.alert("Success", "Child account linked successfully.");
+      queryClient.invalidateQueries({ queryKey: ["linkedChildren"] });
+      setInviteCode("");
     },
     onError: (error: any) => {
-      Alert.alert('Error', error.response?.data?.error || 'Failed to link child account.');
+      Alert.alert(
+        "Error",
+        error.response?.data?.error || "Failed to link child account."
+      );
     },
   });
 
   const handleUpdateProfile = () => {
     if (!displayName.trim()) {
-      Alert.alert('Error', 'Please enter a display name');
+      Alert.alert("Error", "Please enter a display name");
       return;
     }
-    const updateData: { displayName: string; imageUrl?: string } = { 
-      displayName: displayName.trim() 
+    const updateData: { displayName: string; imageUrl?: string } = {
+      displayName: displayName.trim(),
     };
     if (profileImage && profileImage !== user?.imageUrl) {
       updateData.imageUrl = profileImage;
@@ -86,16 +102,20 @@ const ProfileScreen = () => {
   const pickImage = async () => {
     try {
       // Request permission
-      const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
-      
+      const permissionResult =
+        await ImagePicker.requestMediaLibraryPermissionsAsync();
+
       if (permissionResult.granted === false) {
-        Alert.alert('Permission Required', 'Permission to access camera roll is required!');
+        Alert.alert(
+          "Permission Required",
+          "Permission to access camera roll is required!"
+        );
         return;
       }
 
       // Launch image picker
       const result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ['images'] as MediaType[],
+        mediaTypes: ["images"] as MediaType[],
         allowsEditing: true,
         aspect: [1, 1],
         quality: 0.8,
@@ -105,17 +125,21 @@ const ProfileScreen = () => {
         setProfileImage(result.assets[0].uri);
       }
     } catch (error) {
-      Alert.alert('Error', 'Failed to pick image');
+      Alert.alert("Error", "Failed to pick image");
     }
   };
 
   const takePhoto = async () => {
     try {
       // Request permission
-      const permissionResult = await ImagePicker.requestCameraPermissionsAsync();
-      
+      const permissionResult =
+        await ImagePicker.requestCameraPermissionsAsync();
+
       if (permissionResult.granted === false) {
-        Alert.alert('Permission Required', 'Permission to access camera is required!');
+        Alert.alert(
+          "Permission Required",
+          "Permission to access camera is required!"
+        );
         return;
       }
 
@@ -130,25 +154,25 @@ const ProfileScreen = () => {
         setProfileImage(result.assets[0].uri);
       }
     } catch (error) {
-      Alert.alert('Error', 'Failed to take photo');
+      Alert.alert("Error", "Failed to take photo");
     }
   };
 
   const showImageOptions = () => {
     Alert.alert(
-      'Select Profile Picture',
-      'Choose how you want to select your profile picture',
+      "Select Profile Picture",
+      "Choose how you want to select your profile picture",
       [
-        { text: 'Camera', onPress: takePhoto },
-        { text: 'Photo Library', onPress: pickImage },
-        { text: 'Cancel', style: 'cancel' },
+        { text: "Camera", onPress: takePhoto },
+        { text: "Photo Library", onPress: pickImage },
+        { text: "Cancel", style: "cancel" },
       ]
     );
   };
 
   const handleLinkChild = () => {
     if (!inviteCode.trim()) {
-      Alert.alert('Error', 'Please enter an invite code');
+      Alert.alert("Error", "Please enter an invite code");
       return;
     }
     linkChildMutation.mutate(inviteCode.trim());
@@ -170,7 +194,10 @@ const ProfileScreen = () => {
 
   return (
     <SafeArea>
-      <ScrollView showsVerticalScrollIndicator={false} style={styles.scrollView}>
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        style={styles.scrollView}
+      >
         {/* Header */}
         <View style={styles.header}>
           <TouchableOpacity
@@ -179,10 +206,7 @@ const ProfileScreen = () => {
           >
             {ICONS.back_arrow}
           </TouchableOpacity>
-          <CustomText
-            variant="semiBold"
-            style={styles.headerTitle}
-          >
+          <CustomText variant="semiBold" style={styles.headerTitle}>
             Edit Profile
           </CustomText>
         </View>
@@ -192,19 +216,20 @@ const ProfileScreen = () => {
           <CustomText variant="semiBold" style={styles.sectionTitle}>
             Profile Information
           </CustomText>
-          
+
           <View style={styles.card}>
             {/* Profile Image Section */}
             <View style={styles.imageSection}>
-              <TouchableOpacity onPress={showImageOptions} style={styles.imageContainer}>
+              <TouchableOpacity
+                onPress={showImageOptions}
+                style={styles.imageContainer}
+              >
                 <Image
                   source={profileImage ? { uri: profileImage } : IMAGES.profile}
                   style={styles.editProfileImage}
                 />
                 <View style={styles.imageOverlay}>
-                  <View style={styles.cameraIcon}>
-                    {ICONS.edit}
-                  </View>
+                  <View style={styles.cameraIcon}>{ICONS.edit}</View>
                 </View>
               </TouchableOpacity>
               <CustomText variant="medium" style={styles.imageHint}>
@@ -218,13 +243,21 @@ const ProfileScreen = () => {
               value={displayName}
               onChangeText={setDisplayName}
             />
-            
+
             <View style={styles.buttonContainer}>
               <AuthButton
                 fill={true}
-                text={updateProfileMutation.isPending ? "Updating..." : "Update Profile"}
+                text={
+                  updateProfileMutation.isPending
+                    ? "Updating..."
+                    : "Update Profile"
+                }
                 height={responsiveHeight(6)}
-                onPress={updateProfileMutation.isPending ? () => {} : handleUpdateProfile}
+                onPress={
+                  updateProfileMutation.isPending
+                    ? () => {}
+                    : handleUpdateProfile
+                }
               />
             </View>
           </View>
@@ -242,13 +275,17 @@ const ProfileScreen = () => {
               value={inviteCode}
               onChangeText={setInviteCode}
             />
-            
+
             <View style={styles.buttonContainer}>
               <AuthButton
                 fill={false}
-                text={linkChildMutation.isPending ? "Linking..." : "Link Account"}
+                text={
+                  linkChildMutation.isPending ? "Linking..." : "Link Account"
+                }
                 height={responsiveHeight(6)}
-                onPress={linkChildMutation.isPending ? () => {} : handleLinkChild}
+                onPress={
+                  linkChildMutation.isPending ? () => {} : handleLinkChild
+                }
               />
             </View>
           </View>
@@ -297,8 +334,8 @@ const styles = StyleSheet.create({
     marginBottom: responsiveHeight(5),
   },
   header: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     paddingVertical: responsiveHeight(2),
     marginBottom: responsiveHeight(1),
   },
@@ -317,14 +354,14 @@ const styles = StyleSheet.create({
     fontSize: responsiveFontSize(2.5),
     color: COLORS.black,
     marginBottom: responsiveHeight(1.5),
-    fontWeight: '600',
+    fontWeight: "600",
   },
   imageSection: {
-    alignItems: 'center',
+    alignItems: "center",
     marginBottom: responsiveHeight(2.5),
   },
   imageContainer: {
-    position: 'relative',
+    position: "relative",
     marginBottom: responsiveHeight(1),
   },
   editProfileImage: {
@@ -335,7 +372,7 @@ const styles = StyleSheet.create({
     borderColor: COLORS.primary,
   },
   imageOverlay: {
-    position: 'absolute',
+    position: "absolute",
     bottom: 0,
     right: 0,
     backgroundColor: COLORS.white,
@@ -347,20 +384,20 @@ const styles = StyleSheet.create({
   cameraIcon: {
     width: responsiveWidth(6),
     height: responsiveWidth(6),
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
   },
   imageHint: {
     fontSize: responsiveFontSize(1.8),
     color: COLORS.grey,
-    textAlign: 'center',
+    textAlign: "center",
   },
   card: {
     backgroundColor: COLORS.white,
     borderRadius: 20,
     paddingVertical: responsiveHeight(2.5),
     paddingHorizontal: responsiveWidth(5),
-    shadowColor: '#000',
+    shadowColor: "#000",
     shadowOffset: {
       width: 0,
       height: 2,
@@ -371,17 +408,17 @@ const styles = StyleSheet.create({
   },
   buttonContainer: {
     marginTop: responsiveHeight(2),
-    width: '100%',
+    width: "100%",
   },
   childItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
     paddingVertical: responsiveHeight(1.5),
   },
   childInfo: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     gap: responsiveWidth(3),
   },
   childAvatar: {
@@ -392,15 +429,15 @@ const styles = StyleSheet.create({
   childName: {
     fontSize: responsiveFontSize(2.2),
     color: COLORS.black,
-    fontWeight: '500',
+    fontWeight: "500",
   },
   separator: {
     height: 1,
-    backgroundColor: '#00000010',
+    backgroundColor: "#00000010",
     marginVertical: responsiveHeight(0.5),
   },
   loadingContainer: {
-    alignItems: 'center',
+    alignItems: "center",
     paddingVertical: responsiveHeight(2),
   },
   loadingText: {
@@ -408,7 +445,7 @@ const styles = StyleSheet.create({
     color: COLORS.grey,
   },
   emptyContainer: {
-    alignItems: 'center',
+    alignItems: "center",
     paddingVertical: responsiveHeight(3),
   },
   emptyText: {
@@ -419,7 +456,7 @@ const styles = StyleSheet.create({
   emptySubtext: {
     fontSize: responsiveFontSize(1.8),
     color: COLORS.grey,
-    textAlign: 'center',
+    textAlign: "center",
   },
 });
 

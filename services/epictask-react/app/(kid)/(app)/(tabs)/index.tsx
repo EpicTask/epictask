@@ -23,13 +23,13 @@ import {
   responsiveHeight,
   responsiveWidth,
 } from "react-native-responsive-dimensions";
-import apiClient from "@/api/apiClient";
+import userApiClient from "@/api/userService";
 import MicroserviceUrls from "@/constants/Microservices";
 import { Task } from "@/constants/Interfaces";
 import DebouncedTouchableOpacity from "@/components/buttons/DebouncedTouchableOpacity";
 
 const fetchTasks = async () => {
-  const { data } = await apiClient.get(
+  const { data } = await userApiClient.get(
     `${MicroserviceUrls.taskManagement}/tasks?user_id=kid_user_id`
   ); // Replace with actual user_id
   if (Array.isArray(data)) {
@@ -160,7 +160,10 @@ export default function HomeScreen() {
                       variant="semiBold"
                       style={[styles.completedText, { fontSize: 14 }]}
                     >
-                      {tasks.reduce((acc, task: Task) => acc + task.reward_amount, 0)}{" "}
+                      {tasks.reduce(
+                        (acc: number, task: Task) => acc + (task.reward_amount || 0),
+                        0
+                      )}{" "}
                       Stars!
                     </CustomText>
                   </View>
@@ -191,7 +194,9 @@ export default function HomeScreen() {
               >
                 Upcoming Tasks
               </CustomText>
-              <DebouncedTouchableOpacity onPress={() => router.push("/screens/task")}>
+              <DebouncedTouchableOpacity
+                onPress={() => router.push("/screens/task")}
+              >
                 <CustomText
                   style={{
                     fontSize: responsiveFontSize(2),

@@ -1,10 +1,10 @@
-import apiClient from "./apiClient";
+import userApiClient from "./userService";
 import { auth } from "../config/firebaseConfig";
-import { 
-  createUserWithEmailAndPassword, 
-  signInWithEmailAndPassword, 
-  signOut, 
-  updateProfile 
+import {
+  createUserWithEmailAndPassword,
+  signInWithEmailAndPassword,
+  signOut,
+  updateProfile,
 } from "firebase/auth";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { firestoreService } from "../api/firestoreService";
@@ -14,9 +14,13 @@ export const authService = {
   register: async (email, password, displayName, role = "child") => {
     try {
       // Register directly with Firebase Auth
-      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+      const userCredential = await createUserWithEmailAndPassword(
+        auth,
+        email,
+        password
+      );
       const user = userCredential.user;
-      
+
       // Update the user's display name
       await updateProfile(user, {
         displayName: displayName,
@@ -32,8 +36,11 @@ export const authService = {
         displayName: displayName,
         role: role,
       };
-      
-      const createProfileResult = await firestoreService.createUserProfile(user.uid, userData);
+
+      const createProfileResult = await firestoreService.createUserProfile(
+        user.uid,
+        userData
+      );
       if (!createProfileResult.success) {
         throw new Error("Failed to create user profile in database");
       }
@@ -50,23 +57,23 @@ export const authService = {
       };
     } catch (error) {
       console.error("Registration error:", error);
-      
+
       // Handle Firebase Auth specific errors
       if (error.code) {
         switch (error.code) {
-          case 'auth/email-already-in-use':
+          case "auth/email-already-in-use":
             throw new Error("An account with this email already exists");
-          case 'auth/invalid-email':
+          case "auth/invalid-email":
             throw new Error("Invalid email address");
-          case 'auth/weak-password':
+          case "auth/weak-password":
             throw new Error("Password should be at least 6 characters");
-          case 'auth/network-request-failed':
+          case "auth/network-request-failed":
             throw new Error("Network error. Please check your connection");
           default:
             throw new Error(error.message || "Registration failed");
         }
       }
-      
+
       throw new Error(error.message || "Registration failed");
     }
   },
@@ -96,7 +103,10 @@ export const authService = {
         };
       } else {
         // If profile fetch fails, return basic Firebase user info
-        console.warn("Profile fetch failed, using basic Firebase user info:", profileResponse.error);
+        console.warn(
+          "Profile fetch failed, using basic Firebase user info:",
+          profileResponse.error
+        );
         return {
           success: true,
           user: {
@@ -109,29 +119,31 @@ export const authService = {
       }
     } catch (error) {
       console.error("Login error:", error);
-      
+
       // Handle Firebase Auth specific errors
       if (error.code) {
         switch (error.code) {
-          case 'auth/user-not-found':
+          case "auth/user-not-found":
             throw new Error("No account found with this email address");
-          case 'auth/wrong-password':
+          case "auth/wrong-password":
             throw new Error("Incorrect password");
-          case 'auth/invalid-email':
+          case "auth/invalid-email":
             throw new Error("Invalid email address");
-          case 'auth/user-disabled':
+          case "auth/user-disabled":
             throw new Error("This account has been disabled");
-          case 'auth/too-many-requests':
+          case "auth/too-many-requests":
             throw new Error("Too many failed attempts. Please try again later");
-          case 'auth/network-request-failed':
+          case "auth/network-request-failed":
             throw new Error("Network error. Please check your connection");
           default:
             throw new Error(error.message || "Login failed");
         }
       }
-      
+
       // Handle API errors
-      throw new Error(error.response?.data?.error || error.message || "Login failed");
+      throw new Error(
+        error.response?.data?.error || error.message || "Login failed"
+      );
     }
   },
 
@@ -140,10 +152,10 @@ export const authService = {
     try {
       await signOut(auth);
       await AsyncStorage.removeItem("authToken");
-      
+
       // Clear all caches on logout to prevent data leakage
       firestoreService.cache.clear();
-      
+
       return { success: true };
     } catch (error) {
       console.error("Logout error:", error);
@@ -169,7 +181,7 @@ export const authService = {
   // Update user profile
   updateProfile: async (profileData) => {
     try {
-      const response = await apiClient.put("/profileUpdate", profileData);
+      const response = await userApiClient.put("/profileUpdate", profileData);
       return response.data;
     } catch (error) {
       console.error("Update profile error:", error);
@@ -180,7 +192,7 @@ export const authService = {
   // Generate invite code (for kids)
   generateInviteCode: async () => {
     try {
-      const response = await apiClient.post("/users/generate-invite-code");
+      const response = await userApiClient.post("/users/generate-invite-code");
       return response.data;
     } catch (error) {
       console.error("Generate invite code error:", error);
@@ -191,7 +203,7 @@ export const authService = {
   // Link child account (for parents)
   linkChild: async (inviteCode) => {
     try {
-      const response = await apiClient.post("/users/link-child", {
+      const response = await userApiClient.post("/users/link-child", {
         inviteCode,
       });
       return response.data;
@@ -205,7 +217,9 @@ export const authService = {
   createPendingInvite: async (parentId, childData) => {
     try {
       // Generate invite code using existing user management service
-      const inviteResponse = await apiClient.post("/users/generate-invite-code");
+      const inviteResponse = await userApiClient.post(
+        "/users/generate-invite-code"
+      );
       const inviteCode = inviteResponse.data.inviteCode;
 
       // Create pending invite in Firestore
@@ -219,12 +233,14 @@ export const authService = {
         pin_hash: childData.pinHash, // Should be hashed before calling this method
         invite_code: inviteCode,
         created_at: new Date().toISOString(),
-        expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(), // 7 days
-        status: 'pending'
+        expires_at: new Date(
+          Date.now() + 7 * 24 * 60 * 60 * 1000
+        ).toISOString(), // 7 days
+        status: "pending",
       };
 
       const result = await firestoreService.createPendingInvite(pendingInvite);
-      
+
       if (result.success) {
         // Send email invite (this would integrate with your email service)
         // For now, we'll just return the invite code to be handled by the UI
@@ -232,7 +248,7 @@ export const authService = {
           success: true,
           inviteCode: inviteCode,
           pendingInviteId: result.pendingInviteId,
-          message: "Invite created successfully"
+          message: "Invite created successfully",
         };
       } else {
         throw new Error(result.error);
@@ -262,26 +278,26 @@ export const authService = {
         // Check if invite has expired
         const expiresAt = new Date(result.pendingInvite.expires_at);
         const now = new Date();
-        
+
         if (now > expiresAt) {
           return {
             success: false,
-            error: "Invite code has expired"
+            error: "Invite code has expired",
           };
         }
-        
-        if (result.pendingInvite.status !== 'pending') {
+
+        if (result.pendingInvite.status !== "pending") {
           return {
             success: false,
-            error: "Invite code has already been used"
+            error: "Invite code has already been used",
           };
         }
-        
+
         return result;
       } else {
         return {
           success: false,
-          error: "Invalid invite code"
+          error: "Invalid invite code",
         };
       }
     } catch (error) {
@@ -300,15 +316,15 @@ export const authService = {
       }
 
       const pendingInvite = inviteResult.pendingInvite;
-      
+
       // Register the child with Firebase Auth
       const userCredential = await createUserWithEmailAndPassword(
-        auth, 
-        pendingInvite.child_email, 
+        auth,
+        pendingInvite.child_email,
         password
       );
       const user = userCredential.user;
-      
+
       // Update the user's display name
       await updateProfile(user, {
         displayName: pendingInvite.child_name,
@@ -330,16 +346,19 @@ export const authService = {
         parent_id: pendingInvite.parent_id,
         device_sharing_enabled: pendingInvite.age < 16,
         created_at: new Date().toISOString(),
-        updatedAt: new Date().toISOString()
+        updatedAt: new Date().toISOString(),
       };
-      
-      const createProfileResult = await firestoreService.createUserProfile(user.uid, userData);
+
+      const createProfileResult = await firestoreService.createUserProfile(
+        user.uid,
+        userData
+      );
       if (!createProfileResult.success) {
         throw new Error("Failed to create user profile in database");
       }
 
       // Update pending invite status to completed
-      await firestoreService.updateInviteStatus(pendingInvite.id, 'completed');
+      await firestoreService.updateInviteStatus(pendingInvite.id, "completed");
 
       // Link child to parent automatically
       await authService.linkChild(inviteCode);
@@ -354,29 +373,29 @@ export const authService = {
           age: pendingInvite.age,
           grade_level: pendingInvite.grade_level,
           parent_id: pendingInvite.parent_id,
-          device_sharing_enabled: pendingInvite.age < 16
+          device_sharing_enabled: pendingInvite.age < 16,
         },
         token,
       };
     } catch (error) {
       console.error("Complete child registration error:", error);
-      
+
       // Handle Firebase Auth specific errors
       if (error.code) {
         switch (error.code) {
-          case 'auth/email-already-in-use':
+          case "auth/email-already-in-use":
             throw new Error("An account with this email already exists");
-          case 'auth/invalid-email':
+          case "auth/invalid-email":
             throw new Error("Invalid email address");
-          case 'auth/weak-password':
+          case "auth/weak-password":
             throw new Error("Password should be at least 6 characters");
-          case 'auth/network-request-failed':
+          case "auth/network-request-failed":
             throw new Error("Network error. Please check your connection");
           default:
             throw new Error(error.message || "Registration failed");
         }
       }
-      
+
       throw new Error(error.message || "Registration failed");
     }
   },
@@ -392,11 +411,14 @@ export const authService = {
       const result = await firestoreService.verifyChildPIN(childId, pin);
       if (result.success) {
         // Store child context in session
-        await AsyncStorage.setItem("childContext", JSON.stringify({
-          childId: childId,
-          timestamp: Date.now(),
-          expires: Date.now() + (15 * 60 * 1000) // 15 minutes
-        }));
+        await AsyncStorage.setItem(
+          "childContext",
+          JSON.stringify({
+            childId: childId,
+            timestamp: Date.now(),
+            expires: Date.now() + 15 * 60 * 1000, // 15 minutes
+          })
+        );
         return { success: true, child: result.child };
       } else {
         throw new Error(result.error);
@@ -442,7 +464,10 @@ export const authService = {
   // Get linked children (for parents) with enhanced caching
   getLinkedChildren: async (parentUid, useCache = true) => {
     try {
-      const response = await firestoreService.getLinkedChildren(parentUid, useCache);
+      const response = await firestoreService.getLinkedChildren(
+        parentUid,
+        useCache
+      );
       return response;
     } catch (error) {
       console.error("Get linked children error:", error);
@@ -455,7 +480,7 @@ export const authService = {
   // Delete account
   deleteAccount: async () => {
     try {
-      const response = await apiClient.delete("/deleteAccount");
+      const response = await userApiClient.delete("/deleteAccount");
       await signOut(auth);
       await AsyncStorage.removeItem("authToken");
       return response.data;
