@@ -5,10 +5,11 @@ Task Management Service
 import os
 
 import uvicorn
-from fastapi import FastAPI, Request
+from fastapi import Depends, FastAPI, Request
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
 from starlette.middleware.cors import CORSMiddleware
+from .config.security import get_current_user
 from .storage import firestore_db as db
 from .schema import schema
 
@@ -46,7 +47,7 @@ async def hello(request: Request):
         "index.html", {"request": request, "response": response}
     )
 
-@app.post("/TaskCreated")
+@app.post("/TaskCreated", dependencies=[Depends(get_current_user)])
 async def task_created_func(request: schema.TaskCreated):
     """Create and store a new task"""
 
@@ -54,7 +55,7 @@ async def task_created_func(request: schema.TaskCreated):
     return response
 
 
-@app.post("/TaskAssigned")
+@app.post("/TaskAssigned", dependencies=[Depends(get_current_user)])
 def task_assigned_func(request: schema.TaskAssigned):
     """Assign a task to a user"""
 
@@ -63,7 +64,7 @@ def task_assigned_func(request: schema.TaskAssigned):
     return {"response": response}
 
 
-@app.post("/TaskCancelled")
+@app.post("/TaskCancelled", dependencies=[Depends(get_current_user)])
 async def task_cancelled_func(request: schema.TaskCancelled):
     """Cancel a task"""
 
@@ -72,7 +73,7 @@ async def task_cancelled_func(request: schema.TaskCancelled):
     return {"response": response}
 
 
-@app.post("/TaskCommentAdded")
+@app.post("/TaskCommentAdded", dependencies=[Depends(get_current_user)])
 async def task_comment_func(request: schema.TaskCommentAdded):
     """Add a comment to a task"""
 
@@ -80,7 +81,7 @@ async def task_comment_func(request: schema.TaskCommentAdded):
     return {"response": response}
 
 
-@app.post("/TaskCompleted")
+@app.post("/TaskCompleted", dependencies=[Depends(get_current_user)])
 async def task_completed_func(request: schema.TaskCompleted):
     """Mark a task as completed"""
 
@@ -88,7 +89,7 @@ async def task_completed_func(request: schema.TaskCompleted):
     return {"response": response}
 
 
-@app.post("/TaskExpired")
+@app.post("/TaskExpired", dependencies=[Depends(get_current_user)])
 async def task_expired_func(request: schema.TaskExpired):
     """Mark a task as expired"""
 
@@ -96,7 +97,7 @@ async def task_expired_func(request: schema.TaskExpired):
     return {"response": response}
 
 
-@app.post("/TaskRatingUpdate")
+@app.post("/TaskRatingUpdate", dependencies=[Depends(get_current_user)])
 async def task_rating_func(request: schema.TaskRatingUpdate):
     """Update the rating of a task"""
 
@@ -104,7 +105,7 @@ async def task_rating_func(request: schema.TaskRatingUpdate):
     return {"response": response}
 
 
-@app.post("/TaskRewarded")
+@app.post("/TaskRewarded", dependencies=[Depends(get_current_user)])
 async def task_rewared_func(request: schema.TaskRewarded):
     """Reward a user for completing a task"""
 
@@ -121,7 +122,7 @@ async def task_rewared_func(request: schema.TaskRewarded):
     return {"response": response}
 
 
-@app.post("/TaskUpdated")
+@app.post("/TaskUpdated", dependencies=[Depends(get_current_user)])
 async def task_updated_func(request: schema.TaskUpdated):
     """Update the fields of a task"""
 
@@ -130,7 +131,7 @@ async def task_updated_func(request: schema.TaskUpdated):
     return {"response": response}
 
 
-@app.post("/TaskVerified")
+@app.post("/TaskVerified", dependencies=[Depends(get_current_user)])
 async def task_verified_func(request: schema.TaskVerified):
     """Mark a task as verified"""
 
@@ -147,7 +148,7 @@ async def task_verified_func(request: schema.TaskVerified):
     return {"response": response}
 
 
-@app.get("/tasks")
+@app.get("/tasks", dependencies=[Depends(get_current_user)])
 async def get_all_tasks(user_id: str):
     """Get all tasks"""
 
@@ -155,7 +156,7 @@ async def get_all_tasks(user_id: str):
 
     return {"responses": tasks}
 
-@app.get("/get_task/{task_id}")
+@app.get("/get_task/{task_id}", dependencies=[Depends(get_current_user)])
 async def get_task(task_id: str):
     """Get task by ID"""
 
@@ -163,19 +164,19 @@ async def get_task(task_id: str):
 
     return {"response": response}
 
-@app.get("/leaderboard/family/{parent_id}")
+@app.get("/leaderboard/family/{parent_id}", dependencies=[Depends(get_current_user)])
 async def get_family_leaderboard(parent_id: str):
     """Get family leaderboard for parent view"""
     leaderboard = db.get_family_leaderboard(parent_id)
     return leaderboard
 
-@app.get("/leaderboard/kid/{kid_id}")
+@app.get("/leaderboard/kid/{kid_id}", dependencies=[Depends(get_current_user)])
 async def get_kid_leaderboard_view(kid_id: str):
     """Get kid-specific leaderboard view"""
     view = db.get_kid_leaderboard_view(kid_id)
     return view
 
-@app.get("/leaderboard/enhanced-global")
+@app.get("/leaderboard/enhanced-global", dependencies=[Depends(get_current_user)])
 async def get_enhanced_global_leaderboard(limit: int = 100):
     """Get enhanced global leaderboard with token-based scoring only"""
     try:
