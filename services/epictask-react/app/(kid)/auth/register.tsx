@@ -1,3 +1,4 @@
+import { FONT_SIZES } from "@/constants/FontSize";
 import React, { useState } from "react";
 import CustomButton from "@/components/buttons/CustomButton";
 import ScreenHeading from "@/components/headings/ScreenHeading";
@@ -63,17 +64,17 @@ const Register = () => {
             }}
           >
             <Text
-              style={{ fontSize: responsiveFontSize(5), fontWeight:"500", color: COLORS.purple }}
+              style={{ fontSize: FONT_SIZES.display, fontWeight:"500", color: COLORS.purple }}
             >
               Join Your
             </Text>
-            <Text style={{ fontSize: responsiveFontSize(5), fontWeight:"600", }}> Parent's</Text>
-            <Text style={{ fontSize: responsiveFontSize(5), fontWeight:"600", }}> Account</Text>
+            <Text style={{ fontSize: FONT_SIZES.display, fontWeight:"600", }}> Parent's</Text>
+            <Text style={{ fontSize: FONT_SIZES.display, fontWeight:"600", }}> Account</Text>
           </View>
         </View>
         <View style={{ gap: responsiveHeight(4), paddingVertical:20 }}>
           <View style={{ justifyContent: "center" }}>
-            <Text style={{ fontSize: responsiveFontSize(2), fontWeight:"500" }}>
+            <Text style={{ fontSize: FONT_SIZES.medium, fontWeight:"500" }}>
               Enter Parent's Invite Code
             </Text>
             <CodeField

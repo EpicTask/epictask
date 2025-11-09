@@ -1,3 +1,4 @@
+import { FONT_SIZES } from "@/constants/FontSize";
 import React from "react";
 import ScreenHeading from "@/components/headings/ScreenHeading";
 
@@ -54,7 +55,7 @@ const LinkedParent = () => {
         >
           <Text
             style={{
-              fontSize: responsiveFontSize(3),
+              fontSize: FONT_SIZES.title,
               fontWeight: "400",
               color: "#676767",
             }}
@@ -63,7 +64,7 @@ const LinkedParent = () => {
           </Text>
           <Text
             style={{
-              fontSize: responsiveFontSize(3),
+              fontSize: FONT_SIZES.title,
               fontWeight: "500",
               color: COLORS.secondary,
             }}

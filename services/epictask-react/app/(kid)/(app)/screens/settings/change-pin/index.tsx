@@ -1,3 +1,4 @@
+import { FONT_SIZES } from "@/constants/FontSize";
 import React, { useState } from "react";
 import CustomButton from "@/components/buttons/CustomButton";
 import ScreenHeading from "@/components/headings/ScreenHeading";
@@ -31,7 +32,7 @@ const PinComponent = ({ title }: { title: string }) => {
   return (
     <View style={{ gap: responsiveHeight(10) }}>
       <View style={{ justifyContent: "center" }}>
-        <CustomText variant="semiBold" style={{ fontSize: responsiveFontSize(2.5), fontWeight: "500" }}>
+        <CustomText variant="semiBold" style={{ fontSize: FONT_SIZES.extraLarge, fontWeight: "500" }}>
           {title}
         </CustomText>
         <CodeField

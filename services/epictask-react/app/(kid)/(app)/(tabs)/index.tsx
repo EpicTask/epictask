@@ -1,3 +1,4 @@
+import { FONT_SIZES } from "@/constants/FontSize";
 import React from "react";
 import {
   Image,
@@ -77,13 +78,13 @@ export default function HomeScreen() {
             <View style={{ flex: 1 }}>
               <CustomText
                 variant="semiBold"
-                style={{ fontSize: responsiveFontSize(4) }}
+                style={{ fontSize: FONT_SIZES.display }}
               >
                 Hello,
               </CustomText>
               <CustomText
                 variant="semiBold"
-                style={{ fontSize: responsiveFontSize(3.7), fontWeight: "500" }}
+                style={{ fontSize: FONT_SIZES.title, fontWeight: "500" }}
               >
                 Kai Kai! 👋
               </CustomText>
@@ -186,7 +187,7 @@ export default function HomeScreen() {
             >
               <CustomText
                 style={{
-                  fontSize: responsiveFontSize(2.7),
+                  fontSize: FONT_SIZES.subtitle,
                   color: COLORS.black,
                   fontWeight: "500",
                 }}
@@ -199,7 +200,7 @@ export default function HomeScreen() {
               >
                 <CustomText
                   style={{
-                    fontSize: responsiveFontSize(2),
+                    fontSize: FONT_SIZES.medium,
                     color: COLORS.grey,
                     fontWeight: "400",
                   }}

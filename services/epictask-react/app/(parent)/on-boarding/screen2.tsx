@@ -1,3 +1,4 @@
+import { FONT_SIZES } from "@/constants/FontSize";
 import React from "react";
 import CustomText from "@/components/CustomText";
 
@@ -75,7 +76,7 @@ const Screen2 = () => {
                 <CustomText
                   variant="semiBold"
                   style={{
-                    fontSize: responsiveFontSize(3.3),
+                    fontSize: FONT_SIZES.title,
                     textAlign: "center",
                     paddingHorizontal: 20,
                   }}
@@ -86,7 +87,7 @@ const Screen2 = () => {
                   style={{
                     textAlign: "center",
                     color: COLORS.grey,
-                    fontSize: responsiveFontSize(1.6),
+                    fontSize: FONT_SIZES.extraSmall,
                   }}
                   variant="medium"
                 >
@@ -110,7 +111,7 @@ const Screen2 = () => {
                     <Text
                       style={{
                         color: COLORS.secondary,
-                        fontSize: responsiveFontSize(2),
+                        fontSize: FONT_SIZES.medium,
                         fontWeight: "500",
                       }}
                     >
@@ -125,7 +126,7 @@ const Screen2 = () => {
                     <Text
                       style={{
                         color: COLORS.white,
-                        fontSize: responsiveFontSize(1.7),
+                        fontSize: FONT_SIZES.small,
                         backgroundColor: COLORS.secondary,
                         paddingHorizontal: 40,
                         paddingVertical: 16,

@@ -1,3 +1,4 @@
+import { FONT_SIZES } from "@/constants/FontSize";
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { COLORS } from '@/constants/Colors';
@@ -109,11 +110,11 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   icon: {
-    fontSize: responsiveFontSize(2),
+    fontSize: FONT_SIZES.medium,
     marginRight: 8,
   },
   title: {
-    fontSize: responsiveFontSize(1.6),
+    fontSize: FONT_SIZES.extraSmall,
     color: '#666',
     fontWeight: '500',
     flex: 1,
@@ -127,11 +128,11 @@ const styles = StyleSheet.create({
     gap: 2,
   },
   trendIcon: {
-    fontSize: responsiveFontSize(1.2),
+    fontSize: FONT_SIZES.extraSmall,
     color: 'white',
   },
   trendText: {
-    fontSize: responsiveFontSize(1.2),
+    fontSize: FONT_SIZES.extraSmall,
     color: 'white',
     fontWeight: '600',
   },
@@ -140,12 +141,12 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   value: {
-    fontSize: responsiveFontSize(2.8),
+    fontSize: FONT_SIZES.subtitle,
     fontWeight: 'bold',
     marginBottom: 4,
   },
   subtitle: {
-    fontSize: responsiveFontSize(1.4),
+    fontSize: FONT_SIZES.extraSmall,
     color: '#999',
     lineHeight: 18,
   },

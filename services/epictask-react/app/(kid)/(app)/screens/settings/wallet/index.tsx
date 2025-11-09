@@ -1,3 +1,4 @@
+import { FONT_SIZES } from "@/constants/FontSize";
 import React from "react";
 import CustomText from "@/components/CustomText";
 import ScreenHeading from "@/components/headings/ScreenHeading";
@@ -48,7 +49,7 @@ const Transaction = ({ type }: { type: string }) => {
         <View style={{ gap: 6 }}>
           <CustomText
             variant="semiBold"
-            style={{ fontSize: responsiveFontSize(2.3) }}
+            style={{ fontSize: FONT_SIZES.large }}
           >
             Jerome Bell
           </CustomText>
@@ -60,7 +61,7 @@ const Transaction = ({ type }: { type: string }) => {
           <CustomText
             variant="semiBold"
             style={{
-              fontSize: responsiveFontSize(2.3),
+              fontSize: FONT_SIZES.large,
               color: type !== "send" ? "green" : "black",
             }}
           >
@@ -146,13 +147,13 @@ const Wallet = () => {
             <View style={{ alignItems: "center", paddingBottom: 30 }}>
               <CustomText
                 variant="regular"
-                style={{ fontSize: responsiveFontSize(2) }}
+                style={{ fontSize: FONT_SIZES.medium }}
               >
                 Current balance
               </CustomText>
               <CustomText
                 variant="bold"
-                style={{ fontSize: responsiveFontSize(4) }}
+                style={{ fontSize: FONT_SIZES.display }}
               >
                 $ 1,250.45
               </CustomText>
@@ -164,7 +165,7 @@ const Wallet = () => {
           <View style={{ alignItems: "flex-start" }}>
             <CustomText
               variant="bold"
-              style={{ fontSize: responsiveFontSize(2.7) }}
+              style={{ fontSize: FONT_SIZES.subtitle }}
             >
               Transaction History
             </CustomText>

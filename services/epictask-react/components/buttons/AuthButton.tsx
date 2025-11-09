@@ -1,3 +1,4 @@
+import { FONT_SIZES } from "@/constants/FontSize";
 import React from "react";
 
 import {
@@ -48,7 +49,7 @@ const AuthButton = ({
             textAlign: "center",
             flex: 1,
             textAlignVertical: "center",
-            fontSize: responsiveFontSize(2.25)
+            fontSize: FONT_SIZES.large
           }}
         >
           {text}

@@ -1,3 +1,4 @@
+import { FONT_SIZES } from "@/constants/FontSize";
 import React, { useState } from "react";
 
 import SafeArea from "@/components/SafeArea";
@@ -44,14 +45,14 @@ const Login = () => {
               variant="semiBold"
               style={{
                 color: COLORS.primary,
-                fontSize: responsiveFontSize(4.9),
+                fontSize: FONT_SIZES.display,
               }}
             >
               Welcome!
             </CustomText>
             {/* <CustomText
               variant="semiBold"
-              style={{ fontSize: responsiveFontSize(4.7), top: -14 }}
+              style={{ fontSize: FONT_SIZES.display, top: -14 }}
             >
               Back!
             </CustomText> */}
@@ -59,7 +60,7 @@ const Login = () => {
           <View style={{paddingVertical: 12}}>
             {/* <CustomText
               variant="semiBold"
-              style={{ fontSize: responsiveFontSize(2.7) }}
+              style={{ fontSize: FONT_SIZES.subtitle }}
             >
               Login Now
             </CustomText> */}

@@ -1,3 +1,4 @@
+import { FONT_SIZES } from "@/constants/FontSize";
 import React, { useContext, useEffect, useState } from 'react';
 import { View, StyleSheet, ScrollView, TouchableOpacity, Image } from 'react-native';
 import { AuthContext } from '@/context/AuthContext';
@@ -143,7 +144,7 @@ const styles = StyleSheet.create({
   },
   headerTitle: {
     color: COLORS.primary,
-    fontSize: responsiveFontSize(3),
+    fontSize: FONT_SIZES.title,
   },
   profileCard: {
     backgroundColor: COLORS.white,
@@ -175,19 +176,19 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   profileName: {
-    fontSize: responsiveFontSize(2.8),
+    fontSize: FONT_SIZES.subtitle,
     color: COLORS.black,
     marginBottom: responsiveHeight(0.5),
   },
   profileRole: {
-    fontSize: responsiveFontSize(2),
+    fontSize: FONT_SIZES.medium,
     color: COLORS.grey,
   },
   section: {
     marginBottom: responsiveHeight(3),
   },
   sectionTitle: {
-    fontSize: responsiveFontSize(2.5),
+    fontSize: FONT_SIZES.extraLarge,
     color: COLORS.black,
     marginBottom: responsiveHeight(1.5),
     fontWeight: '600',
@@ -210,12 +211,12 @@ const styles = StyleSheet.create({
     paddingVertical: responsiveHeight(1.5),
   },
   detailLabel: {
-    fontSize: responsiveFontSize(1.9),
+    fontSize: FONT_SIZES.medium,
     color: COLORS.grey,
     marginBottom: responsiveHeight(0.5),
   },
   detailValue: {
-    fontSize: responsiveFontSize(2.2),
+    fontSize: FONT_SIZES.large,
     color: COLORS.black,
     fontWeight: '500',
   },

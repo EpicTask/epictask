@@ -1,3 +1,4 @@
+import { FONT_SIZES } from "@/constants/FontSize";
 import React, { useState, useEffect } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Alert } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -136,7 +137,7 @@ const styles = StyleSheet.create({
     elevation: 3,
   },
   label: {
-    fontSize: responsiveFontSize(2),
+    fontSize: FONT_SIZES.medium,
     fontWeight: '600',
     marginBottom: 8,
     color: '#333',
@@ -159,7 +160,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#f0f8ff',
   },
   toggleText: {
-    fontSize: responsiveFontSize(1.8),
+    fontSize: FONT_SIZES.medium,
     fontWeight: '500',
     color: '#666',
   },
@@ -175,7 +176,7 @@ const styles = StyleSheet.create({
   },
   statusText: {
     color: 'white',
-    fontSize: responsiveFontSize(1.6),
+    fontSize: FONT_SIZES.extraSmall,
     fontWeight: '600',
   },
 });

@@ -1,3 +1,4 @@
+import { FONT_SIZES } from "@/constants/FontSize";
 import React, { useState, useEffect, useRef } from 'react';
 import {
   Modal,
@@ -279,7 +280,7 @@ const styles = StyleSheet.create({
     borderBottomColor: '#f0f0f0',
   },
   title: {
-    fontSize: responsiveFontSize(2.2),
+    fontSize: FONT_SIZES.large,
     color: COLORS.primary,
     flex: 1,
   },
@@ -290,7 +291,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   closeText: {
-    fontSize: responsiveFontSize(2.5),
+    fontSize: FONT_SIZES.extraLarge,
     color: COLORS.grey,
   },
   content: {
@@ -302,7 +303,7 @@ const styles = StyleSheet.create({
     gap: responsiveHeight(3),
   },
   description: {
-    fontSize: responsiveFontSize(1.8),
+    fontSize: FONT_SIZES.medium,
     color: COLORS.grey,
     textAlign: 'center',
     marginBottom: responsiveHeight(2),
@@ -315,7 +316,7 @@ const styles = StyleSheet.create({
     width: responsiveWidth(12),
     height: responsiveWidth(12),
     lineHeight: responsiveWidth(12) - 4,
-    fontSize: responsiveFontSize(3),
+    fontSize: FONT_SIZES.title,
     borderWidth: 2,
     borderColor: '#E0E0E0',
     backgroundColor: '#fff',
@@ -329,12 +330,12 @@ const styles = StyleSheet.create({
     backgroundColor: '#f3f4f6',
   },
   cellText: {
-    fontSize: responsiveFontSize(3),
+    fontSize: FONT_SIZES.title,
     textAlign: 'center',
     color: COLORS.primary,
   },
   attemptsWarning: {
-    fontSize: responsiveFontSize(1.6),
+    fontSize: FONT_SIZES.extraSmall,
     color: '#FF6B6B',
     textAlign: 'center',
     marginTop: responsiveHeight(1),
@@ -348,12 +349,12 @@ const styles = StyleSheet.create({
     borderColor: '#FFE69C',
   },
   lockoutTitle: {
-    fontSize: responsiveFontSize(2),
+    fontSize: FONT_SIZES.medium,
     color: '#856404',
     marginBottom: 8,
   },
   lockoutText: {
-    fontSize: responsiveFontSize(1.8),
+    fontSize: FONT_SIZES.medium,
     color: '#856404',
     textAlign: 'center',
     lineHeight: 22,
@@ -366,7 +367,7 @@ const styles = StyleSheet.create({
     marginTop: responsiveHeight(2),
   },
   loadingText: {
-    fontSize: responsiveFontSize(1.8),
+    fontSize: FONT_SIZES.medium,
     color: COLORS.grey,
   },
   footer: {

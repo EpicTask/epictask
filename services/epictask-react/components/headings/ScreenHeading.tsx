@@ -1,3 +1,4 @@
+import { FONT_SIZES } from "@/constants/FontSize";
 import React from "react";
 import PlusButton from "../PlusButton";
 import CustomText from "../CustomText";
@@ -41,7 +42,7 @@ const ScreenHeading = ({
           style={{
             flex: 1,
             textAlign: "center",
-            fontSize: responsiveFontSize(2.7),
+            fontSize: FONT_SIZES.subtitle,
           }}
         >
           {text}

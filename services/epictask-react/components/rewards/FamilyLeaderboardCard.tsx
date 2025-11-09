@@ -1,3 +1,4 @@
+import { FONT_SIZES } from "@/constants/FontSize";
 import React from 'react';
 import {
   View,
@@ -266,12 +267,12 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   summaryValue: {
-    fontSize: responsiveFontSize(2.2),
+    fontSize: FONT_SIZES.large,
     color: COLORS.primary,
     marginBottom: 4,
   },
   summaryLabel: {
-    fontSize: responsiveFontSize(1.4),
+    fontSize: FONT_SIZES.extraSmall,
     color: COLORS.grey,
     textAlign: 'center',
   },
@@ -282,11 +283,11 @@ const styles = StyleSheet.create({
     marginBottom: responsiveHeight(1.5),
   },
   headerTitle: {
-    fontSize: responsiveFontSize(2),
+    fontSize: FONT_SIZES.medium,
     color: '#000',
   },
   headerSubtitle: {
-    fontSize: responsiveFontSize(1.4),
+    fontSize: FONT_SIZES.extraSmall,
     color: COLORS.grey,
   },
   childrenList: {
@@ -324,7 +325,7 @@ const styles = StyleSheet.create({
   },
   rankText: {
     color: COLORS.white,
-    fontSize: responsiveFontSize(1.2),
+    fontSize: FONT_SIZES.extraSmall,
     fontWeight: 'bold',
   },
   childInfo: {
@@ -332,24 +333,24 @@ const styles = StyleSheet.create({
     marginLeft: responsiveWidth(3),
   },
   childName: {
-    fontSize: responsiveFontSize(1.8),
+    fontSize: FONT_SIZES.medium,
     color: '#000',
     marginBottom: 2,
   },
   childLevel: {
-    fontSize: responsiveFontSize(1.3),
+    fontSize: FONT_SIZES.extraSmall,
     color: COLORS.grey,
   },
   childStats: {
     alignItems: 'flex-end',
   },
   totalValue: {
-    fontSize: responsiveFontSize(1.8),
+    fontSize: FONT_SIZES.medium,
     color: COLORS.primary,
     marginBottom: 2,
   },
   tasksCount: {
-    fontSize: responsiveFontSize(1.3),
+    fontSize: FONT_SIZES.extraSmall,
     color: COLORS.grey,
   },
   currencyBreakdown: {
@@ -370,7 +371,7 @@ const styles = StyleSheet.create({
     marginRight: 6,
   },
   currencyText: {
-    fontSize: responsiveFontSize(1.3),
+    fontSize: FONT_SIZES.extraSmall,
     color: '#666',
   },
   progressContainer: {
@@ -387,7 +388,7 @@ const styles = StyleSheet.create({
     borderRadius: 3,
   },
   progressText: {
-    fontSize: responsiveFontSize(1.2),
+    fontSize: FONT_SIZES.extraSmall,
     color: COLORS.grey,
     textAlign: 'right',
   },
@@ -402,7 +403,7 @@ const styles = StyleSheet.create({
     marginRight: 6,
   },
   achievementText: {
-    fontSize: responsiveFontSize(1.1),
+    fontSize: FONT_SIZES.extraSmall,
     color: COLORS.white,
   },
   emptyState: {
@@ -410,13 +411,13 @@ const styles = StyleSheet.create({
     paddingVertical: responsiveHeight(4),
   },
   emptyText: {
-    fontSize: responsiveFontSize(1.8),
+    fontSize: FONT_SIZES.medium,
     color: COLORS.grey,
     marginTop: responsiveHeight(1),
     textAlign: 'center',
   },
   emptySubtext: {
-    fontSize: responsiveFontSize(1.4),
+    fontSize: FONT_SIZES.extraSmall,
     color: COLORS.grey,
     marginTop: responsiveHeight(0.5),
     textAlign: 'center',

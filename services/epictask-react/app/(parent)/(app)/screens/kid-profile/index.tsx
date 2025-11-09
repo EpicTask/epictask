@@ -1,3 +1,4 @@
+import { FONT_SIZES } from "@/constants/FontSize";
 import {
   FlatList,
   Image,
@@ -169,7 +170,7 @@ const KidProfile = () => {
               variant="semiBold"
               style={{
                 flex: 1,
-                fontSize: responsiveFontSize(3.5),
+                fontSize: FONT_SIZES.title,
                 textAlign: "center",
               }}
             >
@@ -276,7 +277,7 @@ const KidProfile = () => {
         <View style={{ flex: 1, paddingVertical: 20, gap: 10 }}>
           {/* Tasks Section Header */}
           <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
-            <CustomText variant="semiBold" style={{ fontSize: responsiveFontSize(2.5) }}>
+            <CustomText variant="semiBold" style={{ fontSize: FONT_SIZES.extraLarge }}>
               {kidName}'s Tasks
             </CustomText>
             <PlusButton onPress={() =>{router.push("/screens/manage-tasks/assign-task" as any)}} />

@@ -1,3 +1,4 @@
+import { FONT_SIZES } from "@/constants/FontSize";
 import React, { useContext, useState } from "react";
 import {
   View,
@@ -345,13 +346,13 @@ const styles = StyleSheet.create({
   },
   headerTitle: {
     color: COLORS.primary,
-    fontSize: responsiveFontSize(3),
+    fontSize: FONT_SIZES.title,
   },
   section: {
     marginBottom: responsiveHeight(3),
   },
   sectionTitle: {
-    fontSize: responsiveFontSize(2.5),
+    fontSize: FONT_SIZES.extraLarge,
     color: COLORS.black,
     marginBottom: responsiveHeight(1.5),
     fontWeight: "600",
@@ -388,7 +389,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   imageHint: {
-    fontSize: responsiveFontSize(1.8),
+    fontSize: FONT_SIZES.medium,
     color: COLORS.grey,
     textAlign: "center",
   },
@@ -427,7 +428,7 @@ const styles = StyleSheet.create({
     borderRadius: responsiveWidth(5),
   },
   childName: {
-    fontSize: responsiveFontSize(2.2),
+    fontSize: FONT_SIZES.large,
     color: COLORS.black,
     fontWeight: "500",
   },
@@ -441,7 +442,7 @@ const styles = StyleSheet.create({
     paddingVertical: responsiveHeight(2),
   },
   loadingText: {
-    fontSize: responsiveFontSize(2),
+    fontSize: FONT_SIZES.medium,
     color: COLORS.grey,
   },
   emptyContainer: {
@@ -449,12 +450,12 @@ const styles = StyleSheet.create({
     paddingVertical: responsiveHeight(3),
   },
   emptyText: {
-    fontSize: responsiveFontSize(2.2),
+    fontSize: FONT_SIZES.large,
     color: COLORS.black,
     marginBottom: responsiveHeight(0.5),
   },
   emptySubtext: {
-    fontSize: responsiveFontSize(1.8),
+    fontSize: FONT_SIZES.medium,
     color: COLORS.grey,
     textAlign: "center",
   },

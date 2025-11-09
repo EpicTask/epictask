@@ -1,3 +1,4 @@
+import { FONT_SIZES } from "@/constants/FontSize";
 import React, { useState } from "react";
 import * as DocumentPicker from "expo-document-picker";
 import CustomButton from "@/components/buttons/CustomButton";
@@ -57,7 +58,7 @@ const PersonalInformation = () => {
           style={{
             flex: 1,
             textAlign: "center",
-            fontSize: responsiveFontSize(3),
+            fontSize: FONT_SIZES.title,
             fontWeight: "500",
           }}
         >
