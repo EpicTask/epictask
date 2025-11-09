@@ -10,7 +10,7 @@ export const authMiddleware = async (req, res, next) => {
   const token = authorization.split('Bearer ')[1];
 
   try {
-    const decodedToken = await auth().verifyIdToken(token);
+    const decodedToken = await auth.verifyIdToken(token);
     req.user = decodedToken;
     next();
   } catch (error) {
