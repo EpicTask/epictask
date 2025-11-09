@@ -1,27 +1,14 @@
-
-import { db } from '../config/firebase_config.js';
-import {
-  doc,
-  setDoc,
-  updateDoc,
-  deleteDoc,
-  collection,
-  getDoc,
-  query,
-  where,
-  getDocs,
-  arrayUnion,
-} from 'firebase/firestore';
 import { getAuth } from 'firebase-admin/auth';
+import { FieldValue } from 'firebase-admin/firestore';
+import { db } from '../config/firebase_config.js';
 
-
-const usersRef = collection(db, 'users');
-const invitesRef = collection(db, 'invites');
+const usersRef = db.collection('users');
+const invitesRef = db.collection('invites');
 
 async function getUserProfile(uid) {
   try {
-    const userDoc = await getDoc(doc(usersRef, uid));
-    if (!userDoc.exists()) {
+    const userDoc = await usersRef.doc(uid).get();
+    if (!userDoc.exists) {
       return null;
     }
     return { uid, ...userDoc.data() };
@@ -33,8 +20,7 @@ async function getUserProfile(uid) {
 
 async function profileUpdate(uid, profileData) {
   try {
-    const userRef = doc(usersRef, uid);
-    await updateDoc(userRef, profileData);
+    await usersRef.doc(uid).update(profileData);
     // Also update Firebase Auth user
     await getAuth().updateUser(uid, {
       displayName: profileData.displayName,
@@ -50,7 +36,7 @@ async function profileUpdate(uid, profileData) {
 
 async function deletedUserAccount(uid) {
   try {
-    await deleteDoc(doc(usersRef, uid));
+    await usersRef.doc(uid).delete();
     await getAuth().deleteUser(uid);
     console.log('Deleted account for user:', uid);
     return true;
@@ -62,11 +48,12 @@ async function deletedUserAccount(uid) {
 
 async function generateInviteCode(childId) {
   try {
-    // Generate a unique ID using doc() without arguments
-    const inviteCode = doc(invitesRef).id;
+    // Generate a unique ID
+    const newInviteRef = invitesRef.doc();
+    const inviteCode = newInviteRef.id;
     const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours from now
 
-    await setDoc(doc(invitesRef, inviteCode), {
+    await newInviteRef.set({
       childId,
       expiresAt,
     });
@@ -80,24 +67,24 @@ async function generateInviteCode(childId) {
 
 async function linkChildAccount(parentUID, inviteCode) {
   try {
-    const inviteDocRef = doc(invitesRef, inviteCode);
-    const inviteDoc = await getDoc(inviteDocRef);
+    const inviteDocRef = invitesRef.doc(inviteCode);
+    const inviteDoc = await inviteDocRef.get();
 
-    if (!inviteDoc.exists() || inviteDoc.data().expiresAt.toDate() < new Date()) {
+    if (!inviteDoc.exists || inviteDoc.data().expiresAt.toDate() < new Date()) {
       throw new Error('Invalid or expired invite code.');
     }
 
     const childId = inviteDoc.data().childId;
 
     // Add child to parent's list and parent to child's list
-    const parentRef = doc(usersRef, parentUID);
-    const childRef = doc(usersRef, childId);
+    const parentRef = usersRef.doc(parentUID);
+    const childRef = usersRef.doc(childId);
 
-    await updateDoc(parentRef, { children: arrayUnion(childId) });
-    await updateDoc(childRef, { parent: parentUID });
+    await parentRef.update({ children: FieldValue.arrayUnion(childId) });
+    await childRef.update({ parent: parentUID });
 
     // Delete the invite code after use
-    await deleteDoc(inviteDocRef);
+    await inviteDocRef.delete();
 
     return { message: 'Child linked successfully.' };
   } catch (error) {
@@ -108,16 +95,15 @@ async function linkChildAccount(parentUID, inviteCode) {
 
 async function getLinkedChildren(parentUID) {
   try {
-    const parentDoc = await getDoc(doc(usersRef, parentUID));
-    if (!parentDoc.exists()) {
+    const parentDoc = await usersRef.doc(parentUID).get();
+    if (!parentDoc.exists) {
       throw new Error('Parent not found.');
     }
     const childIds = parentDoc.data().children || [];
     if (childIds.length === 0) {
       return [];
     }
-    const childrenQuery = query(usersRef, where('uid', 'in', childIds));
-    const childrenSnapshot = await getDocs(childrenQuery);
+    const childrenSnapshot = await usersRef.where('uid', 'in', childIds).get();
     return childrenSnapshot.docs.map(doc => ({ uid: doc.id, ...doc.data() }));
   } catch (error) {
     console.error('Failed to get linked children:', error);
@@ -128,7 +114,7 @@ async function getLinkedChildren(parentUID) {
 async function getUserMetrics() {
   try {
     // Get all users from Firestore
-    const usersSnapshot = await getDocs(usersRef);
+    const usersSnapshot = await usersRef.get();
     const users = usersSnapshot.docs.map(doc => ({ uid: doc.id, ...doc.data() }));
     
     const totalUsers = users.length;

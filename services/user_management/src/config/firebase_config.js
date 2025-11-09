@@ -1,13 +1,12 @@
-import {initializeApp} from 'firebase/app';
-import {getFirestore} from 'firebase/firestore';
-import {getAuth} from 'firebase/auth';
-import firebaseConfig from './firebase_config.json' with { type: 'json' };
+import { initializeApp } from 'firebase-admin/app';
+import { getAuth } from 'firebase-admin/auth';
+import { getFirestore } from 'firebase-admin/firestore';
+// import firebaseConfig from './firebase_config.json' with { type: 'json' };
 
+// Initialize Firebase Admin SDK
+const app = initializeApp();
 
-
-// Initialize Firebase
-const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const auth = getAuth(app);
 
-export {db, auth};
+export { db, auth };
