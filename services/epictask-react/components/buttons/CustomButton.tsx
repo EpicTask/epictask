@@ -1,3 +1,4 @@
+import { FONT_SIZES } from "@/constants/FontSize";
 import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import React from "react";
 import { COLORS } from "@/constants/Colors";
@@ -41,7 +42,7 @@ const CustomButton = ({
         <CustomText
           variant="semiBold"
           style={{
-            fontSize: responsiveFontSize(1.7),
+            fontSize: FONT_SIZES.small,
             color: fill ? "white" : COLORS.secondary,
             textAlign: "center",
             flex: 1,

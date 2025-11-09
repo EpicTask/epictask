@@ -2,6 +2,7 @@ import axios from "axios";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import MicroserviceUrls from "@/constants/Microservices";
 import { Alert } from "react-native";
+import { firestoreService } from "./firestoreService";
 
 // Create a separate API client for Task Management Service
 const taskApiClient = axios.create({
@@ -23,10 +24,12 @@ taskApiClient.interceptors.request.use(
 
 export const taskService = {
   // Task Management Service API Calls Only
-  
+
   createTask: async (taskData) => {
     try {
       const response = await taskApiClient.post("/TaskCreated", taskData);
+      // Invalidate cache after creating a task
+      firestoreService.cache.clearTasks();
       return response.data;
     } catch (error) {
       console.error("Create task error:", error);
@@ -63,7 +66,9 @@ export const taskService = {
 
   getFamilyLeaderboard: async (parentId) => {
     try {
-      const response = await taskApiClient.get(`/leaderboard/family/${parentId}`);
+      const response = await taskApiClient.get(
+        `/leaderboard/family/${parentId}`
+      );
       return response.data;
     } catch (error) {
       console.error("Get family leaderboard error:", error);
@@ -81,10 +86,11 @@ export const taskService = {
     }
   },
 
-
   getEnhancedGlobalLeaderboard: async (limit = 100) => {
     try {
-      const response = await taskApiClient.get(`/leaderboard/enhanced-global?limit=${limit}`);
+      const response = await taskApiClient.get(
+        `/leaderboard/enhanced-global?limit=${limit}`
+      );
       return response.data;
     } catch (error) {
       console.error("Get enhanced global leaderboard error:", error);
@@ -92,13 +98,13 @@ export const taskService = {
     }
   },
 
-
   updateTask: async (taskData) => {
     try {
       const updatedData = {
         task_id: taskData.task_id,
         updated_fields: taskData,
       };
+      console.log("Api Call: ", taskApiClient);
       const response = await taskApiClient.post("/TaskUpdated", updatedData);
       return response.data;
     } catch (error) {
@@ -108,10 +114,13 @@ export const taskService = {
   },
 
   // Additional Task Management Service endpoints
-  
+
   taskCommentAdded: async (commentData) => {
     try {
-      const response = await taskApiClient.post("/TaskCommentAdded", commentData);
+      const response = await taskApiClient.post(
+        "/TaskCommentAdded",
+        commentData
+      );
       return response.data;
     } catch (error) {
       console.error("Task comment added error:", error);
@@ -121,7 +130,10 @@ export const taskService = {
 
   taskCompleted: async (completionData) => {
     try {
-      const response = await taskApiClient.post("/TaskCompleted", completionData);
+      const response = await taskApiClient.post(
+        "/TaskCompleted",
+        completionData
+      );
       return response.data;
     } catch (error) {
       console.error("Task completed error:", error);
@@ -141,7 +153,10 @@ export const taskService = {
 
   taskRatingUpdate: async (ratingData) => {
     try {
-      const response = await taskApiClient.post("/TaskRatingUpdate", ratingData);
+      const response = await taskApiClient.post(
+        "/TaskRatingUpdate",
+        ratingData
+      );
       return response.data;
     } catch (error) {
       console.error("Task rating update error:", error);
@@ -161,7 +176,10 @@ export const taskService = {
 
   taskVerified: async (verificationData) => {
     try {
-      const response = await taskApiClient.post("/TaskVerified", verificationData);
+      const response = await taskApiClient.post(
+        "/TaskVerified",
+        verificationData
+      );
       return response.data;
     } catch (error) {
       console.error("Task verified error:", error);
@@ -169,9 +187,8 @@ export const taskService = {
     }
   },
 
-
   // Get endpoints that call the backend API
-  
+
   getAllTasks: async (userId) => {
     try {
       const response = await taskApiClient.get(`/tasks?user_id=${userId}`);
@@ -190,7 +207,7 @@ export const taskService = {
       console.error("Get task error:", error);
       throw new Error("Failed to get task");
     }
-  }
+  },
 };
 
 export default taskService;

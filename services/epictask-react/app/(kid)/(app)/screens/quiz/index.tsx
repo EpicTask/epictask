@@ -1,3 +1,4 @@
+import { FONT_SIZES } from "@/constants/FontSize";
 import React, { useState } from "react";
 import CustomButton from "@/components/buttons/CustomButton";
 
@@ -106,7 +107,7 @@ const Quiz = () => {
             <CustomText
             variant="semiBold"
               style={{
-                fontSize: responsiveFontSize(3),
+                fontSize: FONT_SIZES.title,
                 paddingHorizontal: 20,
                 textAlign: "center",
               }}

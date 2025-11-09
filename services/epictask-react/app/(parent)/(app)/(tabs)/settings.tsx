@@ -1,3 +1,4 @@
+import { FONT_SIZES } from "@/constants/FontSize";
 import React, { ReactNode, useContext } from "react";
 import {
   responsiveFontSize,
@@ -36,7 +37,7 @@ const ProfileCard = () => {
         />
         <CustomText
           variant="semiBold"
-          style={{ fontWeight: "500", fontSize: responsiveFontSize(2.5) }}
+          style={{ fontWeight: "500", fontSize: FONT_SIZES.extraLarge }}
         >
           {user?.displayName || 'Joshua Smith'}
         </CustomText>
@@ -77,7 +78,7 @@ const SettingButton = ({
         <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
           {icon}
           <Text
-            style={{ fontWeight: "500", fontSize: responsiveFontSize(2.3) }}
+            style={{ fontWeight: "500", fontSize: FONT_SIZES.large }}
           >
             {text}
           </Text>
@@ -106,7 +107,7 @@ const SettingsScreen = () => {
     <SafeAreaView style={styles.safeArea}>
       <ScrollView showsVerticalScrollIndicator={false} style={{ marginBottom: 50 }}>
         <View style={{ flexDirection: "row", justifyContent: "center" }}>
-          <Text style={{ fontSize: responsiveFontSize(3), fontWeight: "500" }}>
+          <Text style={{ fontSize: FONT_SIZES.title, fontWeight: "500" }}>
             Settings
           </Text>
         </View>
@@ -162,7 +163,7 @@ const SettingsScreen = () => {
             <Text
               style={{
                 paddingVertical: 20,
-                fontSize: responsiveFontSize(2),
+                fontSize: FONT_SIZES.medium,
                 fontWeight: "500",
                 color: COLORS.grey,
               }}

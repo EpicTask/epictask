@@ -1,3 +1,4 @@
+import { FONT_SIZES } from "@/constants/FontSize";
 import React from "react";
 import CustomText from "@/components/CustomText";
 import CustomButton from "@/components/buttons/CustomButton";
@@ -35,13 +36,13 @@ const AddKid = () => {
             <View style={{ alignItems: "center", paddingBottom: 30 }}>
               <CustomText
                 variant="bold"
-                style={{ fontSize: responsiveFontSize(3) }}
+                style={{ fontSize: FONT_SIZES.title }}
               >
                 Hallo,
               </CustomText>
               <CustomText
                 variant="semiBold"
-                style={{ fontSize: responsiveFontSize(3) }}
+                style={{ fontSize: FONT_SIZES.title }}
               >
                 John Kanic! 👋
               </CustomText>

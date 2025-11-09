@@ -1,3 +1,4 @@
+import { FONT_SIZES } from "@/constants/FontSize";
 import React, { useState, useEffect } from 'react';
 import {
   Modal,
@@ -370,7 +371,7 @@ const styles = StyleSheet.create({
     padding: 4,
   },
   headerTitle: {
-    fontSize: responsiveFontSize(2.2),
+    fontSize: FONT_SIZES.large,
     fontWeight: '600',
     color: '#000',
   },
@@ -396,7 +397,7 @@ const styles = StyleSheet.create({
     borderBottomColor: COLORS.primary || COLORS.purple,
   },
   tabText: {
-    fontSize: responsiveFontSize(1.8),
+    fontSize: FONT_SIZES.medium,
     color: COLORS.grey,
     marginLeft: 8,
   },
@@ -417,7 +418,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
   },
   sectionTitle: {
-    fontSize: responsiveFontSize(2.2),
+    fontSize: FONT_SIZES.large,
     fontWeight: '600',
     color: '#000',
     marginBottom: responsiveHeight(2),
@@ -430,13 +431,13 @@ const styles = StyleSheet.create({
     borderBottomColor: '#F0F0F0',
   },
   detailLabel: {
-    fontSize: responsiveFontSize(1.6),
+    fontSize: FONT_SIZES.extraSmall,
     color: COLORS.grey,
     width: responsiveWidth(25),
     fontWeight: '500',
   },
   detailValue: {
-    fontSize: responsiveFontSize(1.6),
+    fontSize: FONT_SIZES.extraSmall,
     color: '#000',
     flex: 1,
   },
@@ -446,7 +447,7 @@ const styles = StyleSheet.create({
     borderRadius: 12,
   },
   statusText: {
-    fontSize: responsiveFontSize(1.4),
+    fontSize: FONT_SIZES.extraSmall,
     color: '#FFFFFF',
     fontWeight: '600',
   },
@@ -454,7 +455,7 @@ const styles = StyleSheet.create({
     marginBottom: responsiveHeight(2),
   },
   inputLabel: {
-    fontSize: responsiveFontSize(1.6),
+    fontSize: FONT_SIZES.extraSmall,
     fontWeight: '500',
     color: '#000',
     marginBottom: responsiveHeight(1),
@@ -464,7 +465,7 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     paddingHorizontal: responsiveWidth(3),
     paddingVertical: responsiveHeight(1.2),
-    fontSize: responsiveFontSize(1.8),
+    fontSize: FONT_SIZES.medium,
     color: '#000',
     borderWidth: 1,
     borderColor: '#EAEBEC',
@@ -492,7 +493,7 @@ const styles = StyleSheet.create({
     borderColor: COLORS.primary || COLORS.purple,
   },
   statusOptionText: {
-    fontSize: responsiveFontSize(1.4),
+    fontSize: FONT_SIZES.extraSmall,
     color: COLORS.grey,
     fontWeight: '500',
   },
@@ -521,12 +522,12 @@ const styles = StyleSheet.create({
   },
   deleteButtonText: {
     color: '#FFFFFF',
-    fontSize: responsiveFontSize(1.6),
+    fontSize: FONT_SIZES.extraSmall,
     fontWeight: '600',
   },
   saveButtonText: {
     color: '#FFFFFF',
-    fontSize: responsiveFontSize(1.6),
+    fontSize: FONT_SIZES.extraSmall,
     fontWeight: '600',
   },
 });

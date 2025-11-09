@@ -1,3 +1,4 @@
+import { FONT_SIZES } from "@/constants/FontSize";
 import { StyleSheet, Text, View } from "react-native";
 import React, { useState } from "react";
 import ScreenHeading from "@/components/headings/ScreenHeading";
@@ -26,7 +27,7 @@ const UpdatePassword = () => {
           <View style={{ paddingVertical: 20, gap: 6 }}>
             <CustomText
               variant="semiBold"
-              style={{ fontSize: responsiveFontSize(3.6) }}
+              style={{ fontSize: FONT_SIZES.title }}
             >
               Reset Password
             </CustomText>

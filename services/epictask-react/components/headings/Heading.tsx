@@ -1,3 +1,4 @@
+import { FONT_SIZES } from "@/constants/FontSize";
 import React, { ReactElement } from "react";
 
 import PlusButton from "../PlusButton";
@@ -32,6 +33,6 @@ const styles = StyleSheet.create({
   },
   headingStyle: {
     fontWeight: "500",
-    fontSize: responsiveFontSize(2.7),
+    fontSize: FONT_SIZES.subtitle,
   },
 });

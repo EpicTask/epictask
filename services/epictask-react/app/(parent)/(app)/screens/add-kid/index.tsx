@@ -1,3 +1,4 @@
+import { FONT_SIZES } from "@/constants/FontSize";
 import { Image, StyleSheet, Text, TextInput, View, Alert, ActivityIndicator } from "react-native";
 import React, { useState } from "react";
 import ScreenHeading from "@/components/headings/ScreenHeading";
@@ -167,6 +168,7 @@ const AddKid = () => {
                 value={fullName}
                 onChangeText={setFullName}
                 placeholder="Enter full name"
+                capitalizeFirstLetter={true}
               />
               <CustomInput
                 label="Email Address"
@@ -231,7 +233,7 @@ const AddKid = () => {
             <View style={{ justifyContent: "center" }}>
               <CustomText
                 variant="semiBold"
-                style={{ fontSize: responsiveFontSize(3) }}
+                style={{ fontSize: FONT_SIZES.title }}
               >
                 Create Login PIN
               </CustomText>

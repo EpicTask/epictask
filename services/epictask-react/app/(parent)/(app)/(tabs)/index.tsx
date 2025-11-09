@@ -30,6 +30,7 @@ import { firestoreService } from "@/api/firestoreService";
 import authService from "@/api/authService";
 import ChildSelectionModal from "@/components/modals/ChildSelectionModal";
 import ChildPINModal from "@/components/modals/ChildPINModal";
+import { useFamilyTasks } from "@/hooks/useTaskManagement";
 
 // Type definitions
 interface TaskSummary {
@@ -68,40 +69,42 @@ export default function HomeScreen() {
   const [childPINModalVisible, setChildPINModalVisible] = useState(false);
   const [selectedChildForPIN, setSelectedChildForPIN] = useState<Kid | null>(null);
 
+  const {
+    familyTasks,
+    children,
+    loading: familyTasksLoading,
+    error: familyTasksError,
+    refreshFamilyTasks,
+  } = useFamilyTasks(user?.uid, { realTime: true });
+
   useEffect(() => {
     const fetchData = async () => {
       if (user) {
         try {
           setLoading(true);
-          const summary = await firestoreService.getTaskSummary(user.uid) as TaskSummary;
+          const summary = (await firestoreService.getTaskSummary(
+            user.uid
+          )) as TaskSummary;
           setTaskSummary(summary);
 
-          const tasks = await firestoreService.getRecentTasks(user.uid) as RecentTask[];
+          const tasks = (await firestoreService.getRecentTasks(
+            user.uid
+          )) as RecentTask[];
           setRecentTasks(tasks);
-
-          const linkedKids = await authService.getLinkedChildren(user.uid);
-          const children = linkedKids.children || [];
 
           const kidsWithTaskSummary = await Promise.all(
             children.map(async (kid: Kid) => {
-              try {
-                const kidTaskSummary = await firestoreService.getKidTaskSummary(kid.uid) as TaskSummary;
-                return {
-                  ...kid,
-                  tasks_completed: kidTaskSummary.completed || 0,
-                  tasks_pending: kidTaskSummary.in_progress || 0,
-                };
-              } catch (error) {
-                console.error(`Failed to fetch task summary for kid ${kid.uid}:`, error);
-                return {
-                  ...kid,
-                  tasks_completed: 0,
-                  tasks_pending: 0,
-                };
-              }
+              const kidTaskSummary =
+                (await firestoreService.getKidTaskSummary(
+                  kid.uid
+                )) as TaskSummary;
+              return {
+                ...kid,
+                tasks_completed: kidTaskSummary.completed,
+                tasks_pending: kidTaskSummary.in_progress,
+              };
             })
           );
-          
           setKidsWithTaskData(kidsWithTaskSummary);
         } catch (error) {
           console.error("Failed to fetch dashboard data:", error);
@@ -112,7 +115,7 @@ export default function HomeScreen() {
     };
 
     fetchData();
-  }, [user]);
+  }, [user, children]);
 
   // Handler functions for child switching
   const handleChildSwitchPress = () => {

@@ -1,3 +1,4 @@
+import { FONT_SIZES } from "@/constants/FontSize";
 import { ICONS, IMAGES } from "@/assets";
 import KidRewardsView from "@/components/rewards/KidRewardsView";
 import {
@@ -106,7 +107,7 @@ const styles = StyleSheet.create({
   },
   loadingText: {
     marginTop: responsiveHeight(2),
-    fontSize: responsiveFontSize(1.6),
+    fontSize: FONT_SIZES.extraSmall,
     color: COLORS.grey,
     textAlign: 'center',
   },
@@ -117,7 +118,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: responsiveWidth(8),
   },
   errorText: {
-    fontSize: responsiveFontSize(1.6),
+    fontSize: FONT_SIZES.extraSmall,
     color: COLORS.grey,
     textAlign: 'center',
     lineHeight: 24,

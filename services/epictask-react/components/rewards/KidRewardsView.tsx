@@ -1,3 +1,4 @@
+import { FONT_SIZES } from "@/constants/FontSize";
 import React, { useEffect, useRef } from 'react';
 import {
   View,
@@ -413,7 +414,7 @@ const styles = StyleSheet.create({
     elevation: 8,
   },
   levelEmoji: {
-    fontSize: responsiveFontSize(6),
+    fontSize: FONT_SIZES.huge,
   },
   levelBadge: {
     position: 'absolute',
@@ -430,10 +431,10 @@ const styles = StyleSheet.create({
   },
   levelText: {
     color: '#FFF',
-    fontSize: responsiveFontSize(1.8),
+    fontSize: FONT_SIZES.medium,
   },
   welcomeText: {
-    fontSize: responsiveFontSize(2.5),
+    fontSize: FONT_SIZES.extraLarge,
     color: '#333',
     marginBottom: responsiveHeight(1),
     textAlign: 'center',
@@ -447,7 +448,7 @@ const styles = StyleSheet.create({
     borderLeftColor: '#4CAF50',
   },
   encouragementText: {
-    fontSize: responsiveFontSize(1.6),
+    fontSize: FONT_SIZES.extraSmall,
     color: '#2E7D32',
     textAlign: 'center',
     lineHeight: 22,
@@ -457,7 +458,7 @@ const styles = StyleSheet.create({
     marginBottom: responsiveHeight(2),
   },
   sectionTitle: {
-    fontSize: responsiveFontSize(2),
+    fontSize: FONT_SIZES.medium,
     color: '#333',
     marginBottom: responsiveHeight(1.5),
   },
@@ -476,12 +477,12 @@ const styles = StyleSheet.create({
     marginBottom: responsiveHeight(1),
   },
   totalValue: {
-    fontSize: responsiveFontSize(3.5),
+    fontSize: FONT_SIZES.title,
     color: COLORS.primary,
     marginBottom: 4,
   },
   totalLabel: {
-    fontSize: responsiveFontSize(1.4),
+    fontSize: FONT_SIZES.extraSmall,
     color: '#666',
     marginBottom: responsiveHeight(2),
   },
@@ -505,10 +506,10 @@ const styles = StyleSheet.create({
   },
   currencySymbol: {
     color: '#FFF',
-    fontSize: responsiveFontSize(1),
+    fontSize: FONT_SIZES.extraSmall,
   },
   currencyAmount: {
-    fontSize: responsiveFontSize(1.4),
+    fontSize: FONT_SIZES.extraSmall,
     color: '#333',
   },
   progressSection: {
@@ -531,11 +532,11 @@ const styles = StyleSheet.create({
     marginBottom: responsiveHeight(1),
   },
   currentLevel: {
-    fontSize: responsiveFontSize(1.6),
+    fontSize: FONT_SIZES.extraSmall,
     color: COLORS.primary,
   },
   nextLevel: {
-    fontSize: responsiveFontSize(1.6),
+    fontSize: FONT_SIZES.extraSmall,
     color: '#FF9800',
   },
   progressBarContainer: {
@@ -551,7 +552,7 @@ const styles = StyleSheet.create({
     borderRadius: 6,
   },
   progressText: {
-    fontSize: responsiveFontSize(1.4),
+    fontSize: FONT_SIZES.extraSmall,
     color: '#666',
     textAlign: 'center',
   },
@@ -575,20 +576,20 @@ const styles = StyleSheet.create({
     marginBottom: responsiveHeight(1),
   },
   positionEmoji: {
-    fontSize: responsiveFontSize(4),
+    fontSize: FONT_SIZES.display,
     marginBottom: 8,
   },
   positionText: {
-    fontSize: responsiveFontSize(2.5),
+    fontSize: FONT_SIZES.extraLarge,
     color: COLORS.primary,
     marginBottom: 4,
   },
   positionLabel: {
-    fontSize: responsiveFontSize(1.4),
+    fontSize: FONT_SIZES.extraSmall,
     color: '#666',
   },
   familyContext: {
-    fontSize: responsiveFontSize(1.3),
+    fontSize: FONT_SIZES.extraSmall,
     color: '#888',
     textAlign: 'center',
   },
@@ -614,11 +615,11 @@ const styles = StyleSheet.create({
     elevation: 3,
   },
   achievementIcon: {
-    fontSize: responsiveFontSize(2.5),
+    fontSize: FONT_SIZES.extraLarge,
     marginBottom: 8,
   },
   achievementText: {
-    fontSize: responsiveFontSize(1.2),
+    fontSize: FONT_SIZES.extraSmall,
     color: '#333',
     textAlign: 'center',
   },
@@ -645,12 +646,12 @@ const styles = StyleSheet.create({
     elevation: 5,
   },
   statNumber: {
-    fontSize: responsiveFontSize(2.5),
+    fontSize: FONT_SIZES.extraLarge,
     color: '#333',
     marginVertical: 8,
   },
   statLabel: {
-    fontSize: responsiveFontSize(1.3),
+    fontSize: FONT_SIZES.extraSmall,
     color: '#666',
     textAlign: 'center',
   },
@@ -662,7 +663,7 @@ const styles = StyleSheet.create({
     borderLeftColor: '#2196F3',
   },
   globalText: {
-    fontSize: responsiveFontSize(1.4),
+    fontSize: FONT_SIZES.extraSmall,
     color: '#1565C0',
     textAlign: 'center',
   },
@@ -679,17 +680,17 @@ const styles = StyleSheet.create({
     borderColor: '#FFD54F',
   },
   motivationEmoji: {
-    fontSize: responsiveFontSize(4),
+    fontSize: FONT_SIZES.display,
     marginBottom: responsiveHeight(1),
   },
   motivationTitle: {
-    fontSize: responsiveFontSize(2),
+    fontSize: FONT_SIZES.medium,
     color: '#F57F17',
     marginBottom: responsiveHeight(1),
     textAlign: 'center',
   },
   motivationText: {
-    fontSize: responsiveFontSize(1.5),
+    fontSize: FONT_SIZES.extraSmall,
     color: '#F9A825',
     textAlign: 'center',
     lineHeight: 22,

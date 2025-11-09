@@ -1,3 +1,4 @@
+import { FONT_SIZES } from "@/constants/FontSize";
 import { ScrollView, StyleSheet, Text, View, ActivityIndicator, FlatList } from "react-native";
 import React, { useState, useEffect, useMemo } from "react";
 import {
@@ -247,7 +248,7 @@ const ManageTasks = () => {
     <SafeAreaView style={styles.safeArea}>
       <ScrollView>
         <View style={{flexDirection:'row', alignItems:"center"}}>
-          <CustomText style={{flex:1, textAlign:"center", fontSize: responsiveFontSize(3), fontWeight: 500, paddingVertical: 10}}>
+          <CustomText style={{flex:1, textAlign:"center", fontSize: FONT_SIZES.title, fontWeight: 500, paddingVertical: 10}}>
             Manage Tasks
           </CustomText>
           <PlusButton onPress={() =>{router.push("/screens/parent/manage-tasks/assign-task" as any)}} />
@@ -316,11 +317,11 @@ const ManageTasks = () => {
         <View style={{ flex: 1, paddingVertical: 20 }}>
           {searchQuery.trim() && (
             <View style={{ marginBottom: 15, padding: 12, backgroundColor: 'white', borderRadius: 8, borderWidth: 1, borderColor: '#EAEBEC' }}>
-              <CustomText style={{ fontSize: responsiveFontSize(1.8), color: COLORS.grey, textAlign: 'center' }}>
+              <CustomText style={{ fontSize: FONT_SIZES.medium, color: COLORS.grey, textAlign: 'center' }}>
                 {filteredTasks.length} result{filteredTasks.length !== 1 ? 's' : ''} found for "{searchQuery}"
               </CustomText>
               {filteredTasks.length > 0 && (
-                <CustomText style={{ fontSize: responsiveFontSize(1.6), color: COLORS.grey, textAlign: 'center', marginTop: 4 }}>
+                <CustomText style={{ fontSize: FONT_SIZES.extraSmall, color: COLORS.grey, textAlign: 'center', marginTop: 4 }}>
                   {unrewardedTasks > 0 && `${unrewardedTasks} unrewarded • `}
                   {pendingTasks > 0 && `${pendingTasks} pending • `}
                   {completedTasks > 0 && `${completedTasks} completed • `}
@@ -355,7 +356,7 @@ const ManageTasks = () => {
             />
           ) : (
             <View style={{ flex: 1, justifyContent: "center", alignItems: "center", minHeight: 200 }}>
-              <CustomText style={{ color: COLORS.grey, textAlign: "center", fontSize: responsiveFontSize(1.8) }}>
+              <CustomText style={{ color: COLORS.grey, textAlign: "center", fontSize: FONT_SIZES.medium }}>
                 {searchQuery.trim() 
                   ? `No tasks found matching "${searchQuery}"`
                   : "No tasks created yet.\nCreate your first task to get started!"

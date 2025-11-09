@@ -1,3 +1,4 @@
+import { FONT_SIZES } from "@/constants/FontSize";
 import React, { useState } from "react";
 import CustomText from "@/components/CustomText";
 import CustomButton from "@/components/buttons/CustomButton";
@@ -64,7 +65,7 @@ const Login = () => {
             <CustomText
               variant="semiBold"
               style={{
-                fontSize: responsiveFontSize(4.5),
+                fontSize: FONT_SIZES.display,
                 color: COLORS.purple,
               }}
             >
@@ -73,7 +74,7 @@ const Login = () => {
             <CustomText
               variant="semiBold"
               style={{
-                fontSize: responsiveFontSize(4.5),
+                fontSize: FONT_SIZES.display,
                 padding: 0,
                 margin: 0,
               }}
@@ -83,7 +84,7 @@ const Login = () => {
             </CustomText>
             <CustomText
               variant="semiBold"
-              style={{ fontSize: responsiveFontSize(4.5) }}
+              style={{ fontSize: FONT_SIZES.display }}
             >
               Account
             </CustomText>
@@ -93,7 +94,7 @@ const Login = () => {
           <View style={{ justifyContent: "center" }}>
             <CustomText
               variant="semiBold"
-              style={{ fontSize: responsiveFontSize(2) }}
+              style={{ fontSize: FONT_SIZES.medium }}
             >
               Enter Parent's Invite Code
             </CustomText>

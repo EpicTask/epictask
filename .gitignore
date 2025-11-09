@@ -67,3 +67,4 @@ services/task_management/app/config/service_accounts/
 
 services/epictask-react/constants/Microservices.ts
 services/epictask-react/api/metricsService.js
+services/epictask-react/scripts/updateFontSizes.js

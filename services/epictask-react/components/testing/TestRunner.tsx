@@ -1,3 +1,4 @@
+import { FONT_SIZES } from "@/constants/FontSize";
 import React, { useState } from 'react';
 import {
   View,
@@ -167,7 +168,7 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   testName: {
-    fontSize: responsiveFontSize(1.8),
+    fontSize: FONT_SIZES.medium,
     fontWeight: '600',
     color: '#333',
     flex: 1,
@@ -181,11 +182,11 @@ const styles = StyleSheet.create({
   },
   statusText: {
     color: 'white',
-    fontSize: responsiveFontSize(1.2),
+    fontSize: FONT_SIZES.extraSmall,
     fontWeight: '600',
   },
   message: {
-    fontSize: responsiveFontSize(1.4),
+    fontSize: FONT_SIZES.extraSmall,
     marginBottom: 8,
     lineHeight: 18,
   },
@@ -198,12 +199,12 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   duration: {
-    fontSize: responsiveFontSize(1.2),
+    fontSize: FONT_SIZES.extraSmall,
     color: '#999',
     marginBottom: 2,
   },
   lastRun: {
-    fontSize: responsiveFontSize(1.2),
+    fontSize: FONT_SIZES.extraSmall,
     color: '#999',
   },
   actions: {
@@ -218,7 +219,7 @@ const styles = StyleSheet.create({
   },
   detailsButtonText: {
     color: 'white',
-    fontSize: responsiveFontSize(1.4),
+    fontSize: FONT_SIZES.extraSmall,
     fontWeight: '500',
   },
   runButton: {
@@ -235,7 +236,7 @@ const styles = StyleSheet.create({
   },
   runButtonText: {
     color: 'white',
-    fontSize: responsiveFontSize(1.4),
+    fontSize: FONT_SIZES.extraSmall,
     fontWeight: '600',
   },
 });

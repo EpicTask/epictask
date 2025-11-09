@@ -1,3 +1,4 @@
+import { FONT_SIZES } from "@/constants/FontSize";
 import React, { ReactNode } from "react";
 
 import {
@@ -99,7 +100,7 @@ const RolesScreen = () => {
     return (
       <View style={[styles.container, styles.loadingContainer]}>
         <ActivityIndicator size="large" color={COLORS.white} />
-        <Text style={[styles.screenText, { fontSize: responsiveFontSize(2.5), marginTop: 20 }]}>
+        <Text style={[styles.screenText, { fontSize: FONT_SIZES.extraLarge, marginTop: 20 }]}>
           Loading...
         </Text>
       </View>
@@ -171,7 +172,7 @@ const styles = StyleSheet.create({
     paddingVertical: 20,
   },
   screenText: {
-    fontSize: responsiveFontSize(5),
+    fontSize: FONT_SIZES.display,
     color: COLORS.white,
   },
   fw: {
@@ -204,12 +205,12 @@ const styles = StyleSheet.create({
   },
   btn_text: {
     fontWeight: "bold",
-    fontSize: responsiveFontSize(2.5),
+    fontSize: FONT_SIZES.extraLarge,
     color: COLORS.primary,
   },
   btn_desc: {
     color: COLORS.primary,
     width: responsiveWidth(60),
-    fontSize: responsiveFontSize(1.7),
+    fontSize: FONT_SIZES.small,
   },
 });

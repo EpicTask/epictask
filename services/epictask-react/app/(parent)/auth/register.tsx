@@ -1,3 +1,4 @@
+import { FONT_SIZES } from "@/constants/FontSize";
 import React, { useState } from "react";
 
 import SafeArea from "@/components/SafeArea";
@@ -70,14 +71,14 @@ const Register = () => {
                 variant="semiBold"
                 style={{
                   color: COLORS.primary,
-                  fontSize: responsiveFontSize(4.5),
+                  fontSize: FONT_SIZES.display,
                 }}
               >
                 Create an
               </CustomText>
               <CustomText
                 variant="semiBold"
-                style={{ fontSize: responsiveFontSize(4.5), top: -14 }}
+                style={{ fontSize: FONT_SIZES.display, top: -14 }}
               >
                 Account
               </CustomText>
@@ -87,7 +88,7 @@ const Register = () => {
             <CustomText
               variant="medium"
               style={{
-                fontSize: responsiveFontSize(1.7),
+                fontSize: FONT_SIZES.small,
                 color: COLORS.grey,
                 top: -14,
               }}
@@ -152,7 +153,7 @@ const Register = () => {
                 <CustomText
                   style={{
                     color: COLORS.black,
-                    fontSize: responsiveFontSize(1.75),
+                    fontSize: FONT_SIZES.small,
                   }}
                 >
                   Yes, I agree to the Terms & Conditioins
@@ -181,7 +182,7 @@ const Register = () => {
                 variant="medium"
                 style={{
                   color: COLORS.primary,
-                  fontSize: responsiveFontSize(1.7),
+                  fontSize: FONT_SIZES.small,
                 }}
               >
                 Already have an account?

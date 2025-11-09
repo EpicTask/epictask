@@ -1,3 +1,4 @@
+import { FONT_SIZES } from "@/constants/FontSize";
 import React from 'react';
 import {
   View,
@@ -218,7 +219,7 @@ const styles = StyleSheet.create({
     borderBottomColor: '#f0f0f0',
   },
   title: {
-    fontSize: responsiveFontSize(2.2),
+    fontSize: FONT_SIZES.large,
     fontWeight: 'bold',
     color: '#333',
   },
@@ -234,7 +235,7 @@ const styles = StyleSheet.create({
   },
   actionButtonText: {
     color: 'white',
-    fontSize: responsiveFontSize(1.4),
+    fontSize: FONT_SIZES.extraSmall,
     fontWeight: '600',
   },
   summaryContainer: {
@@ -251,7 +252,7 @@ const styles = StyleSheet.create({
     elevation: 3,
   },
   summaryTitle: {
-    fontSize: responsiveFontSize(1.8),
+    fontSize: FONT_SIZES.medium,
     fontWeight: '600',
     color: '#333',
     marginBottom: 12,
@@ -264,12 +265,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   statValue: {
-    fontSize: responsiveFontSize(2.4),
+    fontSize: FONT_SIZES.extraLarge,
     fontWeight: 'bold',
     marginBottom: 4,
   },
   statLabel: {
-    fontSize: responsiveFontSize(1.4),
+    fontSize: FONT_SIZES.extraSmall,
     color: '#666',
   },
   resultsContainer: {
@@ -283,7 +284,7 @@ const styles = StyleSheet.create({
     paddingVertical: 40,
   },
   emptyText: {
-    fontSize: responsiveFontSize(1.8),
+    fontSize: FONT_SIZES.medium,
     color: COLORS.grey,
   },
   resultCard: {
@@ -313,18 +314,18 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   statusIcon: {
-    fontSize: responsiveFontSize(1.8),
+    fontSize: FONT_SIZES.medium,
     marginRight: 8,
     fontWeight: 'bold',
   },
   resultName: {
-    fontSize: responsiveFontSize(1.6),
+    fontSize: FONT_SIZES.extraSmall,
     fontWeight: '600',
     color: '#333',
     flex: 1,
   },
   resultMessage: {
-    fontSize: responsiveFontSize(1.4),
+    fontSize: FONT_SIZES.extraSmall,
     lineHeight: 18,
   },
   statusBadge: {
@@ -336,7 +337,7 @@ const styles = StyleSheet.create({
   },
   statusText: {
     color: 'white',
-    fontSize: responsiveFontSize(1.2),
+    fontSize: FONT_SIZES.extraSmall,
     fontWeight: '600',
   },
   resultFooter: {
@@ -345,11 +346,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   duration: {
-    fontSize: responsiveFontSize(1.2),
+    fontSize: FONT_SIZES.extraSmall,
     color: '#999',
   },
   lastRun: {
-    fontSize: responsiveFontSize(1.2),
+    fontSize: FONT_SIZES.extraSmall,
     color: '#999',
   },
 });

@@ -1,3 +1,4 @@
+import { FONT_SIZES } from "@/constants/FontSize";
 import React, { useState, useEffect } from 'react';
 import {
   Modal,
@@ -201,7 +202,7 @@ const styles = StyleSheet.create({
     borderBottomColor: '#f0f0f0',
   },
   title: {
-    fontSize: responsiveFontSize(2.5),
+    fontSize: FONT_SIZES.extraLarge,
     color: COLORS.primary,
   },
   closeButton: {
@@ -211,7 +212,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   closeText: {
-    fontSize: responsiveFontSize(2.5),
+    fontSize: FONT_SIZES.extraLarge,
     color: COLORS.grey,
   },
   content: {
@@ -219,7 +220,7 @@ const styles = StyleSheet.create({
     padding: responsiveWidth(4),
   },
   description: {
-    fontSize: responsiveFontSize(2),
+    fontSize: FONT_SIZES.medium,
     color: COLORS.grey,
     marginBottom: responsiveHeight(2),
     textAlign: 'center',
@@ -231,7 +232,7 @@ const styles = StyleSheet.create({
     gap: 10,
   },
   loadingText: {
-    fontSize: responsiveFontSize(2),
+    fontSize: FONT_SIZES.medium,
     color: COLORS.grey,
   },
   emptyContainer: {
@@ -241,7 +242,7 @@ const styles = StyleSheet.create({
     padding: responsiveWidth(4),
   },
   emptyText: {
-    fontSize: responsiveFontSize(2),
+    fontSize: FONT_SIZES.medium,
     color: COLORS.grey,
     textAlign: 'center',
     lineHeight: 24,
@@ -268,12 +269,12 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   childName: {
-    fontSize: responsiveFontSize(2.2),
+    fontSize: FONT_SIZES.large,
     color: COLORS.primary,
     marginBottom: 4,
   },
   childDetails: {
-    fontSize: responsiveFontSize(1.8),
+    fontSize: FONT_SIZES.medium,
     color: COLORS.grey,
   },
   selectionIndicator: {

@@ -15,6 +15,7 @@ interface CustomInputProps {
   onIconClick?: () => void;
   onChangeText: (text: string) => void;
   secureTextEntry?: boolean;
+  capitalizeFirstLetter?: boolean;
 }
 
 const CustomInput: React.FC<CustomInputProps> = ({
@@ -26,11 +27,20 @@ const CustomInput: React.FC<CustomInputProps> = ({
   placeholder,
   date = false,
   secureTextEntry = false,
+  capitalizeFirstLetter = false,
 }) => {
   const [isPasswordVisible, setIsPasswordVisible] = useState(false);
 
   const togglePasswordVisibility = () => {
     setIsPasswordVisible(!isPasswordVisible);
+  };
+
+  const handleTextChange = (text: string) => {
+    if (capitalizeFirstLetter) {
+      onChangeText(text.charAt(0).toUpperCase() + text.slice(1));
+    } else {
+      onChangeText(text);
+    }
   };
 
   return (
@@ -47,7 +57,7 @@ const CustomInput: React.FC<CustomInputProps> = ({
         <TextInput
           style={secureTextEntry ? styles.passwordInput : styles.inputField}
           value={value}
-          onChangeText={onChangeText}
+          onChangeText={handleTextChange}
           secureTextEntry={secureTextEntry && !isPasswordVisible}
           placeholder={placeholder}
         />

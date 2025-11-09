@@ -1,3 +1,4 @@
+import { FONT_SIZES } from "@/constants/FontSize";
 import React from "react";
 import CustomText from "@/components/CustomText";
 import ScreenHeading from "@/components/headings/ScreenHeading";
@@ -45,7 +46,7 @@ const ExploreCard = () => {
       >
         <View>
           <CustomText
-            style={{ color: COLORS.white, fontSize: responsiveFontSize(2) }}
+            style={{ color: COLORS.white, fontSize: FONT_SIZES.medium }}
           >
             Our Planet
           </CustomText>
@@ -54,7 +55,7 @@ const ExploreCard = () => {
             style={{
               width: "80%",
               color: COLORS.white,
-              fontSize: responsiveFontSize(4),
+              fontSize: FONT_SIZES.display,
             }}
           >
             The Blue Planet

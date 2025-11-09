@@ -1,3 +1,4 @@
+import { FONT_SIZES } from "@/constants/FontSize";
 import React, { ReactNode, useContext } from "react";
 import {
   responsiveFontSize,
@@ -44,7 +45,7 @@ const ProfileCard = () => {
         />
         <CustomText
           variant="semiBold"
-          style={{ fontSize: responsiveFontSize(2.3) }}
+          style={{ fontSize: FONT_SIZES.large }}
         >
           {user?.displayName || 'Joshua Smith'}
         </CustomText>
@@ -79,7 +80,7 @@ const SettingButton = ({
           {icon}
           <CustomText
             variant="semiBold"
-            style={{ fontSize: responsiveFontSize(2.3) }}
+            style={{ fontSize: FONT_SIZES.large }}
           >
             {text}
           </CustomText>
@@ -111,7 +112,7 @@ const ProfileScreen = () => {
         <View style={{ flexDirection: "row", justifyContent: "center" }}>
           <CustomText
             variant="semiBold"
-            style={{ fontSize: responsiveFontSize(3), fontWeight: "500" }}
+            style={{ fontSize: FONT_SIZES.title, fontWeight: "500" }}
           >
             Settings
           </CustomText>
@@ -173,7 +174,7 @@ const ProfileScreen = () => {
             <CustomText
               style={{
                 paddingVertical: 20,
-                fontSize: responsiveFontSize(2),
+                fontSize: FONT_SIZES.medium,
                 fontWeight: "500",
                 color: COLORS.grey,
               }}

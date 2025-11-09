@@ -1,3 +1,4 @@
+import { FONT_SIZES } from "@/constants/FontSize";
 import React from "react";
 import Divider from "@/components/Divider/Divider";
 import CustomButton from "@/components/buttons/CustomButton";
@@ -28,14 +29,14 @@ const CreateProfile = () => {
         <CustomText
           variant="semiBold"
           style={{
-            fontSize: responsiveFontSize(3.5),
+            fontSize: FONT_SIZES.title,
           }}
         >
           Create Your Profile
         </CustomText>
         <CustomText
           variant="medium"
-          style={{ color: COLORS.grey, fontSize: responsiveFontSize(1.7) }}
+          style={{ color: COLORS.grey, fontSize: FONT_SIZES.small }}
         >
           You can setup your profile details
         </CustomText>

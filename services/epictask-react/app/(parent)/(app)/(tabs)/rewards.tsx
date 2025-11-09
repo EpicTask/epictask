@@ -1,3 +1,4 @@
+import { FONT_SIZES } from "@/constants/FontSize";
 import { ICONS, IMAGES } from "@/assets";
 import Search from "@/components/search/Search";
 import CustomText from "@/components/CustomText";
@@ -54,7 +55,7 @@ const RewardHistoryComponent: React.FC<{ history: RewardHistory }> = ({ history 
   <View style={{ gap: 4, width: responsiveWidth(70) }}>
     <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
       <AntDesign name="checkcircle" size={20} color="#0ECC44" />
-      <CustomText style={{ color: "#000", fontSize: responsiveFontSize(1.7) }} variant="medium">
+      <CustomText style={{ color: "#000", fontSize: FONT_SIZES.small }} variant="medium">
         {history.message}
       </CustomText>
     </View>
@@ -318,7 +319,7 @@ const styles = StyleSheet.create({
   },
   loadingText: {
     marginTop: responsiveHeight(2),
-    fontSize: responsiveFontSize(1.6),
+    fontSize: FONT_SIZES.extraSmall,
     color: COLORS.grey,
   },
   scrollView: {
@@ -333,13 +334,13 @@ const styles = StyleSheet.create({
     paddingHorizontal: responsiveWidth(4),
   },
   headerTitle: {
-    fontSize: responsiveFontSize(2.8),
+    fontSize: FONT_SIZES.subtitle,
     color: '#333',
     marginBottom: 8,
     textAlign: 'center',
   },
   headerSubtitle: {
-    fontSize: responsiveFontSize(1.5),
+    fontSize: FONT_SIZES.extraSmall,
     color: COLORS.grey,
     textAlign: 'center',
   },
@@ -365,12 +366,12 @@ const styles = StyleSheet.create({
     elevation: 5,
   },
   statNumber: {
-    fontSize: responsiveFontSize(2.2),
+    fontSize: FONT_SIZES.large,
     color: '#333',
     marginVertical: 8,
   },
   statLabel: {
-    fontSize: responsiveFontSize(1.3),
+    fontSize: FONT_SIZES.extraSmall,
     color: COLORS.grey,
     textAlign: 'center',
   },
@@ -379,7 +380,7 @@ const styles = StyleSheet.create({
     marginBottom: responsiveHeight(2),
   },
   sectionTitle: {
-    fontSize: responsiveFontSize(2),
+    fontSize: FONT_SIZES.medium,
     color: '#333',
     marginBottom: responsiveHeight(1.5),
   },
@@ -405,7 +406,7 @@ const styles = StyleSheet.create({
     marginRight: 12,
   },
   currencyRateText: {
-    fontSize: responsiveFontSize(1.5),
+    fontSize: FONT_SIZES.extraSmall,
     color: '#333',
   },
   globalSection: {
@@ -419,7 +420,7 @@ const styles = StyleSheet.create({
     marginBottom: responsiveHeight(1.5),
   },
   viewAllButton: {
-    fontSize: responsiveFontSize(1.4),
+    fontSize: FONT_SIZES.extraSmall,
     color: COLORS.primary,
   },
   globalLeaderboardCard: {
@@ -444,7 +445,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   rankNumber: {
-    fontSize: responsiveFontSize(1.6),
+    fontSize: FONT_SIZES.extraSmall,
     color: COLORS.primary,
   },
   globalInfo: {
@@ -452,19 +453,19 @@ const styles = StyleSheet.create({
     marginLeft: responsiveWidth(3),
   },
   globalName: {
-    fontSize: responsiveFontSize(1.6),
+    fontSize: FONT_SIZES.extraSmall,
     color: '#333',
     marginBottom: 4,
   },
   globalStats: {
-    fontSize: responsiveFontSize(1.3),
+    fontSize: FONT_SIZES.extraSmall,
     color: COLORS.grey,
   },
   globalLevel: {
     alignItems: 'center',
   },
   levelBadge: {
-    fontSize: responsiveFontSize(1.4),
+    fontSize: FONT_SIZES.extraSmall,
     color: COLORS.primary,
     backgroundColor: '#E3F2FD',
     paddingHorizontal: 8,
@@ -476,7 +477,7 @@ const styles = StyleSheet.create({
     paddingVertical: responsiveHeight(4),
   },
   emptyText: {
-    fontSize: responsiveFontSize(1.6),
+    fontSize: FONT_SIZES.extraSmall,
     color: COLORS.grey,
     marginTop: responsiveHeight(1),
     textAlign: 'center',
@@ -501,13 +502,13 @@ const styles = StyleSheet.create({
     marginBottom: responsiveHeight(2),
   },
   tipEmoji: {
-    fontSize: responsiveFontSize(2),
+    fontSize: FONT_SIZES.medium,
     marginRight: responsiveWidth(3),
     marginTop: 2,
   },
   tipText: {
     flex: 1,
-    fontSize: responsiveFontSize(1.5),
+    fontSize: FONT_SIZES.extraSmall,
     color: '#333',
     lineHeight: 22,
   },
@@ -540,11 +541,11 @@ const styles = StyleSheet.create({
   achievementTitle: {
     color: COLORS.white,
     fontWeight: "500",
-    fontSize: responsiveFontSize(2.3),
+    fontSize: FONT_SIZES.large,
   },
   achievementDescription: {
     color: COLORS.white,
-    fontSize: responsiveFontSize(1.6),
+    fontSize: FONT_SIZES.extraSmall,
   },
   historyHeader: {
     flexDirection: "row",
@@ -557,13 +558,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   tokenAmount: {
-    fontSize: responsiveFontSize(1.2),
+    fontSize: FONT_SIZES.extraSmall,
     color: COLORS.primary,
     marginRight: 8,
     fontWeight: '600',
   },
   taskCount: {
-    fontSize: responsiveFontSize(1.3),
+    fontSize: FONT_SIZES.extraSmall,
     color: COLORS.grey,
   },
 });
