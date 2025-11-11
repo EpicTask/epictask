@@ -106,13 +106,15 @@ const AssignTask = () => {
             value={taskData.task_title}
             onChangeText={(value) => handleInputChange("task_title", value)}
             placeholder="Enter task title"
+            capitalizeFirstLetter={true}
           />
           <CustomInput
             label="Task Description"
             value={taskData.task_description}
             onChangeText={(value) => handleInputChange("task_description", value)}
+            capitalizeFirstLetter={true}
           />
-          <DateInput title="Due Date (Optional)" />
+          <DateInput title="Due Date" />
           <CustomInput 
             label="Reward Amount" 
             value={taskData.reward_amount} 
