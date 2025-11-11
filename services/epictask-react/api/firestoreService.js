@@ -1439,5 +1439,58 @@ export const firestoreService = {
       ErrorHandler.logError(operation, error, { parentUid });
       throw ErrorHandler.createError(operation, error, { parentUid });
     }
+  },
+
+  /**
+   * Get notifications for a user
+   * @param {string} userId - The user ID
+   * @param {object} options - Options for caching and limiting
+   * @returns {Promise<Array>} Array of notifications
+   */
+  getNotifications: async (userId, options = {}) => {
+    const operation = 'getNotifications';
+    PerformanceMonitor.start(operation);
+    
+    try {
+      if (!userId) {
+        throw new Error('User ID is required');
+      }
+
+      const { useCache = true, limitCount = 50 } = options;
+      const cacheKey = `notifications:${userId}`;
+      
+      // Check cache first
+      if (useCache) {
+        const cachedNotifications = TaskCache.get(cacheKey);
+        if (cachedNotifications) {
+          PerformanceMonitor.end(operation);
+          return { success: true, notifications: cachedNotifications, fromCache: true };
+        }
+      }
+
+      // Query notifications collection for this user
+      const notificationsQuery = query(
+        collection(db, "notifications", userId, "notifications"),
+        orderBy("timestamp", "desc"),
+        limit(limitCount)
+      );
+
+      const notificationsSnapshot = await getDocs(notificationsQuery);
+      const notifications = notificationsSnapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...doc.data()
+      }));
+
+      // Cache the results
+      if (useCache) {
+        TaskCache.set(cacheKey, notifications, 180000); // 3 minutes
+      }
+
+      PerformanceMonitor.end(operation);
+      return { success: true, notifications };
+    } catch (error) {
+      ErrorHandler.logError(operation, error, { userId });
+      throw ErrorHandler.createError(operation, error, { userId });
+    }
   }
 };

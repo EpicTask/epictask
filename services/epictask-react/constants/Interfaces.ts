@@ -1,4 +1,4 @@
-import { Timestamp } from "@react-native-firebase/firestore";
+import { Timestamp } from "@firebase/firestore";
 
 // Task interface
 interface Task {
@@ -15,7 +15,8 @@ interface Task {
   user_id?: string;
   rewarded?: boolean;
   marked_completed?: boolean;
+  due_date?: string;
+  notes?: string;
 }
 
 export type { Task };
-

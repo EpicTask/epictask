@@ -36,5 +36,7 @@ export const COLORS = {
   light_purple:"#E7E3F9",
   light_green: "#1b6620ff",
   light_yellow:"#FEF3E2",
-  red: "#FF0000"
+  red: "#FF0000",
+  light_grey: "#E5E7EB",
+  success: "#4CAF50"
 };

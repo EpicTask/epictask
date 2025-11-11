@@ -47,7 +47,8 @@
           "backgroundColor": "#ffffff"
         }
       ],
-      "expo-web-browser"
+      "expo-web-browser",
+      "expo-localization"
     ],
     "experiments": {
       "reactCanary": true,

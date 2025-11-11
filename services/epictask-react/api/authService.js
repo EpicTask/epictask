@@ -495,7 +495,7 @@ export const authService = {
     try {
       const user = auth.currentUser;
       if (user) {
-        const token = await user.getIdToken(true); // Force refresh
+        const token = await user.getIdToken(); // Force refresh
         await AsyncStorage.setItem("authToken", token);
         return token;
       }

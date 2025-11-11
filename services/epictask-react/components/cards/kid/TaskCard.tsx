@@ -7,20 +7,24 @@ import { View, Text, Image, StyleSheet } from "react-native";
 import { responsiveHeight } from "react-native-responsive-dimensions";
 import CustomText from "@/components/CustomText";
 
+import { Task } from "@/constants/Interfaces";
+
 interface KidsCardProps {
-  name: string;
-  stars: number;
+  task: Task;
   onPress?: () => void;
   bg?: string;
 }
 
-const TaskCard: React.FC<KidsCardProps> = ({ name, stars, onPress, bg }) => {
+const TaskCard: React.FC<KidsCardProps> = ({ task, onPress, bg }) => {
+  const { task_title, reward_amount, due_date, notes } = task;
   return (
     <View style={[styles.card, { backgroundColor: bg }]}>
       <View style={{ gap: 10 }}>
         <View style={{ flexDirection: "row", justifyContent: "space-between" }}>
           <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
-            <CustomText variant="semiBold" style={styles.name}>{name}</CustomText>
+            <CustomText variant="semiBold" style={styles.name}>
+              {task_title}
+            </CustomText>
           </View>
           <View style={styles.levelContainer}>
             <View style={{ flexDirection: "row", alignItems: "center" }}>
@@ -31,7 +35,7 @@ const TaskCard: React.FC<KidsCardProps> = ({ name, stars, onPress, bg }) => {
                   width: responsiveHeight(2),
                 }}
               />
-              <CustomText style={styles.starsText}> {stars}</CustomText>
+              <CustomText style={styles.starsText}> {reward_amount}</CustomText>
             </View>
           </View>
         </View>
@@ -45,10 +49,20 @@ const TaskCard: React.FC<KidsCardProps> = ({ name, stars, onPress, bg }) => {
             }}
           >
             <Ionicons name="calendar-outline" size={12} color="black" />
-            <CustomText style={styles.statText}>Today 08:30 AM - 10:30 AM</CustomText>
+            <CustomText style={styles.statText}>
+              {due_date
+                ? new Date(due_date).toLocaleDateString()
+                : "No due date"}
+            </CustomText>
           </View>
           <Fontisto name="link" size={16} color="black" />
         </View>
+        {notes && (
+          <View>
+            <Text style={styles.notesTitle}>Notes from Parent:</Text>
+            <Text style={styles.notesText}>{notes}</Text>
+          </View>
+        )}
         <View
           style={{
             flexDirection: "row",
@@ -142,6 +156,13 @@ const styles = StyleSheet.create({
   },
   statText: {
     fontSize: 12,
+    color: "#6B7280",
+  },
+  notesTitle: {
+    fontWeight: "bold",
+    marginTop: 10,
+  },
+  notesText: {
     color: "#6B7280",
   },
 });

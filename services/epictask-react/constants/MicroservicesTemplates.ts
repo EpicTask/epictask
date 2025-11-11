@@ -5,6 +5,7 @@ const MicroserviceUrls = {
   taskManagement: '',
   userManagement: '',
   xrplManagement: '',
+  narrativeEngine:'',
   // Production
   apiGateway: '',
 };

@@ -151,6 +151,13 @@ const SettingsScreen = () => {
                 router.push("/screens/settings/notifications" as any);
               }}
             />
+            <SettingButton
+              icon={<MaterialIcons name="menu-book" size={24} color={COLORS.primary} />}
+              text={"Narrative Learning"}
+              onPress={() => {
+                router.push("/screens/narrative-dashboard" as any);
+              }}
+            />
             {isAdmin && (
               <SettingButton
                 icon={<MaterialIcons name="dashboard" size={24} color={COLORS.primary} />}

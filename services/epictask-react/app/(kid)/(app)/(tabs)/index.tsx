@@ -13,6 +13,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { useQuery } from "@tanstack/react-query";
 import { router } from "expo-router";
 import * as Progress from "react-native-progress";
+import { useAuth } from "@/context/AuthContext";
 
 import TaskCard from "@/components/cards/kid/TaskCard";
 import CustomText from "@/components/CustomText";
@@ -25,14 +26,17 @@ import {
   responsiveWidth,
 } from "react-native-responsive-dimensions";
 import userApiClient from "@/api/userService";
+import { firestoreService } from "@/api/firestoreService";
 import MicroserviceUrls from "@/constants/Microservices";
 import { Task } from "@/constants/Interfaces";
 import DebouncedTouchableOpacity from "@/components/buttons/DebouncedTouchableOpacity";
+import StoryProgressCard from "@/components/cards/kid/StoryProgressCard";
+import narrativeService, { StoryProgress } from "@/api/narrativeService";
 
-const fetchTasks = async () => {
+const fetchTasks = async (userId: string) => {
   const { data } = await userApiClient.get(
-    `${MicroserviceUrls.taskManagement}/tasks?user_id=kid_user_id`
-  ); // Replace with actual user_id
+    `${MicroserviceUrls.taskManagement}/tasks?user_id=${userId}`
+  );
   if (Array.isArray(data)) {
     return data;
   }
@@ -44,14 +48,27 @@ const fetchTasks = async () => {
 };
 
 export default function HomeScreen() {
+  const { user } = useAuth();
   const {
     data: tasks = [],
     isLoading,
     isError,
     error,
+    refetch,
   } = useQuery({
-    queryKey: ["tasks"],
-    queryFn: fetchTasks,
+    queryKey: ["tasks", user?.uid],
+    queryFn: () => fetchTasks(user?.uid),
+    enabled: !!user,
+  });
+
+  // Fetch story progress
+  const {
+    data: storyProgress = [],
+    isLoading: storyProgressLoading,
+  } = useQuery({
+    queryKey: ["homeStoryProgress", user?.uid],
+    queryFn: () => narrativeService.getProgress(user?.uid),
+    enabled: !!user,
   });
 
   if (isLoading) {
@@ -59,13 +76,32 @@ export default function HomeScreen() {
   }
 
   if (isError) {
-    return <Text style={styles.centered}>Error: {error.message}</Text>;
+    return (
+      <View style={styles.centered}>
+        <Text>Oops! We couldn't load your tasks.</Text>
+        <TouchableOpacity onPress={() => refetch()}>
+          <Text style={{ color: COLORS.primary, marginTop: 10 }}>Retry</Text>
+        </TouchableOpacity>
+      </View>
+    );
   }
 
   const completedTasks = tasks.filter(
     (task: Task) => task.status === "completed"
   ).length;
   const progress = tasks.length > 0 ? completedTasks / tasks.length : 0;
+
+  // Calculate story stats
+  const inProgressStories = storyProgress.filter(
+    (p: StoryProgress) => p.status === "in_progress"
+  ).length;
+  const completedStories = storyProgress.filter(
+    (p: StoryProgress) => p.status === "completed"
+  ).length;
+  const totalStoryXp = storyProgress.reduce(
+    (sum: number, p: StoryProgress) => sum + p.total_xp_earned,
+    0
+  );
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -86,22 +122,31 @@ export default function HomeScreen() {
                 variant="semiBold"
                 style={{ fontSize: FONT_SIZES.title, fontWeight: "500" }}
               >
-                Kai Kai! 👋
+                {user?.displayName || "New User"}! 👋
               </CustomText>
               <CustomText style={{ paddingRight: 40, color: COLORS.grey }}>
                 Ready for some fun tasks and rewards today?
               </CustomText>
             </View>
             <View>
-              <View
-                style={{
-                  padding: 14,
-                  backgroundColor: "white",
-                  borderRadius: responsiveWidth(100),
+              <TouchableOpacity
+                onPress={async () => {
+                  const notifications = await firestoreService.getNotifications(
+                    user?.uid
+                  );
+                  console.log(notifications);
                 }}
               >
-                {ICONS.SETTINGS.bell}
-              </View>
+                <View
+                  style={{
+                    padding: 14,
+                    backgroundColor: "white",
+                    borderRadius: responsiveWidth(100),
+                  }}
+                >
+                  {ICONS.SETTINGS.bell}
+                </View>
+              </TouchableOpacity>
             </View>
           </View>
 
@@ -142,37 +187,21 @@ export default function HomeScreen() {
                     >{`${completedTasks}/${tasks.length}`}</Text>
                   </View>
                 </View>
-                <TouchableOpacity style={styles.arrow}>
+                <TouchableOpacity
+                  style={styles.arrow}
+                  onPress={() => router.push("../screens/all-tasks")}
+                >
                   {ICONS.kidArrow}
                 </TouchableOpacity>
               </View>
 
-              {/* Earnings */}
-              <View style={{ width: responsiveWidth(44), height: 165 }}>
-                <View>{ICONS.kidCard}</View>
-                <View style={[styles.cardOverlay, { gap: 20 }]}>
-                  <CustomText variant="semiBold">You've Earned!</CustomText>
-                  <View>
-                    <Image
-                      source={IMAGES.reward}
-                      style={{ width: 50, height: 50 }}
-                    />
-                    <CustomText
-                      variant="semiBold"
-                      style={[styles.completedText, { fontSize: 14 }]}
-                    >
-                      {tasks.reduce(
-                        (acc: number, task: Task) => acc + (task.reward_amount || 0),
-                        0
-                      )}{" "}
-                      Stars!
-                    </CustomText>
-                  </View>
-                </View>
-                <TouchableOpacity style={styles.arrow}>
-                  <KidArrowIcon fill={COLORS.secondary} />
-                </TouchableOpacity>
-              </View>
+              {/* Story Progress */}
+              <StoryProgressCard
+                inProgressCount={inProgressStories}
+                completedCount={completedStories}
+                totalXpEarned={totalStoryXp}
+                onPress={() => router.push("./stories")}
+              />
             </View>
           </View>
 
@@ -196,7 +225,7 @@ export default function HomeScreen() {
                 Upcoming Tasks
               </CustomText>
               <DebouncedTouchableOpacity
-                onPress={() => router.push("/screens/task")}
+                onPress={() => router.push("../screens/all-tasks")}
               >
                 <CustomText
                   style={{
@@ -220,12 +249,23 @@ export default function HomeScreen() {
                       : COLORS.light_yellow
                   }
                   key={index}
-                  name={task.task_title || "Task Title"}
-                  stars={task.reward_amount || 0}
+                  task={task}
                 />
               ))
             ) : (
-              <Text>No tasks for today. Great job!</Text>
+              <View style={styles.centered}>
+                <Text>No tasks for today. Great job!</Text>
+                <TouchableOpacity
+                  style={styles.createTaskButton}
+                  onPress={() => {
+                    /* Handle create task */
+                  }}
+                >
+                  <Text style={styles.createTaskButtonText}>
+                    Create Your Own Task
+                  </Text>
+                </TouchableOpacity>
+              </View>
             )}
           </View>
         </View>
@@ -272,5 +312,16 @@ const styles = StyleSheet.create({
     position: "absolute",
     bottom: 6,
     right: 0,
+  },
+  createTaskButton: {
+    marginTop: 20,
+    backgroundColor: COLORS.primary,
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderRadius: 20,
+  },
+  createTaskButtonText: {
+    color: "white",
+    fontWeight: "bold",
   },
 });
