@@ -489,6 +489,22 @@ export const authService = {
       throw new Error("Failed to delete account");
     }
   },
+
+  // Refresh the Firebase ID token
+  refreshToken: async () => {
+    try {
+      const user = auth.currentUser;
+      if (user) {
+        const token = await user.getIdToken(true); // Force refresh
+        await AsyncStorage.setItem("authToken", token);
+        return token;
+      }
+      return null;
+    } catch (error) {
+      console.error("Token refresh error:", error);
+      throw new Error("Failed to refresh token");
+    }
+  },
 };
 
 export default authService;

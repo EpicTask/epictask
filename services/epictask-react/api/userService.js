@@ -1,14 +1,15 @@
 import axios from "axios";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import MicroserviceUrls from "@/constants/Microservices";
 
 const userApiClient = axios.create({
   baseURL: MicroserviceUrls.userManagement,
 });
 
+import authService from "./authService";
+
 userApiClient.interceptors.request.use(
   async (config) => {
-    const token = await AsyncStorage.getItem("authToken");
+    const token = await authService.refreshToken();
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }

@@ -1,5 +1,4 @@
 import axios from "axios";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import MicroserviceUrls from "@/constants/Microservices";
 import { Alert } from "react-native";
 import { firestoreService } from "./firestoreService";
@@ -9,9 +8,11 @@ const taskApiClient = axios.create({
   baseURL: MicroserviceUrls.taskManagement,
 });
 
+import authService from "./authService";
+
 taskApiClient.interceptors.request.use(
   async (config) => {
-    const token = await AsyncStorage.getItem("authToken");
+    const token = await authService.refreshToken();
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
