@@ -1,0 +1,653 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ANE API Tester</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #4f46e5;
+            --primary-hover: #4338ca;
+            --success: #10b981;
+            --danger: #ef4444;
+            --warning: #f59e0b;
+            --bg: #0f172a;
+            --surface: #1e293b;
+            --surface-light: #334155;
+            --text: #f1f5f9;
+            --text-muted: #94a3b8;
+            --border: #334155;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.6;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        header {
+            background: var(--surface);
+            padding: 30px;
+            border-radius: 12px;
+            margin-bottom: 30px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+        }
+
+        h1 {
+            font-size: 2rem;
+            margin-bottom: 10px;
+            color: var(--primary);
+        }
+
+        .subtitle {
+            color: var(--text-muted);
+            font-size: 0.95rem;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 4px 12px;
+            background: var(--primary);
+            color: white;
+            border-radius: 6px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            margin-left: 10px;
+        }
+
+        .config-section {
+            background: var(--surface);
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 30px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+        }
+
+        .config-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-top: 15px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        label {
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin-bottom: 5px;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        input, select, textarea {
+            background: var(--bg);
+            border: 2px solid var(--border);
+            color: var(--text);
+            padding: 10px 12px;
+            border-radius: 8px;
+            font-size: 0.95rem;
+            transition: border-color 0.2s;
+        }
+
+        input:focus, select:focus, textarea:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+
+        .endpoints-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .endpoint-card {
+            background: var(--surface);
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+        }
+
+        .endpoint-header {
+            background: var(--surface-light);
+            padding: 15px 20px;
+            border-bottom: 2px solid var(--border);
+        }
+
+        .endpoint-method {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 6px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            margin-right: 10px;
+        }
+
+        .method-get { background: var(--success); color: white; }
+        .method-post { background: var(--primary); color: white; }
+        .method-delete { background: var(--danger); color: white; }
+
+        .endpoint-path {
+            font-family: 'Courier New', monospace;
+            font-size: 0.9rem;
+            color: var(--text-muted);
+        }
+
+        .endpoint-body {
+            padding: 20px;
+        }
+
+        .param-input {
+            margin-bottom: 12px;
+        }
+
+        .param-input label {
+            font-size: 0.8rem;
+            margin-bottom: 4px;
+        }
+
+        .param-input input, .param-input select, .param-input textarea {
+            width: 100%;
+            font-size: 0.9rem;
+            padding: 8px 10px;
+        }
+
+        .param-input textarea {
+            min-height: 80px;
+            font-family: 'Courier New', monospace;
+        }
+
+        button {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s;
+            width: 100%;
+        }
+
+        button:hover {
+            background: var(--primary-hover);
+        }
+
+        button:active {
+            transform: scale(0.98);
+        }
+
+        .response-section {
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 2px solid var(--border);
+        }
+
+        .response-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .status-badge {
+            padding: 4px 12px;
+            border-radius: 6px;
+            font-size: 0.75rem;
+            font-weight: 700;
+        }
+
+        .status-success { background: var(--success); color: white; }
+        .status-error { background: var(--danger); color: white; }
+
+        .response-body {
+            background: var(--bg);
+            border: 2px solid var(--border);
+            border-radius: 8px;
+            padding: 12px;
+            max-height: 300px;
+            overflow-y: auto;
+            font-family: 'Courier New', monospace;
+            font-size: 0.85rem;
+            line-height: 1.5;
+        }
+
+        .response-body pre {
+            margin: 0;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+
+        .section-title {
+            font-size: 1.5rem;
+            margin-bottom: 20px;
+            color: var(--primary);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .param-hint {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            margin-top: 4px;
+            font-style: italic;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🚀 {{ service }} <span class="badge">v{{ version }}</span></h1>
+            <p class="subtitle">{{ description }}</p>
+        </header>
+
+        <div class="config-section">
+            <h3>⚙️ Configuration</h3>
+            <div class="config-grid">
+                <div class="form-group">
+                    <label>API Base URL</label>
+                    <input type="text" id="baseUrl" value="{{ base_url }}" placeholder="http://localhost:8080">
+                </div>
+                <div class="form-group">
+                    <label>Authorization Token (Optional)</label>
+                    <input type="text" id="authToken" placeholder="Bearer token for authenticated endpoints">
+                </div>
+            </div>
+        </div>
+
+        <div class="section-title">🏥 Health & Info</div>
+        <div class="endpoints-grid">
+            <div class="endpoint-card">
+                <div class="endpoint-header">
+                    <span class="endpoint-method method-get">GET</span>
+                    <span class="endpoint-path">/health</span>
+                </div>
+                <div class="endpoint-body">
+                    <button onclick="callEndpoint('GET', '/health', {})">Check Health</button>
+                    <div class="response-section" id="response-health" style="display:none;"></div>
+                </div>
+            </div>
+
+            <div class="endpoint-card">
+                <div class="endpoint-header">
+                    <span class="endpoint-method method-get">GET</span>
+                    <span class="endpoint-path">/</span>
+                </div>
+                <div class="endpoint-body">
+                    <button onclick="callEndpoint('GET', '/', {})">Get Service Info</button>
+                    <div class="response-section" id="response-root" style="display:none;"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="section-title">📚 Stories</div>
+        <div class="endpoints-grid">
+            <div class="endpoint-card">
+                <div class="endpoint-header">
+                    <span class="endpoint-method method-get">GET</span>
+                    <span class="endpoint-path">/stories</span>
+                </div>
+                <div class="endpoint-body">
+                    <div class="param-input">
+                        <label>Age (Optional)</label>
+                        <input type="number" id="stories-age" min="5" max="18" placeholder="5-18">
+                        <div class="param-hint">Filter stories by age (5-18)</div>
+                    </div>
+                    <button onclick="callStories()">Get Stories</button>
+                    <div class="response-section" id="response-stories" style="display:none;"></div>
+                </div>
+            </div>
+
+            <div class="endpoint-card">
+                <div class="endpoint-header">
+                    <span class="endpoint-method method-get">GET</span>
+                    <span class="endpoint-path">/stories/{story_id}</span>
+                </div>
+                <div class="endpoint-body">
+                    <div class="param-input">
+                        <label>Story ID</label>
+                        <input type="text" id="story-id" placeholder="Enter story ID">
+                    </div>
+                    <button onclick="callStoryById()">Get Story</button>
+                    <div class="response-section" id="response-story-by-id" style="display:none;"></div>
+                </div>
+            </div>
+
+            <div class="endpoint-card">
+                <div class="endpoint-header">
+                    <span class="endpoint-method method-get">GET</span>
+                    <span class="endpoint-path">/stories/{story_id}/nodes/{node_id}</span>
+                </div>
+                <div class="endpoint-body">
+                    <div class="param-input">
+                        <label>Story ID</label>
+                        <input type="text" id="node-story-id" placeholder="Enter story ID">
+                    </div>
+                    <div class="param-input">
+                        <label>Node ID</label>
+                        <input type="text" id="node-id" placeholder="Enter node ID">
+                    </div>
+                    <div class="param-input">
+                        <label>Age</label>
+                        <input type="number" id="node-age" min="5" max="18" placeholder="5-18" value="10">
+                    </div>
+                    <button onclick="callStoryNode()">Get Node</button>
+                    <div class="response-section" id="response-story-node" style="display:none;"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="section-title">🔧 Admin - Story Management</div>
+        <div class="endpoints-grid">
+            <div class="endpoint-card">
+                <div class="endpoint-header">
+                    <span class="endpoint-method method-get">GET</span>
+                    <span class="endpoint-path">/admin/stories/topics</span>
+                </div>
+                <div class="endpoint-body">
+                    <button onclick="callEndpoint('GET', '/admin/stories/topics', {})">Get Available Topics</button>
+                    <div class="response-section" id="response-topics" style="display:none;"></div>
+                </div>
+            </div>
+
+            <div class="endpoint-card">
+                <div class="endpoint-header">
+                    <span class="endpoint-method method-post">POST</span>
+                    <span class="endpoint-path">/admin/stories/generate</span>
+                </div>
+                <div class="endpoint-body">
+                    <div class="param-input">
+                        <label>Topic</label>
+                        <select id="gen-topic">
+                            <option value="saving_money">Saving Money</option>
+                            <option value="budgeting_basics">Budgeting Basics</option>
+                            <option value="earning_money">Earning Money</option>
+                            <option value="smart_spending">Smart Spending</option>
+                            <option value="sharing_giving">Sharing & Giving</option>
+                        </select>
+                    </div>
+                    <div class="param-input">
+                        <label>Provider</label>
+                        <select id="gen-provider">
+                            <option value="openai">OpenAI</option>
+                            <option value="gemini">Gemini</option>
+                            <option value="grok">Grok</option>
+                        </select>
+                    </div>
+                    <div class="param-input">
+                        <label>Custom Title (Optional)</label>
+                        <input type="text" id="gen-title" placeholder="Leave empty for default">
+                    </div>
+                    <button onclick="generateStory()">Generate Story</button>
+                    <div class="response-section" id="response-generate" style="display:none;"></div>
+                </div>
+            </div>
+
+            <div class="endpoint-card">
+                <div class="endpoint-header">
+                    <span class="endpoint-method method-get">GET</span>
+                    <span class="endpoint-path">/admin/stories/drafts</span>
+                </div>
+                <div class="endpoint-body">
+                    <div class="param-input">
+                        <label>Status Filter (Optional)</label>
+                        <select id="drafts-status">
+                            <option value="">All</option>
+                            <option value="draft">Draft</option>
+                            <option value="published">Published</option>
+                            <option value="rejected">Rejected</option>
+                        </select>
+                    </div>
+                    <div class="param-input">
+                        <label>Limit</label>
+                        <input type="number" id="drafts-limit" value="50" min="1" max="100">
+                    </div>
+                    <button onclick="listDrafts()">List Drafts</button>
+                    <div class="response-section" id="response-drafts" style="display:none;"></div>
+                </div>
+            </div>
+
+            <div class="endpoint-card">
+                <div class="endpoint-header">
+                    <span class="endpoint-method method-get">GET</span>
+                    <span class="endpoint-path">/admin/stories/drafts/{story_id}</span>
+                </div>
+                <div class="endpoint-body">
+                    <div class="param-input">
+                        <label>Story ID</label>
+                        <input type="text" id="draft-id" placeholder="Enter draft story ID">
+                    </div>
+                    <button onclick="getDraft()">Get Draft</button>
+                    <div class="response-section" id="response-draft" style="display:none;"></div>
+                </div>
+            </div>
+
+            <div class="endpoint-card">
+                <div class="endpoint-header">
+                    <span class="endpoint-method method-post">POST</span>
+                    <span class="endpoint-path">/admin/stories/publish</span>
+                </div>
+                <div class="endpoint-body">
+                    <div class="param-input">
+                        <label>Story ID</label>
+                        <input type="text" id="publish-id" placeholder="Enter story ID to publish">
+                    </div>
+                    <button onclick="publishStory()">Publish Story</button>
+                    <div class="response-section" id="response-publish" style="display:none;"></div>
+                </div>
+            </div>
+
+            <div class="endpoint-card">
+                <div class="endpoint-header">
+                    <span class="endpoint-method method-post">POST</span>
+                    <span class="endpoint-path">/admin/stories/reject</span>
+                </div>
+                <div class="endpoint-body">
+                    <div class="param-input">
+                        <label>Story ID</label>
+                        <input type="text" id="reject-id" placeholder="Enter story ID to reject">
+                    </div>
+                    <div class="param-input">
+                        <label>Rejection Reason</label>
+                        <textarea id="reject-reason" placeholder="Explain why this story is being rejected"></textarea>
+                    </div>
+                    <button onclick="rejectStory()">Reject Story</button>
+                    <div class="response-section" id="response-reject" style="display:none;"></div>
+                </div>
+            </div>
+
+            <div class="endpoint-card">
+                <div class="endpoint-header">
+                    <span class="endpoint-method method-delete">DELETE</span>
+                    <span class="endpoint-path">/admin/stories/drafts/{story_id}</span>
+                </div>
+                <div class="endpoint-body">
+                    <div class="param-input">
+                        <label>Story ID</label>
+                        <input type="text" id="delete-id" placeholder="Enter draft story ID to delete">
+                    </div>
+                    <button onclick="deleteDraft()">Delete Draft</button>
+                    <div class="response-section" id="response-delete" style="display:none;"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        async function callEndpoint(method, path, data, responseId) {
+            const baseUrl = document.getElementById('baseUrl').value;
+            const authToken = document.getElementById('authToken').value;
+            
+            // Generate ID or use provided one
+            const id = responseId || `response-${path.replace(/[\/\{\}]/g, '-').replace(/^-/, '').replace(/-+/g, '-')}`;
+            const responseDiv = document.getElementById(id);
+            
+            try {
+                const headers = {
+                    'Content-Type': 'application/json'
+                };
+                
+                if (authToken) {
+                    headers['Authorization'] = authToken.startsWith('Bearer ') ? authToken : `Bearer ${authToken}`;
+                }
+                
+                const options = {
+                    method: method,
+                    headers: headers
+                };
+                
+                if (method !== 'GET' && Object.keys(data).length > 0) {
+                    options.body = JSON.stringify(data);
+                }
+                
+                const url = `${baseUrl}${path}`;
+                const response = await fetch(url, options);
+                const result = await response.json();
+                
+                displayResponse(responseDiv, response.status, result);
+            } catch (error) {
+                displayResponse(responseDiv, 0, { error: error.message });
+            }
+        }
+
+        function displayResponse(element, status, data) {
+            const isSuccess = status >= 200 && status < 300;
+            
+            element.style.display = 'block';
+            element.innerHTML = `
+                <div class="response-header">
+                    <span style="color: var(--text-muted); font-size: 0.85rem;">Response</span>
+                    <span class="status-badge ${isSuccess ? 'status-success' : 'status-error'}">
+                        ${status > 0 ? status : 'ERROR'}
+                    </span>
+                </div>
+                <div class="response-body">
+                    <pre>${JSON.stringify(data, null, 2)}</pre>
+                </div>
+            `;
+        }
+
+        // Specific endpoint functions
+        function callStories() {
+            const age = document.getElementById('stories-age').value;
+            const query = age ? `?age=${age}` : '';
+            callEndpoint('GET', `/stories${query}`, {}, 'response-stories');
+        }
+
+        function callStoryById() {
+            const storyId = document.getElementById('story-id').value;
+            if (!storyId) {
+                alert('Please enter a story ID');
+                return;
+            }
+            callEndpoint('GET', `/stories/${storyId}`, {}, 'response-story-by-id');
+        }
+
+        function callStoryNode() {
+            const storyId = document.getElementById('node-story-id').value;
+            const nodeId = document.getElementById('node-id').value;
+            const age = document.getElementById('node-age').value;
+            
+            if (!storyId || !nodeId || !age) {
+                alert('Please fill in all fields');
+                return;
+            }
+            
+            callEndpoint('GET', `/stories/${storyId}/nodes/${nodeId}?age=${age}`, {}, 'response-story-node');
+        }
+
+        function generateStory() {
+            const data = {
+                topic: document.getElementById('gen-topic').value,
+                provider: document.getElementById('gen-provider').value
+            };
+            
+            const title = document.getElementById('gen-title').value;
+            if (title) {
+                data.custom_title = title;
+            }
+            
+            callEndpoint('POST', '/admin/stories/generate', data, 'response-generate');
+        }
+
+        function listDrafts() {
+            const status = document.getElementById('drafts-status').value;
+            const limit = document.getElementById('drafts-limit').value;
+            
+            let query = `?limit=${limit}`;
+            if (status) {
+                query += `&status_filter=${status}`;
+            }
+            
+            callEndpoint('GET', `/admin/stories/drafts${query}`, {}, 'response-drafts');
+        }
+
+        function getDraft() {
+            const storyId = document.getElementById('draft-id').value;
+            if (!storyId) {
+                alert('Please enter a story ID');
+                return;
+            }
+            callEndpoint('GET', `/admin/stories/drafts/${storyId}`, {}, 'response-draft');
+        }
+
+        function publishStory() {
+            const storyId = document.getElementById('publish-id').value;
+            if (!storyId) {
+                alert('Please enter a story ID');
+                return;
+            }
+            callEndpoint('POST', '/admin/stories/publish', { story_id: storyId }, 'response-publish');
+        }
+
+        function rejectStory() {
+            const storyId = document.getElementById('reject-id').value;
+            const reason = document.getElementById('reject-reason').value;
+            
+            if (!storyId || !reason) {
+                alert('Please fill in all fields');
+                return;
+            }
+            
+            callEndpoint('POST', '/admin/stories/reject', { 
+                story_id: storyId, 
+                reason: reason 
+            }, 'response-reject');
+        }
+
+        function deleteDraft() {
+            const storyId = document.getElementById('delete-id').value;
+            if (!storyId) {
+                alert('Please enter a story ID');
+                return;
+            }
+            
+            if (!confirm('Are you sure you want to delete this draft?')) {
+                return;
+            }
+            
+            callEndpoint('DELETE', `/admin/stories/drafts/${storyId}`, {}, 'response-delete');
+        }
+    </script>
+</body>
+</html>
