@@ -26,11 +26,8 @@ app = FastAPI(
 cors_origins = os.getenv("CORS_ORIGINS", "").split(",")
 if not cors_origins or cors_origins == ['']:
     cors_origins = [
-        "https://task-coin-384722.web.app",
         "http://localhost:8080",
         "http://localhost:3000",
-        "http://localhost:19006",
-        "https://user-management-api-us-8l3obb9a.uc.gateway.dev"
     ]
 
 app.add_middleware(
