@@ -1,0 +1,99 @@
+"""
+EpicTask Monorepo Service
+Unified service combining narrative engine, task management, and user management
+"""
+import os
+from dotenv import load_dotenv
+from datetime import datetime
+from fastapi import FastAPI, Request
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
+from fastapi.templating import Jinja2Templates
+
+load_dotenv()
+
+# Setup Jinja2 templates
+templates = Jinja2Templates(directory="templates")
+
+# Initialize FastAPI app
+app = FastAPI(
+    title="EpicTask Unified Service",
+    description="Combined narrative engine, task management, and user management",
+    version="1.0.0"
+)
+
+# CORS configuration
+cors_origins = os.getenv("CORS_ORIGINS", "").split(",")
+if not cors_origins or cors_origins == ['']:
+    cors_origins = [
+        "https://task-coin-384722.web.app",
+        "http://localhost:8080",
+        "http://localhost:3000",
+        "http://localhost:19006",
+        "https://user-management-api-us-8l3obb9a.uc.gateway.dev"
+    ]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=cors_origins,
+    allow_credentials=True,
+    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allow_headers=["Content-Type", "Authorization"],
+)
+
+# Global exception handler
+@app.exception_handler(Exception)
+async def global_exception_handler(request: Request, exc: Exception):
+    return JSONResponse(
+        status_code=500,
+        content={
+            "error": "Internal server error",
+            "detail": str(exc) if os.getenv("DEBUG") == "true" else "An unexpected error occurred"
+        }
+    )
+
+# Health check
+@app.get("/health")
+async def health_check():
+    return {
+        "status": "healthy",
+        "service": "epictask-unified",
+        "version": "1.0.0",
+        "timestamp": datetime.now().isoformat(),
+        "modules": ["narrative", "tasks", "users"]
+    }
+
+# Root endpoint
+@app.get("/")
+async def root(request: Request):
+    return templates.TemplateResponse(
+        "index.html",
+        {
+            "request": request,
+            "service": "EpicTask Unified Service",
+            "version": "1.0.0"
+        }
+    )
+
+# Import and include routers
+from src.routes.narrative import stories, progress, parent, admin_stories, payouts
+from src.routes.tasks import task_routes
+from src.routes.users import user_routes
+
+# Narrative routes
+app.include_router(stories.router, prefix="/api/narrative", tags=["narrative"])
+app.include_router(progress.router, prefix="/api/narrative", tags=["narrative"])
+app.include_router(parent.router, prefix="/api/narrative", tags=["narrative"])
+app.include_router(payouts.router, prefix="/api/narrative", tags=["narrative"])
+app.include_router(admin_stories.router, prefix="/api/narrative", tags=["narrative-admin"])
+
+# Task routes
+app.include_router(task_routes.router, prefix="/api/tasks", tags=["tasks"])
+
+# User routes
+app.include_router(user_routes.router, prefix="/api/users", tags=["users"])
+
+if __name__ == "__main__":
+    import uvicorn
+    server_port = int(os.getenv("PORT", "8080"))
+    uvicorn.run(app, host="0.0.0.0", port=server_port)

@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>{{ service }}</title>
+    <style>
+        body { font-family: sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; line-height: 1.6; }
+        h1 { color: #2c3e50; }
+        .card { border: 1px solid #ddd; border-radius: 8px; padding: 20px; margin-bottom: 20px; }
+        .status { font-weight: bold; color: green; }
+        code { background: #f4f4f4; padding: 2px 5px; border-radius: 3px; }
+    </style>
+</head>
+<body>
+    <h1>{{ service }}</h1>
+    <p>Version: <strong>{{ version }}</strong></p>
+    
+    <div class="card">
+        <h2>Status</h2>
+        <p class="status">System Operational</p>
+        <p><a href="/health">Health Check</a> | <a href="/docs">API Documentation</a></p>
+    </div>
+
+    <div class="card">
+        <h2>Modules</h2>
+        <ul>
+            <li><strong>Narrative Engine:</strong> AI-powered storytelling and learning</li>
+            <li><strong>Task Management:</strong> Chores, rewards, and leaderboards</li>
+            <li><strong>User Management:</strong> Profiles, family linking, and metrics</li>
+        </ul>
+    </div>
+</body>
+</html>

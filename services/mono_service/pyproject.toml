@@ -1,0 +1,16 @@
+[tool.poetry]
+name = "epictask-mono-service"
+version = "1.0.0"
+description = "Unified service for narrative engine, task management, and user management"
+authors = ["EpicTask Team"]
+
+[tool.poetry.dependencies]
+python = "^3.9"
+fastapi = ">=0.104.0"
+uvicorn = {extras = ["standard"], version = ">=0.24.0"}
+pydantic = ">=2.0.0"
+firebase-admin = ">=6.2.0"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
