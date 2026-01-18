@@ -45,7 +45,7 @@ nano .env  # or use your preferred editor
 
 **Minimum required in .env:**
 ```bash
-GOOGLE_APPLICATION_CREDENTIALS=src/config/service_accounts/task-coin-384722-4adf1998dd08.json
+GOOGLE_APPLICATION_CREDENTIALS=src/config/service_accounts/4adf1998dd08.json
 PORT=8080
 CORS_ORIGINS=http://localhost:3000,http://localhost:8080
 ```
