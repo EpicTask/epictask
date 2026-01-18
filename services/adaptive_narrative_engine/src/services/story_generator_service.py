@@ -1,5 +1,7 @@
 """Service for generating stories using LLM and templates."""
+import asyncio
 import json
+import logging
 import uuid
 from datetime import datetime
 from typing import Dict, List, Any, Optional, Literal
@@ -8,6 +10,10 @@ from src.services.llm_service import llm_service
 from src.services.story_templates import get_template, get_all_topics, get_node_generation_prompt
 from src.config.firebase_config import db
 from src.config.collection_names import collections
+
+
+# Configure logging
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
 
 class StoryGeneratorService:
@@ -30,6 +36,7 @@ class StoryGeneratorService:
         Returns:
             Generated story structure with all nodes
         """
+        logging.info(f"Starting story generation for topic: {topic} with provider: {provider}")
         # Get template
         template = get_template(topic)
         
@@ -59,7 +66,7 @@ class StoryGeneratorService:
         # Generate nodes sequentially
         previous_context = ""
         for node_index in range(template["structure"]["total_nodes"]):
-            print(f"Generating node {node_index + 1}/{template['structure']['total_nodes']}...")
+            logging.info(f"Generating node {node_index + 1}/{template['structure']['total_nodes']}...")
             
             node = await self._generate_node(
                 template=template,
@@ -74,9 +81,10 @@ class StoryGeneratorService:
             previous_context += f"\nNode {node_index + 1}: {node['title']}\n{node['prompt']}\n"
         
         # Generate age variants for all nodes
-        print("Generating age-appropriate variants...")
+        logging.info("Generating age-appropriate variants...")
         await self._generate_age_variants(story, template["age_ranges"], provider)
         
+        logging.info(f"Successfully generated story with ID: {story_id}")
         return story
     
     async def _generate_node(
@@ -103,6 +111,7 @@ class StoryGeneratorService:
         # Generate prompt for this node
         prompt = get_node_generation_prompt(template, node_index, previous_context)
         
+        logging.info(f"Generating content for node {node_index + 1}. Prompt: {prompt}")
         # Generate content with LLM
         response = await llm_service.generate_content(
             prompt=prompt,
@@ -120,9 +129,10 @@ class StoryGeneratorService:
                 json_str = response.split("```")[1].split("```")[0].strip()
             
             node_data = json.loads(json_str)
+            logging.info(f"Successfully parsed JSON response for node {node_index + 1}.")
         except json.JSONDecodeError as e:
-            print(f"Failed to parse JSON response: {e}")
-            print(f"Response was: {response}")
+            logging.error(f"Failed to parse JSON response for node {node_index + 1}: {e}")
+            logging.error(f"Response was: {response}")
             # Fallback structure
             node_data = {
                 "title": f"Node {node_index + 1}",
@@ -178,30 +188,73 @@ class StoryGeneratorService:
         provider: str
     ):
         """
-        Generate age-appropriate text variants for all nodes.
+        Generate age-appropriate text variants for all nodes concurrently using batch processing.
+        This is significantly faster than sequential generation.
         
         Args:
             story: Story structure to add variants to
             age_ranges: List of (min_age, max_age) tuples
             provider: LLM provider
         """
+        # Create tasks for concurrent processing
+        tasks = []
+        
         for node in story["nodes"]:
-            # Generate variants for the main prompt
-            prompt_variants = await llm_service.generate_age_variants(
-                base_text=node["prompt"],
-                age_ranges=age_ranges,
-                provider=provider
-            )
-            node["age_variants"] = prompt_variants
-            
-            # Generate variants for option text if present
-            for option in node.get("options", []):
-                option_variants = await llm_service.generate_age_variants(
-                    base_text=option["text"],
-                    age_ranges=age_ranges,
-                    provider=provider
+            # Add task for node prompt variants
+            tasks.append(self._generate_node_variants(node, age_ranges, provider))
+        
+        # Execute all tasks concurrently
+        await asyncio.gather(*tasks)
+    
+    async def _generate_node_variants(
+        self,
+        node: Dict[str, Any],
+        age_ranges: List[tuple],
+        provider: str
+    ):
+        """
+        Generate age variants for a single node and its options using batch processing.
+        
+        Args:
+            node: Node to generate variants for
+            age_ranges: List of (min_age, max_age) tuples
+            provider: LLM provider
+        """
+        # Generate variants for the main prompt using batch generation (single LLM call)
+        node["age_variants"] = await llm_service.generate_age_variants_batch(
+            base_text=node["prompt"],
+            age_ranges=age_ranges,
+            provider=provider
+        )
+        
+        # Generate variants for all options concurrently
+        if node.get("options"):
+            option_tasks = []
+            for option in node["options"]:
+                option_tasks.append(
+                    self._generate_option_variants(option, age_ranges, provider)
                 )
-                option["age_variants"] = option_variants
+            await asyncio.gather(*option_tasks)
+    
+    async def _generate_option_variants(
+        self,
+        option: Dict[str, Any],
+        age_ranges: List[tuple],
+        provider: str
+    ):
+        """
+        Generate age variants for a single option using batch processing.
+        
+        Args:
+            option: Option to generate variants for
+            age_ranges: List of (min_age, max_age) tuples
+            provider: LLM provider
+        """
+        option["age_variants"] = await llm_service.generate_age_variants_batch(
+            base_text=option["text"],
+            age_ranges=age_ranges,
+            provider=provider
+        )
     
     def _link_story_nodes(self, story: Dict[str, Any]):
         """

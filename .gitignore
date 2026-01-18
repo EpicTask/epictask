@@ -44,6 +44,9 @@ services/epictask-react/web-build/
 services/epictask-react/api/tests/
 services/user_management/node_modules/
 services/user_management/src/config/firebase_config.json
+services/adaptive_narrative_engine/src/config/service_accounts/
+services/adaptive_narrative_engine/sample_data/
+services/adaptive_narrative_engine/scripts/
 services/pubsub/node_modules/
 services/xrpl_management/node_modules/
 services/xrpl_management/dist/
@@ -68,3 +71,5 @@ services/task_management/app/config/service_accounts/
 services/epictask-react/constants/Microservices.ts
 services/epictask-react/api/metricsService.js
 services/epictask-react/scripts/updateFontSizes.js
+
+services/adaptive_narrative_engine/firestore.indexes.json

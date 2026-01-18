@@ -1,4 +1,3 @@
-version: '3.8'
 
 services:
   # User Management Service
@@ -34,6 +33,23 @@ services:
     depends_on:
       - user-management
 
+  # Adaptive Narrative Engine Service
+  adaptive-narrative-engine:
+    build:
+      context: ./services/adaptive_narrative_engine
+      dockerfile: Dockerfile
+    ports:
+      - "8087:8000"
+    environment:
+      - PORT=8000
+      - PYTHONPATH=/app
+    networks:
+      - epictask-network
+    restart: unless-stopped
+    depends_on:
+      - user-management
+
+
   # Admin Management Service
   admin-management:
     build:
@@ -54,6 +70,7 @@ services:
     depends_on:
       - user-management
       - task-management
+      - adaptive-narrative-engine
 
   # PubSub Service
   pubsub:
@@ -110,6 +127,7 @@ services:
     depends_on:
       - user-management
       - task-management
+      - adaptive-narrative-engine
     stdin_open: true
     tty: true
 
@@ -129,6 +147,7 @@ services:
     depends_on:
       - user-management
       - task-management
+      - adaptive-narrative-engine
     profiles:
       - production
 
@@ -176,9 +195,9 @@ services:
       - user-management
       - task-management
       - pubsub
-      - xrpl
       - xrpl-management
       - epictask-react
+      - adaptive-narrative-engine
     profiles:
       - production
 

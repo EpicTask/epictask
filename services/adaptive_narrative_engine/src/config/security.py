@@ -1,3 +1,4 @@
+import os
 from typing import Optional
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
@@ -8,10 +9,13 @@ security = HTTPBearer()
 
 
 async def get_current_user(
-    credentials: HTTPAuthorizationCredentials = Depends(security)
+    credentials: Optional[HTTPAuthorizationCredentials] = Depends(security)
 ) -> dict:
     """
     Verify Firebase ID token and return user information.
+    
+    For local testing, auth can be disabled by setting the
+    AUTH_DISABLED_FOR_TESTING environment variable to "true".
     
     Args:
         credentials: HTTP Bearer token from request header
@@ -22,6 +26,17 @@ async def get_current_user(
     Raises:
         HTTPException: If token is invalid or expired
     """
+    # Check if auth is disabled for local testing
+    if os.getenv("AUTH_DISABLED_FOR_TESTING") == "true":
+        return {"uid": "local_test_user", "role": "admin"}
+        
+    if credentials is None:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Authentication credentials were not provided",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+        
     token = credentials.credentials
     
     try:

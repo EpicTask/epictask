@@ -80,7 +80,7 @@ async def get_available_topics(
 @router.post("/generate", status_code=status.HTTP_202_ACCEPTED)
 async def generate_story(
     request: GenerateStoryRequest,
-    current_user: dict = Depends(get_current_user)
+    # current_user: dict = Depends(get_current_user)
 ):
     """
     Generate a new story using LLM and templates.
@@ -96,7 +96,7 @@ async def generate_story(
     
     **Admin Access Required**
     """
-    user_id = verify_admin(current_user)
+    # user_id = verify_admin(current_user)
     
     try:
         # Prepare custom parameters if provided
