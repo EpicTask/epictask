@@ -3,13 +3,30 @@ name = "epictask-mono-service"
 version = "1.0.0"
 description = "Unified service for narrative engine, task management, and user management"
 authors = ["EpicTask Team"]
+package-mode = false
 
 [tool.poetry.dependencies]
-python = "^3.9"
+python = "^3.10"
 fastapi = ">=0.104.0"
 uvicorn = {extras = ["standard"], version = ">=0.24.0"}
-pydantic = ">=2.0.0"
+pydantic = {extras = ["email"], version = ">=2.0.0"}
+pydantic-settings = ">=2.0.0"
+jinja2 = ">=3.1.0"
+python-dotenv = ">=1.0.0"
 firebase-admin = ">=6.2.0"
+google-cloud-firestore = ">=2.13.0"
+google-cloud-pubsub = ">=2.18.0"
+httpx = ">=0.25.0"
+python-jose = {extras = ["cryptography"], version = ">=3.3.0"}
+python-multipart = ">=0.0.6"
+openai = ">=1.0.0"
+google-cloud-secret-manager = ">=2.16.0"
+requests = ">=2.32.0"
+google-genai = "^1.65.0"
+
+[tool.poetry.group.dev.dependencies]
+pytest = ">=8.4.0"
+pytest-asyncio = ">=0.21.0"
 
 [build-system]
 requires = ["poetry-core"]
