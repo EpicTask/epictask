@@ -1,6 +1,6 @@
 """
 EpicTask Monorepo Service
-Unified service combining narrative engine, task management, and user management
+Unified service combining all services for EpicTask.
 """
 import os
 from dotenv import load_dotenv
@@ -18,7 +18,7 @@ templates = Jinja2Templates(directory="templates")
 # Initialize FastAPI app
 app = FastAPI(
     title="EpicTask Unified Service",
-    description="Combined narrative engine, task management, and user management",
+    description="Combined task management and user management",
     version="1.0.0"
 )
 
@@ -57,7 +57,7 @@ async def health_check():
         "service": "epictask-unified",
         "version": "1.0.0",
         "timestamp": datetime.now().isoformat(),
-        "modules": ["narrative", "tasks", "users"]
+        "modules": ["tasks", "users"]
     }
 
 # Root endpoint
@@ -73,16 +73,9 @@ async def root(request: Request):
     )
 
 # Import and include routers
-from src.routes.narrative import stories, progress, parent, admin_stories, payouts
 from src.routes.tasks import task_routes
 from src.routes.users import user_routes
 
-# Narrative routes
-app.include_router(stories.router, prefix="/api/narrative", tags=["narrative"])
-app.include_router(progress.router, prefix="/api/narrative", tags=["narrative"])
-app.include_router(parent.router, prefix="/api/narrative", tags=["narrative"])
-app.include_router(payouts.router, prefix="/api/narrative", tags=["narrative"])
-app.include_router(admin_stories.router, prefix="/api/narrative", tags=["narrative-admin"])
 
 # Task routes
 app.include_router(task_routes.router, prefix="/api/tasks", tags=["tasks"])

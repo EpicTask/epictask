@@ -17,22 +17,6 @@ class Collections:
     INVITES = "invites"
     
     # ---------------------------------------------------------
-    # NARRATIVE ENGINE
-    # ---------------------------------------------------------
-    STORIES = "stories"
-    NARRATIVE_STORIES = "stories"  
-    STORY_NODES = "nodes"  # subcollection of stories
-    
-    STORY_PROGRESS = "story_progress"
-    NARRATIVE_PROGRESS = "story_progress"  
-    USER_STORIES = "stories"  # subcollection of story_progress/{userId}
-    
-    NARRATIVE_AWARDS = "narrative_awards"
-    NARRATIVE_PAYOUT_REQUESTS = "narrative_payout_requests"
-    NARRATIVE_SETTINGS = "narrative_settings"  # Parent settings per kid
-    NARRATIVE_EVENTS = "narrative_events"
-    
-    # ---------------------------------------------------------
     # TASK MANAGEMENT
     # ---------------------------------------------------------
     TASKS = "tasks"

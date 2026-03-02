@@ -1,28 +1,7 @@
 """
 Domain models for the Monorepo Service.
-Combines models from Narrative Engine, Task Management, and User Management.
+Combines models from Task Management and User Management.
 """
-
-from .narrative_models import (
-    Story,
-    NodeOption,
-    PayoutHint,
-    StoryNode,
-    StoryProgress,
-    AdvanceRequest,
-    AdvanceResponse,
-    NarrativeAward,
-    PayoutRequest,
-    PayoutRequestRecord,
-    UserProfile as NarrativeUserProfile,
-    RecommendRequest,
-    RecommendResponse,
-    ParentNarrativeSettings,
-    KidProgressSummary,
-    PayoutApprovalRequest,
-    PayoutApprovalResponse,
-    HealthResponse
-)
 
 from .task_models import (
     TaskEvent,
