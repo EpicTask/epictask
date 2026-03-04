@@ -1,7 +1,7 @@
 import { xrpToDrops } from "xrpl";
 import { writeResponseToDatabase } from "../../../data/database";
 import { PaymentRequest } from "../../../typings/models";
-import { CreatedPayload } from "xumm-sdk/dist/src/types";
+import { XummPostPayloadResponse } from "xumm-sdk/dist/src/types";
 import { xummSdk } from "../../../config/clients";
 
 type ResolveData = {
@@ -28,7 +28,7 @@ export class PaymentHandler {
       if (!xummSdk) {
         throw new Error("Xumm SDK not initialized.");
       }
-      const subscription = await xummSdk.payload?.create(xummPayload);
+      const subscription = await xummSdk.payload?.create(xummPayload as any);
       if (subscription) {
         this.writeResponse(subscription, paymentRequest.task_id);
         return this.formatResponse(subscription);
@@ -61,7 +61,7 @@ export class PaymentHandler {
       if (!xummSdk) {
         throw new Error("Xumm SDK not initialized.");
       }
-      const createPayload = await xummSdk.payload?.create(xummPayload);
+      const createPayload = await xummSdk.payload?.create(xummPayload as any);
       if (createPayload) {
         const response = this.formatResponse(createPayload);
         console.log(response);
@@ -84,7 +84,7 @@ export class PaymentHandler {
       }
       const getPayload = await xummSdk.payload?.get(resolveData.payload_uuidv4);
       if (getPayload) {
-        const getPayloadResp = this.formatResponse(getPayload);
+        const getPayloadResp = this.formatResponse(getPayload as any);
         return getPayloadResp;
       }
     }
@@ -109,7 +109,7 @@ export class PaymentHandler {
   }
 
   private writeResponse(
-    subscription: CreatedPayload | any,
+    subscription: XummPostPayloadResponse | any,
     taskId: string | null | undefined
   ) {
     if (taskId) {
@@ -117,7 +117,7 @@ export class PaymentHandler {
     }
   }
 
-  private formatResponse(payload: CreatedPayload) {
+  private formatResponse(payload: XummPostPayloadResponse) {
     return JSON.stringify(payload, null, 4);
   }
 }

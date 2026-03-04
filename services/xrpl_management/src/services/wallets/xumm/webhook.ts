@@ -1,6 +1,4 @@
-import { db } from "../../../config/clients/firebase";
-import { collection, addDoc } from "firebase/firestore";
-import { config } from "../../../config/config.dev";
+import { writeResponseToDatabase } from "../../../data/database";
 
 export interface XummWebhookBody<T = object> {
   payloadUuidv4: string;
@@ -14,12 +12,9 @@ export interface XummWebhookBody<T = object> {
 
 export const handleXummWebhook = async (webhookBody: XummWebhookBody) => {
   try {
-    const docRef = await addDoc(collection(db, `${config.xrplServiceCollection}_webhooks`), {
-      received_at: new Date(),
-      payload: webhookBody,
-    });
-    console.log("Webhook data saved with ID: ", docRef.id);
-    return { status: "success", docId: docRef.id };
+    const docId = await writeResponseToDatabase(webhookBody, "xumm_webhook");
+    console.log("Webhook data saved with ID: ", docId);
+    return { status: "success", docId };
   } catch (error:any) {
     console.error("Error handling Xumm webhook:", error);
     return { status: "error", message: error.toString() };

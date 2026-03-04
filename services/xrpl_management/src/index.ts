@@ -109,7 +109,7 @@ router.post("/create_escrow", async (ctx) => {
   const createEscrowModel = ctx.request.body as CreateEscrowModel;
   const escrowService = new EscrowService();
   const result = await escrowService.createEscrowXumm(createEscrowModel);
-  ctx.body = { message: "Create escrow placeholder", data: result };
+  ctx.body = { message: "Escrow created successfully", data: result };
 });
 
 // POST /cancel_escrow_xumm
@@ -117,7 +117,7 @@ router.post("/cancel_escrow_xumm", async (ctx) => {
   const escrowModel = ctx.request.body as EscrowModel;
   const escrowService = new EscrowService();
   const result = await escrowService.cancelEscrowXumm(escrowModel);
-  ctx.body = { message: "Cancel escrow placeholder", data: result };
+  ctx.body = { message: "Escrow cancelled successfully", data: result };
 });
 
 // POST /finish_escrow_xumm
@@ -125,11 +125,20 @@ router.post("/finish_escrow_xumm", async (ctx) => {
   const escrowModel = ctx.request.body as EscrowModel;
   const escrowService = new EscrowService();
   const result = await escrowService.finishEscrowXumm(escrowModel);
-  ctx.body = { message: "Finish escrow placeholder", data: result };
+  ctx.body = { message: "Escrow finished successfully", data: result };
 });
 
 // POST /xumm/webhook
 router.post("/xumm/webhook", async (ctx) => {
+  const userAgent = ctx.headers['user-agent'];
+  // Verify User-Agent matches Xumm
+  if (userAgent !== 'xumm-webhook') {
+    console.warn(`Invalid webhook attempt with User-Agent: ${userAgent}`);
+    ctx.status = 403;
+    ctx.body = { error: 'Forbidden: Invalid User-Agent' };
+    return;
+  }
+
   const webhookBody = ctx.request.body as XummWebhookBody;
   const result = await handleXummWebhook(webhookBody);
   ctx.body = result;

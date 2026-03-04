@@ -19,7 +19,7 @@ export const connectWallet = async (uid: string) => {
     if (!xummSdk) {
       throw new Error("Xumm SDK not initialized.");
     }
-    const response = await xummSdk.payload?.create(payload);
+    const response = await xummSdk.payload?.create(payload as any);
     if (!response) {
       throw new Error("Failed to create XUMM payload.");
     }

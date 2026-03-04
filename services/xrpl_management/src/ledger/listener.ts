@@ -242,11 +242,11 @@ export class LedgerListener {
         return;
       }
 
-      console.log(`Transaction received: ${transaction.transaction.hash || 'unknown'}`);
+      console.log(`Transaction received: ${(transaction.transaction as any).hash || 'unknown'}`);
       
       // Validate transaction signature and structure
       if (!this.validateTransaction(transaction)) {
-        console.warn(`Invalid transaction received: ${transaction.transaction.hash || 'unknown'}`);
+        console.warn(`Invalid transaction received: ${(transaction.transaction as any).hash || 'unknown'}`);
         return;
       }
 

@@ -5,7 +5,7 @@ import {
   writeResponseToDatabase,
 } from "../../../data/database";
 import { CreateEscrowModel, EscrowModel } from "../../../typings/models";
-import { CreatedPayload } from "xumm-sdk/dist/src/types";
+import { XummPostPayloadResponse } from "xumm-sdk/dist/src/types";
 
 type EscrowCreationResponse = {
   status: string;
@@ -83,7 +83,7 @@ export class EscrowService {
           identifier: identifier,
         },
       };
-      const payload = await xummSdk.payload?.create(escrowTx);
+      const payload = await xummSdk.payload?.create(escrowTx as any);
       if (payload) {
         writeResponseToDatabase(
           payload,
@@ -97,7 +97,7 @@ export class EscrowService {
     }
   }
 
-  public async finishEscrowXumm(response: EscrowModel): Promise<CreatedPayload | ErrorResponse> {
+  public async finishEscrowXumm(response: EscrowModel): Promise<XummPostPayloadResponse | ErrorResponse> {
     if (!xummSdk) {
       return { error: "Xumm SDK not initialized." };
     }
@@ -121,7 +121,7 @@ export class EscrowService {
           identifier: identifier,
         },
       };
-      const payload = await xummSdk.payload?.create(escrowFinish);
+      const payload = await xummSdk.payload?.create(escrowFinish as any);
       if (payload) {
         writeResponseToDatabase(
           payload,
@@ -129,13 +129,16 @@ export class EscrowService {
           response.task_id || undefined
         );
       }
+      if (!payload) {
+        return { error: "Failed to create payload." };
+      }
       return payload;
     } catch (error:any) {
       return { error: error.toString() };
     }
   }
 
-  public async cancelEscrowXumm(response: EscrowModel): Promise<CreatedPayload | ErrorResponse> {
+  public async cancelEscrowXumm(response: EscrowModel): Promise<XummPostPayloadResponse | ErrorResponse> {
     if (!xummSdk) {
       return { error: "Xumm SDK not initialized." };
     }
@@ -159,13 +162,16 @@ export class EscrowService {
           identifier: identifier,
         },
       };
-      const payload = await xummSdk.payload?.create(escrowTx);
+      const payload = await xummSdk.payload?.create(escrowTx as any);
       if (payload) {
         writeResponseToDatabase(
           payload,
           "cancel_escrow_xumm",
           response.task_id || undefined
         );
+      }
+      if (!payload) {
+        return { error: "Failed to create payload." };
       }
       return payload;
     } catch (error:any) {

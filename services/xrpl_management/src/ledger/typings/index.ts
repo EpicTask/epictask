@@ -1,4 +1,4 @@
-import { AccountObject, BaseRequest } from "xrpl";
+import { BaseRequest } from "xrpl";
 
 export interface Subscribe {
     accounts?: string[];

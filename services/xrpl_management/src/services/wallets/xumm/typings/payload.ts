@@ -9,7 +9,7 @@ export interface XummPayloadOptions {
     }
 }
 
-export interface XummPayload extends XummTypes.XummPostPayloadBodyJson {
+export interface XummPayload extends Omit<XummTypes.XummPostPayloadBodyJson, 'options'> {
   custom_meta?: XummTypes.XummCustomMeta;
   options?: XummPayloadOptions | null
   user_token?: string;

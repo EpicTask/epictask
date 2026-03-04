@@ -1,6 +1,6 @@
-import { db } from "../config/clients/firebase";
-import { addDoc, collection, Timestamp, doc } from "firebase/firestore";
-import { config } from "../config/config.dev";
+import crypto from 'crypto';
+
+const MONO_SERVICE_URL = process.env.MONO_SERVICE_URL || 'http://localhost:8080';
 
 export const writeResponseToDatabase = async (
   response: object,
@@ -8,25 +8,32 @@ export const writeResponseToDatabase = async (
   taskId?: string
 ) => {
   try {
-    const docRef = await addDoc(
-      collection(db, config.xrplServiceCollection),
-      response
-    );
-
-    // Update document with the docRef.id
-    await addDoc(collection(db, config.xrplServiceCollection, docRef.id), {
-      doc_id: docRef.id,
+    const payload = {
+      response,
       function: func,
-      task_id: taskId,
-      timestamp: Timestamp,
+      task_id: taskId
+    };
+
+    const res = await fetch(`${MONO_SERVICE_URL}/api/xrpl/log`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(payload)
     });
-    return docRef.id;
+
+    if (!res.ok) {
+      throw new Error(`HTTP error! status: ${res.status}`);
+    }
+
+    const data = await res.json();
+    return data.doc_id;
   } catch (e) {
-    console.error("Error adding document: ", e);
+    console.error("Error logging XRPL event: ", e);
     return null;
   }
 };
+
 export const createIdentifier = (): string => {
-  doc(db, config.xrplServiceCollection).id;
-  return doc(db, config.xrplServiceCollection).id;
+  return crypto.randomUUID();
 };
