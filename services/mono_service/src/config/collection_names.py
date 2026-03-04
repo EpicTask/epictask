@@ -2,36 +2,37 @@
 
 
 class Collections:
-    """Firestore collection name constants."""
+    """Firestore collection name constants for testing."""
     
     # ---------------------------------------------------------
     # SHARED / CORE
     # ---------------------------------------------------------
     USERS = "users"
     USER_SETTINGS = "settings"  # subcollection of users
-    USER_EVENTS = "user_events"
+    USER_EVENTS = "test_user_events"
     
     # ---------------------------------------------------------
     # USER MANAGEMENT
     # ---------------------------------------------------------
-    INVITES = "invites"
+    INVITES = "test_invites"
+    NOTIFICATIONS = "test_notifications"
     
     # ---------------------------------------------------------
     # TASK MANAGEMENT
     # ---------------------------------------------------------
-    TASKS = "tasks"
-    TASK_EVENTS = "task_events"
-    TASK_COMMENTS = "task_comments"
-    PAID_TASKS = "paid_tasks"
-    REWARDS = "rewards"
+    TASKS = "test_tasks"
+    TASK_EVENTS = "test_task_events"
+    TASK_COMMENTS = "test_task_comments"
+    PAID_TASKS = "test_paid_tasks"
+    REWARDS = "test_rewards"
     
-    LEADERBOARD = "leaderboard"
+    LEADERBOARD = "test_leaderboard"
     
     # Smart Contract / XRPL related (Legacy/Integration)
-    CONTRACTS = "contracts"
-    INTERACTIONS = "interactions"
-    XRPL_SERVICE = "xrpl_service"
-    XUMM_CALLBACKS = "xumm_callbacks"
+    CONTRACTS = "test_contracts"
+    INTERACTIONS = "test_interactions"
+    XRPL_SERVICE = "test_xrpl_service"
+    XUMM_CALLBACKS = "test_xumm_callbacks"
 
 
 # Global instance

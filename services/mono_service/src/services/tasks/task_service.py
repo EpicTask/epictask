@@ -5,6 +5,8 @@ from ...domain.task_models import (
     TaskCompleted, TaskExpired, TaskRatingUpdate, TaskRewarded,
     TaskUpdated, TaskVerified
 )
+from ...domain.notification_models import NotificationType, NotificationCreate
+from ..notifications.notification_service import notification_service
 
 class TaskService:
     """Service for managing tasks."""
@@ -15,26 +17,69 @@ class TaskService:
 
     async def assign_task(self, request: TaskAssigned) -> str:
         """Assign a task to a user."""
-        # event_type = "TaskAssigned" - passed implicitly or handled in DB
-        # The original code passed event_type string, but db.assign_task doesn't use it in signature 
-        # but calls it 'task_event' which is confusing in original code.
-        # Checking firestore_db.py: def assign_task(task_event, response):
-        # It seems the first arg is ignored or misused in original code.
-        # In copied firestore_db.py: def assign_task(task_event, response):
-        # task_event seems unused.
-        return task_db.assign_task("TaskAssigned", request)
+        result = task_db.assign_task("TaskAssigned", request)
+        
+        # Notify the assigned user
+        try:
+            task = task_db.get_task(request.task_id)
+            if task and isinstance(task, dict):
+                await notification_service.notify_task_assigned(
+                    recipient_id=request.assigned_to_id,
+                    task_title=task.get('task_title', 'Task'),
+                    assigner_name="Parent",  # In real app, fetch parent name
+                    task_id=request.task_id
+                )
+        except Exception as e:
+            print(f"Warning: Failed to send notification: {e}")
+            
+        return result
 
     async def cancel_task(self, request: TaskCancelled) -> str:
         """Cancel a task."""
+        # Notify user (if assigned) that task was cancelled
+        try:
+            task = task_db.get_task(request.task_id)
+            if task and isinstance(task, dict) and task.get('assigned_to_ids'):
+                for assigned_id in task.get('assigned_to_ids'):
+                    notification = NotificationCreate(
+                        recipient_id=assigned_id,
+                        title="Task Cancelled",
+                        message=f"Task '{task.get('task_title')}' has been cancelled.",
+                        type=NotificationType.SYSTEM_ALERT,
+                        metadata={"task_id": request.task_id}
+                    )
+                    await notification_service.send_notification(notification)
+        except Exception as e:
+            print(f"Warning: Failed to send cancellation notification: {e}")
+            
         return task_db.delete_task("TaskCancelled", request)
 
     async def add_comment(self, request: TaskCommentAdded) -> str:
         """Add a comment to a task."""
+        # Notify task owner/assignee about new comment
+        # (This would need logic to not notify self, skipped for simplicity)
         return task_db.add_comment(request)
 
     async def complete_task(self, request: TaskCompleted) -> str:
         """Mark a task as completed."""
-        return task_db.completed_task(request)
+        result = task_db.completed_task(request)
+        
+        # Notify the task creator (Parent)
+        try:
+            task = task_db.get_task(request.task_id)
+            if task and isinstance(task, dict):
+                creator_id = task.get('user_id')
+                if creator_id:
+                    await notification_service.notify_task_completed(
+                        recipient_id=creator_id,
+                        task_title=task.get('task_title', 'Task'),
+                        completer_name="Child",  # In real app, fetch child name
+                        task_id=request.task_id
+                    )
+        except Exception as e:
+            print(f"Warning: Failed to send completion notification: {e}")
+            
+        return result
 
     async def expire_task(self, request: TaskExpired) -> str:
         """Mark a task as expired."""
@@ -53,6 +98,26 @@ class TaskService:
             task_db.update_enhanced_leaderboard(request)
         except Exception as e:
             print(f"Warning: Failed to update leaderboard: {e}")
+        
+        # Notify user of reward
+        try:
+            task = task_db.get_task(request.task_id)
+            if task and isinstance(task, dict) and task.get('assigned_to_ids'):
+                for assigned_id in task.get('assigned_to_ids'):
+                    notification = NotificationCreate(
+                        recipient_id=assigned_id,
+                        title="Reward Earned!",
+                        message=f"You earned a reward for completing '{task.get('task_title')}'!",
+                        type=NotificationType.REWARD_EARNED,
+                        metadata={
+                            "task_id": request.task_id,
+                            "reward_amount": task.get('reward_amount'),
+                            "currency": task.get('reward_currency')
+                        }
+                    )
+                    await notification_service.send_notification(notification)
+        except Exception as e:
+            print(f"Warning: Failed to send reward notification: {e}")
             
         return response
 
@@ -69,6 +134,20 @@ class TaskService:
             task_db.update_enhanced_leaderboard(request)
         except Exception as e:
             print(f"Warning: Failed to update leaderboard: {e}")
+            
+        # Notify user (Child) that task is verified
+        try:
+            task = task_db.get_task(request.task_id)
+            if task and isinstance(task, dict) and task.get('assigned_to_ids'):
+                # Notify all assignees
+                for assigned_id in task.get('assigned_to_ids'):
+                    await notification_service.notify_task_verified(
+                        recipient_id=assigned_id,
+                        task_title=task.get('task_title', 'Task'),
+                        task_id=request.task_id
+                    )
+        except Exception as e:
+            print(f"Warning: Failed to send verification notification: {e}")
             
         return response
 

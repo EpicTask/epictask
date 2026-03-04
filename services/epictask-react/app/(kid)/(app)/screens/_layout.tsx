@@ -10,6 +10,7 @@ export default function ScreensLayout() {
       <Stack.Screen name="settings/linked-parent" options={{ headerShown: false }} />
       <Stack.Screen name="settings/change-pin" options={{ headerShown: false }} />
       <Stack.Screen name="settings/wallet" options={{ headerShown: false }} />
+      <Stack.Screen name="notification-screen/index" options={{ headerShown: false }} />
     </Stack>
   );
 }

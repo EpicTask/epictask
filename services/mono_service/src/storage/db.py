@@ -8,6 +8,7 @@ from ..config.collection_names import collections
 # Import storage modules
 from . import firestore_db as task_db
 from . import user_db
+from . import notification_db
 
 # Shared utilities can go here
 

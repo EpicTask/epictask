@@ -22,12 +22,15 @@ import {
   ActivityIndicator,
   TouchableOpacity,
   Alert,
+  RefreshControl,
 } from "react-native";
-import { Link } from "expo-router";
-import React, { useEffect, useState } from "react";
+import { Link, useFocusEffect } from "expo-router";
+import React, { useEffect, useState, useCallback } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { firestoreService } from "@/api/firestoreService";
 import authService from "@/api/authService";
+import taskService from "@/api/taskService";
+import { notificationService } from "@/api/notificationService";
 import ChildSelectionModal from "@/components/modals/ChildSelectionModal";
 import ChildPINModal from "@/components/modals/ChildPINModal";
 import { useFamilyTasks } from "@/hooks/useTaskManagement";
@@ -63,6 +66,10 @@ export default function HomeScreen() {
   const [recentTasks, setRecentTasks] = useState<RecentTask[]>([]);
   const [kidsWithTaskData, setKidsWithTaskData] = useState<Kid[]>([]);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+  const [lastRefreshTime, setLastRefreshTime] = useState<number>(0);
+  const [unreadNotifications, setUnreadNotifications] = useState(0);
+  const REFRESH_COOLDOWN = 5000; // 5 seconds cooldown
 
   // Child switching modals
   const [childSelectionModalVisible, setChildSelectionModalVisible] = useState(false);
@@ -77,45 +84,80 @@ export default function HomeScreen() {
     refreshFamilyTasks,
   } = useFamilyTasks(user?.uid, { realTime: true });
 
-  useEffect(() => {
-    const fetchData = async () => {
-      if (user) {
+  const fetchData = useCallback(async (isRefresh = false) => {
+    if (user) {
+      try {
+        if (!isRefresh) setLoading(true);
+        const summary = (await firestoreService.getTaskSummary(
+          user.uid
+        )) as TaskSummary;
+        setTaskSummary(summary);
+
+        const tasks = (await firestoreService.getRecentTasks(
+          user.uid
+        )) as RecentTask[];
+        setRecentTasks(tasks);
+
+        // Fetch unread notifications count
         try {
-          setLoading(true);
-          const summary = (await firestoreService.getTaskSummary(
-            user.uid
-          )) as TaskSummary;
-          setTaskSummary(summary);
-
-          const tasks = (await firestoreService.getRecentTasks(
-            user.uid
-          )) as RecentTask[];
-          setRecentTasks(tasks);
-
-          const kidsWithTaskSummary = await Promise.all(
-            children.map(async (kid: Kid) => {
-              const kidTaskSummary =
-                (await firestoreService.getKidTaskSummary(
-                  kid.uid
-                )) as TaskSummary;
-              return {
-                ...kid,
-                tasks_completed: kidTaskSummary.completed,
-                tasks_pending: kidTaskSummary.in_progress,
-              };
-            })
-          );
-          setKidsWithTaskData(kidsWithTaskSummary);
-        } catch (error) {
-          console.error("Failed to fetch dashboard data:", error);
-        } finally {
-          setLoading(false);
+            const notifications = await notificationService.getNotifications(20, true);
+            setUnreadNotifications(notifications.length);
+        } catch (e) {
+            console.log("Failed to fetch notifications count", e);
         }
-      }
-    };
 
-    fetchData();
+        const kidsWithTaskSummary = await Promise.all(
+          children.map(async (kid: Kid) => {
+            const kidTaskSummary =
+              (await firestoreService.getKidTaskSummary(
+                kid.uid
+              )) as TaskSummary;
+            return {
+              ...kid,
+              tasks_completed: kidTaskSummary.completed,
+              tasks_pending: kidTaskSummary.in_progress,
+            };
+          })
+        );
+        setKidsWithTaskData(kidsWithTaskSummary);
+      } catch (error) {
+        console.error("Failed to fetch dashboard data:", error);
+      } finally {
+        if (!isRefresh) setLoading(false);
+      }
+    }
   }, [user, children]);
+
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
+
+  // Refresh notifications when screen comes into focus
+  useFocusEffect(
+    useCallback(() => {
+        if (user) {
+            notificationService.getNotifications(20, true)
+                .then(notifications => setUnreadNotifications(notifications.length))
+                .catch(e => console.log("Failed to refresh notifications count", e));
+        }
+    }, [user])
+  );
+
+  const onRefresh = useCallback(async () => {
+    const now = Date.now();
+    if (now - lastRefreshTime < REFRESH_COOLDOWN) {
+      return; // Skip if cooling down
+    }
+    
+    setRefreshing(true);
+    setLastRefreshTime(now);
+
+    if (refreshFamilyTasks) {
+      await refreshFamilyTasks();
+    }
+    await fetchData(true);
+    setRefreshing(false);
+  }, [fetchData, refreshFamilyTasks, lastRefreshTime]);
 
   // Handler functions for child switching
   const handleChildSwitchPress = () => {
@@ -155,7 +197,13 @@ export default function HomeScreen() {
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
+      <ScrollView
+        style={styles.container}
+        showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+        }
+      >
         <View style={{ gap: 20 }}>
           {/* Header */}
           <View style={styles.header}>
@@ -169,7 +217,16 @@ export default function HomeScreen() {
             </Link>
             <View style={styles.notificationIcon}>
               <Link href="/screens/notification-screen" asChild>
-                <Pressable>{ICONS.SETTINGS.bell}</Pressable>
+                <Pressable>
+                    {ICONS.SETTINGS.bell}
+                    {unreadNotifications > 0 && (
+                        <View style={styles.badge}>
+                            <Text style={styles.badgeText}>
+                                {unreadNotifications > 9 ? '9+' : unreadNotifications}
+                            </Text>
+                        </View>
+                    )}
+                </Pressable>
               </Link>
             </View>
           </View>
@@ -248,6 +305,20 @@ export default function HomeScreen() {
                   key={task.task_id}
                   name={task.task_title}
                   stars={task.reward_amount}
+                  taskData={task}
+                  onReward={async () => {
+                    try {
+                      // Optimistic
+                      setRecentTasks(prev => prev.map(t => 
+                        t.task_id === task.task_id ? { ...t, rewarded: true, marked_completed: true, status: 'completed' } : t
+                      ));
+                      await firestoreService.rewardTask(task.task_id);
+                    } catch (e) {
+                      console.error("Error rewarding task", e);
+                      setRecentTasks([...recentTasks]);
+                    }
+                  }}
+                  isParentView={true}
                 />
               ))
             ) : (
@@ -300,6 +371,24 @@ const styles = StyleSheet.create({
     padding: 14,
     backgroundColor: "white",
     borderRadius: responsiveWidth(100),
+    position: 'relative',
+  },
+  badge: {
+    position: 'absolute',
+    top: 5,
+    right: 5,
+    backgroundColor: 'red',
+    borderRadius: 10,
+    width: 20,
+    height: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 1,
+  },
+  badgeText: {
+    color: 'white',
+    fontSize: 10,
+    fontWeight: 'bold',
   },
   childSwitchButton: {
     backgroundColor: COLORS.primary,

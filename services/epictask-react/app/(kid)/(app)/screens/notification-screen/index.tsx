@@ -12,13 +12,11 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import ScreenHeading from "@/components/headings/ScreenHeading";
-import { useSwipeable } from "react-swipeable";
 import {
   responsiveHeight,
   responsiveWidth,
 } from "react-native-responsive-dimensions";
 import { notificationService } from "@/api/notificationService";
-import { router } from "expo-router";
 import { MaterialIcons } from "@expo/vector-icons";
 
 // Define the structure for a notification
@@ -44,15 +42,6 @@ const NotificationItem: React.FC<NotificationItemProps> = ({
   onDelete,
   onMarkRead
 }) => {
-  // Swipe left to delete
-  // Swipe right to mark as read (if unread)
-  
-  // Note: react-swipeable might conflict with ScrollView if not carefully handled.
-  // For simplicity, let's use a tap to expand/mark read and a dedicated delete button or long press.
-  // Or stick to the swipeable logic if it works well.
-  
-  // Let's use a simple tap to mark as read, and a delete icon.
-  
   const handlePress = () => {
     if (!notification.is_read) {
       onMarkRead(notification.id);
@@ -114,7 +103,6 @@ const NotificationList: React.FC = () => {
       setNotifications(data);
     } catch (error) {
       console.error("Failed to fetch notifications:", error);
-      // Optional: Show toast or alert
     } finally {
       setLoading(false);
       setRefreshing(false);

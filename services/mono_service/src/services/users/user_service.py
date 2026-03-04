@@ -1,6 +1,8 @@
 from typing import Dict, Any, Optional
 from ...storage.db import user_db
 from ...domain.user_models import UserProfileUpdate, InviteCodeResponse, LinkChildRequest, UserMetrics
+from ...domain.notification_models import NotificationType, NotificationCreate
+from ..notifications.notification_service import notification_service
 
 class UserService:
     """Service for user management."""
@@ -25,7 +27,55 @@ class UserService:
 
     async def link_child(self, parent_uid: str, request: LinkChildRequest) -> Dict[str, str]:
         """Link a child account to a parent."""
-        return user_db.link_child_account(parent_uid, request.invite_code)
+        # The user_db function returns {"message": "...", "child_id": "...", "parent_name": "..."} hopefully?
+        # Checking user_db.link_child_account implementation again.
+        # It currently returns just {"message": "Child linked successfully."}.
+        # I need to modify user_db to return more info OR fetch it here.
+        # Fetching here is safer to avoid changing db signature too much if used elsewhere (though it's mono_service now).
+        
+        # Actually, user_db.link_child_account consumes the invite code, so I can't look it up after.
+        # But I can look up the parent profile to get their name.
+        
+        # Let's modify user_db to return the child_id so we know who to notify.
+        # Wait, I can't easily modify user_db return type without checking all callers.
+        # But I'm the one writing the service.
+        
+        # Let's check if I can pass the child_id notification logic INTO user_db? No, keep logic in service.
+        
+        # I'll update user_db.link_child_account to return the child_id.
+        result = user_db.link_child_account(parent_uid, request.invite_code)
+        
+        if result and "child_id" in result:
+            child_id = result["child_id"]
+            
+            # Notify child
+            try:
+                parent_profile = user_db.get_user_profile(parent_uid)
+                parent_name = parent_profile.get("display_name", "A parent") if parent_profile else "A parent"
+                
+                notification = NotificationCreate(
+                    recipient_id=child_id,
+                    title="Family Link Successful",
+                    message=f"You have been successfully linked to {parent_name}'s family account.",
+                    type=NotificationType.FAMILY_INVITE,
+                    metadata={"parent_uid": parent_uid, "parent_name": parent_name}
+                )
+                await notification_service.send_notification(notification)
+                
+                # Notify parent (optional, but good UX)
+                notification_parent = NotificationCreate(
+                    recipient_id=parent_uid,
+                    title="New Family Member",
+                    message="A new family member has been successfully linked to your account.",
+                    type=NotificationType.SYSTEM_ALERT,
+                    metadata={"child_id": child_id}
+                )
+                await notification_service.send_notification(notification_parent)
+                
+            except Exception as e:
+                print(f"Warning: Failed to send link notification: {e}")
+                
+        return result
 
     async def get_metrics(self) -> UserMetrics:
         """Get user metrics."""

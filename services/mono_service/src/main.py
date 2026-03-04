@@ -75,6 +75,7 @@ async def root(request: Request):
 # Import and include routers
 from src.routes.tasks import task_routes
 from src.routes.users import user_routes
+from src.routes.notifications import notification_routes
 
 
 # Task routes
@@ -82,6 +83,9 @@ app.include_router(task_routes.router, prefix="/api/tasks", tags=["tasks"])
 
 # User routes
 app.include_router(user_routes.router, prefix="/api/users", tags=["users"])
+
+# Notification routes
+app.include_router(notification_routes.router, prefix="/api/notifications", tags=["notifications"])
 
 if __name__ == "__main__":
     import uvicorn
