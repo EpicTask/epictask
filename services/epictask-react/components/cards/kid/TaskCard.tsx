@@ -12,10 +12,11 @@ import { Task } from "@/constants/Interfaces";
 interface KidsCardProps {
   task: Task;
   onPress?: () => void;
+  onComplete?: () => void;
   bg?: string;
 }
 
-const TaskCard: React.FC<KidsCardProps> = ({ task, onPress, bg }) => {
+const TaskCard: React.FC<KidsCardProps> = ({ task, onPress, onComplete, bg }) => {
   const { task_title, reward_amount, due_date, notes } = task;
   return (
     <View style={[styles.card, { backgroundColor: bg }]}>
@@ -78,19 +79,31 @@ const TaskCard: React.FC<KidsCardProps> = ({ task, onPress, bg }) => {
           <View style={{ flex: 1 }}>
             <CustomButton
               height={responsiveHeight(6)}
-              onPress={onPress!}
+              onPress={onPress || (() => {})}
               text="VIEW"
               fill={false}
             />
           </View>
-          <View style={{ flex: 1 }}>
-            <CustomButton
-              height={responsiveHeight(6)}
-              onPress={onPress!}
-              text="COMPLETE"
-              fill={true}
-            />
-          </View>
+          {!task.marked_completed && !task.rewarded && onComplete && (
+            <View style={{ flex: 1 }}>
+              <CustomButton
+                height={responsiveHeight(6)}
+                onPress={onComplete}
+                text="COMPLETE"
+                fill={true}
+              />
+            </View>
+          )}
+          {task.marked_completed && !task.rewarded && (
+            <View style={{ flex: 1 }}>
+              <CustomButton
+                height={responsiveHeight(6)}
+                onPress={() => {}}
+                text="PENDING"
+                fill={true}
+              />
+            </View>
+          )}
         </View>
       </View>
     </View>

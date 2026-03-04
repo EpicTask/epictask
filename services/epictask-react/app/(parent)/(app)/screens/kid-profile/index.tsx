@@ -25,40 +25,38 @@ import { firestoreService } from "@/api/firestoreService";
 import PlusButton from "@/components/PlusButton";
 import { TaskActionModal } from "@/components/modals/TaskActionModal";
 import { Task } from "@/constants/Interfaces";
-
+import taskService from "@/api/taskService";
 
 const KidProfile = () => {
   const router = useRouter();
   const params = useLocalSearchParams();
-  
+
   // Extract kid data from parameters with fallbacks
-  const kidName = params.name as string || "Unknown";
+  const kidName = (params.name as string) || "Unknown";
   const kidLevel = parseInt(params.level as string) || 1;
   const kidStars = parseInt(params.stars as string) || 0;
   const kidCompleted = parseInt(params.completed as string) || 0;
   const kidPending = parseInt(params.pending as string) || 0;
   const kidUid = params.uid as string;
-  
+
   // State for tasks and modal
   const [tasks, setTasks] = useState<Task[]>([]);
   const [loading, setLoading] = useState(true);
   const [modalVisible, setModalVisible] = useState(false);
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
-  
+
   // Calculate real-time metrics from actual task data
   // Completed: Tasks that have been rewarded
   // Pending: Tasks that have been marked complete but not yet rewarded
-  const completedTasks = tasks.filter(task => 
-    task.rewarded === true
-  ).length;
-  const pendingTasks = tasks.filter(task => 
-    task.marked_completed === true && task.rewarded !== true
+  const completedTasks = tasks.filter((task) => task.rewarded === true).length;
+  const pendingTasks = tasks.filter(
+    (task) => task.marked_completed === true && task.rewarded !== true,
   ).length;
   const totalTasks = tasks.length;
   const totalRewardPoints = tasks
-    .filter(task => task.rewarded === true)
+    .filter((task) => task.rewarded === true)
     .reduce((sum, task) => sum + (task.reward_amount || task.reward || 0), 0);
-  
+
   // Calculate progress percentages
   const completedProgress = totalTasks > 0 ? completedTasks / totalTasks : 0;
   const pendingProgress = totalTasks > 0 ? pendingTasks / totalTasks : 0;
@@ -95,15 +93,16 @@ const KidProfile = () => {
 
   const handleTaskSave = async (updatedTask: Task) => {
     try {
-      // TODO: Implement task update API call
-      
+      // Call the TaskUpdated endpoint via taskService
+      await taskService.updateTask(updatedTask);
+
       // Update local state
-      setTasks(prevTasks => 
-        prevTasks.map(task => 
-          task.task_id === updatedTask.task_id ? updatedTask : task
-        )
+      setTasks((prevTasks) =>
+        prevTasks.map((task) =>
+          task.task_id === updatedTask.task_id ? updatedTask : task,
+        ),
       );
-      
+
       // Refresh tasks from server
       if (kidUid) {
         const result = await firestoreService.getTasksForUser(kidUid);
@@ -112,35 +111,40 @@ const KidProfile = () => {
         }
       }
     } catch (error) {
-      console.error('Error updating task:', error);
+      console.error("Error updating task:", error);
       throw error;
     }
   };
 
   const handleTaskDelete = async (taskId: string) => {
     try {
-      // TODO: Implement task delete API call
-      
+      // Delete task via API call
+      await taskService.taskCanceled(taskId);
       // Update local state
-      setTasks(prevTasks => prevTasks.filter(task => task.task_id !== taskId));
+      setTasks((prevTasks) =>
+        prevTasks.filter((task) => task.task_id !== taskId),
+      );
     } catch (error) {
-      console.error('Error deleting task:', error);
+      console.error("Error deleting task:", error);
     }
   };
 
   const handleRewardTask = async (taskId: string) => {
     try {
+      // Optimistic update
+      setTasks(prevTasks => 
+        prevTasks.map(task => 
+          task.task_id === taskId ? { ...task, rewarded: true, marked_completed: true, status: 'completed' } : task
+        )
+      );
+
+      // Backend logic handles marking complete and rewarding in one step
       await firestoreService.rewardTask(taskId);
-      // Refresh tasks from server
-      if (kidUid) {
-        const result = await firestoreService.getTasksForUser(kidUid);
-        if (result.success) {
-          setTasks(result.tasks || []);
-        }
-      }
       closeModal();
     } catch (error) {
-      console.error('Error rewarding task:', error);
+      console.error("Error rewarding task:", error);
+      // Revert optimistic update on failure
+      setTasks([...tasks]);
     }
   };
 
@@ -276,16 +280,35 @@ const KidProfile = () => {
         </View>
         <View style={{ flex: 1, paddingVertical: 20, gap: 10 }}>
           {/* Tasks Section Header */}
-          <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
-            <CustomText variant="semiBold" style={{ fontSize: FONT_SIZES.extraLarge }}>
+          <View
+            style={{
+              flexDirection: "row",
+              justifyContent: "space-between",
+              alignItems: "center",
+            }}
+          >
+            <CustomText
+              variant="semiBold"
+              style={{ fontSize: FONT_SIZES.extraLarge }}
+            >
               {kidName}'s Tasks
             </CustomText>
-            <PlusButton onPress={() =>{router.push("/screens/manage-tasks/assign-task" as any)}} />
+            <PlusButton
+              onPress={() => {
+                router.push("/screens/manage-tasks/assign-task" as any);
+              }}
+            />
           </View>
-          
+
           {/* Tasks List */}
           {loading ? (
-            <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
+            <View
+              style={{
+                flex: 1,
+                justifyContent: "center",
+                alignItems: "center",
+              }}
+            >
               <ActivityIndicator size="large" color={COLORS.primary} />
             </View>
           ) : tasks.length > 0 ? (
@@ -295,23 +318,41 @@ const KidProfile = () => {
               data={tasks}
               horizontal
               renderItem={({ item }) => (
-                <View style={{ marginHorizontal: 6, width: responsiveWidth(70), height: 180 }}>
-                  <TaskCard 
-                    name={item.task_title || item.task_description || "Untitled Task"} 
-                    stars={item.reward_amount || 0} 
+                <View
+                  style={{
+                    marginHorizontal: 6,
+                    width: responsiveWidth(70),
+                    height: 180,
+                  }}
+                >
+                  <TaskCard
+                    name={
+                      item.task_title ||
+                      item.task_description ||
+                      "Untitled Task"
+                    }
+                    stars={item.reward_amount || 0}
                     taskData={item}
                     kidName={kidName}
                     onPress={() => handleTaskView(item)}
-                    onReward={() => handleRewardTask(item.task_id)}
+                    onReward={() => handleRewardTask(item.task_id!)}
+                    isParentView={true}
                   />
                 </View>
               )}
               keyExtractor={(item) => item.task_id || Math.random().toString()}
             />
           ) : (
-            <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
+            <View
+              style={{
+                flex: 1,
+                justifyContent: "center",
+                alignItems: "center",
+              }}
+            >
               <CustomText style={{ color: COLORS.grey, textAlign: "center" }}>
-                No tasks assigned yet.{"\n"}Assign tasks to {kidName} to see them here!
+                No tasks assigned yet.{"\n"}Assign tasks to {kidName} to see
+                them here!
               </CustomText>
             </View>
           )}

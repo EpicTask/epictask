@@ -1,12 +1,12 @@
 from typing import Any, Dict, List, Optional
 from datetime import datetime
-from pydantic import BaseModel, EmailStr, Field
+from pydantic import BaseModel, Field
 
 class UserProfile(BaseModel):
     """User profile model"""
     uid: str
     display_name: Optional[str] = None
-    email: Optional[EmailStr] = None
+    email: Optional[str] = None
     photo_url: Optional[str] = None
     role: str = Field(..., pattern="^(parent|kid|admin)$")
     children: List[str] = []  # List of child UIDs

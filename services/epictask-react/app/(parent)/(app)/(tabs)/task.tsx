@@ -164,6 +164,7 @@ const ManageTasks = () => {
   const handleTaskDelete = async (taskId: string) => {
     try {
       // TODO: Implement task delete API call
+      console.log("Canceling task with data:", taskId);
       await taskService.taskCanceled(taskId);
       
       // Update local state
@@ -175,23 +176,20 @@ const ManageTasks = () => {
 
   const handleRewardTask = async (taskId: string) => {
     try {
+      // Optimistic update
+      setTasks(prevTasks => 
+        prevTasks.map(task => 
+          task.task_id === taskId ? { ...task, rewarded: true, marked_completed: true, status: 'completed' } : task
+        )
+      );
+
+      // Backend logic will handle marking complete + paying out reward in one step
       await firestoreService.rewardTask(taskId);
-      // Refresh tasks from server
-      if (user?.uid) {
-        const result = await firestoreService.getTasksForFamily(user.uid);
-        if (result.success) {
-          const allTasks: Task[] = [];
-          Object.values(result.familyTasks || {}).forEach((childData: any) => {
-            if (childData.tasks) {
-              allTasks.push(...childData.tasks);
-            }
-          });
-          setTasks(allTasks);
-        }
-      }
       closeModal();
     } catch (error) {
       console.error('Error rewarding task:', error);
+      // Revert optimistic update on failure
+      setTasks([...tasks]);
     }
   };
 
@@ -352,6 +350,7 @@ const ManageTasks = () => {
               kidName={getChildName(item)}
               onPress={() => handleTaskView(item)}
               onReward={() => handleRewardTask(item.task_id!)}
+              isParentView={true}
             />
           </View>
         )}

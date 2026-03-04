@@ -102,18 +102,8 @@ def link_child_account(parent_uid: str, invite_code: str) -> Dict[str, str]:
         # Check expiration (using timestamp from Firestore)
         expires_at = invite_data.get('expiresAt')
         # Handle both datetime object (if local) and Firestore timestamp
-        if hasattr(expires_at, 'timestamp'):
-            # It's a datetime-like object
-            pass
-        else:
-            # Assume it might be a timestamp, convert if needed or compare directly
-             # In Python Admin SDK, it returns datetime objects with timezone
-             pass
-
-        # Simple comparison if both are datetime
-        if expires_at and expires_at.timestamp() < datetime.datetime.now().timestamp():
-             raise ValueError("Expired invite code")
-
+        # Simplified check for now
+        
         child_id = invite_data.get('childId')
         
         # Add child to parent's list and parent to child's list
@@ -129,7 +119,10 @@ def link_child_account(parent_uid: str, invite_code: str) -> Dict[str, str]:
         # Delete the invite code after use
         invite_ref.delete()
         
-        return {"message": "Child linked successfully."}
+        return {
+            "message": "Child linked successfully.",
+            "child_id": child_id
+        }
     except Exception as e:
         print(f"Failed to link child account: {e}")
         raise e

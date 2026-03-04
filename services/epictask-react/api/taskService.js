@@ -20,7 +20,7 @@ taskApiClient.interceptors.request.use(
   },
   (error) => {
     return Promise.reject(error);
-  }
+  },
 );
 
 export const taskService = {
@@ -28,7 +28,7 @@ export const taskService = {
 
   createTask: async (taskData) => {
     try {
-      const response = await taskApiClient.post("/TaskCreated", taskData);
+      const response = await taskApiClient.post("/", taskData);
       // Invalidate cache after creating a task
       firestoreService.cache.clearTasks();
       return response.data;
@@ -41,9 +41,10 @@ export const taskService = {
   taskAssigned: async (assignmentData) => {
     try {
       const response = await taskApiClient.post(
-        "/TaskAssigned",
-        assignmentData
+        `/${assignmentData.task_id}/assign`,
+        assignmentData,
       );
+      firestoreService.cache.clearTasks();
       return response.data;
     } catch (error) {
       console.error("Task assigned error:", error);
@@ -54,12 +55,138 @@ export const taskService = {
   taskCanceled: async (taskId) => {
     try {
       const cancelData = { task_id: taskId };
-      const response = await taskApiClient.post("/TaskCancelled", cancelData);
+      const response = await taskApiClient.post(
+        `/${taskId}/cancel`,
+        cancelData,
+      );
       Alert.alert(response.data.response || "Task canceled successfully");
+      firestoreService.cache.clearTasks();
       return response.data;
     } catch (error) {
       console.error("Task canceled error:", error);
       throw new Error("Failed to cancel task");
+    }
+  },
+
+  updateTask: async (taskData) => {
+    try {
+      const updatedData = {
+        task_id: taskData.task_id,
+        updated_fields: taskData,
+        user_id: taskData.user_id,
+      };
+      console.log("Api Call: ", taskApiClient);
+      const response = await taskApiClient.post(
+        `/${taskData.task_id}/update`,
+        updatedData,
+      );
+      firestoreService.cache.clearTasks();
+      return response.data;
+    } catch (error) {
+      console.error("Update task error:", error);
+      throw new Error("Failed to update task");
+    }
+  },
+
+  // Additional Task Management Service endpoints
+
+  taskCommentAdded: async (commentData) => {
+    try {
+      const response = await taskApiClient.post(
+        `/${commentData.task_id}/comment`,
+        commentData,
+      );
+      return response.data;
+    } catch (error) {
+      console.error("Task comment added error:", error);
+      throw new Error("Failed to add task comment");
+    }
+  },
+
+  taskCompleted: async (completionData) => {
+    try {
+      const response = await taskApiClient.post(
+        `/${completionData.task_id}/complete`,
+        completionData,
+      );
+      return response.data;
+    } catch (error) {
+      console.error("Task completed error:", error);
+      throw new Error("Failed to mark task as completed");
+    }
+  },
+
+  taskExpired: async (expirationData) => {
+    try {
+      const response = await taskApiClient.post(
+        `/${expirationData.task_id}/expire`,
+        expirationData,
+      );
+      return response.data;
+    } catch (error) {
+      console.error("Task expired error:", error);
+      throw new Error("Failed to mark task as expired");
+    }
+  },
+
+  taskRatingUpdate: async (ratingData) => {
+    try {
+      const response = await taskApiClient.post(
+        `/${ratingData.task_id}/rating`,
+        ratingData,
+      );
+      return response.data;
+    } catch (error) {
+      console.error("Task rating update error:", error);
+      throw new Error("Failed to update task rating");
+    }
+  },
+
+  taskRewarded: async (rewardData) => {
+    try {
+      const response = await taskApiClient.post(
+        `/${rewardData.task_id}/reward`,
+        rewardData,
+      );
+      return response.data;
+    } catch (error) {
+      console.error("Task rewarded error:", error);
+      throw new Error("Failed to reward task");
+    }
+  },
+
+  taskVerified: async (verificationData) => {
+    try {
+      const response = await taskApiClient.post(
+        `/${verificationData.task_id}/verify`,
+        verificationData,
+      );
+      return response.data;
+    } catch (error) {
+      console.error("Task verified error:", error);
+      throw new Error("Failed to verify task");
+    }
+  },
+
+  // Get endpoints that call the backend API
+
+  getAllTasks: async (userId) => {
+    try {
+      const response = await taskApiClient.get(`/user/${userId}`);
+      return response.data;
+    } catch (error) {
+      console.error("Get all tasks error:", error);
+      throw new Error("Failed to get all tasks");
+    }
+  },
+
+  getTask: async (taskId) => {
+    try {
+      const response = await taskApiClient.get(`/${taskId}`);
+      return response.data;
+    } catch (error) {
+      console.error("Get task error:", error);
+      throw new Error("Failed to get task");
     }
   },
 
@@ -68,7 +195,7 @@ export const taskService = {
   getFamilyLeaderboard: async (parentId) => {
     try {
       const response = await taskApiClient.get(
-        `/leaderboard/family/${parentId}`
+        `/leaderboard/family/${parentId}`,
       );
       return response.data;
     } catch (error) {
@@ -90,123 +217,12 @@ export const taskService = {
   getEnhancedGlobalLeaderboard: async (limit = 100) => {
     try {
       const response = await taskApiClient.get(
-        `/leaderboard/enhanced-global?limit=${limit}`
+        `/leaderboard/global?limit=${limit}`,
       );
       return response.data;
     } catch (error) {
       console.error("Get enhanced global leaderboard error:", error);
       throw new Error("Failed to get enhanced global leaderboard");
-    }
-  },
-
-  updateTask: async (taskData) => {
-    try {
-      const updatedData = {
-        task_id: taskData.task_id,
-        updated_fields: taskData,
-      };
-      console.log("Api Call: ", taskApiClient);
-      const response = await taskApiClient.post("/TaskUpdated", updatedData);
-      return response.data;
-    } catch (error) {
-      console.error("Update task error:", error);
-      throw new Error("Failed to update task");
-    }
-  },
-
-  // Additional Task Management Service endpoints
-
-  taskCommentAdded: async (commentData) => {
-    try {
-      const response = await taskApiClient.post(
-        "/TaskCommentAdded",
-        commentData
-      );
-      return response.data;
-    } catch (error) {
-      console.error("Task comment added error:", error);
-      throw new Error("Failed to add task comment");
-    }
-  },
-
-  taskCompleted: async (completionData) => {
-    try {
-      const response = await taskApiClient.post(
-        "/TaskCompleted",
-        completionData
-      );
-      return response.data;
-    } catch (error) {
-      console.error("Task completed error:", error);
-      throw new Error("Failed to mark task as completed");
-    }
-  },
-
-  taskExpired: async (expirationData) => {
-    try {
-      const response = await taskApiClient.post("/TaskExpired", expirationData);
-      return response.data;
-    } catch (error) {
-      console.error("Task expired error:", error);
-      throw new Error("Failed to mark task as expired");
-    }
-  },
-
-  taskRatingUpdate: async (ratingData) => {
-    try {
-      const response = await taskApiClient.post(
-        "/TaskRatingUpdate",
-        ratingData
-      );
-      return response.data;
-    } catch (error) {
-      console.error("Task rating update error:", error);
-      throw new Error("Failed to update task rating");
-    }
-  },
-
-  taskRewarded: async (rewardData) => {
-    try {
-      const response = await taskApiClient.post("/TaskRewarded", rewardData);
-      return response.data;
-    } catch (error) {
-      console.error("Task rewarded error:", error);
-      throw new Error("Failed to reward task");
-    }
-  },
-
-  taskVerified: async (verificationData) => {
-    try {
-      const response = await taskApiClient.post(
-        "/TaskVerified",
-        verificationData
-      );
-      return response.data;
-    } catch (error) {
-      console.error("Task verified error:", error);
-      throw new Error("Failed to verify task");
-    }
-  },
-
-  // Get endpoints that call the backend API
-
-  getAllTasks: async (userId) => {
-    try {
-      const response = await taskApiClient.get(`/tasks?user_id=${userId}`);
-      return response.data;
-    } catch (error) {
-      console.error("Get all tasks error:", error);
-      throw new Error("Failed to get all tasks");
-    }
-  },
-
-  getTask: async (taskId) => {
-    try {
-      const response = await taskApiClient.get(`/get_task/${taskId}`);
-      return response.data;
-    } catch (error) {
-      console.error("Get task error:", error);
-      throw new Error("Failed to get task");
     }
   },
 };

@@ -1,5 +1,5 @@
 import { FONT_SIZES } from "@/constants/FontSize";
-import React from "react";
+import React, { useState, useCallback, useEffect } from "react";
 import {
   Image,
   ScrollView,
@@ -8,10 +8,12 @@ import {
   TouchableOpacity,
   View,
   ActivityIndicator,
+  RefreshControl,
+  Pressable
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useQuery } from "@tanstack/react-query";
-import { router } from "expo-router";
+import { router, Link, useFocusEffect } from "expo-router";
 import * as Progress from "react-native-progress";
 import { useAuth } from "@/context/AuthContext";
 
@@ -25,8 +27,9 @@ import {
   responsiveHeight,
   responsiveWidth,
 } from "react-native-responsive-dimensions";
-import userApiClient from "@/api/userService";
+import taskService from "@/api/taskService";
 import { firestoreService } from "@/api/firestoreService";
+import { notificationService } from "@/api/notificationService";
 import MicroserviceUrls from "@/constants/Microservices";
 import { Task } from "@/constants/Interfaces";
 import DebouncedTouchableOpacity from "@/components/buttons/DebouncedTouchableOpacity";
@@ -34,9 +37,7 @@ import StoryProgressCard from "@/components/cards/kid/StoryProgressCard";
 import narrativeService, { StoryProgress } from "@/api/narrativeService";
 
 const fetchTasks = async (userId: string) => {
-  const { data } = await userApiClient.get(
-    `${MicroserviceUrls.taskManagement}/tasks?user_id=${userId}`
-  );
+  const data = await taskService.getAllTasks(userId);
   if (Array.isArray(data)) {
     return data;
   }
@@ -49,6 +50,8 @@ const fetchTasks = async (userId: string) => {
 
 export default function HomeScreen() {
   const { user } = useAuth();
+  const [unreadNotifications, setUnreadNotifications] = useState(0);
+  
   const {
     data: tasks = [],
     isLoading,
@@ -65,11 +68,51 @@ export default function HomeScreen() {
   const {
     data: storyProgress = [],
     isLoading: storyProgressLoading,
+    refetch: refetchStoryProgress,
   } = useQuery({
     queryKey: ["homeStoryProgress", user?.uid],
     queryFn: () => narrativeService.getProgress(user?.uid),
     enabled: !!user,
   });
+
+  const [refreshing, setRefreshing] = useState(false);
+  const [lastRefreshTime, setLastRefreshTime] = useState<number>(0);
+  const REFRESH_COOLDOWN = 5000; // 5 seconds cooldown
+
+  // Fetch notifications count
+  const fetchNotificationCount = useCallback(async () => {
+    if (user) {
+        try {
+            const notifications = await notificationService.getNotifications(20, true);
+            setUnreadNotifications(notifications.length);
+        } catch (e) {
+            console.log("Failed to fetch notifications count", e);
+        }
+    }
+  }, [user]);
+
+  useEffect(() => {
+    fetchNotificationCount();
+  }, [fetchNotificationCount]);
+
+  // Refresh notifications when screen comes into focus
+  useFocusEffect(
+    useCallback(() => {
+        fetchNotificationCount();
+    }, [fetchNotificationCount])
+  );
+
+  const onRefresh = useCallback(async () => {
+    const now = Date.now();
+    if (now - lastRefreshTime < REFRESH_COOLDOWN) {
+      return; // Skip if cooling down
+    }
+
+    setRefreshing(true);
+    setLastRefreshTime(now);
+    await Promise.all([refetch(), refetchStoryProgress(), fetchNotificationCount()]);
+    setRefreshing(false);
+  }, [refetch, refetchStoryProgress, fetchNotificationCount, lastRefreshTime]);
 
   if (isLoading) {
     return <ActivityIndicator size="large" style={styles.centered} />;
@@ -105,7 +148,13 @@ export default function HomeScreen() {
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
+      <ScrollView
+        style={styles.container}
+        showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+        }
+      >
         <View style={{ gap: 10 }}>
           {/* Header */}
           <View
@@ -129,24 +178,27 @@ export default function HomeScreen() {
               </CustomText>
             </View>
             <View>
-              <TouchableOpacity
-                onPress={async () => {
-                  const notifications = await firestoreService.getNotifications(
-                    user?.uid
-                  );
-                  console.log(notifications);
-                }}
-              >
-                <View
-                  style={{
-                    padding: 14,
-                    backgroundColor: "white",
-                    borderRadius: responsiveWidth(100),
-                  }}
-                >
-                  {ICONS.SETTINGS.bell}
-                </View>
-              </TouchableOpacity>
+              <Link href="../screens/notification-screen" asChild>
+                <TouchableOpacity>
+                    <View
+                    style={{
+                        padding: 14,
+                        backgroundColor: "white",
+                        borderRadius: responsiveWidth(100),
+                        position: 'relative',
+                    }}
+                    >
+                    {ICONS.SETTINGS.bell}
+                    {unreadNotifications > 0 && (
+                        <View style={styles.badge}>
+                            <Text style={styles.badgeText}>
+                                {unreadNotifications > 9 ? '9+' : unreadNotifications}
+                            </Text>
+                        </View>
+                    )}
+                    </View>
+                </TouchableOpacity>
+              </Link>
             </View>
           </View>
 
@@ -250,6 +302,14 @@ export default function HomeScreen() {
                   }
                   key={index}
                   task={task}
+                  onComplete={async () => {
+                    try {
+                      await taskService.taskCompleted({ task_id: task.task_id });
+                      refetch();
+                    } catch (e) {
+                      console.error("Failed to complete task:", e);
+                    }
+                  }}
                 />
               ))
             ) : (
@@ -323,5 +383,22 @@ const styles = StyleSheet.create({
   createTaskButtonText: {
     color: "white",
     fontWeight: "bold",
+  },
+  badge: {
+    position: 'absolute',
+    top: 5,
+    right: 5,
+    backgroundColor: 'red',
+    borderRadius: 10,
+    width: 20,
+    height: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 1,
+  },
+  badgeText: {
+    color: 'white',
+    fontSize: 10,
+    fontWeight: 'bold',
   },
 });

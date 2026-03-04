@@ -14,14 +14,12 @@ import TaskCard from "@/components/cards/kid/TaskCard";
 import CustomText from "@/components/CustomText";
 import { COLORS } from "@/constants/Colors";
 import { responsiveWidth } from "react-native-responsive-dimensions";
-import userApiClient from "@/api/userService";
+import taskService from "@/api/taskService";
 import MicroserviceUrls from "@/constants/Microservices";
 import { Task } from "@/constants/Interfaces";
 
 const fetchTasks = async (userId: string) => {
-  const { data } = await userApiClient.get(
-    `${MicroserviceUrls.taskManagement}/tasks?user_id=${userId}`
-  );
+  const data = await taskService.getAllTasks(userId);
   if (Array.isArray(data)) {
     return data;
   }
@@ -38,6 +36,7 @@ export default function AllTasksScreen() {
     isLoading,
     isError,
     error,
+    refetch,
   } = useQuery({
     queryKey: ["allTasks", user?.uid],
     queryFn: () => fetchTasks(user?.uid),
@@ -71,6 +70,14 @@ export default function AllTasksScreen() {
                   : COLORS.light_yellow
               }
               task={item}
+              onComplete={async () => {
+                try {
+                  await taskService.taskCompleted({ task_id: item.task_id });
+                  refetch();
+                } catch (e) {
+                  console.error("Failed to complete task:", e);
+                }
+              }}
             />
           )}
           ListEmptyComponent={

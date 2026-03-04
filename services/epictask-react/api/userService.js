@@ -20,4 +20,56 @@ userApiClient.interceptors.request.use(
   }
 );
 
-export default userApiClient;
+export const userService = {
+  updateProfile: async (profileData) => {
+    try {
+      const response = await userApiClient.put("/profile", profileData);
+      return response.data;
+    } catch (error) {
+      console.error("Update profile error:", error);
+      throw new Error("Failed to update profile");
+    }
+  },
+
+  deleteAccount: async () => {
+    try {
+      const response = await userApiClient.delete("/account");
+      return response.data;
+    } catch (error) {
+      console.error("Delete account error:", error);
+      throw new Error("Failed to delete account");
+    }
+  },
+
+  generateInviteCode: async () => {
+    try {
+      const response = await userApiClient.post("/invite-code");
+      return response.data;
+    } catch (error) {
+      console.error("Generate invite code error:", error);
+      throw new Error("Failed to generate invite code");
+    }
+  },
+
+  linkChild: async (linkData) => {
+    try {
+      const response = await userApiClient.post("/link-child", linkData);
+      return response.data;
+    } catch (error) {
+      console.error("Link child error:", error);
+      throw new Error("Failed to link child account");
+    }
+  },
+
+  getMetrics: async () => {
+    try {
+      const response = await userApiClient.get("/admin/metrics");
+      return response.data;
+    } catch (error) {
+      console.error("Get metrics error:", error);
+      throw new Error("Failed to get metrics");
+    }
+  }
+};
+
+export default userService;

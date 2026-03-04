@@ -184,33 +184,20 @@ const ManageTasks = () => {
 
   const handleRewardTask = async (taskId: string) => {
     try {
+      // Optimistic update
+      setTasks(prevTasks => 
+        prevTasks.map(task => 
+          task.task_id === taskId ? { ...task, rewarded: true, marked_completed: true, status: 'completed' } : task
+        )
+      );
+
+      // Backend logic handles marking complete and rewarding in one step
       await firestoreService.rewardTask(taskId);
-      // Refresh tasks from server
-      if (user?.uid) {
-        const result = await firestoreService.getTasksForFamily(user.uid);
-        if (result.success) {
-          // Update children map
-          const childMap = new Map<string, string>();
-          Object.entries(result.familyTasks || {}).forEach(([childId, childData]: [string, any]) => {
-            childMap.set(childId, childData.childName || "Child");
-          });
-          setChildrenMap(childMap);
-          
-          const allTasks: Task[] = [];
-          Object.values(result.familyTasks || {}).forEach((childData: any) => {
-            if (childData.tasks) {
-              allTasks.push(...childData.tasks);
-            }
-          });
-          
-          // Deduplicate tasks to handle tasks assigned to multiple children
-          const uniqueTasks = deduplicateTasks(allTasks);
-          setTasks(uniqueTasks);
-        }
-      }
       closeModal();
     } catch (error) {
       console.error('Error rewarding task:', error);
+      // Revert optimistic update on failure
+      setTasks([...tasks]);
     }
   };
 
@@ -348,7 +335,8 @@ const ManageTasks = () => {
                     taskData={item}
                     kidName={getChildName(item)}
                     onPress={() => handleTaskView(item)}
-                    onReward={() => handleRewardTask(item.task_id)}
+                    onReward={() => handleRewardTask(item.task_id!)}
+                    isParentView={true}
                   />
                 </View>
               )}
