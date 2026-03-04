@@ -1,7 +1,0 @@
-app/.env
-.idea
-.pytest_cache
-.readmes
-.vscode
-.task-management-api.yaml
-__pycache__

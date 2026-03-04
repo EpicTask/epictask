@@ -1,4 +1,0 @@
-# Contract Generator
-
-## Description
-The "contract-generator" cloud function is responsible for creating a simplified contract that outlines the terms of a task that needs to be completed. This function takes relevant task details as input and generates a concise and easy-to-understand contract document. The contract includes essential information such as task description, deadline, reward, and any specific terms or conditions associated with the task. By automating the contract generation process, this cloud function streamlines the task management workflow and ensures clear communication of expectations between task assigners and task performers. The generated contract serves as a reference document that helps both parties understand their roles and responsibilities, fostering transparency and accountability in the task completion process.
