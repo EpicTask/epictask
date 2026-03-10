@@ -1,4 +1,4 @@
-import { writeResponseToDatabase } from "../../../data/database";
+import { writeResponseToDatabase } from "../../data/database";
 
 export interface XummWebhookBody<T = object> {
   payloadUuidv4: string;
@@ -7,7 +7,7 @@ export interface XummWebhookBody<T = object> {
   custom_meta: {
     blob: T;
     identifier: string;
-  }
+  };
 }
 
 export const handleXummWebhook = async (webhookBody: XummWebhookBody) => {
@@ -15,7 +15,7 @@ export const handleXummWebhook = async (webhookBody: XummWebhookBody) => {
     const docId = await writeResponseToDatabase(webhookBody, "xumm_webhook");
     console.log("Webhook data saved with ID: ", docId);
     return { status: "success", docId };
-  } catch (error:any) {
+  } catch (error: any) {
     console.error("Error handling Xumm webhook:", error);
     return { status: "error", message: error.toString() };
   }

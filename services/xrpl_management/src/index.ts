@@ -7,16 +7,19 @@ import serve from "koa-static";
 import * as path from "path";
 import { fileURLToPath } from "url";
 import { dirname } from "path";
-import { connectWallet } from "./services/wallets/xumm/signin.js";
-import { PaymentHandler } from "./services/wallets/xumm/payments.js";
-import { EscrowService } from "./services/wallets/xumm/escrow.js";
-import { handleXummWebhook, XummWebhookBody } from "./services/wallets/xumm/webhook.js";
-import { crossmarkService } from "./services/wallets/crossmark/index.js";
+import { connectWallet } from "./wallets/xumm/signin.js";
+import { PaymentHandler } from "./wallets/xumm/payments.js";
+import { EscrowService } from "./wallets/xumm/escrow.js";
+import { handleXummWebhook, XummWebhookBody } from "./wallets/xumm/webhook.js";
+import { crossmarkService } from "./wallets/crossmark/index.js";
 import { accountService } from "./ledger/account.js";
 import { ledgerListener } from "./ledger/listener.js";
 import { TransactionBuilder } from "./ledger/builder.js";
-import { PaymentRequest, CreateEscrowModel, EscrowModel } from "./typings/models.js";
-
+import {
+  PaymentRequest,
+  CreateEscrowModel,
+  EscrowModel,
+} from "./typings/models.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -52,15 +55,15 @@ app.use(async (ctx, next) => {
     }
 
     // Check for Koa-specific error properties
-    if (typeof err === 'object' && err !== null) {
-      if ('status' in err && typeof err.status === 'number') {
+    if (typeof err === "object" && err !== null) {
+      if ("status" in err && typeof err.status === "number") {
         errorStatus = err.status;
       }
-      if ('message' in err && typeof err.message === 'string') {
+      if ("message" in err && typeof err.message === "string") {
         errorMessage = err.message;
       }
     }
-    
+
     ctx.status = errorStatus;
     ctx.body = {
       error: errorMessage,
@@ -68,8 +71,7 @@ app.use(async (ctx, next) => {
   }
 });
 
-app.use(views(path.join(__dirname, "../src/templates"), { extension: "ejs" })); 
-
+app.use(views(path.join(__dirname, "../src/templates"), { extension: "ejs" }));
 
 app.use(serve(path.join(__dirname, "../src/static")));
 
@@ -86,7 +88,10 @@ router.get("/xchain_payment_request", async (ctx) => {
 router.get("/xummSignInRequest/:uid", async (ctx) => {
   const { uid } = ctx.params;
   const signInUrl = await connectWallet(uid);
-  ctx.body = { message: `XUMM Sign In request for UID: ${uid}`, data: { signInUrl } };
+  ctx.body = {
+    message: `XUMM Sign In request for UID: ${uid}`,
+    data: { signInUrl },
+  };
 });
 
 // POST /payment_request
@@ -130,12 +135,12 @@ router.post("/finish_escrow_xumm", async (ctx) => {
 
 // POST /xumm/webhook
 router.post("/xumm/webhook", async (ctx) => {
-  const userAgent = ctx.headers['user-agent'];
+  const userAgent = ctx.headers["user-agent"];
   // Verify User-Agent matches Xumm
-  if (userAgent !== 'xumm-webhook') {
+  if (userAgent !== "xumm-webhook") {
     console.warn(`Invalid webhook attempt with User-Agent: ${userAgent}`);
     ctx.status = 403;
-    ctx.body = { error: 'Forbidden: Invalid User-Agent' };
+    ctx.body = { error: "Forbidden: Invalid User-Agent" };
     return;
   }
 
@@ -148,123 +153,122 @@ router.post("/xumm/webhook", async (ctx) => {
 // *** Crossmark Endpoints ***
 
 router.post("/crossmark/signin", async (ctx) => {
-    try {
-        const result = await crossmarkService.signIn();
-        ctx.body = result;
-        if (!result.success) {
-            ctx.status = 400;
-        }
-    } catch (error) {
-        ctx.status = 500;
-        ctx.body = { 
-            success: false, 
-            error: error instanceof Error ? error.message : "Unknown error" 
-        };
+  try {
+    const result = await crossmarkService.signIn();
+    ctx.body = result;
+    if (!result.success) {
+      ctx.status = 400;
     }
+  } catch (error) {
+    ctx.status = 500;
+    ctx.body = {
+      success: false,
+      error: error instanceof Error ? error.message : "Unknown error",
+    };
+  }
 });
 
 router.post("/crossmark/payment_request", async (ctx) => {
-    try {
-        const paymentRequest = ctx.request.body as PaymentRequest;
-        const result = await crossmarkService.handlePaymentRequest(paymentRequest);
-        ctx.body = result;
-        if (!result.success) {
-            ctx.status = 400;
-        }
-    } catch (error) {
-        ctx.status = 500;
-        ctx.body = { 
-            success: false, 
-            error: error instanceof Error ? error.message : "Unknown error" 
-        };
+  try {
+    const paymentRequest = ctx.request.body as PaymentRequest;
+    const result = await crossmarkService.handlePaymentRequest(paymentRequest);
+    ctx.body = result;
+    if (!result.success) {
+      ctx.status = 400;
     }
+  } catch (error) {
+    ctx.status = 500;
+    ctx.body = {
+      success: false,
+      error: error instanceof Error ? error.message : "Unknown error",
+    };
+  }
 });
 
 router.post("/crossmark/create_escrow", async (ctx) => {
-    try {
-        const escrowRequest = ctx.request.body as CreateEscrowModel;
-        const result = await crossmarkService.createEscrow(escrowRequest);
-        ctx.body = result;
-        if (!result.success) {
-            ctx.status = 400;
-        }
-    } catch (error) {
-        ctx.status = 500;
-        ctx.body = { 
-            success: false, 
-            error: error instanceof Error ? error.message : "Unknown error" 
-        };
+  try {
+    const escrowRequest = ctx.request.body as CreateEscrowModel;
+    const result = await crossmarkService.createEscrow(escrowRequest);
+    ctx.body = result;
+    if (!result.success) {
+      ctx.status = 400;
     }
+  } catch (error) {
+    ctx.status = 500;
+    ctx.body = {
+      success: false,
+      error: error instanceof Error ? error.message : "Unknown error",
+    };
+  }
 });
 
 router.post("/crossmark/finish_escrow", async (ctx) => {
-    try {
-        const escrowRequest = ctx.request.body as EscrowModel;
-        const result = await crossmarkService.finishEscrow(escrowRequest);
-        ctx.body = result;
-        if (!result.success) {
-            ctx.status = 400;
-        }
-    } catch (error) {
-        ctx.status = 500;
-        ctx.body = { 
-            success: false, 
-            error: error instanceof Error ? error.message : "Unknown error" 
-        };
+  try {
+    const escrowRequest = ctx.request.body as EscrowModel;
+    const result = await crossmarkService.finishEscrow(escrowRequest);
+    ctx.body = result;
+    if (!result.success) {
+      ctx.status = 400;
     }
+  } catch (error) {
+    ctx.status = 500;
+    ctx.body = {
+      success: false,
+      error: error instanceof Error ? error.message : "Unknown error",
+    };
+  }
 });
 
 router.post("/crossmark/cancel_escrow", async (ctx) => {
-    try {
-        const escrowRequest = ctx.request.body as EscrowModel;
-        const result = await crossmarkService.cancelEscrow(escrowRequest);
-        ctx.body = result;
-        if (!result.success) {
-            ctx.status = 400;
-        }
-    } catch (error) {
-        ctx.status = 500;
-        ctx.body = { 
-            success: false, 
-            error: error instanceof Error ? error.message : "Unknown error" 
-        };
+  try {
+    const escrowRequest = ctx.request.body as EscrowModel;
+    const result = await crossmarkService.cancelEscrow(escrowRequest);
+    ctx.body = result;
+    if (!result.success) {
+      ctx.status = 400;
     }
+  } catch (error) {
+    ctx.status = 500;
+    ctx.body = {
+      success: false,
+      error: error instanceof Error ? error.message : "Unknown error",
+    };
+  }
 });
 
 router.post("/crossmark/sign_transaction", async (ctx) => {
-    try {
-        const tx = ctx.request.body as any;
-        const result = await crossmarkService.signTransaction(tx);
-        ctx.body = result;
-        if (!result.success) {
-            ctx.status = 400;
-        }
-    } catch (error) {
-        ctx.status = 500;
-        ctx.body = { 
-            success: false, 
-            error: error instanceof Error ? error.message : "Unknown error" 
-        };
+  try {
+    const tx = ctx.request.body as any;
+    const result = await crossmarkService.signTransaction(tx);
+    ctx.body = result;
+    if (!result.success) {
+      ctx.status = 400;
     }
+  } catch (error) {
+    ctx.status = 500;
+    ctx.body = {
+      success: false,
+      error: error instanceof Error ? error.message : "Unknown error",
+    };
+  }
 });
 
 router.get("/crossmark/status", async (ctx) => {
-    try {
-        const isAvailable = crossmarkService.isAvailable();
-        const version = await crossmarkService.getVersion();
-        ctx.body = {
-            available: isAvailable,
-            version: version
-        };
-    } catch (error) {
-        ctx.status = 500;
-        ctx.body = { 
-            success: false, 
-            error: error instanceof Error ? error.message : "Unknown error" 
-        };
-    }
+  try {
+    const isAvailable = crossmarkService.isAvailable();
+    const version = await crossmarkService.getVersion();
+    ctx.body = {
+      available: isAvailable,
+      version: version,
+    };
+  } catch (error) {
+    ctx.status = 500;
+    ctx.body = {
+      success: false,
+      error: error instanceof Error ? error.message : "Unknown error",
+    };
+  }
 });
-
 
 // *** Account Functions ***
 
@@ -322,152 +326,152 @@ router.get("/transactions/:address", async (ctx) => {
 // *** Ledger Listener Management ***
 
 router.post("/ledger/listener/start", async (ctx) => {
-    try {
-        await ledgerListener.startListening();
-        ctx.body = { 
-            success: true, 
-            message: "Ledger listener started",
-            isActive: ledgerListener.isActive()
-        };
-    } catch (error) {
-        ctx.status = 500;
-        ctx.body = { 
-            success: false, 
-            error: error instanceof Error ? error.message : "Unknown error" 
-        };
-    }
+  try {
+    await ledgerListener.startListening();
+    ctx.body = {
+      success: true,
+      message: "Ledger listener started",
+      isActive: ledgerListener.isActive(),
+    };
+  } catch (error) {
+    ctx.status = 500;
+    ctx.body = {
+      success: false,
+      error: error instanceof Error ? error.message : "Unknown error",
+    };
+  }
 });
 
 router.post("/ledger/listener/stop", async (ctx) => {
-    try {
-        await ledgerListener.stopListening();
-        ctx.body = { 
-            success: true, 
-            message: "Ledger listener stopped",
-            isActive: ledgerListener.isActive()
-        };
-    } catch (error) {
-        ctx.status = 500;
-        ctx.body = { 
-            success: false, 
-            error: error instanceof Error ? error.message : "Unknown error" 
-        };
-    }
+  try {
+    await ledgerListener.stopListening();
+    ctx.body = {
+      success: true,
+      message: "Ledger listener stopped",
+      isActive: ledgerListener.isActive(),
+    };
+  } catch (error) {
+    ctx.status = 500;
+    ctx.body = {
+      success: false,
+      error: error instanceof Error ? error.message : "Unknown error",
+    };
+  }
 });
 
 router.get("/ledger/listener/status", async (ctx) => {
-    ctx.body = {
-        isActive: ledgerListener.isActive(),
-        monitoredAccounts: ledgerListener.getMonitoredAccounts()
-    };
+  ctx.body = {
+    isActive: ledgerListener.isActive(),
+    monitoredAccounts: ledgerListener.getMonitoredAccounts(),
+  };
 });
 
 router.post("/ledger/listener/add_account", async (ctx) => {
-    try {
-        const { account } = ctx.request.body as { account: string };
-        if (!account) {
-            ctx.status = 400;
-            ctx.body = { success: false, error: "Account address is required" };
-            return;
-        }
-        
-        await ledgerListener.addAccount(account);
-        ctx.body = { 
-            success: true, 
-            message: `Started monitoring account: ${account}`,
-            monitoredAccounts: ledgerListener.getMonitoredAccounts()
-        };
-    } catch (error) {
-        ctx.status = 500;
-        ctx.body = { 
-            success: false, 
-            error: error instanceof Error ? error.message : "Unknown error" 
-        };
+  try {
+    const { account } = ctx.request.body as { account: string };
+    if (!account) {
+      ctx.status = 400;
+      ctx.body = { success: false, error: "Account address is required" };
+      return;
     }
+
+    await ledgerListener.addAccount(account);
+    ctx.body = {
+      success: true,
+      message: `Started monitoring account: ${account}`,
+      monitoredAccounts: ledgerListener.getMonitoredAccounts(),
+    };
+  } catch (error) {
+    ctx.status = 500;
+    ctx.body = {
+      success: false,
+      error: error instanceof Error ? error.message : "Unknown error",
+    };
+  }
 });
 
 router.post("/ledger/listener/remove_account", async (ctx) => {
-    try {
-        const { account } = ctx.request.body as { account: string };
-        if (!account) {
-            ctx.status = 400;
-            ctx.body = { success: false, error: "Account address is required" };
-            return;
-        }
-        
-        await ledgerListener.removeAccount(account);
-        ctx.body = { 
-            success: true, 
-            message: `Stopped monitoring account: ${account}`,
-            monitoredAccounts: ledgerListener.getMonitoredAccounts()
-        };
-    } catch (error) {
-        ctx.status = 500;
-        ctx.body = { 
-            success: false, 
-            error: error instanceof Error ? error.message : "Unknown error" 
-        };
+  try {
+    const { account } = ctx.request.body as { account: string };
+    if (!account) {
+      ctx.status = 400;
+      ctx.body = { success: false, error: "Account address is required" };
+      return;
     }
+
+    await ledgerListener.removeAccount(account);
+    ctx.body = {
+      success: true,
+      message: `Stopped monitoring account: ${account}`,
+      monitoredAccounts: ledgerListener.getMonitoredAccounts(),
+    };
+  } catch (error) {
+    ctx.status = 500;
+    ctx.body = {
+      success: false,
+      error: error instanceof Error ? error.message : "Unknown error",
+    };
+  }
 });
 
 // *** Transaction Builder Utilities ***
 
 router.post("/transaction/build/payment", async (ctx) => {
-    try {
-        const request = ctx.request.body as any;
-        const transaction = await TransactionBuilder.buildPayment(request);
-        const validation = TransactionBuilder.validateTransaction(transaction);
-        
-        ctx.body = {
-            success: true,
-            transaction,
-            validation
-        };
-    } catch (error) {
-        ctx.status = 500;
-        ctx.body = { 
-            success: false, 
-            error: error instanceof Error ? error.message : "Unknown error" 
-        };
-    }
+  try {
+    const request = ctx.request.body as any;
+    const transaction = await TransactionBuilder.buildPayment(request);
+    const validation = TransactionBuilder.validateTransaction(transaction);
+
+    ctx.body = {
+      success: true,
+      transaction,
+      validation,
+    };
+  } catch (error) {
+    ctx.status = 500;
+    ctx.body = {
+      success: false,
+      error: error instanceof Error ? error.message : "Unknown error",
+    };
+  }
 });
 
 router.post("/transaction/build/escrow_create", async (ctx) => {
-    try {
-        const request = ctx.request.body as any;
-        const transaction = await TransactionBuilder.buildEscrowCreate(request);
-        const validation = TransactionBuilder.validateTransaction(transaction);
-        
-        ctx.body = {
-            success: true,
-            transaction,
-            validation
-        };
-    } catch (error) {
-        ctx.status = 500;
-        ctx.body = { 
-            success: false, 
-            error: error instanceof Error ? error.message : "Unknown error" 
-        };
-    }
+  try {
+    const request = ctx.request.body as any;
+    const transaction = await TransactionBuilder.buildEscrowCreate(request);
+    const validation = TransactionBuilder.validateTransaction(transaction);
+
+    ctx.body = {
+      success: true,
+      transaction,
+      validation,
+    };
+  } catch (error) {
+    ctx.status = 500;
+    ctx.body = {
+      success: false,
+      error: error instanceof Error ? error.message : "Unknown error",
+    };
+  }
 });
 
 router.post("/transaction/validate", async (ctx) => {
-    try {
-        const transaction = ctx.request.body;
-        const validation = TransactionBuilder.validateTransaction(transaction);
-        
-        ctx.body = {
-            success: true,
-            validation
-        };
-    } catch (error) {
-        ctx.status = 500;
-        ctx.body = { 
-            success: false, 
-            error: error instanceof Error ? error.message : "Unknown error" 
-        };
-    }
+  try {
+    const transaction = ctx.request.body;
+    const validation = TransactionBuilder.validateTransaction(transaction);
+
+    ctx.body = {
+      success: true,
+      validation,
+    };
+  } catch (error) {
+    ctx.status = 500;
+    ctx.body = {
+      success: false,
+      error: error instanceof Error ? error.message : "Unknown error",
+    };
+  }
 });
 
 router.get("/", async (ctx) => {
@@ -478,47 +482,47 @@ const port = process.env.PORT || 3000;
 
 // Initialize services and start server
 const startServer = async () => {
-    try {
-        // Initialize ledger listener
-        await initializeLedgerListener();
-        
-        // Start the server
-        app.listen(port, () => {
-            console.log(`Server is running on port ${port}`);
-            console.log(`Ledger listener active: ${ledgerListener.isActive()}`);
-        });
-    } catch (error) {
-        console.error("Failed to start server:", error);
-        process.exit(1);
-    }
+  try {
+    // Initialize ledger listener
+    await initializeLedgerListener();
+
+    // Start the server
+    app.listen(port, () => {
+      console.log(`Server is running on port ${port}`);
+      console.log(`Ledger listener active: ${ledgerListener.isActive()}`);
+    });
+  } catch (error) {
+    console.error("Failed to start server:", error);
+    process.exit(1);
+  }
 };
 
 app.use(router.routes());
 app.use(router.allowedMethods());
 
 // Graceful shutdown
-process.on('SIGINT', async () => {
-    console.log('Received SIGINT, shutting down gracefully...');
-    try {
-        await ledgerListener.stopListening();
-        console.log('Ledger listener stopped');
-        process.exit(0);
-    } catch (error) {
-        console.error('Error during shutdown:', error);
-        process.exit(1);
-    }
+process.on("SIGINT", async () => {
+  console.log("Received SIGINT, shutting down gracefully...");
+  try {
+    await ledgerListener.stopListening();
+    console.log("Ledger listener stopped");
+    process.exit(0);
+  } catch (error) {
+    console.error("Error during shutdown:", error);
+    process.exit(1);
+  }
 });
 
-process.on('SIGTERM', async () => {
-    console.log('Received SIGTERM, shutting down gracefully...');
-    try {
-        await ledgerListener.stopListening();
-        console.log('Ledger listener stopped');
-        process.exit(0);
-    } catch (error) {
-        console.error('Error during shutdown:', error);
-        process.exit(1);
-    }
+process.on("SIGTERM", async () => {
+  console.log("Received SIGTERM, shutting down gracefully...");
+  try {
+    await ledgerListener.stopListening();
+    console.log("Ledger listener stopped");
+    process.exit(0);
+  } catch (error) {
+    console.error("Error during shutdown:", error);
+    process.exit(1);
+  }
 });
 
 // Start the server

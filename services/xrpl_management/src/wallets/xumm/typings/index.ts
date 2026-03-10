@@ -1,2 +1,2 @@
-export {XummPayload} from './payload';
+export type {XummPayload} from './payload';
 export {XummFunctionType} from './functionTypes';

@@ -1,8 +1,8 @@
 import { xrpToDrops } from "xrpl";
-import { writeResponseToDatabase } from "../../../data/database";
-import { PaymentRequest } from "../../../typings/models";
+import { writeResponseToDatabase } from "../../data/database";
+import { PaymentRequest } from "../../typings/models";
 import { XummPostPayloadResponse } from "xumm-sdk/dist/src/types";
-import { xummSdk } from "../../../config/clients";
+import { xummSdk } from "../../config/clients";
 
 type ResolveData = {
   payload_uuidv4: string;
@@ -67,7 +67,7 @@ export class PaymentHandler {
         console.log(response);
         const subscription = await xummSdk.payload!.subscribe(
           createPayload.uuid,
-          callbackFunc
+          callbackFunc,
         );
         this.writeResponse(subscription, paymentRequest.task_id);
         console.log("Subscribe to payload");
@@ -110,7 +110,7 @@ export class PaymentHandler {
 
   private writeResponse(
     subscription: XummPostPayloadResponse | any,
-    taskId: string | null | undefined
+    taskId: string | null | undefined,
   ) {
     if (taskId) {
       writeResponseToDatabase(subscription, "payment_request", taskId);

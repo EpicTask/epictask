@@ -13,7 +13,7 @@
   "scripts": {
     "test": "jest",
     "start": "node dist/index.js",
-    "dev": "npx ts-node src/index.ts",
+    "dev": "node --loader ts-node/esm src/index.ts",
     "build": "tsc",
     "lint": "eslint .",
     "watch": "tsc --watch"
@@ -31,6 +31,7 @@
     "koa-static": "^5.0.0",
     "mime": "^4.0.3",
     "path": "^0.12.7",
+    "tsx": "^4.21.0",
     "xrpl": "^4.6.0",
     "xumm": "^1.8.0"
   },
@@ -39,11 +40,11 @@
     "@babel/preset-env": "^7.24.7",
     "@babel/preset-typescript": "^7.24.7",
     "@jest/globals": "^29.7.0",
-    "@types/koa__router": "^12.0.4",
     "@types/koa-bodyparser": "^4.3.12",
     "@types/koa-json": "^2.0.23",
     "@types/koa-router": "^7.4.8",
     "@types/koa-static": "^4.0.4",
+    "@types/koa__router": "^12.0.4",
     "@types/node": "^20.14.8",
     "@typescript-eslint/eslint-plugin": "^7.13.1",
     "@typescript-eslint/parser": "^7.13.1",

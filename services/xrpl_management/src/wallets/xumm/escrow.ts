@@ -1,10 +1,7 @@
 import { xrpToDrops } from "xrpl";
-import { xummSdk } from "../../../config/clients";
-import {
-  createIdentifier,
-  writeResponseToDatabase,
-} from "../../../data/database";
-import { CreateEscrowModel, EscrowModel } from "../../../typings/models";
+import { xummSdk } from "../../config/clients";
+import { createIdentifier, writeResponseToDatabase } from "../../data/database";
+import { CreateEscrowModel, EscrowModel } from "../../typings/models";
 import { XummPostPayloadResponse } from "xumm-sdk/dist/src/types";
 
 type EscrowCreationResponse = {
@@ -32,19 +29,19 @@ export class EscrowService {
     const tenMinFromNow = new Date(this.datetime.getTime() + 10 * 60000);
     const newTimestamp =
       Math.floor(
-        (tenMinFromNow.getTime() - new Date(1970, 0, 1).getTime()) / 1000
+        (tenMinFromNow.getTime() - new Date(1970, 0, 1).getTime()) / 1000,
       ) - 946684800;
     return newTimestamp;
   }
 
   private createCancelAfterTimestamp(finish_after: number): number {
     const cancelAfterDatetime = new Date(
-      finish_after * 1000 + 24 * 3600 * 1000
+      finish_after * 1000 + 24 * 3600 * 1000,
     );
     return this.generateXRPLTimestamp(
       Math.floor(
-        (cancelAfterDatetime.getTime() - new Date(1970, 0, 1).getTime()) / 1000
-      )
+        (cancelAfterDatetime.getTime() - new Date(1970, 0, 1).getTime()) / 1000,
+      ),
     );
   }
 
@@ -52,7 +49,9 @@ export class EscrowService {
     return timestamp > Math.floor(new Date().getTime() / 1000);
   }
 
-  public async createEscrowXumm(response: CreateEscrowModel): Promise<EscrowCreationResponse | ErrorResponse> {
+  public async createEscrowXumm(
+    response: CreateEscrowModel,
+  ): Promise<EscrowCreationResponse | ErrorResponse> {
     if (!xummSdk) {
       return { error: "Xumm SDK not initialized." };
     }
@@ -88,7 +87,7 @@ export class EscrowService {
         writeResponseToDatabase(
           payload,
           "create_escrow_xumm",
-          response.task_id
+          response.task_id,
         );
       }
       return { status: "Escrow successfully created." };
@@ -97,7 +96,9 @@ export class EscrowService {
     }
   }
 
-  public async finishEscrowXumm(response: EscrowModel): Promise<XummPostPayloadResponse | ErrorResponse> {
+  public async finishEscrowXumm(
+    response: EscrowModel,
+  ): Promise<XummPostPayloadResponse | ErrorResponse> {
     if (!xummSdk) {
       return { error: "Xumm SDK not initialized." };
     }
@@ -126,19 +127,21 @@ export class EscrowService {
         writeResponseToDatabase(
           payload,
           "finish_escrow_xumm",
-          response.task_id || undefined
+          response.task_id || undefined,
         );
       }
       if (!payload) {
         return { error: "Failed to create payload." };
       }
       return payload;
-    } catch (error:any) {
+    } catch (error: any) {
       return { error: error.toString() };
     }
   }
 
-  public async cancelEscrowXumm(response: EscrowModel): Promise<XummPostPayloadResponse | ErrorResponse> {
+  public async cancelEscrowXumm(
+    response: EscrowModel,
+  ): Promise<XummPostPayloadResponse | ErrorResponse> {
     if (!xummSdk) {
       return { error: "Xumm SDK not initialized." };
     }
@@ -167,14 +170,14 @@ export class EscrowService {
         writeResponseToDatabase(
           payload,
           "cancel_escrow_xumm",
-          response.task_id || undefined
+          response.task_id || undefined,
         );
       }
       if (!payload) {
         return { error: "Failed to create payload." };
       }
       return payload;
-    } catch (error:any) {
+    } catch (error: any) {
       return { error: error.toString() };
     }
   }

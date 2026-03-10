@@ -1,7 +1,11 @@
 import sdk from "@crossmarkio/sdk";
-import { TransactionBuilder } from "../../../ledger/builder";
-import { writeResponseToDatabase } from "../../../data/database";
-import { PaymentRequest, CreateEscrowModel, EscrowModel } from "../../../typings/models";
+import { TransactionBuilder } from "../../ledger/builder";
+import { writeResponseToDatabase } from "../../data/database";
+import {
+  PaymentRequest,
+  CreateEscrowModel,
+  EscrowModel,
+} from "../../typings/models";
 
 const crossmark = sdk;
 
@@ -19,26 +23,29 @@ export class CrossmarkService {
   async signIn(): Promise<CrossmarkResponse> {
     try {
       const response = await crossmark.methods.signInAndWait();
-      
+
       if (response.response.data.address) {
         return {
           success: true,
           data: {
             address: response.response.data.address,
-            publicKey: response.response.data.publicKey
-          }
+            publicKey: response.response.data.publicKey,
+          },
         };
       }
-      
+
       return {
         success: false,
-        error: "Failed to get address from Crossmark response"
+        error: "Failed to get address from Crossmark response",
       };
     } catch (error) {
       console.error("Crossmark sign in error:", error);
       return {
         success: false,
-        error: error instanceof Error ? error.message : "Unknown error during sign in"
+        error:
+          error instanceof Error
+            ? error.message
+            : "Unknown error during sign in",
       };
     }
   }
@@ -46,16 +53,21 @@ export class CrossmarkService {
   /**
    * Handle payment request through Crossmark
    */
-  async handlePaymentRequest(paymentRequest: PaymentRequest): Promise<CrossmarkResponse> {
+  async handlePaymentRequest(
+    paymentRequest: PaymentRequest,
+  ): Promise<CrossmarkResponse> {
     try {
       // Build transaction using the centralized builder
       const transaction = await TransactionBuilder.buildPayment({
         account: paymentRequest.source,
         destination: paymentRequest.destination,
         amount: paymentRequest.amount,
-        memos: paymentRequest.task_id ? 
-          TransactionBuilder.createTaskMemo(paymentRequest.task_id, "payment_request") : 
-          undefined
+        memos: paymentRequest.task_id
+          ? TransactionBuilder.createTaskMemo(
+              paymentRequest.task_id,
+              "payment_request",
+            )
+          : undefined,
       });
 
       // Validate transaction
@@ -63,23 +75,29 @@ export class CrossmarkService {
       if (!validation.isValid) {
         return {
           success: false,
-          error: `Transaction validation failed: ${validation.errors.join(", ")}`
+          error: `Transaction validation failed: ${validation.errors.join(", ")}`,
         };
       }
 
       // Sign and submit with Crossmark
       const response = await crossmark.async.signAndSubmitAndWait(transaction);
-      
+
       if (response.response.data.resp) {
         const result = {
           success: true,
           data: response.response.data,
-          hash: (response.response.data.resp as any)?.hash || response.response.data.resp
+          hash:
+            (response.response.data.resp as any)?.hash ||
+            response.response.data.resp,
         };
 
         // Store response in database
         if (paymentRequest.task_id) {
-          await writeResponseToDatabase(result, "crossmark_payment_request", paymentRequest.task_id);
+          await writeResponseToDatabase(
+            result,
+            "crossmark_payment_request",
+            paymentRequest.task_id,
+          );
         }
 
         return result;
@@ -87,13 +105,16 @@ export class CrossmarkService {
 
       return {
         success: false,
-        error: "No response data received from Crossmark"
+        error: "No response data received from Crossmark",
       };
     } catch (error) {
       console.error("Crossmark payment error:", error);
       return {
         success: false,
-        error: error instanceof Error ? error.message : "Unknown error during payment"
+        error:
+          error instanceof Error
+            ? error.message
+            : "Unknown error during payment",
       };
     }
   }
@@ -101,12 +122,16 @@ export class CrossmarkService {
   /**
    * Create escrow through Crossmark
    */
-  async createEscrow(escrowRequest: CreateEscrowModel): Promise<CrossmarkResponse> {
+  async createEscrow(
+    escrowRequest: CreateEscrowModel,
+  ): Promise<CrossmarkResponse> {
     try {
       // Generate timestamps if not provided
-      const finishAfter = escrowRequest.finish_after || 
+      const finishAfter =
+        escrowRequest.finish_after ||
         TransactionBuilder.generateFutureTimestamp(10);
-      const cancelAfter = escrowRequest.cancel_after || 
+      const cancelAfter =
+        escrowRequest.cancel_after ||
         TransactionBuilder.generateCancelAfterTimestamp(finishAfter);
 
       // Build transaction using the centralized builder
@@ -116,12 +141,13 @@ export class CrossmarkService {
         amount: escrowRequest.amount,
         finishAfter: finishAfter,
         cancelAfter: cancelAfter,
-        memos: escrowRequest.task_id ? 
-          TransactionBuilder.createTaskMemo(
-            escrowRequest.task_id, 
-            "create_escrow_crossmark", 
-            escrowRequest.user_id
-          ) : undefined
+        memos: escrowRequest.task_id
+          ? TransactionBuilder.createTaskMemo(
+              escrowRequest.task_id,
+              "create_escrow_crossmark",
+              escrowRequest.user_id,
+            )
+          : undefined,
       });
 
       // Validate transaction
@@ -129,23 +155,29 @@ export class CrossmarkService {
       if (!validation.isValid) {
         return {
           success: false,
-          error: `Transaction validation failed: ${validation.errors.join(", ")}`
+          error: `Transaction validation failed: ${validation.errors.join(", ")}`,
         };
       }
 
       // Sign and submit with Crossmark
       const response = await crossmark.async.signAndSubmitAndWait(transaction);
-      
+
       if (response.response.data.resp) {
         const result = {
           success: true,
           data: response.response.data,
-          hash: (response.response.data.resp as any)?.hash || response.response.data.resp
+          hash:
+            (response.response.data.resp as any)?.hash ||
+            response.response.data.resp,
         };
 
         // Store response in database
         if (escrowRequest.task_id) {
-          await writeResponseToDatabase(result, "crossmark_create_escrow", escrowRequest.task_id);
+          await writeResponseToDatabase(
+            result,
+            "crossmark_create_escrow",
+            escrowRequest.task_id,
+          );
         }
 
         return result;
@@ -153,13 +185,16 @@ export class CrossmarkService {
 
       return {
         success: false,
-        error: "No response data received from Crossmark"
+        error: "No response data received from Crossmark",
       };
     } catch (error) {
       console.error("Crossmark escrow creation error:", error);
       return {
         success: false,
-        error: error instanceof Error ? error.message : "Unknown error during escrow creation"
+        error:
+          error instanceof Error
+            ? error.message
+            : "Unknown error during escrow creation",
       };
     }
   }
@@ -174,12 +209,13 @@ export class CrossmarkService {
         account: escrowRequest.account,
         owner: escrowRequest.owner,
         offerSequence: parseInt(escrowRequest.offer_sequence),
-        memos: escrowRequest.task_id ? 
-          TransactionBuilder.createTaskMemo(
-            escrowRequest.task_id, 
-            "finish_escrow_crossmark", 
-            escrowRequest.user_id || undefined
-          ) : undefined
+        memos: escrowRequest.task_id
+          ? TransactionBuilder.createTaskMemo(
+              escrowRequest.task_id,
+              "finish_escrow_crossmark",
+              escrowRequest.user_id || undefined,
+            )
+          : undefined,
       });
 
       // Validate transaction
@@ -187,23 +223,29 @@ export class CrossmarkService {
       if (!validation.isValid) {
         return {
           success: false,
-          error: `Transaction validation failed: ${validation.errors.join(", ")}`
+          error: `Transaction validation failed: ${validation.errors.join(", ")}`,
         };
       }
 
       // Sign and submit with Crossmark
       const response = await crossmark.async.signAndSubmitAndWait(transaction);
-      
+
       if (response.response.data.resp) {
         const result = {
           success: true,
           data: response.response.data,
-          hash: (response.response.data.resp as any)?.hash || response.response.data.resp
+          hash:
+            (response.response.data.resp as any)?.hash ||
+            response.response.data.resp,
         };
 
         // Store response in database
         if (escrowRequest.task_id) {
-          await writeResponseToDatabase(result, "crossmark_finish_escrow", escrowRequest.task_id);
+          await writeResponseToDatabase(
+            result,
+            "crossmark_finish_escrow",
+            escrowRequest.task_id,
+          );
         }
 
         return result;
@@ -211,13 +253,16 @@ export class CrossmarkService {
 
       return {
         success: false,
-        error: "No response data received from Crossmark"
+        error: "No response data received from Crossmark",
       };
     } catch (error) {
       console.error("Crossmark escrow finish error:", error);
       return {
         success: false,
-        error: error instanceof Error ? error.message : "Unknown error during escrow finish"
+        error:
+          error instanceof Error
+            ? error.message
+            : "Unknown error during escrow finish",
       };
     }
   }
@@ -232,12 +277,13 @@ export class CrossmarkService {
         account: escrowRequest.account,
         owner: escrowRequest.owner,
         offerSequence: parseInt(escrowRequest.offer_sequence),
-        memos: escrowRequest.task_id ? 
-          TransactionBuilder.createTaskMemo(
-            escrowRequest.task_id, 
-            "cancel_escrow_crossmark", 
-            escrowRequest.user_id || undefined
-          ) : undefined
+        memos: escrowRequest.task_id
+          ? TransactionBuilder.createTaskMemo(
+              escrowRequest.task_id,
+              "cancel_escrow_crossmark",
+              escrowRequest.user_id || undefined,
+            )
+          : undefined,
       });
 
       // Validate transaction
@@ -245,23 +291,29 @@ export class CrossmarkService {
       if (!validation.isValid) {
         return {
           success: false,
-          error: `Transaction validation failed: ${validation.errors.join(", ")}`
+          error: `Transaction validation failed: ${validation.errors.join(", ")}`,
         };
       }
 
       // Sign and submit with Crossmark
       const response = await crossmark.async.signAndSubmitAndWait(transaction);
-      
+
       if (response.response.data.resp) {
         const result = {
           success: true,
           data: response.response.data,
-          hash: (response.response.data.resp as any)?.hash || response.response.data.resp
+          hash:
+            (response.response.data.resp as any)?.hash ||
+            response.response.data.resp,
         };
 
         // Store response in database
         if (escrowRequest.task_id) {
-          await writeResponseToDatabase(result, "crossmark_cancel_escrow", escrowRequest.task_id);
+          await writeResponseToDatabase(
+            result,
+            "crossmark_cancel_escrow",
+            escrowRequest.task_id,
+          );
         }
 
         return result;
@@ -269,13 +321,16 @@ export class CrossmarkService {
 
       return {
         success: false,
-        error: "No response data received from Crossmark"
+        error: "No response data received from Crossmark",
       };
     } catch (error) {
       console.error("Crossmark escrow cancel error:", error);
       return {
         success: false,
-        error: error instanceof Error ? error.message : "Unknown error during escrow cancel"
+        error:
+          error instanceof Error
+            ? error.message
+            : "Unknown error during escrow cancel",
       };
     }
   }
@@ -290,28 +345,31 @@ export class CrossmarkService {
       if (!validation.isValid) {
         return {
           success: false,
-          error: `Transaction validation failed: ${validation.errors.join(", ")}`
+          error: `Transaction validation failed: ${validation.errors.join(", ")}`,
         };
       }
 
       const response = await crossmark.async.signAndWait(transaction);
-      
+
       if (response.response.data) {
         return {
           success: true,
-          data: response.response.data
+          data: response.response.data,
         };
       }
 
       return {
         success: false,
-        error: "No response data received from Crossmark"
+        error: "No response data received from Crossmark",
       };
     } catch (error) {
       console.error("Crossmark sign transaction error:", error);
       return {
         success: false,
-        error: error instanceof Error ? error.message : "Unknown error during transaction signing"
+        error:
+          error instanceof Error
+            ? error.message
+            : "Unknown error during transaction signing",
       };
     }
   }
@@ -321,8 +379,10 @@ export class CrossmarkService {
    */
   isAvailable(): boolean {
     try {
-      return typeof window !== 'undefined' && 
-             typeof (window as any).crossmark !== 'undefined';
+      return (
+        typeof window !== "undefined" &&
+        typeof (window as any).crossmark !== "undefined"
+      );
     } catch {
       return false;
     }
@@ -336,7 +396,7 @@ export class CrossmarkService {
       if (!this.isAvailable()) {
         return {
           success: false,
-          error: "Crossmark is not available"
+          error: "Crossmark is not available",
         };
       }
 
@@ -346,12 +406,15 @@ export class CrossmarkService {
         data: {
           available: true,
           // version: await crossmark.getVersion() // if available
-        }
+        },
       };
     } catch (error) {
       return {
         success: false,
-        error: error instanceof Error ? error.message : "Unknown error getting version"
+        error:
+          error instanceof Error
+            ? error.message
+            : "Unknown error getting version",
       };
     }
   }
@@ -362,4 +425,5 @@ export const crossmarkService = new CrossmarkService();
 
 // Export legacy functions for backward compatibility
 export const signIn = () => crossmarkService.signIn();
-export const signAndSubmitTransaction = (tx: any) => crossmarkService.signTransaction(tx);
+export const signAndSubmitTransaction = (tx: any) =>
+  crossmarkService.signTransaction(tx);
