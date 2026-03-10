@@ -28,15 +28,15 @@ const __dirname = dirname(__filename);
 const app = new Koa();
 const router = new Router();
 
-// Initialize ledger listener on startup
-const initializeLedgerListener = async () => {
-  try {
-    await ledgerListener.startListening();
-    console.log("Ledger listener initialized successfully");
-  } catch (error) {
-    console.error("Failed to initialize ledger listener:", error);
-  }
-};
+// Initialize ledger listener on startup (Disabled for Cloud Run compatibility)
+// const initializeLedgerListener = async () => {
+//   try {
+//     await ledgerListener.startListening();
+//     console.log("Ledger listener initialized successfully");
+//   } catch (error) {
+//     console.error("Failed to initialize ledger listener:", error);
+//   }
+// };
 
 // Middleware to handle json responses
 app.use(json());
@@ -484,13 +484,13 @@ const port = process.env.PORT || 3000;
 // Initialize services and start server
 const startServer = async () => {
   try {
-    // Initialize ledger listener
-    await initializeLedgerListener();
+    // Initialize ledger listener (Disabled for Cloud Run compatibility)
+    // await initializeLedgerListener();
 
     // Start the server
     app.listen(port, () => {
       console.log(`Server is running on port ${port}`);
-      console.log(`Ledger listener active: ${ledgerListener.isActive()}`);
+      // console.log(`Ledger listener active: ${ledgerListener.isActive()}`);
     });
   } catch (error) {
     console.error("Failed to start server:", error);
@@ -505,8 +505,10 @@ app.use(router.allowedMethods());
 process.on("SIGINT", async () => {
   console.log("Received SIGINT, shutting down gracefully...");
   try {
-    await ledgerListener.stopListening();
-    console.log("Ledger listener stopped");
+    if (ledgerListener.isActive()) {
+      await ledgerListener.stopListening();
+      console.log("Ledger listener stopped");
+    }
     process.exit(0);
   } catch (error) {
     console.error("Error during shutdown:", error);
@@ -517,8 +519,10 @@ process.on("SIGINT", async () => {
 process.on("SIGTERM", async () => {
   console.log("Received SIGTERM, shutting down gracefully...");
   try {
-    await ledgerListener.stopListening();
-    console.log("Ledger listener stopped");
+    if (ledgerListener.isActive()) {
+      await ledgerListener.stopListening();
+      console.log("Ledger listener stopped");
+    }
     process.exit(0);
   } catch (error) {
     console.error("Error during shutdown:", error);
