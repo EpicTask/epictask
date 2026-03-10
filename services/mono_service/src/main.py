@@ -76,6 +76,8 @@ async def root(request: Request):
 from src.routes.tasks import task_routes
 from src.routes.users import user_routes
 from src.routes.notifications import notification_routes
+# from src.routes.contracts import contract_routes
+from src.routes.xrpl import xrpl_routes
 
 
 # Task routes
@@ -86,6 +88,12 @@ app.include_router(user_routes.router, prefix="/api/users", tags=["users"])
 
 # Notification routes
 app.include_router(notification_routes.router, prefix="/api/notifications", tags=["notifications"])
+
+# Contract routes
+# app.include_router(contract_routes.router, prefix="/api/contracts", tags=["contracts"])
+
+# XRPL routes
+app.include_router(xrpl_routes.router, prefix="/api/xrpl", tags=["xrpl"])
 
 if __name__ == "__main__":
     import uvicorn
