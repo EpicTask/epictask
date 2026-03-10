@@ -12,6 +12,7 @@ import { PaymentHandler } from "./wallets/xumm/payments.js";
 import { EscrowService } from "./wallets/xumm/escrow.js";
 import { handleXummWebhook, XummWebhookBody } from "./wallets/xumm/webhook.js";
 import { crossmarkService } from "./wallets/crossmark/index.js";
+import { requireAuth } from "./middleware/firebase_auth.js";
 import { accountService } from "./ledger/account.js";
 import { ledgerListener } from "./ledger/listener.js";
 import { TransactionBuilder } from "./ledger/builder.js";
@@ -78,14 +79,14 @@ app.use(serve(path.join(__dirname, "../src/static")));
 // *** Primary Functions - Placeholder Handlers ***
 
 // GET /xchain_payment_request
-router.get("/xchain_payment_request", async (ctx) => {
+router.get("/xchain_payment_request", requireAuth, async (ctx) => {
   // TODO: Implement actual logic similar to handle_xchain_payment_request
   // Example: const queryParams = ctx.query;
   ctx.body = { message: "XChain payment request placeholder", data: {} };
 });
 
 // GET /xummSignInRequest/:uid
-router.get("/xummSignInRequest/:uid", async (ctx) => {
+router.get("/xummSignInRequest/:uid", requireAuth, async (ctx) => {
   const { uid } = ctx.params;
   const signInUrl = await connectWallet(uid);
   ctx.body = {
@@ -95,7 +96,7 @@ router.get("/xummSignInRequest/:uid", async (ctx) => {
 });
 
 // POST /payment_request
-router.post("/payment_request", async (ctx) => {
+router.post("/payment_request", requireAuth, async (ctx) => {
   const paymentRequest = ctx.request.body as PaymentRequest;
   const paymentHandler = new PaymentHandler();
   const result = await paymentHandler.handlePaymentRequest(paymentRequest);

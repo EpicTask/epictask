@@ -24,6 +24,7 @@
     "@ladjs/koa-views": "^9.0.0",
     "@types/mime": "^4.0.0",
     "ejs": "^3.1.10",
+    "firebase-admin": "^13.7.0",
     "koa": "^3.0.0",
     "koa-bodyparser": "^4.4.1",
     "koa-json": "^2.0.2",
