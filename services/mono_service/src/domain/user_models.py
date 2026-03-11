@@ -13,9 +13,17 @@ class UserProfile(BaseModel):
     parent: Optional[str] = None  # Parent UID
     created_at: Optional[datetime] = None
     last_login: Optional[datetime] = None
-    
+    fcm_token: Optional[str] = None          # Device push token (FCM / APNs)
+    fcm_token_platform: Optional[str] = None  # "android" | "ios"
+
     class Config:
         populate_by_name = True
+
+
+class FcmTokenUpdate(BaseModel):
+    """Request body for registering / rotating a device push token."""
+    token: str
+    platform: str  # "android" | "ios"
 
 class UserProfileUpdate(BaseModel):
     """Model for updating user profile"""

@@ -163,6 +163,42 @@ def get_linked_children(parent_uid: str) -> List[dict]:
         print(f"Failed to get linked children: {e}")
         raise e
 
+def get_fcm_token(uid: str) -> Optional[str]:
+    """Return the stored FCM / APNs push token for a user, or None."""
+    try:
+        doc = db.collection(collections.USERS).document(uid).get()
+        if not doc.exists:
+            return None
+        return doc.to_dict().get("fcm_token")
+    except Exception as e:
+        print(f"Failed to get FCM token for {uid}: {e}")
+        return None
+
+
+def update_fcm_token(uid: str, token: str, platform: str) -> bool:
+    """Persist a device push token on the user's profile document."""
+    try:
+        db.collection(collections.USERS).document(uid).update(
+            {"fcm_token": token, "fcm_token_platform": platform}
+        )
+        return True
+    except Exception as e:
+        print(f"Failed to update FCM token for {uid}: {e}")
+        return False
+
+
+def clear_fcm_token(uid: str) -> bool:
+    """Remove an invalid / expired push token from the user's profile."""
+    try:
+        db.collection(collections.USERS).document(uid).update(
+            {"fcm_token": None, "fcm_token_platform": None}
+        )
+        return True
+    except Exception as e:
+        print(f"Failed to clear FCM token for {uid}: {e}")
+        return False
+
+
 def get_user_metrics() -> UserMetrics:
     """Get aggregate user metrics."""
     try:

@@ -12,6 +12,12 @@ class NotificationType(str, Enum):
     REWARD_EARNED = "REWARD_EARNED"
     SYSTEM_ALERT = "SYSTEM_ALERT"
     FAMILY_INVITE = "FAMILY_INVITE"
+    # XRPL / payment events
+    PAYMENT_SENT = "PAYMENT_SENT"
+    PAYMENT_RECEIVED = "PAYMENT_RECEIVED"
+    ESCROW_CREATED = "ESCROW_CREATED"
+    ESCROW_RELEASED = "ESCROW_RELEASED"
+    ESCROW_CANCELLED = "ESCROW_CANCELLED"
 
 class NotificationBase(BaseModel):
     """Base notification model"""

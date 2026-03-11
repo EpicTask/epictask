@@ -1,8 +1,9 @@
 from typing import Dict, Any
 from fastapi import APIRouter, Depends, HTTPException, status
-from ...domain.user_models import UserProfileUpdate, InviteCodeRequest, LinkChildRequest
+from ...domain.user_models import UserProfileUpdate, InviteCodeRequest, LinkChildRequest, FcmTokenUpdate
 from ...services import user_service
 from ...config.security import get_current_user
+from ...storage.db import user_db
 
 router = APIRouter()
 
@@ -66,3 +67,33 @@ async def get_metrics():
     """Get user metrics (Admin only)."""
     # Should probably add admin check here
     return await user_service.get_metrics()
+
+
+@router.put("/fcm-token", dependencies=[Depends(get_current_user)])
+async def register_fcm_token(
+    request: FcmTokenUpdate,
+    current_user: dict = Depends(get_current_user),
+):
+    """Register or rotate the caller's device push token.
+
+    Called by the React Native app on launch (after sign-in) and whenever
+    expo-notifications reports that the token has been refreshed.
+    The token is stored on the user's Firestore profile document and used by
+    notification_service._dispatch_fcm() when sending push notifications.
+    """
+    uid = current_user["uid"]
+    success = user_db.update_fcm_token(uid, request.token, request.platform)
+    if not success:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to register push token",
+        )
+    return {"message": "Push token registered successfully"}
+
+
+@router.delete("/fcm-token", dependencies=[Depends(get_current_user)])
+async def unregister_fcm_token(current_user: dict = Depends(get_current_user)):
+    """Remove the caller's push token (e.g. on sign-out or notifications disabled)."""
+    uid = current_user["uid"]
+    user_db.clear_fcm_token(uid)
+    return {"message": "Push token removed"}
