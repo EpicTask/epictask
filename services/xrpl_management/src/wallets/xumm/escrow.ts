@@ -3,6 +3,10 @@ import { xummSdk } from "../../config/clients";
 import { createIdentifier, writeResponseToDatabase } from "../../data/database";
 import { CreateEscrowModel, EscrowModel } from "../../typings/models";
 import { XummPostPayloadResponse } from "xumm-sdk/dist/src/types";
+import {
+  sendNotification,
+  NotificationType,
+} from "../../services/notificationHelper.js";
 
 type EscrowCreationResponse = {
   status: string;
@@ -89,6 +93,17 @@ export class EscrowService {
           "create_escrow_xumm",
           response.task_id,
         );
+
+        // Notify the initiating user that escrow is pending their signature in Xumm
+        sendNotification({
+          recipient_id: response.user_id,
+          title: "Escrow Signature Required 🔏",
+          message: "Open Xumm to sign and lock funds in escrow for the task reward.",
+          type: NotificationType.ESCROW_CREATED,
+          metadata: { task_id: response.task_id },
+        }).catch((err) =>
+          console.warn("[escrow] Pending-create notification failed:", err)
+        );
       }
       return { status: "Escrow successfully created." };
     } catch (error: any) {
@@ -129,6 +144,19 @@ export class EscrowService {
           "finish_escrow_xumm",
           response.task_id || undefined,
         );
+
+        // Notify the initiating user that they need to sign the escrow release in Xumm
+        if (response.user_id) {
+          sendNotification({
+            recipient_id: response.user_id,
+            title: "Escrow Release Signature Required 🔏",
+            message: "Open Xumm to sign and release the escrow reward.",
+            type: NotificationType.ESCROW_RELEASED,
+            metadata: { task_id: response.task_id ?? undefined },
+          }).catch((err) =>
+            console.warn("[escrow] Pending-finish notification failed:", err)
+          );
+        }
       }
       if (!payload) {
         return { error: "Failed to create payload." };
@@ -172,6 +200,19 @@ export class EscrowService {
           "cancel_escrow_xumm",
           response.task_id || undefined,
         );
+
+        // Notify the initiating user that they need to sign the escrow cancellation in Xumm
+        if (response.user_id) {
+          sendNotification({
+            recipient_id: response.user_id,
+            title: "Escrow Cancellation Signature Required 🔏",
+            message: "Open Xumm to sign and cancel the escrow. Funds will be returned.",
+            type: NotificationType.ESCROW_CANCELLED,
+            metadata: { task_id: response.task_id ?? undefined },
+          }).catch((err) =>
+            console.warn("[escrow] Pending-cancel notification failed:", err)
+          );
+        }
       }
       if (!payload) {
         return { error: "Failed to create payload." };
