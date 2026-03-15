@@ -88,11 +88,8 @@ router.get("/xchain_payment_request", requireAuth, async (ctx) => {
 // GET /xummSignInRequest/:uid
 router.get("/xummSignInRequest/:uid", requireAuth, async (ctx) => {
   const { uid } = ctx.params;
-  const signInUrl = await connectWallet(uid);
-  ctx.body = {
-    message: `XUMM Sign In request for UID: ${uid}`,
-    data: { signInUrl },
-  };
+  const payloadResponse = await connectWallet(uid);
+  ctx.body = payloadResponse;
 });
 
 // POST /payment_request

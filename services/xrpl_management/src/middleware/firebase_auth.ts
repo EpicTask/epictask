@@ -7,11 +7,6 @@ if (!admin.apps.length) {
 }
 
 export const requireAuth = async (ctx: Context, next: Next) => {
-  // Allow for local testing mock if explicitly enabled
-  if (process.env.AUTH_DISABLED_FOR_TESTING === 'true') {
-    ctx.state.user = { uid: 'local_test_user', role: 'admin' };
-    return next();
-  }
 
   const authHeader = ctx.headers.authorization;
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
