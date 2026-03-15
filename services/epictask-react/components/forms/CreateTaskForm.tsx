@@ -21,7 +21,7 @@ export const CreateTaskForm: React.FC<CreateTaskFormProps> = ({
     title: '',
     description: '',
     assigned_to_ids: [] as string[],
-    due_date: '',
+    expiration_date: '',
     reward_amount: '',
     reward_currency: 'eTask',
     priority: 'medium'
@@ -65,7 +65,7 @@ export const CreateTaskForm: React.FC<CreateTaskFormProps> = ({
     const taskValidation = validateTaskData({
       title: formData.title,
       assigned_to_ids: formData.assigned_to_ids,
-      due_date: formData.due_date,
+      expiration_date: formData.expiration_date,
       reward_amount: formData.reward_amount ? parseFloat(formData.reward_amount) : undefined
     });
 
@@ -75,8 +75,8 @@ export const CreateTaskForm: React.FC<CreateTaskFormProps> = ({
           newErrors.title = error;
         } else if (error.includes('assigned')) {
           newErrors.assigned_to_ids = error;
-        } else if (error.includes('due date')) {
-          newErrors.due_date = error;
+        } else if (error.includes('due date') || error.includes('expiration date')) {
+          newErrors.expiration_date = error;
         } else if (error.includes('reward')) {
           newErrors.reward_amount = error;
         }
@@ -104,7 +104,7 @@ export const CreateTaskForm: React.FC<CreateTaskFormProps> = ({
       reward_amount: formData.reward_amount ? parseFloat(formData.reward_amount) : 0,
       status: 'assigned',
       created_at: new Date().toISOString(),
-      due_date: formData.due_date ? new Date(formData.due_date).toISOString() : null
+      expiration_date: formData.expiration_date ? Math.floor(new Date(formData.expiration_date).getTime() / 1000) : null
     };
 
     onSubmit(taskData);
@@ -275,7 +275,7 @@ export const CreateTaskForm: React.FC<CreateTaskFormProps> = ({
           )}
         </View>
 
-        {renderFormField('Due Date (Optional)', 'due_date', 'YYYY-MM-DD')}
+        {renderFormField('Due Date (Optional)', 'expiration_date', 'YYYY-MM-DD')}
 
         {renderPrioritySelector()}
 

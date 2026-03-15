@@ -31,11 +31,12 @@ interface Task {
   assigned_to_ids?: string[];
   status?: string;
   task_description?: string;
-  expiration_date?: string;
+  expiration_date?: number;
   timestamp?: Timestamp;
   user_id?: string;
   rewarded?: boolean;
   marked_completed?: boolean;
+  notes?: string;
 }
 
 interface TaskActionModalProps {
@@ -73,7 +74,7 @@ export const TaskActionModal: React.FC<TaskActionModalProps> = ({
   const taskTitle = task.task_title || 'Untitled Task';
   const taskDescription = task.task_description || 'No description';
   const taskReward = task.reward_amount || task.reward || 0;
-  const taskDueDate = task.expiration_date ? new Date(task.expiration_date).toLocaleDateString() : 'No due date';
+  const taskDueDate = task.expiration_date ? new Date(task.expiration_date * 1000).toLocaleDateString() : 'No due date';
   const taskStatus = task.status || 'pending';
   const isPending = task.marked_completed === true && !task.rewarded;
   const taskCreated = task.timestamp ? new Date(task.timestamp.nanoseconds).toLocaleDateString() : 'Unknown';

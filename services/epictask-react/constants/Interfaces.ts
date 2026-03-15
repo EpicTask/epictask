@@ -10,12 +10,11 @@ interface Task {
   assigned_to_ids?: string[];
   status?: string;
   task_description?: string;
-  expiration_date?: string;
+  expiration_date?: number; // Standard Unix Timestamp (seconds)
   timestamp?: Timestamp;
   user_id?: string;
   rewarded?: boolean;
   marked_completed?: boolean;
-  due_date?: string;
   notes?: string;
 }
 

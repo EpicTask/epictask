@@ -14,7 +14,7 @@ const ProfileScreen = () => {
 
   const updateProfileMutation = useMutation({
     mutationFn: (updatedProfile) =>
-      userApiClient.put("/profileUpdate", updatedProfile),
+      userApiClient.updateProfile( updatedProfile),
     onSuccess: (data) => {
       setUser({ ...user, ...data.data });
       Alert.alert("Success", "Profile updated successfully.");
@@ -29,7 +29,7 @@ const ProfileScreen = () => {
   });
 
   const generateInviteCodeMutation = useMutation({
-    mutationFn: () => userApiClient.post("/users/generate-invite-code", {displayName}),
+    mutationFn: () => userApiClient.generateInviteCode(),
     onSuccess: (data) => {
       setInviteCode(data.data.inviteCode);
       Alert.alert(

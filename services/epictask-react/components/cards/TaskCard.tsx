@@ -58,7 +58,11 @@ const TaskCard: React.FC<TaskCardProps> = ({ name, stars, taskData, kidName, onP
                 borderRadius: responsiveWidth(100),
               }}
             />
-            <CustomText variant="medium" style={styles.statText}>{new Date(taskData.expiration_date).toDateString()}</CustomText>
+            <CustomText variant="medium" style={styles.statText}>
+              {taskData.expiration_date 
+                ? new Date(taskData.expiration_date).toDateString() 
+                : "No due date"}
+            </CustomText>
           </View>
           <View style={styles.statRow}>
             {ICONS.progress}

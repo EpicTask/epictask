@@ -1,5 +1,5 @@
 import { FONT_SIZES } from "@/constants/FontSize";
-import React from "react";
+import React, { useState } from "react";
 import {
   FlatList,
   StyleSheet,
@@ -10,6 +10,7 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/context/AuthContext";
+import { KidTaskModal } from "@/components/modals/KidTaskModal";
 import TaskCard from "@/components/cards/kid/TaskCard";
 import CustomText from "@/components/CustomText";
 import { COLORS } from "@/constants/Colors";
@@ -17,9 +18,10 @@ import { responsiveWidth } from "react-native-responsive-dimensions";
 import taskService from "@/api/taskService";
 import MicroserviceUrls from "@/constants/Microservices";
 import { Task } from "@/constants/Interfaces";
+import { firestoreService } from "@/api/firestoreService";
 
 const fetchTasks = async (userId: string) => {
-  const data = await taskService.getAllTasks(userId);
+  const data = await firestoreService.getTasksForUser(userId);
   if (Array.isArray(data)) {
     return data;
   }
@@ -31,6 +33,8 @@ const fetchTasks = async (userId: string) => {
 
 export default function AllTasksScreen() {
   const { user } = useAuth();
+  const [selectedTask, setSelectedTask] = useState<Task | null>(null);
+  const [modalVisible, setModalVisible] = useState(false);
   const {
     data: tasks = [],
     isLoading,
@@ -64,12 +68,16 @@ export default function AllTasksScreen() {
             <TaskCard
               bg={
                 index % 3 === 0
-                  ? COLORS.light_purple
+                  ? COLORS.light_grey
                   : index % 3 === 1
-                  ? COLORS.light_green
-                  : COLORS.light_yellow
+                  ? COLORS.light_yellow
+                  : COLORS.light_purple
               }
               task={item}
+              onPress={() => {
+                setSelectedTask(item);
+                setModalVisible(true);
+              }}
               onComplete={async () => {
                 try {
                   await taskService.taskCompleted({ task_id: item.task_id });
@@ -85,6 +93,16 @@ export default function AllTasksScreen() {
           }
         />
       </View>
+
+      <KidTaskModal
+        visible={modalVisible}
+        task={selectedTask}
+        onClose={() => {
+          setModalVisible(false);
+          setSelectedTask(null);
+        }}
+        onRefresh={refetch}
+      />
     </SafeAreaView>
   );
 }

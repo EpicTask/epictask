@@ -12,6 +12,7 @@ import { StatusBar } from "expo-status-bar";
 import { useColorScheme } from "@/hooks/useColorScheme";
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { AuthProvider, AuthContext } from '../context/AuthContext';
+import { usePushNotifications } from '@/hooks/usePushNotifications';
 
 // Prevent the splash screen from auto-hiding before asset loading is complete.
 SplashScreen.preventAutoHideAsync();
@@ -23,6 +24,10 @@ function RootLayout() {
   const { user, loading } = useContext(AuthContext);
   const segments = useSegments();
   const router = useRouter();
+
+  // Register for push notifications once the user is authenticated.
+  // The hook is idempotent — it re-runs only when user.uid or user.role changes.
+  usePushNotifications(user);
 
   const [loaded] = useFonts({
     MontSerrat_regular: require("../assets/fonts/Montserrat/Montserrat-Regular.ttf"),

@@ -15,6 +15,8 @@ import CustomText from "@/components/CustomText";
 import { AuthContext } from "@/context/AuthContext";
 import { isAuthorizedTestUser } from "@/constants/TestingConfig";
 import DebouncedTouchableOpacity from "@/components/buttons/DebouncedTouchableOpacity";
+import { useXummAuth } from "@/hooks/useXummAuth";
+import { XummQrModal } from "@/components/modals/XummQrModal";
 
 const ProfileCard = () => {
   const { user } = useContext(AuthContext);
@@ -91,6 +93,7 @@ const SettingButton = ({
 
 const SettingsScreen = () => {
   const { logout, user } = useContext(AuthContext);
+  const { connectWallet, showQrModal, qrUrl, closeModal, isConnecting } = useXummAuth();
 
   const handleSignOut = async () => {
     try {
@@ -135,6 +138,15 @@ const SettingsScreen = () => {
               text={"Wallet"}
               onPress={() => {
                 router.push("/screens/settings/wallet" as any);
+              }}
+            />
+            <SettingButton
+              icon={<MaterialIcons name="account-balance-wallet" size={24} color={COLORS.primary} />}
+              text={isConnecting ? "Connecting..." : "Connect Xumm Wallet"}
+              onPress={() => {
+                if (user?.uid) {
+                  connectWallet(user.uid);
+                }
               }}
             />
             <SettingButton
@@ -200,6 +212,12 @@ const SettingsScreen = () => {
           </View>
         </View>
       </ScrollView>
+
+      <XummQrModal
+        visible={showQrModal}
+        qrUrl={qrUrl}
+        onClose={closeModal}
+      />
     </SafeAreaView>
   );
 };

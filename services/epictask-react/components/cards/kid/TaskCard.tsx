@@ -1,5 +1,5 @@
 import React from "react";
-import CustomButton from "../..//buttons/CustomButton";
+import CustomButton from "../../buttons/CustomButton";
 
 import { IMAGES } from "@/assets";
 import { Fontisto, Ionicons } from "@expo/vector-icons";
@@ -17,9 +17,9 @@ interface KidsCardProps {
 }
 
 const TaskCard: React.FC<KidsCardProps> = ({ task, onPress, onComplete, bg }) => {
-  const { task_title, reward_amount, due_date, notes } = task;
+  const { task_title, reward_amount, expiration_date, notes } = task || {};
   return (
-    <View style={[styles.card, { backgroundColor: bg }]}>
+    <View style={[styles.card, { backgroundColor: bg || "white" }]}>
       <View style={{ gap: 10 }}>
         <View style={{ flexDirection: "row", justifyContent: "space-between" }}>
           <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
@@ -45,14 +45,13 @@ const TaskCard: React.FC<KidsCardProps> = ({ task, onPress, onComplete, bg }) =>
             style={{
               flexDirection: "row",
               gap: 6,
-              justifyContent: "space-between",
               alignItems: "center",
             }}
           >
             <Ionicons name="calendar-outline" size={12} color="black" />
             <CustomText style={styles.statText}>
-              {due_date
-                ? new Date(due_date).toLocaleDateString()
+              {expiration_date
+                ? new Date(expiration_date).toLocaleDateString()
                 : "No due date"}
             </CustomText>
           </View>
@@ -74,17 +73,18 @@ const TaskCard: React.FC<KidsCardProps> = ({ task, onPress, onComplete, bg }) =>
             borderTopColor: "#00000010",
             borderTopWidth: 1,
             paddingTop: 10,
+            marginTop: 10,
           }}
         >
           <View style={{ flex: 1 }}>
             <CustomButton
               height={responsiveHeight(6)}
-              onPress={onPress || (() => {})}
+              onPress={onPress ? onPress : () => {}}
               text="VIEW"
               fill={false}
             />
           </View>
-          {!task.marked_completed && !task.rewarded && onComplete && (
+          {task && !task.marked_completed && !task.rewarded && onComplete && (
             <View style={{ flex: 1 }}>
               <CustomButton
                 height={responsiveHeight(6)}
@@ -94,7 +94,7 @@ const TaskCard: React.FC<KidsCardProps> = ({ task, onPress, onComplete, bg }) =>
               />
             </View>
           )}
-          {task.marked_completed && !task.rewarded && (
+          {task && task.marked_completed && !task.rewarded && (
             <View style={{ flex: 1 }}>
               <CustomButton
                 height={responsiveHeight(6)}
@@ -115,9 +115,10 @@ const styles = StyleSheet.create({
     backgroundColor: "white",
     overflow: "hidden",
     borderRadius: 25,
-    paddingVertical: 10,
-    paddingHorizontal: 15,
+    paddingVertical: 15,
+    paddingHorizontal: 20,
     flex: 1,
+    marginBottom: 15,
   },
   avatar: {
     width: responsiveHeight(6),

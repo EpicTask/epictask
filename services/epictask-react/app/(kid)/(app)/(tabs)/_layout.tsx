@@ -52,7 +52,7 @@ export default function TabLayout() {
       <Tabs.Screen
         name="stories"
         options={{
-          title: "Stories",
+          title: "Lessons",
           tabBarIcon: ({ color }) => <StoryIcon stroke={color} />,
         }}
       />

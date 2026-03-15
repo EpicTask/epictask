@@ -56,7 +56,7 @@ const ProfileScreen = () => {
 
   const updateProfileMutation = useMutation({
     mutationFn: (updatedProfile: { displayName: string; imageUrl?: string }) =>
-      userApiClient.put("/profileUpdate", updatedProfile),
+      userApiClient.updateProfile(updatedProfile),
     onSuccess: (data) => {
       setUser({ ...user, ...data.data });
       Alert.alert("Success", "Profile updated successfully.");
@@ -72,7 +72,7 @@ const ProfileScreen = () => {
 
   const linkChildMutation = useMutation({
     mutationFn: (code: string) =>
-      userApiClient.post("/users/link-child", { inviteCode: code }),
+      userApiClient.linkChild({ inviteCode: code }),
     onSuccess: () => {
       Alert.alert("Success", "Child account linked successfully.");
       queryClient.invalidateQueries({ queryKey: ["linkedChildren"] });

@@ -54,7 +54,7 @@ interface AchievementData {
 const RewardHistoryComponent: React.FC<{ history: RewardHistory }> = ({ history }) => (
   <View style={{ gap: 4, width: responsiveWidth(70) }}>
     <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
-      <AntDesign name="checkcircle" size={20} color="#0ECC44" />
+      `<MaterialIcons name="check-circle" size={20} color="#0ECC44" />`
       <CustomText style={{ color: "#000", fontSize: FONT_SIZES.small }} variant="medium">
         {history.message}
       </CustomText>

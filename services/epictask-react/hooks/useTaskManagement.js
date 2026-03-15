@@ -268,7 +268,7 @@ export const useFamilyTasks = (parentId, options = {}) => {
       completed: childTasks.filter(task => task.status === 'completed').length,
       inProgress: childTasks.filter(task => task.status === 'in_progress' || task.status === 'assigned').length,
       overdue: childTasks.filter(task => {
-        const dueDate = task.due_date ? new Date(task.due_date) : null;
+        const dueDate = task.expiration_date ? new Date(task.expiration_date * 1000) : null;
         return dueDate && dueDate < new Date() && task.status !== 'completed';
       }).length
     };
@@ -295,7 +295,7 @@ export const useFamilyTasks = (parentId, options = {}) => {
       summary.inProgressTasks += childTasks.filter(task => task.status === 'in_progress' || task.status === 'assigned').length;
       
       const overdue = childTasks.filter(task => {
-        const dueDate = task.due_date ? new Date(task.due_date) : null;
+        const dueDate = task.expiration_date ? new Date(task.expiration_date * 1000) : null;
         return dueDate && dueDate < new Date() && task.status !== 'completed';
       }).length;
       summary.overdueTasks += overdue;

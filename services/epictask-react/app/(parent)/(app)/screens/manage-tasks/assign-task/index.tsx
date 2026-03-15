@@ -75,7 +75,7 @@ const AssignTask = () => {
       const newTask = {
         task_description: taskData.task_description,
         task_id: "", // Generated on backend
-        expiration_date: taskData.expiration_date ? new Date(taskData.expiration_date).getTime() : Date.now() + (3 * 24 * 60 * 60 * 1000), // Default 7 days from now
+        expiration_date: taskData.expiration_date ? taskData.expiration_date : Math.floor(Date.now() / 1000) + (3 * 24 * 60 * 60), // Default 3 days from now in Unix seconds
         payment_method: "Pay Directly",
         reward_amount: parseFloat(taskData.reward_amount),
         reward_currency: "eTask",

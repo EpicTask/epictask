@@ -23,8 +23,7 @@ const TaskScreen = () => {
             return (
               <View style={{ padding: 4, flex: 1 }}>
                 <TaskCard
-                  name="Prepare for you breakfast"
-                  stars={20}
+                  task={{ task_id: 'mock', task_title: "Prepare for you breakfast", reward_amount: 20 }}
                   bg={COLORS.light_yellow}
                 />
               </View>
