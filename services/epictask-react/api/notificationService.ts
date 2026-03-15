@@ -2,27 +2,14 @@ import axios from "axios";
 import MicroserviceUrls from "@/constants/Microservices";
 import authService from "./authService";
 
-// Helper to get base URL for notifications
-// Assuming taskManagement URL ends in /api/tasks based on usage in taskService.js
-const getNotificationBaseUrl = () => {
-  const taskUrl = MicroserviceUrls.taskManagement || "";
-  if (taskUrl.endsWith("/tasks")) {
-    return taskUrl.replace("/tasks", "/notifications");
-  }
-  // If it doesn't end in /tasks, maybe it's just the host? 
-  // But taskService does .post('/') which implies it hits the resource root.
-  // Let's assume standard mono_service structure: /api/tasks -> /api/notifications
-  return taskUrl.replace("/tasks", "/notifications");
-};
-
 const notificationApiClient = axios.create({
-  baseURL: getNotificationBaseUrl(),
+  baseURL: MicroserviceUrls.notificationsManagement,
 });
 
 notificationApiClient.interceptors.request.use(
   async (config) => {
     // Refresh base URL in case MicroserviceUrls changes (e.g. strict mode)
-    config.baseURL = getNotificationBaseUrl();
+    config.baseURL = MicroserviceUrls.notificationsManagement;
     
     const token = await authService.refreshToken();
     if (token) {
@@ -48,7 +35,7 @@ export const notificationService = {
     }
   },
 
-  markAsRead: async (notificationId) => {
+  markAsRead: async (notificationId: string) => {
     try {
       const response = await notificationApiClient.patch(`/${notificationId}/read`);
       return response.data;
@@ -68,7 +55,7 @@ export const notificationService = {
     }
   },
 
-  deleteNotification: async (notificationId) => {
+  deleteNotification: async (notificationId: string) => {
     try {
       const response = await notificationApiClient.delete(`/${notificationId}`);
       return response.data;
@@ -78,16 +65,9 @@ export const notificationService = {
     }
   },
   
-  // Create notification (for testing or manual triggers)
-  createNotification: async (notificationData) => {
-    try {
-        const response = await notificationApiClient.post("/", notificationData);
-        return response.data;
-    } catch (error) {
-        console.error("Create notification error:", error);
-        throw new Error("Failed to create notification");
-    }
-  }
+  // NOTE: createNotification has been intentionally removed.
+  // Notifications are created exclusively server-side on real events.
+  // See: mono_service/src/routes/notifications/notification_routes.py for context.
 };
 
 export default notificationService;
