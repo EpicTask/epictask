@@ -38,6 +38,21 @@ export async function updateUserToken(
 
   try {
     const firestore = admin.firestore();
+
+    // Guard: read existing token and skip write if still valid.
+    const userDoc = await firestore.collection(COLLECTION_USERS).doc(uid).get();
+    const existing = userDoc.data()?.userToken as XummUserToken | undefined;
+    const nowSecs = Math.floor(Date.now() / 1000);
+
+    if (existing?.user_token && existing.token_expiration > nowSecs) {
+      const remainingSecs = existing.token_expiration - nowSecs;
+      console.log(
+        `[userTokenService] Existing token still valid for uid=${uid} ` +
+          `(expires in ${remainingSecs}s) — skipping write.`
+      );
+      return;
+    }
+
     await firestore.collection(COLLECTION_USERS).doc(uid).update({
       userToken,
     });
