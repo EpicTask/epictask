@@ -26,7 +26,13 @@ export const connectWallet = async (uid: string) => {
     writeResponseToDatabase(response, XummFunctionType.SIGNIN_REQUEST);
 
     console.log("XUMM response", response);
-    return response.next.always;
+    return {
+      qrUrl: response.refs.qr_png,
+      next: {
+        always: response.next.always
+      },
+      uuid: response.uuid
+    };
   } catch (error) {
     console.error("XUMM error", error);
     throw error;

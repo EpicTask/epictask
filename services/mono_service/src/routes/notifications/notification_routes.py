@@ -1,21 +1,11 @@
 from fastapi import APIRouter, HTTPException, Depends, Query
 from typing import List, Optional
-from ...domain.notification_models import Notification, NotificationCreate, NotificationUpdate
+from ...domain.notification_models import Notification, NotificationUpdate
 from ...services.notifications.notification_service import notification_service
 from ...config.security import get_user_id
 
-router = APIRouter()
 
-@router.post("/", response_model=str, status_code=201)
-async def create_notification(notification: NotificationCreate):
-    """
-    Create a new notification.
-    """
-    try:
-        notification_id = await notification_service.send_notification(notification)
-        return notification_id
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+router = APIRouter()
 
 @router.get("/", response_model=List[Notification])
 async def get_notifications(

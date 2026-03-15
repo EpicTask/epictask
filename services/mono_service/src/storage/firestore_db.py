@@ -2,6 +2,9 @@ from datetime import datetime, timedelta
 import os
 from firebase_admin import firestore
 
+from domain.notification_models import NotificationCreate, NotificationType
+from services.notifications import notification_service
+
 from ..schema.schema import (
     TaskCommentAdded,
     TaskCompleted,
@@ -66,7 +69,6 @@ def create_task(response: TaskCreated):
         )
         write_event_to_firestore(task_event)
 
-        return doc_id
     # Handle any errors that occur during the Firestore operation
     except FirestoreOperationException as e:
         return handle_firestore_exception(e)
