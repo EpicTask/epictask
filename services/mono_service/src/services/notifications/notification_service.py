@@ -1,7 +1,8 @@
 from typing import List
 from firebase_admin import messaging
 
-from ...storage.db import notification_db, user_db
+from ...storage import notification_db
+from ...storage import user_db
 from ...domain.notification_models import (
     NotificationCreate,
     Notification,
@@ -11,18 +12,8 @@ from ...domain.notification_models import (
 
 
 class NotificationService:
-    """Service for managing notifications.
-
-    Every notification is persisted to Firestore (test_notifications) and,
-    when the recipient has a registered push token, dispatched via FCM/APNs
-    using the Firebase Admin SDK.  FCM dispatch is fire-and-forget — a
-    failure never blocks the caller.
-    """
-
-    # ------------------------------------------------------------------
-    # Public API
-    # ------------------------------------------------------------------
-
+    """Service for managing notifications."""
+    
     async def send_notification(self, request: NotificationCreate) -> str:
         """Persist a notification record and dispatch an FCM push."""
         notification_id = notification_db.create_notification(request)

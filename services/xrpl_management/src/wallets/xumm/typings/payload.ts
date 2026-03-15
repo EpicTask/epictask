@@ -1,5 +1,13 @@
 import { XummTypes } from "xumm-sdk";
 
+/** Xumm userToken returned in webhook callbacks.
+ *  Persisted to users/{uid}.userToken to enable future push-style requests. */
+export interface XummUserToken {
+  user_token: string;
+  token_issued: number;
+  token_expiration: number;
+}
+
 export interface XummPayloadOptions {
     expire?: number;
     force_network?: string;

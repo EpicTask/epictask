@@ -9,6 +9,7 @@ from ..config.collection_names import collections
 from . import firestore_db as task_db
 from . import user_db
 from . import notification_db
+from . import xrpl_db
 
 # Shared utilities can go here
 

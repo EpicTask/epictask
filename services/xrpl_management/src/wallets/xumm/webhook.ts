@@ -1,17 +1,19 @@
-import { writeResponseToDatabase } from "../../data/database";
+import { writeResponseToDatabase } from "../../data/database.js";
 import {
   notifyEscrowCreated,
   notifyEscrowReleased,
   notifyEscrowCancelled,
   notifyPaymentSent,
 } from "../../services/notificationHelper.js";
+import { updateUserToken } from "../../services/userTokenService.js";
+import { XummUserToken } from "./typings/index.js";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
 export interface XummWebhookBody<T = object> {
   payloadUuidv4: string;
   signed: boolean;
-  userToken: object | null;
+  userToken: XummUserToken | null;
   custom_meta: {
     blob: T;
     identifier: string;
@@ -38,6 +40,15 @@ export const handleXummWebhook = async (
   try {
     const docId = await writeResponseToDatabase(webhookBody, "xumm_webhook");
     console.log("Webhook data saved with ID: ", docId);
+
+    // Persist the Xumm userToken whenever present — enables future push-style
+    // requests without requiring the user to scan a QR code.
+    // Runs on every webhook callback (signed or rejected) because Xumm issues
+    // the token when the payload is opened, not when it is signed.
+    const blob = webhookBody.custom_meta?.blob as EpicTaskBlob | undefined;
+    if (blob?.uid && webhookBody.userToken) {
+      await updateUserToken(blob.uid, webhookBody.userToken);
+    }
 
     // Only trigger notifications for user-signed (confirmed) transactions
     if (webhookBody.signed === true) {

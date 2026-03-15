@@ -2,8 +2,8 @@ from datetime import datetime, timedelta
 import os
 from firebase_admin import firestore
 
-from domain.notification_models import NotificationCreate, NotificationType
-from services.notifications import notification_service
+from ..domain.notification_models import NotificationCreate, NotificationType
+from ..services.notifications import notification_service
 
 from ..schema.schema import (
     TaskCommentAdded,
