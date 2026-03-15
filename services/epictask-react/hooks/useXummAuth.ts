@@ -11,9 +11,27 @@ import {
   XummEscrowRequest
 } from '../api/xummService';
 import { getFirestore, doc, onSnapshot } from 'firebase/firestore';
+
 // Ensure the collection matches your environment config (e.g. 'xumm_callbacks' vs 'test_xumm_callbacks')
-// Often this can be mapped to a constant if needed.
-const XUMM_CALLBACK_COLLECTION = 'test_xumm_callbacks'; // Adjust as per your environment
+const XUMM_CALLBACK_COLLECTION = 'test_xumm_callbacks';
+
+export interface XummUserToken {
+  user_token: string;
+  token_issued: number;
+  token_expiration: number; // Unix seconds
+}
+
+/**
+ * Returns true if the user has a valid (non-expired) Xumm userToken.
+ * A valid token means subsequent transactions can be sent directly to the
+ * user's Xumm app without showing a QR code.
+ *
+ * @param userToken  The userToken object from the user's profile (may be null/undefined)
+ */
+export const isXummWalletConnected = (userToken?: XummUserToken | null): boolean => {
+  if (!userToken?.user_token) return false;
+  return userToken.token_expiration > Math.floor(Date.now() / 1000);
+};
 
 type XummActionType = 'SIGN_IN' | 'PAYMENT' | 'CREATE_ESCROW' | 'FINISH_ESCROW' | 'CANCEL_ESCROW';
 
@@ -68,9 +86,6 @@ export const useXummAuth = () => {
              }
 
              Alert.alert('Success', message);
-             // Persistent in-app notifications for XRPL events are now created
-             // server-side by xrpl_management/src/wallets/xumm/webhook.ts when
-             // the Xumm webhook fires with signed=true. No client-side creation needed.
              closeModal();
           }
         }
@@ -114,7 +129,24 @@ export const useXummAuth = () => {
     }
   }
 
-  const connectWallet = async (uid: string) => {
+  /**
+   * Initiates a Xumm sign-in payload to connect the user's wallet.
+   * If the user already has a valid (non-expired) userToken, the flow is
+   * skipped and the user is notified that their wallet is already connected.
+   *
+   * @param uid               Firebase UID of the current user
+   * @param existingUserToken The userToken from the user's profile (if any)
+   */
+  const connectWallet = async (uid: string, existingUserToken?: XummUserToken | null) => {
+    // Guard: skip QR flow if user already has a valid push token
+    if (isXummWalletConnected(existingUserToken)) {
+      Alert.alert(
+        'Wallet Already Connected',
+        'Your Xumm wallet is already connected. Transactions will be sent directly to your Xumm app.'
+      );
+      return;
+    }
+
     setIsConnecting(true);
     try {
       const response = await requestXummSignIn(uid);

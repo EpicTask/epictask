@@ -15,7 +15,7 @@ import CustomText from "@/components/CustomText";
 import { AuthContext } from "@/context/AuthContext";
 import { isAuthorizedTestUser } from "@/constants/TestingConfig";
 import DebouncedTouchableOpacity from "@/components/buttons/DebouncedTouchableOpacity";
-import { useXummAuth } from "@/hooks/useXummAuth";
+import { useXummAuth, isXummWalletConnected, XummUserToken } from "@/hooks/useXummAuth";
 import { XummQrModal } from "@/components/modals/XummQrModal";
 
 const ProfileCard = () => {
@@ -95,6 +95,10 @@ const SettingsScreen = () => {
   const { logout, user } = useContext(AuthContext);
   const { connectWallet, showQrModal, qrUrl, closeModal, isConnecting } = useXummAuth();
 
+  // Derive wallet connection status from the user's stored Xumm userToken.
+  // isXummWalletConnected returns false if the token is absent or expired.
+  const walletConnected = isXummWalletConnected(user?.userToken as XummUserToken | undefined);
+
   const handleSignOut = async () => {
     try {
       await logout();
@@ -141,11 +145,23 @@ const SettingsScreen = () => {
               }}
             />
             <SettingButton
-              icon={<MaterialIcons name="account-balance-wallet" size={24} color={COLORS.primary} />}
-              text={isConnecting ? "Connecting..." : "Connect Xumm Wallet"}
+              icon={
+                <MaterialIcons
+                  name="account-balance-wallet"
+                  size={24}
+                  color={walletConnected ? COLORS.primary : COLORS.grey}
+                />
+              }
+              text={
+                isConnecting
+                  ? "Connecting..."
+                  : walletConnected
+                  ? "Xumm Wallet Connected ✓"
+                  : "Connect Xumm Wallet"
+              }
               onPress={() => {
                 if (user?.uid) {
-                  connectWallet(user.uid);
+                  connectWallet(user.uid, user.userToken as XummUserToken | undefined);
                 }
               }}
             />
