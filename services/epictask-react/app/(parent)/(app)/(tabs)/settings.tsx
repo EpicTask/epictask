@@ -46,7 +46,7 @@ const ProfileCard = () => {
       </View>
       <DebouncedTouchableOpacity
         onPress={() => {
-          router.push("/(parent)/(app)/screens/profile" as any);
+          router.push("/(parent)/(app)/screens/settings/personal-info" as any);
         }}
       >
         {ICONS.edit}
@@ -134,14 +134,14 @@ const SettingsScreen = () => {
               icon={ICONS.SETTINGS.kid_face}
               text={"Kid profiles"}
               onPress={() => {
-                router.push("/(parent)/(app)/screens/profile" as any);
+                router.push("/(parent)/(app)/screens/settings/kid-profiles" as any);
               }}
             />
             <SettingButton
               icon={ICONS.SETTINGS.wallet}
               text={"Wallet"}
               onPress={() => {
-                router.push("/screens/settings/wallet" as any);
+                router.push("/(parent)/(app)/screens/settings/wallet" as any);
               }}
             />
             <SettingButton
@@ -208,7 +208,7 @@ const SettingsScreen = () => {
             <SettingButton
               icon={ICONS.SETTINGS.get_help}
               text={"Get Help"}
-              onPress={() => {}}
+              onPress={() => router.push("/(parent)/(app)/screens/settings/get-help" as any)}
             />
             <SettingButton
               icon={ICONS.SETTINGS.user}
@@ -218,7 +218,7 @@ const SettingsScreen = () => {
             <SettingButton
               icon={ICONS.SETTINGS.terms}
               text={"Who We Are"}
-              onPress={() => {}}
+              onPress={() => router.push("/(parent)/(app)/screens/settings/who-we-are" as any)}
             />
             <SettingButton
               icon={<MaterialIcons name="logout" size={24} color="red" />}

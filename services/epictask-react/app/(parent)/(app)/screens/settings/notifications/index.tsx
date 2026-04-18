@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { View, Text, Switch, StyleSheet, ScrollView } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, Switch, StyleSheet, ScrollView, ActivityIndicator, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import ScreenHeading from '@/components/headings/ScreenHeading';
 import {
@@ -7,6 +7,7 @@ import {
     responsiveWidth,
 } from "react-native-responsive-dimensions";
 import { COLORS } from '@/constants/Colors';
+import { userService } from '@/api/userService';
 
 const notificationSettings = [
     { key: 'email', label: 'Email Notifications' },
@@ -22,13 +23,58 @@ function NotificationsContent() {
         sms: false,
         reminders: true,
     });
+    const [loading, setLoading] = useState(true);
 
-    const toggleSwitch = (key: string) => {
+    useEffect(() => {
+        const fetchPreferences = async () => {
+            try {
+                const prefs = await userService.getNotificationPreferences();
+                if (prefs) {
+                    setSettings({
+                        email: prefs.email,
+                        push: prefs.push,
+                        sms: prefs.sms,
+                        reminders: prefs.reminders,
+                    });
+                }
+            } catch (error) {
+                console.error("Failed to fetch preferences:", error);
+                Alert.alert("Error", "Could not load notification preferences.");
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchPreferences();
+    }, []);
+
+    const toggleSwitch = async (key: string) => {
+        const newValue = !settings[key as keyof typeof settings];
+        
+        // Optimistic update
+        const previousSettings = { ...settings };
         setSettings(prev => ({
             ...prev,
-            [key]: !prev[key as keyof typeof prev],
+            [key]: newValue,
         }));
+
+        try {
+            await userService.updateNotificationPreferences({ [key]: newValue });
+        } catch (error) {
+            console.error("Failed to update preference:", error);
+            Alert.alert("Error", "Could not save your setting. Please try again.");
+            // Rollback on failure
+            setSettings(previousSettings);
+        }
     };
+
+    if (loading) {
+        return (
+            <View style={styles.loadingContainer}>
+                <ActivityIndicator size="large" color={COLORS.primary} />
+            </View>
+        );
+    }
 
     return (
         <View style={{ flex: 1 }}>
@@ -84,5 +130,11 @@ const styles = StyleSheet.create({
     },
     label: {
         fontSize: 16,
+    },
+    loadingContainer: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+        backgroundColor: "#F1F6F9",
     },
 });

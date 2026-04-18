@@ -1,40 +1,80 @@
 import { FONT_SIZES } from "@/constants/FontSize";
-import React, { useState } from "react";
-import * as DocumentPicker from "expo-document-picker";
-import CustomButton from "@/components/buttons/CustomButton";
+import React, { useState, useContext, useEffect } from "react";
+import * as ImagePicker from "expo-image-picker";
+import { AuthContext } from "@/context/AuthContext";
 import CustomInput from "@/components/custom-input/CustomInput";
 
 import {
-  responsiveFontSize,
   responsiveHeight,
   responsiveWidth,
 } from "react-native-responsive-dimensions";
 import { ICONS, IMAGES } from "@/assets";
 import { router } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { Image, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { Image, StyleSheet, Text, TouchableOpacity, View, Alert } from "react-native";
 import AuthButton from "@/components/buttons/AuthButton";
 
 const PersonalInformation = () => {
+  const { user, updateProfile } = useContext(AuthContext);
+  const [name, setName] = useState(user?.displayName || "");
+  const [profileImage, setProfileImage] = useState(user?.imageUrl || user?.photoURL || null);
+  const [isUpdating, setIsUpdating] = useState(false);
 
-  const [phone, setPhone] = useState("");
-  const [name, setName] = useState("");
-  const [file, setFile] = useState<any>(null);
+  useEffect(() => {
+    if (user) {
+      setName(user.displayName || "");
+      setProfileImage(user.imageUrl || user.photoURL || null);
+    }
+  }, [user]);
 
-  const pickDocument = async () => {
+  const pickImage = async () => {
     try {
-      const result = await DocumentPicker.getDocumentAsync({
-        type: "*/*",
-        copyToCacheDirectory: true,
-        multiple: false,
+      const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
+
+      if (permissionResult.granted === false) {
+        Alert.alert("Permission Required", "Permission to access camera roll is required!");
+        return;
+      }
+
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ["images"] as ImagePicker.MediaType[],
+        allowsEditing: true,
+        aspect: [1, 1],
+        quality: 0.8,
       });
 
-      if (result?.assets && result.assets.length > 0) {
-        setFile(result.assets[0]);
-      } else if (result.canceled) {
+      if (!result.canceled && result.assets[0]) {
+        setProfileImage(result.assets[0].uri);
       }
-    } catch (err) {
-      console.error("Document pick error: ", err);
+    } catch (error) {
+      Alert.alert("Error", "Failed to pick image");
+    }
+  };
+
+  const handleUpdate = async () => {
+    if (!name.trim()) {
+      Alert.alert("Error", "Please enter your name");
+      return;
+    }
+
+    try {
+      setIsUpdating(true);
+      const updateData: any = {
+        displayName: name.trim(),
+      };
+      
+      if (profileImage && profileImage !== (user?.imageUrl || user?.photoURL)) {
+        updateData.imageUrl = profileImage;
+      }
+
+      await updateProfile(updateData);
+      Alert.alert("Success", "Personal information updated successfully");
+      router.back();
+    } catch (error) {
+      Alert.alert("Error", "Failed to update profile");
+      console.error(error);
+    } finally {
+      setIsUpdating(false);
     }
   };
 
@@ -66,20 +106,25 @@ const PersonalInformation = () => {
         </Text>
       </View>
       <View style={{ gap: 10 }}>
-        <View style={{ paddingVertical: 10 }}>
-          <TouchableOpacity onPress={pickDocument}>
+        <View style={{ paddingVertical: 10, alignItems: "center" }}>
+          <TouchableOpacity onPress={pickImage}>
             <Image
-              source={file ?? IMAGES.upload_profile }
+              source={profileImage ? { uri: profileImage } : IMAGES.profile }
               style={{
                 width: responsiveWidth(30),
-                borderRadius: 100,
+                borderRadius: responsiveWidth(15),
                 height: responsiveWidth(30),
+                borderWidth: 2,
+                borderColor: "#EE4266",
               }}
             />
+            <View style={{ position: "absolute", bottom: 0, right: responsiveWidth(35), backgroundColor: 'white', borderRadius: 15, padding: 5 }}>
+                {ICONS.edit}
+            </View>
           </TouchableOpacity>
         </View>
         <View>
-          <Text style={{ fontWeight: "500" }}>Personal Information</Text>
+          <Text style={{ fontWeight: "500", fontSize: FONT_SIZES.large }}>Account Details</Text>
         </View>
         <View style={{ gap: 14 }}>
           <CustomInput
@@ -89,19 +134,17 @@ const PersonalInformation = () => {
             onChangeText={setName}
           />
           <CustomInput
-            label="Enter Phone"
-            placeholder="+92"
-            value={phone}
-            onChangeText={setPhone}
+            label="Email"
+            placeholder="Your Email"
+            value={user?.email || ""}
+            onChangeText={() => {}} // Email usually not editable here
           />
         </View>
         <View style={{ paddingVertical: 30 }}>
           <AuthButton
             fill={true}
-            onPress={() => {
-              router.back();
-            }}
-            text="Update"
+            onPress={handleUpdate}
+            text={isUpdating ? "Updating..." : "Update"}
             height={responsiveHeight(6)}
           />
         </View>

@@ -114,7 +114,15 @@ const AssignTask = () => {
             onChangeText={(value) => handleInputChange("task_description", value)}
             capitalizeFirstLetter={true}
           />
-          <DateInput title="Due Date" />
+          <DateInput 
+            title="Due Date" 
+            value={taskData.expiration_date}
+            onDateChange={(date) => {
+              // Convert date string (YYYY-MM-DD) to Unix timestamp
+              const unixTimestamp = Math.floor(new Date(date).getTime() / 1000);
+              handleInputChange("expiration_date", unixTimestamp.toString());
+            }}
+          />
           <CustomInput 
             label="Reward Amount" 
             value={taskData.reward_amount} 

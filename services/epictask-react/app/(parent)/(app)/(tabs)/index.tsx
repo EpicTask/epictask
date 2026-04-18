@@ -30,10 +30,12 @@ import { useAuth } from "@/context/AuthContext";
 import { firestoreService } from "@/api/firestoreService";
 import authService from "@/api/authService";
 import taskService from "@/api/taskService";
+import { narrativeService, PendingPayout } from "@/api/narrativeService";
 import { notificationService } from "@/api/notificationService";
 import ChildSelectionModal from "@/components/modals/ChildSelectionModal";
 import ChildPINModal from "@/components/modals/ChildPINModal";
 import { useFamilyTasks } from "@/hooks/useTaskManagement";
+import CustomText from "@/components/CustomText";
 
 // Type definitions
 interface TaskSummary {
@@ -46,6 +48,10 @@ interface RecentTask {
   task_id: string;
   task_title: string;
   reward_amount: number;
+  assigned_to_ids?: string[];
+  status?: string;
+  story_id?: string;
+  node_id?: string;
 }
 
 interface Kid {
@@ -64,6 +70,7 @@ export default function HomeScreen() {
   const { user } = useAuth();
   const [taskSummary, setTaskSummary] = useState<TaskSummary>({ completed: 0, in_progress: 0, total: 0 });
   const [recentTasks, setRecentTasks] = useState<RecentTask[]>([]);
+  const [pendingPayouts, setPendingPayouts] = useState<PendingPayout[]>([]);
   const [kidsWithTaskData, setKidsWithTaskData] = useState<Kid[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -91,32 +98,51 @@ export default function HomeScreen() {
         const summary = (await firestoreService.getTaskSummary(
           user.uid
         )) as TaskSummary;
-        setTaskSummary(summary);
+        setTaskSummary(summary || { completed: 0, in_progress: 0, total: 0 });
 
         const tasks = (await firestoreService.getRecentTasks(
           user.uid
         )) as RecentTask[];
-        setRecentTasks(tasks);
+        setRecentTasks(Array.isArray(tasks) ? tasks : []);
+
+        // Fetch pending narrative payouts
+        try {
+            const payouts = await narrativeService.getPendingPayouts(user.uid);
+            setPendingPayouts(Array.isArray(payouts) ? payouts : []);
+        } catch (e) {
+            console.log("Failed to fetch pending payouts", e);
+            setPendingPayouts([]);
+        }
 
         // Fetch unread notifications count
         try {
             const notifications = await notificationService.getNotifications(20, true);
-            setUnreadNotifications(notifications.length);
+            setUnreadNotifications(Array.isArray(notifications) ? notifications.length : 0);
         } catch (e) {
             console.log("Failed to fetch notifications count", e);
         }
 
+        const safeChildren = Array.isArray(children) ? children : [];
         const kidsWithTaskSummary = await Promise.all(
-          children.map(async (kid: Kid) => {
-            const kidTaskSummary =
-              (await firestoreService.getKidTaskSummary(
-                kid.uid
-              )) as TaskSummary;
-            return {
-              ...kid,
-              tasks_completed: kidTaskSummary.completed,
-              tasks_pending: kidTaskSummary.in_progress,
-            };
+          safeChildren.map(async (kid: Kid) => {
+            try {
+                const kidTaskSummary =
+                  (await firestoreService.getKidTaskSummary(
+                    kid.uid
+                  )) as TaskSummary;
+                return {
+                  ...kid,
+                  tasks_completed: kidTaskSummary?.completed || 0,
+                  tasks_pending: kidTaskSummary?.in_progress || 0,
+                };
+            } catch (err) {
+                console.log(`Failed to fetch summary for kid ${kid.uid}`, err);
+                return {
+                    ...kid,
+                    tasks_completed: 0,
+                    tasks_pending: 0,
+                }
+            }
           })
         );
         setKidsWithTaskData(kidsWithTaskSummary);
@@ -237,18 +263,18 @@ export default function HomeScreen() {
             <View style={{ flexDirection: "row", gap: 10 }}>
               <ProgressCard
                 tab={true}
-                progress={taskSummary.total > 0 ? taskSummary.completed / taskSummary.total : 0}
-                completed={taskSummary.completed}
-                total={taskSummary.total}
+                progress={(taskSummary?.total || 0) > 0 ? (taskSummary?.completed || 0) / (taskSummary?.total || 1) : 0}
+                completed={taskSummary?.completed || 0}
+                total={taskSummary?.total || 0}
                 text="Completed"
                 color={COLORS.purple}
               />
               <ProgressCard
                 tab={true}
-                progress={taskSummary.total > 0 ? taskSummary.in_progress / taskSummary.total : 0}
-                completed={taskSummary.in_progress}
+                progress={(taskSummary?.total || 0) > 0 ? (taskSummary?.in_progress || 0) / (taskSummary?.total || 1) : 0}
+                completed={taskSummary?.in_progress || 0}
                 text="In Progress"
-                total={taskSummary.total}
+                total={taskSummary?.total || 0}
                 color={COLORS.grey}
               />
             </View>
@@ -291,6 +317,53 @@ export default function HomeScreen() {
             )}
           </View>
 
+          {/* Pending Narrative Rewards */}
+          {pendingPayouts.length > 0 && (
+            <View style={{ gap: 10 }}>
+              <Heading title="Pending Rewards" />
+              {pendingPayouts.map((payout) => (
+                <View key={payout.request_id} style={styles.payoutCard}>
+                  <View style={styles.payoutInfo}>
+                    <CustomText variant="semiBold" style={styles.payoutTitle}>
+                      {payout.kid_name || "Child"} earned {payout.amount} tokens
+                    </CustomText>
+                    <CustomText style={styles.payoutDetail}>
+                      For completing "{payout.story_id}"
+                    </CustomText>
+                  </View>
+                  <View style={styles.payoutActions}>
+                    <TouchableOpacity 
+                      style={[styles.payoutButton, styles.approveButton]}
+                      onPress={async () => {
+                        try {
+                          await narrativeService.approvePayout(payout.request_id);
+                          setPendingPayouts(prev => prev.filter(p => p.request_id !== payout.request_id));
+                        } catch (e) {
+                          console.error("Failed to approve payout", e);
+                        }
+                      }}
+                    >
+                      <Text style={styles.payoutButtonText}>Approve</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity 
+                      style={[styles.payoutButton, styles.rejectButton]}
+                      onPress={async () => {
+                        try {
+                          await narrativeService.rejectPayout(payout.request_id, "Rejected by parent");
+                          setPendingPayouts(prev => prev.filter(p => p.request_id !== payout.request_id));
+                        } catch (e) {
+                          console.error("Failed to reject payout", e);
+                        }
+                      }}
+                    >
+                      <Text style={styles.payoutButtonText}>Reject</Text>
+                    </TouchableOpacity>
+                  </View>
+                </View>
+              ))}
+            </View>
+          )}
+
           {/* Recent Tasks */}
           <View style={{ gap: 10, paddingVertical: 20 }}>
             <Heading
@@ -313,6 +386,30 @@ export default function HomeScreen() {
                         t.task_id === task.task_id ? { ...t, rewarded: true, marked_completed: true, status: 'completed' } : t
                       ));
                       await firestoreService.rewardTask(task.task_id);
+
+                      // Milestone 2.1: Post-Approval Payout Hook
+                      if (task.assigned_to_ids && task.assigned_to_ids.length > 0) {
+                        try {
+                          // Fetch kid's active story progress to get current node
+                          const kidId = task.assigned_to_ids[0];
+                          const progress = await narrativeService.getProgress(kidId);
+                          
+                          // If there's active progress, create a payout request
+                          if (progress && progress.length > 0) {
+                            const activeStory = progress.find(p => p.status === 'in_progress') || progress[0];
+                            
+                            await narrativeService.createPayout({
+                              kid_id: kidId,
+                              story_id: activeStory.story_id,
+                              node_id: activeStory.current_node,
+                              token_amount: task.reward_amount,
+                              task_id: task.task_id,
+                            });
+                          }
+                        } catch (payoutError) {
+                          console.error("Failed to create narrative payout:", payoutError);
+                        }
+                      }
                     } catch (e) {
                       console.error("Error rewarding task", e);
                       setRecentTasks([...recentTasks]);
@@ -402,5 +499,51 @@ const styles = StyleSheet.create({
     color: 'white',
     fontSize: 16,
     fontWeight: '600',
-  },
-});
+    },
+    payoutCard: {
+    backgroundColor: 'white',
+    borderRadius: 15,
+    padding: 15,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+    marginBottom: 10,
+    },
+    payoutInfo: {
+    flex: 1,
+    },
+    payoutTitle: {
+    fontSize: 14,
+    color: COLORS.black,
+    },
+    payoutDetail: {
+    fontSize: 12,
+    color: COLORS.grey,
+    marginTop: 2,
+    },
+    payoutActions: {
+    flexDirection: 'row',
+    gap: 8,
+    },
+    payoutButton: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 8,
+    },
+    approveButton: {
+    backgroundColor: COLORS.primary,
+    },
+    rejectButton: {
+    backgroundColor: COLORS.grey,
+    },
+    payoutButtonText: {
+    color: 'white',
+    fontSize: 12,
+    fontWeight: 'bold',
+    },
+    });
