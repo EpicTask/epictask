@@ -1,7 +1,7 @@
 from typing import Dict, Any
 from fastapi import APIRouter, Depends, HTTPException, status
-from ...domain.user_models import UserProfileUpdate, InviteCodeRequest, LinkChildRequest, FcmTokenUpdate
-from ...services import user_service
+from ...domain.user_models import UserProfileUpdate, InviteCodeRequest, LinkChildRequest, FcmTokenUpdate, NotificationPreferencesUpdate
+from ...services.users.user_service import user_service
 from ...config.security import get_current_user
 from ...storage.db import user_db
 
@@ -62,10 +62,11 @@ async def link_child(
             detail=str(e)
         )
 
-@router.get("/admin/metrics", dependencies=[Depends(get_current_user)])
-async def get_metrics():
+@router.get("/admin/metrics")
+async def get_metrics(current_user: dict = Depends(get_current_user)):
     """Get user metrics (Admin only)."""
-    # Should probably add admin check here
+    if current_user.get("role") != "admin":
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Admin access required")
     return await user_service.get_metrics()
 
 
@@ -97,3 +98,42 @@ async def unregister_fcm_token(current_user: dict = Depends(get_current_user)):
     uid = current_user["uid"]
     user_db.clear_fcm_token(uid)
     return {"message": "Push token removed"}
+
+@router.get("/preferences/notifications", dependencies=[Depends(get_current_user)])
+async def get_notification_preferences(current_user: dict = Depends(get_current_user)):
+    """Get notification preferences."""
+    uid = current_user['uid']
+    return await user_service.get_notification_preferences(uid)
+
+@router.put("/preferences/notifications", dependencies=[Depends(get_current_user)])
+async def update_notification_preferences(
+    request: NotificationPreferencesUpdate,
+    current_user: dict = Depends(get_current_user)
+):
+    """Update notification preferences."""
+    uid = current_user['uid']
+    success = await user_service.update_notification_preferences(uid, request)
+    if not success:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to update notification preferences"
+        )
+    return {"message": "Successful preferences update"}
+
+@router.post("/ask-help", dependencies=[Depends(get_current_user)])
+async def ask_parent_for_help(current_user: dict = Depends(get_current_user)):
+    """Kid requests help from their parent."""
+    uid = current_user['uid']
+    try:
+        success = await user_service.ask_parent_for_help(uid)
+        if not success:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Failed to send help request"
+            )
+        return {"message": "Help request sent successfully"}
+    except ValueError as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(e)
+        )

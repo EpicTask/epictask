@@ -1,6 +1,6 @@
 from typing import Dict, Any, Optional
 from ...storage.db import user_db
-from ...domain.user_models import UserProfileUpdate, InviteCodeResponse, LinkChildRequest, UserMetrics
+from ...domain.user_models import UserProfileUpdate, InviteCodeResponse, LinkChildRequest, UserMetrics, NotificationPreferencesUpdate
 from ...domain.notification_models import NotificationType, NotificationCreate
 from ..notifications.notification_service import notification_service
 
@@ -80,5 +80,41 @@ class UserService:
     async def get_metrics(self) -> UserMetrics:
         """Get user metrics."""
         return user_db.get_user_metrics()
+
+    async def get_notification_preferences(self, uid: str):
+        """Get notification preferences."""
+        return user_db.get_notification_preferences(uid)
+
+    async def update_notification_preferences(self, uid: str, prefs_update: NotificationPreferencesUpdate) -> bool:
+        """Update notification preferences."""
+        data = prefs_update.model_dump(exclude_unset=True)
+        return user_db.update_notification_preferences(uid, data)
+
+    async def ask_parent_for_help(self, kid_uid: str) -> bool:
+        """Send a help request notification from a kid to their linked parent."""
+        kid_profile = user_db.get_user_profile(kid_uid)
+        if not kid_profile:
+            raise ValueError("Child profile not found")
+        
+        parent_uid = kid_profile.get("parent")
+        if not parent_uid:
+            raise ValueError("No linked parent found for this child")
+            
+        kid_name = kid_profile.get("display_name", "Your child")
+        
+        notification = NotificationCreate(
+            recipient_id=parent_uid,
+            title="Help Needed!",
+            message=f"{kid_name} needs help in the EpicTask app. Check in with them!",
+            type=NotificationType.SYSTEM_ALERT,
+            metadata={"kid_uid": kid_uid, "help_request": True}
+        )
+        
+        try:
+            await notification_service.send_notification(notification)
+            return True
+        except Exception as e:
+            print(f"Failed to send help request notification: {e}")
+            return False
 
 user_service = UserService()

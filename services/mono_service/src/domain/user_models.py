@@ -11,6 +11,8 @@ class UserProfile(BaseModel):
     role: str = Field(..., pattern="^(parent|kid|admin)$")
     children: List[str] = []  # List of child UIDs
     parent: Optional[str] = None  # Parent UID
+    age: Optional[int] = None
+    date_of_birth: Optional[str] = None
     created_at: Optional[datetime] = None
     last_login: Optional[datetime] = None
     fcm_token: Optional[str] = None          # Device push token (FCM / APNs)
@@ -29,7 +31,22 @@ class UserProfileUpdate(BaseModel):
     """Model for updating user profile"""
     display_name: Optional[str] = None
     photo_url: Optional[str] = None
-    
+
+class NotificationPreferences(BaseModel):
+    """User notification preferences stored in a sub-collection"""
+    email: bool = True
+    push: bool = True
+    sms: bool = False
+    reminders: bool = True
+    updated_at: datetime = Field(default_factory=datetime.now)
+
+class NotificationPreferencesUpdate(BaseModel):
+    """Model for updating notification preferences"""
+    email: Optional[bool] = None
+    push: Optional[bool] = None
+    sms: Optional[bool] = None
+    reminders: Optional[bool] = None
+
 class InviteCodeRequest(BaseModel):
     """Request to generate an invite code"""
     child_id: str

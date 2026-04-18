@@ -26,10 +26,6 @@ async def get_current_user(
     Raises:
         HTTPException: If token is invalid or expired
     """
-    # Check if auth is disabled for local testing
-    if os.getenv("AUTH_DISABLED_FOR_TESTING") == "true":
-        return {"uid": "local_test_user", "role": "admin"}
-        
     if credentials is None:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,

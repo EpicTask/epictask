@@ -7,6 +7,7 @@ import serve from "koa-static";
 import * as path from "path";
 import { fileURLToPath } from "url";
 import { dirname } from "path";
+import crypto from "crypto";
 import { connectWallet } from "./wallets/xumm/signin.js";
 import { PaymentHandler } from "./wallets/xumm/payments.js";
 import { EscrowService } from "./wallets/xumm/escrow.js";
@@ -101,14 +102,14 @@ router.post("/payment_request", requireAuth, async (ctx) => {
 });
 
 // GET /lookup_escrow/:account
-router.get("/lookup_escrow/:account", async (ctx) => {
+router.get("/lookup_escrow/:account", requireAuth, async (ctx) => {
   const { account } = ctx.params;
   const escrows = await accountService.lookupEscrow(account);
   ctx.body = { account, escrows };
 });
 
 // POST /create_escrow
-router.post("/create_escrow", async (ctx) => {
+router.post("/create_escrow", requireAuth, async (ctx) => {
   const createEscrowModel = ctx.request.body as CreateEscrowModel;
   const escrowService = new EscrowService();
   const result = await escrowService.createEscrowXumm(createEscrowModel);
@@ -116,7 +117,7 @@ router.post("/create_escrow", async (ctx) => {
 });
 
 // POST /cancel_escrow_xumm
-router.post("/cancel_escrow_xumm", async (ctx) => {
+router.post("/cancel_escrow_xumm", requireAuth, async (ctx) => {
   const escrowModel = ctx.request.body as EscrowModel;
   const escrowService = new EscrowService();
   const result = await escrowService.cancelEscrowXumm(escrowModel);
@@ -124,7 +125,7 @@ router.post("/cancel_escrow_xumm", async (ctx) => {
 });
 
 // POST /finish_escrow_xumm
-router.post("/finish_escrow_xumm", async (ctx) => {
+router.post("/finish_escrow_xumm", requireAuth, async (ctx) => {
   const escrowModel = ctx.request.body as EscrowModel;
   const escrowService = new EscrowService();
   const result = await escrowService.finishEscrowXumm(escrowModel);
@@ -132,13 +133,25 @@ router.post("/finish_escrow_xumm", async (ctx) => {
 });
 
 // POST /xumm/webhook
+// Authenticate using a pre-shared token passed as a query parameter.
+// Register the Xumm webhook URL as: https://<host>/xumm/webhook?token=<XUMM_WEBHOOK_TOKEN>
 router.post("/xumm/webhook", async (ctx) => {
-  const userAgent = ctx.headers["user-agent"];
-  // Verify User-Agent matches Xumm
-  if (userAgent !== "xumm-webhook") {
-    console.warn(`Invalid webhook attempt with User-Agent: ${userAgent}`);
+  const expectedToken = process.env.XUMM_WEBHOOK_TOKEN;
+  if (!expectedToken) {
+    console.error("[webhook] XUMM_WEBHOOK_TOKEN not configured — rejecting all webhook calls");
+    ctx.status = 503;
+    ctx.body = { error: "Webhook not configured" };
+    return;
+  }
+
+  const receivedToken = (ctx.query.token as string) ?? "";
+  // Constant-time comparison via HMAC to prevent timing attacks
+  const hmacExpected = crypto.createHmac("sha256", "epictask-webhook-compare").update(expectedToken).digest();
+  const hmacReceived = crypto.createHmac("sha256", "epictask-webhook-compare").update(receivedToken).digest();
+  if (!crypto.timingSafeEqual(hmacExpected, hmacReceived)) {
+    console.warn("[webhook] Invalid token in webhook request");
     ctx.status = 403;
-    ctx.body = { error: "Forbidden: Invalid User-Agent" };
+    ctx.body = { error: "Forbidden" };
     return;
   }
 
@@ -323,7 +336,7 @@ router.get("/transactions/:address", async (ctx) => {
 
 // *** Ledger Listener Management ***
 
-router.post("/ledger/listener/start", async (ctx) => {
+router.post("/ledger/listener/start", requireAuth, async (ctx) => {
   try {
     await ledgerListener.startListening();
     ctx.body = {
@@ -340,7 +353,7 @@ router.post("/ledger/listener/start", async (ctx) => {
   }
 });
 
-router.post("/ledger/listener/stop", async (ctx) => {
+router.post("/ledger/listener/stop", requireAuth, async (ctx) => {
   try {
     await ledgerListener.stopListening();
     ctx.body = {
@@ -357,14 +370,14 @@ router.post("/ledger/listener/stop", async (ctx) => {
   }
 });
 
-router.get("/ledger/listener/status", async (ctx) => {
+router.get("/ledger/listener/status", requireAuth, async (ctx) => {
   ctx.body = {
     isActive: ledgerListener.isActive(),
     monitoredAccounts: ledgerListener.getMonitoredAccounts(),
   };
 });
 
-router.post("/ledger/listener/add_account", async (ctx) => {
+router.post("/ledger/listener/add_account", requireAuth, async (ctx) => {
   try {
     const { account } = ctx.request.body as { account: string };
     if (!account) {
@@ -388,7 +401,7 @@ router.post("/ledger/listener/add_account", async (ctx) => {
   }
 });
 
-router.post("/ledger/listener/remove_account", async (ctx) => {
+router.post("/ledger/listener/remove_account", requireAuth, async (ctx) => {
   try {
     const { account } = ctx.request.body as { account: string };
     if (!account) {

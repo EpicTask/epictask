@@ -5,7 +5,7 @@ from google.cloud.firestore_v1.base_query import FieldFilter
 
 from ..config.firebase_config import db
 from ..config.collection_names import collections
-from ..domain.user_models import UserProfile, InviteCodeResponse, UserMetrics
+from ..domain.user_models import UserProfile, InviteCodeResponse, UserMetrics, NotificationPreferences
 
 def get_user_profile(uid: str) -> Optional[dict]:
     """Get user profile from Firestore."""
@@ -246,3 +246,26 @@ def get_user_metrics() -> UserMetrics:
             registration_trends={},
             last_updated=datetime.datetime.now()
         )
+
+def get_notification_preferences(uid: str) -> NotificationPreferences:
+    """Get user notification preferences from the sub-collection."""
+    try:
+        pref_ref = db.collection(collections.USERS).document(uid).collection(collections.PREFERENCES).document("notifications")
+        doc = pref_ref.get()
+        if doc.exists:
+            return NotificationPreferences(**doc.to_dict())
+        return NotificationPreferences()  # Return defaults if not found
+    except Exception as e:
+        print(f"Failed to get notification preferences for {uid}: {e}")
+        return NotificationPreferences()
+
+def update_notification_preferences(uid: str, prefs_dict: dict) -> bool:
+    """Update user notification preferences in the sub-collection."""
+    try:
+        pref_ref = db.collection(collections.USERS).document(uid).collection(collections.PREFERENCES).document("notifications")
+        prefs_dict['updated_at'] = datetime.datetime.now()
+        pref_ref.set(prefs_dict, merge=True)
+        return True
+    except Exception as e:
+        print(f"Failed to update notification preferences for {uid}: {e}")
+        return False
