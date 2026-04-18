@@ -49,47 +49,57 @@ class PayoutService:
         
         return True, ""
     
-    async def check_parent_approval(self, user_id: str) -> tuple[bool, Optional[str]]:
+    async def check_parent_approval_settings(self, user_id: str) -> tuple[bool, Optional[str], bool]:
         """
-        Check if parent has approved narrative payouts for this user.
+        Check if parent has approved narrative payouts and get approval settings.
         
         Args:
             user_id: User (kid) identifier
             
         Returns:
-            Tuple of (is_approved, parent_wallet_address)
+            Tuple of (is_approved, parent_wallet_address, manual_approval_required)
         """
         # Get user document
         user_doc = self.db.collection(collections.USERS).document(user_id).get()
         
         if not user_doc.exists:
-            return False, None
+            return False, None, True
         
         user_data = user_doc.to_dict()
         
-        # Check if narrative payouts are enabled
-        narrative_settings = user_data.get("narrative_settings", {})
-        payouts_enabled = narrative_settings.get("payouts_enabled", False)
-        
-        if not payouts_enabled:
-            return False, None
-        
-        # Get parent's wallet address (default for kid payouts)
+        # Check parent ID
         parent_id = user_data.get("parent_id")
         if not parent_id:
-            return False, None
+            return False, None, True
+
+        # Check narrative settings in dedicated collection
+        settings_doc = self.db.collection(collections.NARRATIVE_SETTINGS).document(user_id).get()
         
-        parent_doc = self.db.collection(collections.USERS).document(parent_id).get()
-        if not parent_doc.exists:
-            return False, None
+        if settings_doc.exists:
+            settings_data = settings_doc.to_dict()
+            payouts_enabled = settings_data.get("payouts_enabled", False)
+            manual_approval = settings_data.get("require_manual_approval", True)
+            parent_wallet = settings_data.get("parent_wallet_address")
+        else:
+            # Fallback to defaults or user document if settings don't exist
+            payouts_enabled = False
+            manual_approval = True
+            parent_wallet = None
+
+        if not payouts_enabled:
+            return False, None, True
         
-        parent_data = parent_doc.to_dict()
-        wallet_address = parent_data.get("wallet_address")
+        # If wallet not in settings, get from parent document
+        if not parent_wallet:
+            parent_doc = self.db.collection(collections.USERS).document(parent_id).get()
+            if parent_doc.exists:
+                parent_data = parent_doc.to_dict()
+                parent_wallet = parent_data.get("wallet_address")
         
-        if not wallet_address:
-            return False, None
+        if not parent_wallet:
+            return False, None, True
         
-        return True, wallet_address
+        return True, parent_wallet, manual_approval
     
     async def create_payout_request(
         self,
@@ -114,6 +124,7 @@ class PayoutService:
             reason=request.reason,
             story_id=request.story_id,
             node_id=request.node_id,
+            task_id=request.task_id,
             status="pending",
             correlation_id=correlation_id,
             created_at=datetime.utcnow(),

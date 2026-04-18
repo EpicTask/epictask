@@ -57,6 +57,7 @@ class StoryNode(BaseModel):
     age_range: List[int] = Field(min_length=2, max_length=2)
     prompt: str
     options: List[NodeOption]
+    task_gate: Optional[str] = None  # Reference to a task category
     payout_hint: Optional[PayoutHint] = None
     is_terminal: bool = Field(default=False)
     order: int = Field(default=0, ge=0)
@@ -84,6 +85,7 @@ class StoryProgress(BaseModel):
     total_xp: int = Field(default=0, ge=0)
     level: int = Field(default=1, ge=1)
     preferred_topics: List[str] = Field(default_factory=list)
+    status: Literal["in_progress", "completed", "abandoned"] = Field(default="in_progress")
     started_at: Optional[datetime] = None
     last_updated: Optional[datetime] = None
 
@@ -93,15 +95,30 @@ class AdvanceRequest(BaseModel):
     user_id: str
     story_id: str
     current_node_id: str
-    choice_index: int = Field(ge=0)
-    age: int = Field(ge=5, le=18)
+    choice_index: Optional[int] = Field(None, ge=0)
+    selected_option_id: Optional[str] = None
+    age: Optional[int] = Field(10, ge=5, le=18)
+
+
+class StartStoryRequest(BaseModel):
+    """Request to start a new story."""
+    user_id: str
+    story_id: str
+
+
+class StartStoryResponse(BaseModel):
+    """Response after starting a story."""
+    node: StoryNode
+    progress: StoryProgress
 
 
 class AdvanceResponse(BaseModel):
     """Response after advancing story progress."""
-    next_node_id: str
-    xp_awarded: int
-    payout_candidate: Optional[PayoutHint] = None
+    next_node: StoryNode
+    xp_earned: int
+    payout_earned: Optional[float] = None
+    story_completed: bool
+    progress: StoryProgress
     level_up: bool = Field(default=False)
     new_level: Optional[int] = None
 
@@ -128,6 +145,7 @@ class PayoutRequest(BaseModel):
     reason: Literal["chapter_completion", "story_completion", "streak_bonus", "milestone"]
     story_id: Optional[str] = None
     node_id: Optional[str] = None
+    task_id: Optional[str] = None
 
 
 class PayoutRequestRecord(BaseModel):
@@ -140,6 +158,7 @@ class PayoutRequestRecord(BaseModel):
     reason: str
     story_id: Optional[str] = None
     node_id: Optional[str] = None
+    task_id: Optional[str] = None
     status: Literal["pending", "submitted", "confirmed", "failed"] = Field(default="pending")
     correlation_id: Optional[str] = None
     transaction_hash: Optional[str] = None
@@ -204,6 +223,7 @@ class KidProgressSummary(BaseModel):
     total_xp_earned: int = Field(default=0, ge=0)
     total_payouts: int = Field(default=0, ge=0)
     total_payout_amount: float = Field(default=0.0, ge=0)
+    total_payouts_pending: int = Field(default=0, ge=0)
     last_activity_at: Optional[datetime] = None
     current_stories: List[dict] = Field(default_factory=list)
 

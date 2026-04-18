@@ -2,6 +2,7 @@
 from datetime import datetime
 from typing import List, Optional, Dict, Any
 from google.cloud.firestore import Query
+from google.cloud.firestore_v1.base_query import FieldFilter
 
 from src.config.firebase_config import db
 from src.config.collection_names import collections
@@ -29,7 +30,7 @@ class FirestoreService:
         query = self.db.collection(collections.STORIES)
         
         if published_only:
-            query = query.where("published", "==", True)
+            query = query.where(filter=FieldFilter("published", "==", True))
         
         stories = []
         for doc in query.stream():
@@ -213,6 +214,54 @@ class FirestoreService:
             progress_list.append(progress_data)
         
         return progress_list
+
+    async def get_progress_summary(self, user_id: str) -> Dict[str, Any]:
+        """
+        Get a summary of all story progress for a user.
+        
+        Args:
+            user_id: User identifier
+            
+        Returns:
+            Summary dictionary
+        """
+        progress_list = await self.get_all_user_progress(user_id)
+        
+        stories_started = len(progress_list)
+        stories_completed = sum(1 for p in progress_list if p.get("status") == "completed")
+        total_xp_earned = sum(p.get("total_xp", 0) for p in progress_list)
+        
+        # Get payout data
+        payout_query = (self.db.collection(collections.NARRATIVE_PAYOUT_REQUESTS)
+                       .where("user_id", "==", user_id))
+        
+        payouts = list(payout_query.stream())
+        total_payouts = sum(1 for p in payouts if p.to_dict().get("status") in ["submitted", "confirmed"])
+        total_payout_amount = sum(p.to_dict().get("amount", 0.0) for p in payouts if p.to_dict().get("status") in ["submitted", "confirmed"])
+        total_payouts_pending = sum(1 for p in payouts if p.to_dict().get("status") == "pending")
+
+        current_stories = []
+        for p in progress_list:
+            if p.get("status") != "completed":
+                story = await self.get_story(p["story_id"])
+                if story:
+                    current_stories.append({
+                        "story_id": p["story_id"],
+                        "title": story.get("title", "Unknown"),
+                        "progress": len(p.get("completed_nodes", [])),
+                        "total": story.get("total_nodes", 0)
+                    })
+
+        return {
+            "kid_id": user_id,
+            "stories_started": stories_started,
+            "stories_completed": stories_completed,
+            "total_xp_earned": total_xp_earned,
+            "total_payouts": total_payouts,
+            "total_payout_amount": total_payout_amount,
+            "total_payouts_pending": total_payouts_pending,
+            "current_stories": current_stories
+        }
 
 
 # Global instance

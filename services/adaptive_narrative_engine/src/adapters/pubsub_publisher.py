@@ -3,8 +3,16 @@ import json
 import os
 from datetime import datetime
 from typing import Dict, Any, Optional
-from google.cloud import pubsub_v1
 import uuid
+
+
+try:
+    from google.cloud import pubsub_v1
+    _PUBSUB_AVAILABLE = True
+except ImportError:
+    pubsub_v1 = None
+    _PUBSUB_AVAILABLE = False
+    print("WARNING: google-cloud-pubsub not installed. Pub/Sub publishing disabled.")
 
 
 class PubSubPublisher:
@@ -12,7 +20,7 @@ class PubSubPublisher:
     
     def __init__(self):
         self.project_id = os.getenv("GCP_PROJECT_ID")
-        self.publisher = pubsub_v1.PublisherClient()
+        self.publisher = pubsub_v1.PublisherClient() if _PUBSUB_AVAILABLE else None
         
         # Topic names
         self.topics = {
@@ -281,6 +289,10 @@ class PubSubPublisher:
         Returns:
             Message ID from Pub/Sub
         """
+        if not _PUBSUB_AVAILABLE or self.publisher is None:
+            print(f"[PubSub disabled] Would publish to {topic_path}: {event_data.get('event_id')}")
+            return None
+
         try:
             # Convert event to JSON bytes
             message_data = json.dumps(event_data).encode("utf-8")

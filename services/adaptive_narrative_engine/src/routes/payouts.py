@@ -46,7 +46,7 @@ async def request_payout(
         )
     
     # Check parent approval and get wallet address
-    parent_approved, parent_wallet = await payout_service.check_parent_approval(request.user_id)
+    parent_approved, parent_wallet, manual_approval = await payout_service.check_parent_approval_settings(request.user_id)
     if not parent_approved:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
@@ -75,13 +75,17 @@ async def request_payout(
     except Exception as e:
         print(f"Failed to publish payout requested event: {str(e)}")
     
-    # Process payout immediately (can be made async with background tasks)
-    payout_record = await payout_service.process_payout(payout_record)
+    # Process payout immediately ONLY if manual approval is not required
+    if not manual_approval:
+        payout_record = await payout_service.process_payout(payout_record)
+        message = "Payout request created and processing initiated"
+    else:
+        message = "Payout request created and pending parent approval"
     
     return {
         "request_id": payout_record.request_id,
         "status": payout_record.status,
-        "message": "Payout request created",
+        "message": message,
         "wallet_address": payout_record.wallet_address,
         "amount": payout_record.amount,
         "token": payout_record.token,
@@ -155,45 +159,41 @@ async def get_user_payouts(
 @router.post("/{request_id}/status", response_model=dict)
 async def update_payout_status(
     request_id: str,
-    status: str,
+    new_status: str,
     transaction_hash: str = None,
     current_user: dict = Depends(get_current_user)
 ):
     """
-    Update the status of a payout request (webhook/callback endpoint).
-    
-    - **request_id**: Payout request identifier
-    - **status**: New status (pending, submitted, confirmed, failed)
-    - **transaction_hash**: Optional transaction hash
-    
-    This endpoint is typically called by XRPL Management Service
-    to update payout status after transaction confirmation.
-    
-    **Note:** In production, this will be protected with service-to-service auth.
+    Update the status of a payout request.
+
+    Restricted to admin/service accounts. The XRPL Management Service must
+    authenticate with an admin service account to call this endpoint.
     """
-    # TODO: Add service-to-service authentication
-    # For now, allow authenticated users to update their own payouts
-    
+    if current_user.get("role") != "admin":
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Admin or service access required"
+        )
+
     payout = await payout_service.get_payout_request(request_id)
-    
+
     if not payout:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Payout request not found"
         )
-    
-    # Validate status value
+
     valid_statuses = ["pending", "submitted", "confirmed", "failed"]
-    if status not in valid_statuses:
+    if new_status not in valid_statuses:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=f"Invalid status. Must be one of: {', '.join(valid_statuses)}"
         )
-    
-    await payout_service.update_payout_status(request_id, status, transaction_hash)
-    
+
+    await payout_service.update_payout_status(request_id, new_status, transaction_hash)
+
     return {
         "request_id": request_id,
-        "status": status,
+        "status": new_status,
         "message": "Payout status updated"
     }
