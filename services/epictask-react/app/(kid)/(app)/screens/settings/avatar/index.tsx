@@ -1,8 +1,10 @@
 import { FONT_SIZES } from "@/constants/FontSize";
-import React from "react";
+import React, { useState } from "react";
 import CustomText from "@/components/CustomText";
 import CustomButton from "@/components/buttons/CustomButton";
 import ScreenHeading from "@/components/headings/ScreenHeading";
+import { useAuth } from "@/context/AuthContext";
+import * as ImagePicker from "expo-image-picker";
 
 import {
   responsiveFontSize,
@@ -11,11 +13,92 @@ import {
 } from "react-native-responsive-dimensions";
 
 import { IMAGES } from "@/assets";
-import { Image, StyleSheet, View } from "react-native";
+import { Image, StyleSheet, View, Alert } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { router } from "expo-router";
 
-const AddKid = () => {
+const AvatarScreen = () => {
+  const { user, updateProfile } = useAuth();
+  const [profileImage, setProfileImage] = useState(user?.image || user?.imageUrl || null);
+  const [isSaving, setIsSaving] = useState(false);
+
+  const displayName = user?.displayName || user?.name || "Kid";
+
+  const handleUpdateProfile = async (uri: string) => {
+    try {
+      setIsSaving(true);
+      await updateProfile({
+        imageUrl: uri,
+      });
+      setProfileImage(uri);
+      Alert.alert("Success", "Avatar updated successfully");
+    } catch (error) {
+      Alert.alert("Error", "Failed to update avatar");
+      console.error(error);
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const pickImage = async () => {
+    try {
+      const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
+
+      if (permissionResult.granted === false) {
+        Alert.alert("Permission Required", "Permission to access camera roll is required!");
+        return;
+      }
+
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ["images"] as ImagePicker.MediaType[],
+        allowsEditing: true,
+        aspect: [1, 1],
+        quality: 0.8,
+      });
+
+      if (!result.canceled && result.assets[0]) {
+        handleUpdateProfile(result.assets[0].uri);
+      }
+    } catch (error) {
+      Alert.alert("Error", "Failed to pick image");
+    }
+  };
+
+  const takePhoto = async () => {
+    try {
+      const permissionResult = await ImagePicker.requestCameraPermissionsAsync();
+
+      if (permissionResult.granted === false) {
+        Alert.alert("Permission Required", "Permission to access camera is required!");
+        return;
+      }
+
+      const result = await ImagePicker.launchCameraAsync({
+        allowsEditing: true,
+        aspect: [1, 1],
+        quality: 0.8,
+      });
+
+      if (!result.canceled && result.assets[0]) {
+        handleUpdateProfile(result.assets[0].uri);
+      }
+    } catch (error) {
+      Alert.alert("Error", "Failed to take photo");
+    }
+  };
+
+  const showImageOptions = () => {
+    Alert.alert(
+      "Select Avatar",
+      "Choose how you want to select your avatar",
+      [
+        { text: "Camera", onPress: takePhoto },
+        { text: "Photo Library", onPress: pickImage },
+        { text: "Cancel", style: "cancel" },
+      ]
+    );
+  };
+
   return (
     <SafeAreaView style={styles.safeArea}>
       <ScreenHeading text="Avatar" back={true} plus={false} />
@@ -44,30 +127,41 @@ const AddKid = () => {
                 variant="semiBold"
                 style={{ fontSize: FONT_SIZES.title }}
               >
-                John Kanic! 👋
+                {displayName}! 👋
               </CustomText>
             </View>
             <Image
-              source={IMAGES.profile}
+              source={profileImage ? { uri: profileImage } : IMAGES.profile}
               style={{
                 height: responsiveWidth(40),
                 width: responsiveWidth(40),
+                borderRadius: responsiveWidth(20),
+                borderWidth: 2,
+                borderColor: "#EE4266",
               }}
             />
           </View>
-          <CustomButton
-            fill={true}
-            onPress={() => {router.back()}}
-            text="Change"
-            height={responsiveHeight(7)}
-          />
+          <View style={{ gap: 10 }}>
+            <CustomButton
+              fill={true}
+              onPress={showImageOptions}
+              text={isSaving ? "Saving..." : "Change Avatar"}
+              height={responsiveHeight(7)}
+            />
+            <CustomButton
+              fill={false}
+              onPress={() => router.back()}
+              text="Go Back"
+              height={responsiveHeight(7)}
+            />
+          </View>
         </View>
       </View>
     </SafeAreaView>
   );
 };
 
-export default AddKid;
+export default AvatarScreen;
 
 const styles = StyleSheet.create({
   safeArea: {
@@ -77,22 +171,5 @@ const styles = StyleSheet.create({
     height: responsiveHeight(100),
     width: responsiveWidth(100),
     padding: responsiveWidth(6),
-  },
-  codeFieldRoot: { marginTop: 20, justifyContent: "space-between" },
-  cell: {
-    width: 70,
-    height: 70,
-    lineHeight: 68,
-    fontSize: 24,
-    borderWidth: 0,
-    borderColor: "#00000010",
-    backgroundColor: "#fff",
-    textAlign: "center",
-    borderRadius: 8,
-    marginHorizontal: 1,
-  },
-  focusCell: {
-    color: "white",
-    backgroundColor: "#EE4266",
   },
 });

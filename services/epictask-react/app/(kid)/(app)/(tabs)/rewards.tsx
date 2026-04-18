@@ -18,10 +18,12 @@ import CustomText from "@/components/CustomText";
 import React, { useEffect, useState, useCallback } from "react";
 import { useAuth } from "@/context/AuthContext";
 import taskService from "@/api/taskService";
+import narrativeService from "@/api/narrativeService";
 
 export default function TabTwoScreen() {
-  const { user } = useAuth();
+  const { user, childAge } = useAuth();
   const [kidLeaderboardData, setKidLeaderboardData] = useState<any>(null);
+  const [progressSummary, setProgressSummary] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
@@ -31,9 +33,14 @@ export default function TabTwoScreen() {
     try {
       setLoading(true);
       
-      // Fetch kid's leaderboard view
-      const kidData = await taskService.getKidLeaderboardView(user.uid);
+      // Fetch kid's leaderboard view and progress summary
+      const [kidData, summary] = await Promise.all([
+        taskService.getKidLeaderboardView(user.uid),
+        narrativeService.getKidProgressSummary(user.uid)
+      ]);
+      
       setKidLeaderboardData(kidData);
+      setProgressSummary(summary);
 
     } catch (error) {
       console.error("Failed to fetch kid rewards data:", error);
@@ -86,6 +93,8 @@ export default function TabTwoScreen() {
     <SafeAreaView style={styles.safeArea}>
       <KidRewardsView 
         kidData={kidLeaderboardData}
+        childAge={childAge}
+        progressSummary={progressSummary}
         onAchievementPress={handleAchievementPress}
       />
     </SafeAreaView>

@@ -1,13 +1,16 @@
 import { FONT_SIZES } from "@/constants/FontSize";
-import React, { useState } from "react";
+import React, { useState, useCallback } from "react";
 import {
   FlatList,
   StyleSheet,
   Text,
+  TouchableOpacity,
   View,
   ActivityIndicator,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { router, useFocusEffect } from "expo-router";
+import { Ionicons } from "@expo/vector-icons";
 import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/context/AuthContext";
 import { KidTaskModal } from "@/components/modals/KidTaskModal";
@@ -47,6 +50,12 @@ export default function AllTasksScreen() {
     enabled: !!user,
   });
 
+  useFocusEffect(
+    useCallback(() => {
+      refetch();
+    }, [refetch])
+  );
+
   if (isLoading) {
     return <ActivityIndicator size="large" style={styles.centered} />;
   }
@@ -58,9 +67,14 @@ export default function AllTasksScreen() {
   return (
     <SafeAreaView style={styles.safeArea}>
       <View style={styles.container}>
-        <CustomText variant="semiBold" style={styles.title}>
-          All My Tasks
-        </CustomText>
+        <View style={styles.header}>
+          <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+            <Ionicons name="chevron-back" size={28} color={COLORS.primary} />
+          </TouchableOpacity>
+          <CustomText variant="semiBold" style={styles.title}>
+            All My Tasks
+          </CustomText>
+        </View>
         <FlatList
           data={tasks}
           keyExtractor={(item) => item.id.toString()}
@@ -123,8 +137,15 @@ const styles = StyleSheet.create({
     textAlign: "center",
     marginTop: 50,
   },
+  header: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 20,
+  },
+  backButton: {
+    marginRight: 8,
+  },
   title: {
     fontSize: FONT_SIZES.title,
-    marginBottom: 20,
   },
 });

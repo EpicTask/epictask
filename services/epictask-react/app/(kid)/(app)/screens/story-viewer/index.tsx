@@ -65,7 +65,7 @@ export default function StoryViewerScreen() {
           setProgress(currentProgress);
           const node = await narrativeService.getNode(
             storyId,
-            currentProgress.current_node_id
+            currentProgress.current_node
           );
           setCurrentNode(node);
         }
@@ -110,7 +110,7 @@ export default function StoryViewerScreen() {
         // Story completed
         Alert.alert(
           "🎉 Story Complete!",
-          `Congratulations! You've earned ${response.progress.total_xp_earned} XP!`,
+          `Congratulations! You've earned ${response.progress.total_xp} XP!`,
           [
             {
               text: "Continue",
@@ -164,7 +164,7 @@ export default function StoryViewerScreen() {
   }
 
   const progressPercent =
-    progress.completed_node_ids.length / story.total_nodes;
+    progress.completed_nodes.length / story.total_nodes;
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -220,12 +220,12 @@ export default function StoryViewerScreen() {
             </CustomText>
             {currentNode.options.map((option, index) => (
               <TouchableOpacity
-                key={option.id}
+                key={option.option_id}
                 style={[
                   styles.optionButton,
                   advancing && styles.optionButtonDisabled,
                 ]}
-                onPress={() => handleOptionSelect(option.id)}
+                onPress={() => handleOptionSelect(option.option_id)}
                 disabled={advancing}
                 activeOpacity={0.7}
               >

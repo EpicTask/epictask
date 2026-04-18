@@ -73,24 +73,24 @@ export default function StoriesScreen() {
   // Categorize stories
   const inProgressStories = stories.filter(
     (story: Story) =>
-      progressMap[story.id]?.status === "in_progress"
+      progressMap[story.story_id]?.status === "in_progress"
   );
   const completedStories = stories.filter(
     (story: Story) =>
-      progressMap[story.id]?.status === "completed"
+      progressMap[story.story_id]?.status === "completed"
   );
   const newStories = stories.filter(
-    (story: Story) => !progressMap[story.id]
+    (story: Story) => !progressMap[story.story_id]
   );
 
   const handleStoryPress = (story: Story) => {
-    const progress = progressMap[story.id];
+    const progress = progressMap[story.story_id];
     if (progress) {
       // Continue story
       router.push({
         pathname: "../screens/story-viewer",
         params: {
-          storyId: story.id,
+          storyId: story.story_id,
           progressId: progress.id,
         },
       });
@@ -99,7 +99,7 @@ export default function StoriesScreen() {
       router.push({
         pathname: "../screens/story-viewer",
         params: {
-          storyId: story.id,
+          storyId: story.story_id,
         },
       });
     }
@@ -156,9 +156,9 @@ export default function StoriesScreen() {
             </CustomText>
             {inProgressStories.map((story: Story, index: number) => (
               <StoryCard
-                key={story.id}
+                key={story.story_id}
                 story={story}
-                progress={progressMap[story.id]}
+                progress={progressMap[story.story_id]}
                 onPress={() => handleStoryPress(story)}
                 bg={getCardColor(index)}
               />
@@ -174,7 +174,7 @@ export default function StoriesScreen() {
             </CustomText>
             {newStories.map((story: Story, index: number) => (
               <StoryCard
-                key={story.id}
+                key={story.story_id}
                 story={story}
                 onPress={() => handleStoryPress(story)}
                 bg={getCardColor(index)}
@@ -191,9 +191,9 @@ export default function StoriesScreen() {
             </CustomText>
             {completedStories.map((story: Story, index: number) => (
               <StoryCard
-                key={story.id}
+                key={story.story_id}
                 story={story}
-                progress={progressMap[story.id]}
+                progress={progressMap[story.story_id]}
                 onPress={() => handleStoryPress(story)}
                 bg={getCardColor(index)}
               />

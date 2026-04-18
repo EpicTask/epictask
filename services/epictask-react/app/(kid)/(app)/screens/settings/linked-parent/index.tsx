@@ -1,20 +1,43 @@
 import { FONT_SIZES } from "@/constants/FontSize";
-import React from "react";
+import React, { useEffect, useState } from "react";
 import ScreenHeading from "@/components/headings/ScreenHeading";
+import { useAuth } from "@/context/AuthContext";
+import { firestoreService } from "@/api/firestoreService";
 
 import {
-  responsiveFontSize,
   responsiveHeight,
   responsiveWidth,
 } from "react-native-responsive-dimensions";
 
 import { ICONS, IMAGES } from "@/assets";
-import { Image, Text } from "react-native";
+import { Image, Text, ActivityIndicator } from "react-native";
 import { COLORS } from "@/constants/Colors";
 import { StyleSheet, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 const LinkedParent = () => {
+  const { user } = useAuth();
+  const [parent, setParent] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchParent = async () => {
+      if (user?.parent_id) {
+        try {
+          const result = await firestoreService.getUserProfile(user.parent_id);
+          if (result.success) {
+            setParent(result.user);
+          }
+        } catch (error) {
+          console.error("Error fetching parent:", error);
+        }
+      }
+      setLoading(false);
+    };
+
+    fetchParent();
+  }, [user]);
+
   return (
     <SafeAreaView style={styles.safeArea}>
       <ScreenHeading text="Linked Parent" back={true} plus={false} />
@@ -34,10 +57,11 @@ const LinkedParent = () => {
           }}
         >
           <Image
-            source={IMAGES.profile}
+            source={parent?.image ? { uri: parent.image } : IMAGES.profile}
             style={{
               height: responsiveHeight(14),
               width: responsiveHeight(14),
+              borderRadius: responsiveHeight(7),
             }}
           />
         </View>
@@ -58,9 +82,10 @@ const LinkedParent = () => {
               fontSize: FONT_SIZES.title,
               fontWeight: "400",
               color: "#676767",
+              marginBottom: 10,
             }}
           >
-            Full Name
+            {loading ? "Loading..." : "Full Name"}
           </Text>
           <Text
             style={{
@@ -69,9 +94,11 @@ const LinkedParent = () => {
               color: COLORS.secondary,
             }}
           >
-            John Wick
+            {loading ? "" : (parent?.displayName || parent?.email || "Unknown Parent")}
           </Text>
-          {ICONS.link}
+          <View style={{ marginTop: 20 }}>
+            {ICONS.link}
+          </View>
         </View>
       </View>
     </SafeAreaView>

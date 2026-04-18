@@ -19,6 +19,7 @@ import * as Progress from "react-native-progress";
 import { useAuth } from "@/context/AuthContext";
 
 import TaskCard from "@/components/cards/kid/TaskCard";
+import Heading from "@/components/headings/Heading";
 import CustomText from "@/components/CustomText";
 import KidArrowIcon from "@/assets/icons/KidArrow";
 import { ICONS, IMAGES } from "@/assets";
@@ -35,7 +36,8 @@ import MicroserviceUrls from "@/constants/Microservices";
 import { Task } from "@/constants/Interfaces";
 import DebouncedTouchableOpacity from "@/components/buttons/DebouncedTouchableOpacity";
 import StoryProgressCard from "@/components/cards/kid/StoryProgressCard";
-import narrativeService, { StoryProgress } from "@/api/narrativeService";
+import ActiveStoryCard from "@/components/cards/kid/ActiveStoryCard";
+import narrativeService, { StoryProgress, Story } from "@/api/narrativeService";
 
 const fetchTasks = async (userId: string) => {
   const data = await firestoreService.getTasksForUser(userId);
@@ -62,7 +64,7 @@ export default function HomeScreen() {
     error,
     refetch,
   } = useQuery({
-    queryKey: ["tasks", user?.uid],
+    queryKey: ["allTasks", user?.uid],
     queryFn: () => fetchTasks(user?.uid),
     enabled: !!user,
   });
@@ -98,11 +100,13 @@ export default function HomeScreen() {
     fetchNotificationCount();
   }, [fetchNotificationCount]);
 
-  // Refresh notifications when screen comes into focus
+  // Refresh tasks, story progress, and notifications when screen comes into focus
   useFocusEffect(
     useCallback(() => {
+        refetch();
+        refetchStoryProgress();
         fetchNotificationCount();
-    }, [fetchNotificationCount])
+    }, [refetch, refetchStoryProgress, fetchNotificationCount])
   );
 
   const onRefresh = useCallback(async () => {
@@ -116,6 +120,20 @@ export default function HomeScreen() {
     await Promise.all([refetch(), refetchStoryProgress(), fetchNotificationCount()]);
     setRefreshing(false);
   }, [refetch, refetchStoryProgress, fetchNotificationCount, lastRefreshTime]);
+
+  // Derive activeProgress before any early returns so hooks stay stable
+  const activeProgress = storyProgress.find(
+    (p: StoryProgress) => p.status === "in_progress"
+  );
+
+  // Fetch active node to check for task gates — must be above early returns
+  const {
+    data: activeNode = null,
+  } = useQuery({
+    queryKey: ["activeStoryNode", user?.uid, activeProgress?.story_id, activeProgress?.current_node_id],
+    queryFn: () => activeProgress ? narrativeService.getNode(activeProgress.story_id, activeProgress.current_node_id) : null,
+    enabled: !!activeProgress,
+  });
 
   if (isLoading) {
     return <ActivityIndicator size="large" style={styles.centered} />;
@@ -145,7 +163,7 @@ export default function HomeScreen() {
     (p: StoryProgress) => p.status === "completed"
   ).length;
   const totalStoryXp = storyProgress.reduce(
-    (sum: number, p: StoryProgress) => sum + p.total_xp_earned,
+    (sum: number, p: StoryProgress) => sum + p.total_xp,
     0
   );
 
@@ -260,6 +278,28 @@ export default function HomeScreen() {
             </View>
           </View>
 
+          {/* Active Story / Adventure Section */}
+          <View style={{ paddingVertical: 5 }}>
+            <Heading title="Your Adventure" />
+            <ActiveStoryCard
+              title={activeProgress?.story_id === 'broken-toy-5-7' ? "The Broken Toy" : 
+                     activeProgress?.story_id === 'cookie-jar-5-7' ? "The Cookie Jar" :
+                     activeProgress ? "Current Story" : "Start a New Story!"}
+              progress={activeProgress ? (activeProgress.completed_nodes.length / 3) : 0} // Assuming 3 nodes for seeded stories
+              isNew={!activeProgress}
+              onPress={() => {
+                if (activeProgress) {
+                  router.push({
+                    pathname: "../screens/story",
+                    params: { storyId: activeProgress.story_id }
+                  });
+                } else {
+                  router.push("./stories");
+                }
+              }}
+            />
+          </View>
+
           {/* Upcoming Tasks */}
           <View style={{ gap: 10, paddingVertical: 6 }}>
             <View
@@ -305,6 +345,7 @@ export default function HomeScreen() {
                   }
                   key={index}
                   task={task}
+                  isStoryTask={activeNode?.task_gate === task.task_title}
                   onPress={() => {
                     setSelectedTask(task);
                     setModalVisible(true);

@@ -133,28 +133,28 @@ const SettingsScreen = () => {
               icon={ICONS.SETTINGS.user_avatar}
               text={"Avatar"}
               onPress={() => {
-                router.push("/(kid)/(app)/screens/profile" as any);
+                router.push("/(kid)/(app)/screens/settings/avatar" as any);
               }}
             />
             <SettingButton
               icon={ICONS.basicInfo}
               text={"Basic Info"}
               onPress={() => {
-                router.push("/(kid)/(app)/screens/profile" as any);
+                router.push("/(kid)/(app)/screens/settings/basic-info" as any);
               }}
             />
             <SettingButton
               icon={<TaskIcon width={20} height={20} />}
               text={"Task Overview"}
               onPress={() => {
-                router.push("/screens/settings/task-overview" as any);
+                router.push("/(kid)/(app)/screens/settings/task-overview" as any);
               }}
             />
             <SettingButton
               icon={<LinkIcon height={20} width={20} />}
               text={"Linked Parent"}
               onPress={() => {
-                router.push("/(kid)/(app)/screens/profile" as any);
+                router.push("/(kid)/(app)/screens/settings/linked-parent" as any);
               }}
             />
             <SettingButton
@@ -184,7 +184,7 @@ const SettingsScreen = () => {
             <SettingButton
               icon={ICONS.SETTINGS.get_help}
               text={"Get Help"}
-              onPress={() => {}}
+              onPress={() => router.push("/(kid)/(app)/screens/settings/get-help" as any)}
             />
             <SettingButton
               icon={ICONS.SETTINGS.user}
@@ -194,7 +194,7 @@ const SettingsScreen = () => {
             <SettingButton
               icon={ICONS.SETTINGS.terms}
               text={"Who We Are"}
-              onPress={() => {}}
+              onPress={() => router.push("/(kid)/(app)/screens/settings/who-we-are" as any)}
             />
             <SettingButton
               icon={<MaterialIcons name="logout" size={24} color="red" />}
