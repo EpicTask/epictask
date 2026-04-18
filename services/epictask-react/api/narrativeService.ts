@@ -1,28 +1,13 @@
-import axios from "axios";
 import MicroserviceUrls from "@/constants/Microservices";
-import authService from "./authService";
+import createAuthenticatedClient from "./apiClient";
 
 // Create API client for Adaptive Narrative Engine
-const narrativeApiClient = axios.create({
-  baseURL: MicroserviceUrls.narrativeEngine,
-});
-
-// Add auth interceptor
-narrativeApiClient.interceptors.request.use(
-  async (config) => {
-    const token = await authService.refreshToken();
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
-    }
-    return config;
-  },
-  (error) => {
-    return Promise.reject(error);
-  }
+const narrativeApiClient = createAuthenticatedClient(
+  MicroserviceUrls.narrativeEngine
 );
 
 export interface Story {
-  id: string;
+  story_id: string;
   title: string;
   description: string;
   min_age: number;
@@ -37,11 +22,12 @@ export interface Story {
 }
 
 export interface Node {
-  id: string;
+  node_id: string;
   story_id: string;
   prompt: string;
   options: NodeOption[];
   node_type: "choice" | "completion" | "checkpoint";
+  task_gate?: string;
   xp_reward: number;
   payout_eligible: boolean;
   payout_amount?: number;
@@ -50,7 +36,7 @@ export interface Node {
 }
 
 export interface NodeOption {
-  id: string;
+  option_id: string;
   text: string;
   next_node_id: string | null;
   is_correct?: boolean;
@@ -60,13 +46,13 @@ export interface StoryProgress {
   id: string;
   user_id: string;
   story_id: string;
-  current_node_id: string;
-  completed_node_ids: string[];
-  total_xp_earned: number;
+  current_node: string;
+  completed_nodes: string[];
+  total_xp: number;
   status: "in_progress" | "completed" | "abandoned";
   started_at: string;
   completed_at?: string;
-  last_activity_at: string;
+  last_updated: string;
 }
 
 export interface AdvanceProgressRequest {
@@ -86,15 +72,20 @@ export interface AdvanceProgressResponse {
 
 export interface PayoutRequest {
   user_id: string;
-  story_id: string;
-  node_id: string;
+  story_id?: string;
+  node_id?: string;
+  task_id?: string;
   amount: number;
+  wallet_address?: string;
+  token?: "eTask" | "RLUSD" | "XRP";
+  reason?: "chapter_completion" | "story_completion" | "streak_bonus" | "milestone";
 }
 
 export interface PayoutResponse {
   request_id: string;
-  status: "pending" | "approved" | "rejected" | "completed";
-  message: string;
+  status: "pending" | "submitted" | "confirmed" | "failed" | "approved" | "rejected";
+  message?: string;
+  transaction_hash?: string;
 }
 
 // Parent-specific types
@@ -123,6 +114,7 @@ export interface KidProgressSummary {
   total_xp_earned: number;
   total_payouts: number;
   total_payout_amount: number;
+  total_payouts_pending: number;
   last_activity_at?: string;
   current_stories: Array<{
     story_id: string;
@@ -209,10 +201,10 @@ export const narrativeService = {
   },
 
   // Get a specific node
-  getNode: async (storyId: string, nodeId: string): Promise<Node> => {
+  getNode: async (storyId: string, nodeId: string, age: number = 10): Promise<Node> => {
     try {
       const response = await narrativeApiClient.get(
-        `/stories/${storyId}/nodes/${nodeId}`
+        `/stories/${storyId}/nodes/${nodeId}?age=${age}`
       );
       return response.data;
     } catch (error) {
@@ -227,15 +219,15 @@ export const narrativeService = {
     storyId?: string
   ): Promise<StoryProgress[]> => {
     try {
-      const params = new URLSearchParams({ user_id: userId });
-      if (storyId) {
-        params.append("story_id", storyId);
-      }
-      const response = await narrativeApiClient.get(`/progress?${params}`);
-      return response.data.progress || response.data;
+      const url = storyId ? `/progress/${userId}/${storyId}` : `/progress/${userId}`;
+      const response = await narrativeApiClient.get(url);
+      // Backend returns a single object if storyId is provided, or an array if not
+      const data = response.data.progress || response.data;
+      return Array.isArray(data) ? data : [data];
     } catch (error) {
-      console.error("Get progress error:", error);
-      throw new Error("Failed to get progress");
+      console.error("Get story progress error:", error);
+      // Return empty array instead of throwing to avoid breaking the UI on fresh starts
+      return [];
     }
   },
 
@@ -278,6 +270,22 @@ export const narrativeService = {
       console.error("Request payout error:", error);
       throw new Error("Failed to request payout");
     }
+  },
+
+  // Alias for requestPayout as used in build plan
+  createPayout: async (data: any): Promise<PayoutResponse> => {
+    // Map build plan fields to PayoutRequest
+    const mappedData: PayoutRequest = {
+      user_id: data.kid_id || data.user_id,
+      story_id: data.story_id,
+      node_id: data.node_id,
+      task_id: data.task_id,
+      amount: data.token_amount || data.amount,
+      wallet_address: data.wallet_address || "", // Will be overridden by parent wallet in backend
+      token: data.token || "eTask",
+      reason: data.reason || "chapter_completion"
+    };
+    return narrativeService.requestPayout(mappedData);
   },
 
   // Get payout status
@@ -415,6 +423,17 @@ export const narrativeService = {
     } catch (error) {
       console.error("Get narrative analytics error:", error);
       throw new Error("Failed to get narrative analytics");
+    }
+  },
+
+  // Get kid progress summary
+  getKidProgressSummary: async (kidId: string): Promise<KidProgressSummary> => {
+    try {
+      const response = await narrativeApiClient.get(`/progress/summary/${kidId}`);
+      return response.data;
+    } catch (error) {
+      console.error("Get kid progress summary error:", error);
+      throw new Error("Failed to get progress summary");
     }
   },
 };

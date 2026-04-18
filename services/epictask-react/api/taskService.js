@@ -1,27 +1,10 @@
-import axios from "axios";
 import MicroserviceUrls from "@/constants/Microservices";
 import { Alert } from "react-native";
 import { firestoreService } from "./firestoreService";
+import createAuthenticatedClient from "./apiClient";
 
 // Create a separate API client for Task Management Service
-const taskApiClient = axios.create({
-  baseURL: MicroserviceUrls.taskManagement,
-});
-
-import authService from "./authService";
-
-taskApiClient.interceptors.request.use(
-  async (config) => {
-    const token = await authService.refreshToken();
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
-    }
-    return config;
-  },
-  (error) => {
-    return Promise.reject(error);
-  },
-);
+const taskApiClient = createAuthenticatedClient(MicroserviceUrls.taskManagement);
 
 export const taskService = {
   // Task Management Service API Calls Only

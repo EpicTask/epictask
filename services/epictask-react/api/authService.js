@@ -490,16 +490,11 @@ export const authService = {
     }
   },
 
-  // Refresh the Firebase ID token
+  // Refresh the Firebase ID token (delegates to the shared smart-refresh utility)
   refreshToken: async () => {
     try {
-      const user = auth.currentUser;
-      if (user) {
-        const token = await user.getIdToken(); // Force refresh
-        await AsyncStorage.setItem("authToken", token);
-        return token;
-      }
-      return null;
+      const { smartRefreshToken } = await import("./apiClient");
+      return await smartRefreshToken();
     } catch (error) {
       console.error("Token refresh error:", error);
       throw new Error("Failed to refresh token");

@@ -1,24 +1,7 @@
-import axios from "axios";
 import MicroserviceUrls from "@/constants/Microservices";
+import createAuthenticatedClient from "./apiClient";
 
-const userApiClient = axios.create({
-  baseURL: MicroserviceUrls.userManagement,
-});
-
-import authService from "./authService";
-
-userApiClient.interceptors.request.use(
-  async (config) => {
-    const token = await authService.refreshToken();
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
-    }
-    return config;
-  },
-  (error) => {
-    return Promise.reject(error);
-  }
-);
+const userApiClient = createAuthenticatedClient(MicroserviceUrls.userManagement);
 
 export const userService = {
   updateProfile: async (profileData) => {
@@ -101,6 +84,37 @@ export const userService = {
       console.error("Unregister push token error:", error);
     }
   },
+
+  getNotificationPreferences: async () => {
+    try {
+      const response = await userApiClient.get("/preferences/notifications");
+      return response.data;
+    } catch (error) {
+      console.error("Get notification preferences error:", error);
+      throw new Error("Failed to fetch notification preferences");
+    }
+  },
+
+  updateNotificationPreferences: async (prefs) => {
+    try {
+      const response = await userApiClient.put("/preferences/notifications", prefs);
+      return response.data;
+    } catch (error) {
+      console.error("Update notification preferences error:", error);
+      throw new Error("Failed to update notification preferences");
+    }
+  },
+
+  askParentForHelp: async () => {
+    try {
+      const response = await userApiClient.post("/ask-help");
+      return response.data;
+    } catch (error) {
+      console.error("Ask parent for help error:", error);
+      throw new Error(error.response?.data?.detail || "Failed to ask parent for help");
+    }
+  },
 };
 
-export default userService;
+export { userApiClient };
+export default userApiClient;
