@@ -16,7 +16,7 @@
     "ios": {
       "usesAppleSignIn": true,
       "supportsTablet": true,
-      "buildNumber": "6",
+      "buildNumber": "8",
       "bundleIdentifier": "com.kaitechcorp.epictask",
       "googleServicesFile": "./GoogleService-Info.plist",
       "infoPlist": {
