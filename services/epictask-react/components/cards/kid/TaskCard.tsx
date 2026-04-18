@@ -8,18 +8,26 @@ import { responsiveHeight } from "react-native-responsive-dimensions";
 import CustomText from "@/components/CustomText";
 
 import { Task } from "@/constants/Interfaces";
+import { COLORS } from "@/constants/Colors";
 
 interface KidsCardProps {
   task: Task;
   onPress?: () => void;
   onComplete?: () => void;
   bg?: string;
+  isStoryTask?: boolean;
 }
 
-const TaskCard: React.FC<KidsCardProps> = ({ task, onPress, onComplete, bg }) => {
+const TaskCard: React.FC<KidsCardProps> = ({ task, onPress, onComplete, bg, isStoryTask }) => {
   const { task_title, reward_amount, expiration_date, notes } = task || {};
   return (
     <View style={[styles.card, { backgroundColor: bg || "white" }]}>
+      {isStoryTask && (
+        <View style={styles.storyBadge}>
+          <Ionicons name="star" size={12} color="white" />
+          <Text style={styles.storyBadgeText}>STORY TASK</Text>
+        </View>
+      )}
       <View style={{ gap: 10 }}>
         <View style={{ flexDirection: "row", justifyContent: "space-between" }}>
           <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
@@ -51,7 +59,7 @@ const TaskCard: React.FC<KidsCardProps> = ({ task, onPress, onComplete, bg }) =>
             <Ionicons name="calendar-outline" size={12} color="black" />
             <CustomText style={styles.statText}>
               {expiration_date
-                ? new Date(expiration_date).toLocaleDateString()
+                ? new Date(expiration_date*1000).toLocaleDateString()
                 : "No due date"}
             </CustomText>
           </View>
@@ -178,6 +186,25 @@ const styles = StyleSheet.create({
   },
   notesText: {
     color: "#6B7280",
+  },
+  storyBadge: {
+    position: 'absolute',
+    top: 0,
+    right: 20,
+    backgroundColor: COLORS.secondary || '#FFC107',
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderBottomLeftRadius: 10,
+    borderBottomRightRadius: 10,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    zIndex: 10,
+  },
+  storyBadgeText: {
+    color: 'white',
+    fontSize: 9,
+    fontWeight: 'bold',
   },
 });
 

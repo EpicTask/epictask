@@ -17,6 +17,7 @@ import { COLORS } from '@/constants/Colors';
 import CustomText from '@/components/CustomText';
 import { MaterialIcons, FontAwesome5, AntDesign } from '@expo/vector-icons';
 import DebouncedTouchableOpacity from '../buttons/DebouncedTouchableOpacity';
+import EarningsJar from './EarningsJar';
 
 interface KidData {
   user_id: string;
@@ -54,10 +55,12 @@ interface KidLeaderboardData {
 
 interface Props {
   kidData: KidLeaderboardData;
+  childAge?: number;
+  progressSummary?: any;
   onAchievementPress?: (achievement: string) => void;
 }
 
-const KidRewardsView: React.FC<Props> = ({ kidData, onAchievementPress }) => {
+const KidRewardsView: React.FC<Props> = ({ kidData, childAge, progressSummary, onAchievementPress }) => {
   const bounceAnim = useRef(new Animated.Value(1)).current;
   const progressAnim = useRef(new Animated.Value(0)).current;
   const coinAnim = useRef(new Animated.Value(0)).current;
@@ -142,102 +145,114 @@ const KidRewardsView: React.FC<Props> = ({ kidData, onAchievementPress }) => {
 
   return (
     <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
-      {/* Hero Section with Avatar and Level */}
-      <View style={styles.heroSection}>
-        <View style={styles.avatarContainer}>
-          <DebouncedTouchableOpacity onPress={handleLevelPress} activeOpacity={0.8}>
-            <Animated.View
-              style={[
-                styles.avatarCircle,
-                { transform: [{ scale: bounceAnim }] },
-              ]}
-            >
-              <Text style={styles.levelEmoji}>{getLevelIcon(kidData.kid_data.level)}</Text>
-            </Animated.View>
-          </DebouncedTouchableOpacity>
-          <View style={styles.levelBadge}>
-            <CustomText variant="bold" style={styles.levelText}>
-              {kidData.kid_data.level}
+      {/* 5-7 UI Overlay: Earnings Jar */}
+      {childAge && childAge >= 5 && childAge <= 7 ? (
+        <View style={styles.jarSection}>
+          <EarningsJar 
+            totalCoins={kidData.kid_data.token_score || 0} 
+            pendingCoins={progressSummary?.total_payouts_pending || 0}
+          />
+        </View>
+      ) : (
+        /* Original Hero Section */
+        <View style={styles.heroSection}>
+          <View style={styles.avatarContainer}>
+            <DebouncedTouchableOpacity onPress={handleLevelPress} activeOpacity={0.8}>
+              <Animated.View
+                style={[
+                  styles.avatarCircle,
+                  { transform: [{ scale: bounceAnim }] },
+                ]}
+              >
+                <Text style={styles.levelEmoji}>{getLevelIcon(kidData.kid_data.level)}</Text>
+              </Animated.View>
+            </DebouncedTouchableOpacity>
+            <View style={styles.levelBadge}>
+              <CustomText variant="bold" style={styles.levelText}>
+                {kidData.kid_data.level}
+              </CustomText>
+            </View>
+          </View>
+
+          <CustomText variant="bold" style={styles.welcomeText}>
+            Hey {kidData.kid_data.display_name || 'Champion'}! 👋
+          </CustomText>
+
+          <View style={styles.encouragementCard}>
+            <CustomText variant="medium" style={styles.encouragementText}>
+              {kidData.encouragement_message}
             </CustomText>
           </View>
         </View>
+      )}
 
-        <CustomText variant="bold" style={styles.welcomeText}>
-          Hey {kidData.kid_data.display_name || 'Champion'}! 👋
-        </CustomText>
-
-        <View style={styles.encouragementCard}>
-          <CustomText variant="medium" style={styles.encouragementText}>
-            {kidData.encouragement_message}
+      {/* Earnings Display - Hide if 5-7 (since Jar handles it) */}
+      {!(childAge && childAge >= 5 && childAge <= 7) && (
+        <View style={styles.earningsSection}>
+          <CustomText variant="semiBold" style={styles.sectionTitle}>
+            💰 Your Treasure Chest
           </CustomText>
-        </View>
-      </View>
-
-      {/* Earnings Display */}
-      <View style={styles.earningsSection}>
-        <CustomText variant="semiBold" style={styles.sectionTitle}>
-          💰 Your Treasure Chest
-        </CustomText>
-        
-        <View style={styles.treasureChest}>
-          <Animated.View
-            style={[
-              styles.coinIcon,
-              {
-                transform: [
-                  { rotate: coinRotation },
-                  { scale: coinScale },
-                ],
-              },
-            ]}
-          >
-            <FontAwesome5 name="coins" size={32} color="#FFD700" />
-          </Animated.View>
           
-          <CustomText variant="bold" style={styles.totalValue}>
-            {kidData.kid_data.tasks_completed}
-          </CustomText>
-          <CustomText variant="medium" style={styles.totalLabel}>
-            Tasks Completed
-          </CustomText>
+          <View style={styles.treasureChest}>
+            <Animated.View
+              style={[
+                styles.coinIcon,
+                {
+                  transform: [
+                    { rotate: coinRotation },
+                    { scale: coinScale },
+                  ],
+                },
+              ]}
+            >
+              <FontAwesome5 name="coins" size={32} color="#FFD700" />
+            </Animated.View>
+            
+            <CustomText variant="bold" style={styles.totalValue}>
+              {kidData.kid_data.tasks_completed}
+            </CustomText>
+            <CustomText variant="medium" style={styles.totalLabel}>
+              Tasks Completed
+            </CustomText>
 
-          {/* Currency Breakdown */}
-          <View style={styles.currencyGrid}>
-            {kidData.kid_data.currencies.xrp_earned > 0 && (
-              <View style={styles.currencyCard}>
-                <View style={[styles.currencyIcon, { backgroundColor: '#23292F' }]}>
-                  <CustomText variant="bold" style={styles.currencySymbol}>XRP</CustomText>
+            {/* Currency Breakdown */}
+            <View style={styles.currencyGrid}>
+              {kidData.kid_data.currencies.xrp_earned > 0 && (
+                <View style={styles.currencyCard}>
+                  <View style={[styles.currencyIcon, { backgroundColor: '#23292F' }]}>
+                    <CustomText variant="bold" style={styles.currencySymbol}>XRP</CustomText>
+                  </View>
+                  <CustomText variant="semiBold" style={styles.currencyAmount}>
+                    {kidData.kid_data.currencies.xrp_earned.toFixed(2)}
+                  </CustomText>
                 </View>
-                <CustomText variant="semiBold" style={styles.currencyAmount}>
-                  {kidData.kid_data.currencies.xrp_earned.toFixed(2)}
-                </CustomText>
-              </View>
-            )}
-            
-            {kidData.kid_data.currencies.rlusd_earned > 0 && (
-              <View style={styles.currencyCard}>
-                <View style={[styles.currencyIcon, { backgroundColor: '#1976D2' }]}>
-                  <CustomText variant="bold" style={styles.currencySymbol}>RLUSD</CustomText>
+              )}
+              
+              {kidData.kid_data.currencies.rlusd_earned > 0 && (
+                <View style={styles.currencyCard}>
+                  <View style={[styles.currencyIcon, { backgroundColor: '#1976D2' }]}>
+                    <CustomText variant="bold" style={styles.currencySymbol}>RLUSD</CustomText>
+                  </View>
+                  <CustomText variant="semiBold" style={styles.currencyAmount}>
+                    {kidData.kid_data.currencies.rlusd_earned.toFixed(2)}
+                  </CustomText>
                 </View>
-                <CustomText variant="semiBold" style={styles.currencyAmount}>
-                  {kidData.kid_data.currencies.rlusd_earned.toFixed(2)}
-                </CustomText>
-              </View>
-            )}
-            
-            {kidData.kid_data.currencies.etask_earned > 0 && (
-              <View style={styles.currencyCard}>
-                <View style={[styles.currencyIcon, { backgroundColor: '#4CAF50' }]}>
-                  <CustomText variant="bold" style={styles.currencySymbol}>eTask</CustomText>
+              )}
+              
+              {kidData.kid_data.currencies.etask_earned > 0 && (
+                <View style={styles.currencyCard}>
+                  <View style={[styles.currencyIcon, { backgroundColor: '#4CAF50' }]}>
+                    <CustomText variant="bold" style={styles.currencySymbol}>eTask</CustomText>
+                  </View>
+                  <CustomText variant="semiBold" style={styles.currencyAmount}>
+                    {kidData.kid_data.currencies.etask_earned.toFixed(0)}
+                  </CustomText>
                 </View>
-                <CustomText variant="semiBold" style={styles.currencyAmount}>
-                  {kidData.kid_data.currencies.etask_earned.toFixed(0)}
-                </CustomText>
-              </View>
-            )}
+              )}
+            </View>
           </View>
         </View>
-      </View>
+      )}
 
       {/* Progress to Next Level */}
       <View style={styles.progressSection}>
@@ -388,6 +403,19 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#F0F8FF',
+  },
+  jarSection: {
+    paddingVertical: responsiveHeight(4),
+    alignItems: 'center',
+    backgroundColor: 'white',
+    borderBottomLeftRadius: 40,
+    borderBottomRightRadius: 40,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 10,
+    elevation: 10,
+    marginBottom: 20,
   },
   heroSection: {
     alignItems: 'center',

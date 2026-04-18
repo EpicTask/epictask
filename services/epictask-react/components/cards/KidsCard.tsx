@@ -6,7 +6,7 @@ import { useRouter } from "expo-router";
 import { COLORS } from "@/constants/Colors";
 import { responsiveHeight } from "react-native-responsive-dimensions";
 import { AntDesign, MaterialCommunityIcons } from "@expo/vector-icons";
-import { View, Text, Image, StyleSheet } from "react-native";
+import { View, Text, Image, StyleSheet, TouchableOpacity } from "react-native";
 import DebouncedTouchableOpacity from "../buttons/DebouncedTouchableOpacity";
 import CustomText from "../CustomText";
 
@@ -73,6 +73,20 @@ const KidsCard: React.FC<KidsCardProps> = ({
             <CustomText variant="medium" style={styles.statText}>{pending} Pending</CustomText>
           </View>
         </View>
+        
+        <TouchableOpacity 
+          style={styles.storyButton}
+          onPress={(e) => {
+            e.stopPropagation();
+            router.push({
+              pathname: "/screens/child-progress",
+              params: { kidId: uid, kidName: name }
+            } as any);
+          }}
+        >
+          <MaterialCommunityIcons name="book-open-variant" size={16} color={COLORS.primary} />
+          <Text style={styles.storyButtonText}>Story Progress</Text>
+        </TouchableOpacity>
       </View>
     </DebouncedTouchableOpacity>
   );
@@ -128,6 +142,21 @@ const styles = StyleSheet.create({
   statText: {
     fontSize: 12,
     color: "#6B7280",
+  },
+  storyButton: {
+    marginTop: 10,
+    paddingVertical: 8,
+    borderTopWidth: 1,
+    borderTopColor: '#f0f0f0',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+  },
+  storyButtonText: {
+    fontSize: 11,
+    fontWeight: 'bold',
+    color: COLORS.primary,
   },
 });
 

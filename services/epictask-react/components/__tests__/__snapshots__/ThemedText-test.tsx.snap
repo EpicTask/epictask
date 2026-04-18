@@ -1,6 +1,6 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`renders correctly 1`] = `
+exports[`ThemedText renders correctly 1`] = `
 <Text
   style={
     [
@@ -8,8 +8,8 @@ exports[`renders correctly 1`] = `
         "color": "#11181C",
       },
       {
-        "fontSize": 16,
-        "lineHeight": 24,
+        "fontSize": 18,
+        "lineHeight": 26,
       },
       undefined,
       undefined,

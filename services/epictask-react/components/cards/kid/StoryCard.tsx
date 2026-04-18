@@ -30,7 +30,7 @@ export default function StoryCard({
   bg = COLORS.light_purple,
 }: StoryCardProps) {
   const progressPercent = progress
-    ? progress.completed_node_ids.length / story.total_nodes
+    ? progress.completed_nodes.length / story.total_nodes
     : 0;
   const isCompleted = progress?.status === "completed";
   const isInProgress = progress?.status === "in_progress";
@@ -127,7 +127,7 @@ export default function StoryCard({
           {isCompleted && (
             <View style={styles.completedContainer}>
               <Text style={styles.completedText}>
-                ✨ Completed! Earned {progress?.total_xp_earned || 0} XP
+                ✨ Completed! Earned {progress?.total_xp || 0} XP
               </Text>
             </View>
           )}
@@ -268,4 +268,5 @@ const styles = StyleSheet.create({
     fontWeight: "600",
     textAlign: "center",
   },
+});
 });

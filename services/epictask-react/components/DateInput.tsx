@@ -1,14 +1,30 @@
 import { StyleSheet, Text, View, Modal, TouchableOpacity, ScrollView } from "react-native";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import CustomInput from "./custom-input/CustomInput";
 import { ICONS } from "@/assets";
 
-const DateInput = ({title}:{title:string}) => {
+interface DateInputProps {
+  title: string;
+  value: string;
+  onDateChange: (date: string) => void;
+}
+
+const DateInput = ({ title, value, onDateChange }: DateInputProps) => {
   const [showDateModal, setShowDateModal] = useState(false);
   const [selectedDate, setSelectedDate] = useState(new Date());
 
+  useEffect(() => {
+    if (value) {
+      const parsedDate = new Date(value);
+      if (!isNaN(parsedDate.getTime())) {
+        setSelectedDate(parsedDate);
+      }
+    }
+  }, [value]);
+
   const handleDateSelect = (date: Date): void => {
     setSelectedDate(date);
+    onDateChange(date.toISOString().split('T')[0]); // Use YYYY-MM-DD format
     setShowDateModal(false);
   };
 
@@ -25,7 +41,7 @@ const DateInput = ({title}:{title:string}) => {
           setShowDateModal(true);
         }}
         label={title}
-        value={selectedDate.toLocaleDateString()}
+        value={value || selectedDate.toLocaleDateString()}
         icon={ICONS.calendar}
         onChangeText={() => {}}
       />
