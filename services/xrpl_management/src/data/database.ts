@@ -1,6 +1,6 @@
 import crypto from 'crypto';
 
-const MONO_SERVICE_URL = process.env.MONO_SERVICE_URL || 'http://localhost:8080';
+const MONO_SERVICE_URL = process.env.MONO_SERVICE_URL;
 
 export const writeResponseToDatabase = async (
   response: object,

@@ -1,7 +1,7 @@
 import { Client } from 'xrpl';
 
 const initializeClient = async () => {
-  const client = new Client(process.env.XRPL_TESTNET_WSS || 'wss://s.altnet.rippletest.net:51233');
+  const client = new Client(process.env.XRPL_TESTNET_WSS || process.env.XRPL_SOLOGENIC_WSS || '');
   try {
     await client.connect();
   } catch (error) {

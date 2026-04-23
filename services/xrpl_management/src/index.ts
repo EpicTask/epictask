@@ -29,16 +29,6 @@ const __dirname = dirname(__filename);
 const app = new Koa();
 const router = new Router();
 
-// Initialize ledger listener on startup (Disabled for Cloud Run compatibility)
-// const initializeLedgerListener = async () => {
-//   try {
-//     await ledgerListener.startListening();
-//     console.log("Ledger listener initialized successfully");
-//   } catch (error) {
-//     console.error("Failed to initialize ledger listener:", error);
-//   }
-// };
-
 // Middleware to handle json responses
 app.use(json());
 // Middleware to parse request bodies
@@ -137,6 +127,8 @@ router.post("/finish_escrow_xumm", requireAuth, async (ctx) => {
 // Register the Xumm webhook URL as: https://<host>/xumm/webhook?token=<XUMM_WEBHOOK_TOKEN>
 router.post("/xumm/webhook", async (ctx) => {
   const expectedToken = process.env.XUMM_WEBHOOK_TOKEN;
+  console.log("[webhook] Received webhook request with query: %o", ctx.query);
+  console.log("Environment variable XUMM_WEBHOOK_TOKEN is %s", expectedToken);
   if (!expectedToken) {
     console.error("[webhook] XUMM_WEBHOOK_TOKEN not configured — rejecting all webhook calls");
     ctx.status = 503;

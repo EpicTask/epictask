@@ -1,4 +1,4 @@
-# Use Node.js 18 LTS
+# Use Node.js 22 LTS
 FROM node:22-alpine
 
 # Set working directory
@@ -13,9 +13,6 @@ RUN yarn install --frozen-lockfile --production
 
 # Copy source code
 COPY . .
-
-# Build the TypeScript code
-# RUN yarn build
 
 # Expose port
 EXPOSE 3000
