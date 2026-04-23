@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
-import { View, StyleSheet, TextInput, Button, Text, Alert } from 'react-native';
+import { View, StyleSheet, TextInput, Button, Text, Alert, TouchableOpacity } from 'react-native';
 import { router } from 'expo-router';
 import { COLORS } from '@/constants/Colors';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import CustomText from '@/components/CustomText';
 import { useAuth } from '@/context/AuthContext';
+import authService from '@/api/authService';
 
 const LoginScreen = () => {
   const [email, setEmail] = useState('');
@@ -14,10 +15,34 @@ const LoginScreen = () => {
   const handleLogin = async () => {
     try {
       await login(email, password);
-      // Navigation will be handled automatically by the AuthContext and _layout.tsx
     } catch (error) {
       Alert.alert('Login Failed', error instanceof Error ? error.message : 'Login failed');
     }
+  };
+
+  const handleForgotPassword = () => {
+    if (!email.trim()) {
+      Alert.alert('Reset Password', 'Enter your email address above, then tap Forgot Password.');
+      return;
+    }
+    Alert.alert(
+      'Reset Password',
+      `Send a password reset link to ${email}?`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Send',
+          onPress: async () => {
+            try {
+              await authService.resetPassword(email.trim());
+              Alert.alert('Email Sent', 'Check your inbox for a password reset link.');
+            } catch (e) {
+              Alert.alert('Error', e instanceof Error ? e.message : 'Failed to send reset email');
+            }
+          },
+        },
+      ]
+    );
   };
 
   return (
@@ -30,6 +55,7 @@ const LoginScreen = () => {
         value={email}
         onChangeText={setEmail}
         autoCapitalize="none"
+        keyboardType="email-address"
         editable={!loading}
       />
       <TextInput
@@ -40,6 +66,9 @@ const LoginScreen = () => {
         secureTextEntry
         editable={!loading}
       />
+      <TouchableOpacity onPress={handleForgotPassword} style={styles.forgotLink}>
+        <Text style={styles.link}>Forgot Password?</Text>
+      </TouchableOpacity>
       <Button title={loading ? "Logging in..." : "Login"} onPress={handleLogin} disabled={loading} />
       <View style={styles.registerLink}>
         <Text>Don't have an account? </Text>
@@ -74,6 +103,10 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     marginBottom: 12,
     paddingHorizontal: 8,
+  },
+  forgotLink: {
+    alignSelf: 'flex-end',
+    marginBottom: 12,
   },
   registerLink: {
     flexDirection: 'row',

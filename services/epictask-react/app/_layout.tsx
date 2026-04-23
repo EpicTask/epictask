@@ -10,18 +10,17 @@ import { Stack, useRouter, useSegments } from "expo-router";
 import { useFonts } from "expo-font";
 import { StatusBar } from "expo-status-bar";
 import { useColorScheme } from "@/hooks/useColorScheme";
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { QueryClientProvider } from '@tanstack/react-query';
+import { queryClient } from '../api/queryClient';
 import { AuthProvider, AuthContext } from '../context/AuthContext';
 import { usePushNotifications } from '@/hooks/usePushNotifications';
 
 // Prevent the splash screen from auto-hiding before asset loading is complete.
 SplashScreen.preventAutoHideAsync();
 
-const queryClient = new QueryClient();
-
 function RootLayout() {
   const colorScheme = useColorScheme();
-  const { user, loading } = useContext(AuthContext);
+  const { user, loading, isSharedDeviceMode } = useContext(AuthContext);
   const segments = useSegments();
   const router = useRouter();
 
@@ -55,8 +54,8 @@ function RootLayout() {
           const targetPath = userRole === 'parent' ? '/(parent)/(app)/(tabs)' : '/(kid)/(app)/(tabs)';
           console.log("Redirecting authenticated user to:", targetPath);
           router.replace(targetPath as any);
-        } else if (userRole === 'parent' && !inParentGroup) {
-          // Parent user not in parent section (and not in admin), redirect to parent dashboard
+        } else if (userRole === 'parent' && !inParentGroup && !isSharedDeviceMode) {
+          // Parent user not in parent section — redirect unless they switched to a child view
           console.log("Redirecting parent to parent dashboard");
           router.replace('/(parent)/(app)/(tabs)' as any);
         } else if (userRole === 'child' && !inKidGroup) {
@@ -73,7 +72,7 @@ function RootLayout() {
         }
       }
     }
-  }, [loaded, user, loading, segments, router]);
+  }, [loaded, user, loading, segments, router, isSharedDeviceMode]);
 
   if (!loaded || loading) {
     return null; 

@@ -19,3 +19,14 @@ interface Task {
 }
 
 export type { Task };
+
+export interface ChildProfile {
+  uid: string;
+  display_name: string;
+  email?: string;
+  role: 'child';
+  age?: number;
+  date_of_birth?: string;
+  parent_id: string;
+  created_at?: string;
+}

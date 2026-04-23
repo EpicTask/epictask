@@ -50,6 +50,7 @@ export const IMAGES = {
     explore: require("./images/explore.png"),
     splash_img: require("./images/splash-image.png"),
     upload_profile: require("./images/upload-profile.png"),
+    story_img_1: require("./images/story-img-1.png"),
 }
 
 

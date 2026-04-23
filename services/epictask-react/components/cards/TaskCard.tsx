@@ -22,9 +22,10 @@ interface TaskCardProps {
   onModify?: () => void;
   onReward?: () => void;
   isParentView?: boolean;
+  isRewarding?: boolean;
 }
 
-const TaskCard: React.FC<TaskCardProps> = ({ name, stars, taskData, kidName, onPress, onModify, onReward, isParentView }) => {
+const TaskCard: React.FC<TaskCardProps> = ({ name, stars, taskData, kidName, onPress, onModify, onReward, isParentView, isRewarding }) => {
   return (
     <View style={styles.card}>
       <View style={{ gap: 10 }}>
@@ -103,9 +104,11 @@ const TaskCard: React.FC<TaskCardProps> = ({ name, stars, taskData, kidName, onP
           {!taskData.rewarded && isParentView && (
             <View style={{ flex: 1 }}>
               <CustomButton
-                onPress={onReward || (() => console.log('Reward pressed'))}
+                onPress={onReward || (() => {})}
                 text={taskData.marked_completed ? "VERIFY & REWARD" : "REWARD"}
                 fill={true}
+                loading={isRewarding}
+                disabled={isRewarding}
               />
             </View>
           )}
