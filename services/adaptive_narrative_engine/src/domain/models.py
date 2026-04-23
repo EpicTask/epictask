@@ -160,6 +160,7 @@ class PayoutRequestRecord(BaseModel):
     node_id: Optional[str] = None
     task_id: Optional[str] = None
     status: Literal["pending", "submitted", "confirmed", "failed"] = Field(default="pending")
+    requires_manual_approval: bool = False
     correlation_id: Optional[str] = None
     transaction_hash: Optional[str] = None
     created_at: Optional[datetime] = None

@@ -1,4 +1,5 @@
 """Pub/Sub publisher for narrative events."""
+import asyncio
 import json
 import os
 from datetime import datetime
@@ -297,9 +298,10 @@ class PubSubPublisher:
             # Convert event to JSON bytes
             message_data = json.dumps(event_data).encode("utf-8")
             
-            # Publish message
+            # Publish message — run blocking future.result() off the event loop
             future = self.publisher.publish(topic_path, message_data)
-            message_id = future.result()  # Wait for publish to complete
+            loop = asyncio.get_event_loop()
+            message_id = await loop.run_in_executor(None, future.result)
             
             print(f"Published event {event_data['event_id']} to {topic_path}: {message_id}")
             return message_id

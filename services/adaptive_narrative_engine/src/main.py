@@ -95,7 +95,7 @@ async def root(request: Request):
 
 
 # Import routes
-from src.routes import stories, progress, payouts, parent, admin_stories
+from src.routes import stories, progress, payouts, parent, admin_stories, internal
 
 # Include routers
 app.include_router(stories.router)
@@ -103,6 +103,7 @@ app.include_router(progress.router)
 app.include_router(payouts.router)
 app.include_router(parent.router)
 app.include_router(admin_stories.router)
+app.include_router(internal.router)
 
 if __name__ == "__main__":
     import uvicorn

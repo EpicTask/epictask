@@ -67,8 +67,8 @@ class PayoutService:
         
         user_data = user_doc.to_dict()
         
-        # Check parent ID
-        parent_id = user_data.get("parent_id")
+        # Field written by link_child_account as "parent"; "parent_id" kept as fallback
+        parent_id = user_data.get("parent") or user_data.get("parent_id")
         if not parent_id:
             return False, None, True
 
@@ -103,7 +103,8 @@ class PayoutService:
     
     async def create_payout_request(
         self,
-        request: PayoutRequest
+        request: PayoutRequest,
+        requires_manual_approval: bool = False
     ) -> PayoutRequestRecord:
         """
         Create a payout request record in Firestore.
@@ -126,6 +127,7 @@ class PayoutService:
             node_id=request.node_id,
             task_id=request.task_id,
             status="pending",
+            requires_manual_approval=requires_manual_approval,
             correlation_id=correlation_id,
             created_at=datetime.utcnow(),
             updated_at=datetime.utcnow()

@@ -37,9 +37,9 @@ class ParentService:
                 return False
             
             kid_data = kid_doc.to_dict()
-            linked_parents = kid_data.get("linked_parents", [])
-            
-            return parent_id in linked_parents
+            # "parent" is written by link_child_account; "linked_parents" kept as fallback
+            return (kid_data.get("parent") == parent_id or
+                    parent_id in kid_data.get("linked_parents", []))
         except Exception as e:
             print(f"Error verifying parent-kid link: {str(e)}")
             return False

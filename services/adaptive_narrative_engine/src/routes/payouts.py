@@ -57,7 +57,7 @@ async def request_payout(
     request.wallet_address = parent_wallet
     
     # Create payout request
-    payout_record = await payout_service.create_payout_request(request)
+    payout_record = await payout_service.create_payout_request(request, requires_manual_approval=manual_approval)
     
     # Publish payout requested event to Pub/Sub
     try:
