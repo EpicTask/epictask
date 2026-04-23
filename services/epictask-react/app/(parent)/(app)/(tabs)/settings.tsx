@@ -213,7 +213,7 @@ const SettingsScreen = () => {
             <SettingButton
               icon={ICONS.SETTINGS.user}
               text={"Terms and Conditions"}
-              onPress={() => {}}
+              onPress={() => router.push("/(parent)/(app)/screens/settings/terms-and-conditions" as any)}
             />
             <SettingButton
               icon={ICONS.SETTINGS.terms}

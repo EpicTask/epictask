@@ -2,6 +2,7 @@ import { FONT_SIZES } from "@/constants/FontSize";
 import React, { useState, useContext, useEffect } from "react";
 import * as ImagePicker from "expo-image-picker";
 import { AuthContext } from "@/context/AuthContext";
+import storageService from "@/api/storageService";
 import CustomInput from "@/components/custom-input/CustomInput";
 
 import {
@@ -64,7 +65,10 @@ const PersonalInformation = () => {
       };
       
       if (profileImage && profileImage !== (user?.imageUrl || user?.photoURL)) {
-        updateData.imageUrl = profileImage;
+        // Upload image to Firebase Storage
+        const storagePath = `avatars/${user.uid}_${Date.now()}.jpg`;
+        const downloadURL = await storageService.uploadImage(profileImage, storagePath);
+        updateData.imageUrl = downloadURL;
       }
 
       await updateProfile(updateData);

@@ -2,25 +2,23 @@ import { FONT_SIZES } from "@/constants/FontSize";
 import React, { useState } from "react";
 
 import SafeArea from "@/components/SafeArea";
-import Divider from "@/components/Divider/Divider";
 import AuthButton from "@/components/buttons/AuthButton";
 import CustomInput from "@/components/custom-input/CustomInput";
 
-import { ICONS } from "@/assets";
 import { router } from "expo-router";
 import { COLORS } from "@/constants/Colors";
 import {
   Alert,
   ScrollView,
   StyleSheet,
-  Text,
   TouchableOpacity,
   View,
 } from "react-native";
-import { responsiveFontSize } from "react-native-responsive-dimensions";
 import CustomText from "@/components/CustomText";
 import { useAuth } from "@/context/AuthContext";
 import DebouncedTouchableOpacity from "@/components/buttons/DebouncedTouchableOpacity";
+import authService from "@/api/authService";
+import { ICONS } from "@/assets";
 
 const Login = () => {
   const [password, setPassword] = useState("");
@@ -30,10 +28,34 @@ const Login = () => {
   const handleLogin = async () => {
     try {
       await login(email, password);
-      // Navigation will be handled automatically by the AuthContext and _layout.tsx
     } catch (error) {
       Alert.alert('Login Failed', error instanceof Error ? error.message : 'Login failed');
     }
+  };
+
+  const handleForgotPassword = () => {
+    if (!email.trim()) {
+      Alert.alert('Reset Password', 'Enter your email address above, then tap Forgot Password.');
+      return;
+    }
+    Alert.alert(
+      'Reset Password',
+      `Send a password reset link to ${email}?`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Send',
+          onPress: async () => {
+            try {
+              await authService.resetPassword(email.trim());
+              Alert.alert('Email Sent', 'Check your inbox for a password reset link.');
+            } catch (e) {
+              Alert.alert('Error', e instanceof Error ? e.message : 'Failed to send reset email');
+            }
+          },
+        },
+      ]
+    );
   };
 
   return (
@@ -90,80 +112,45 @@ const Login = () => {
           </View>
           <View
             style={{
-              gap: 36,
+              gap: 16,
               paddingVertical: 16,
               alignItems: "center",
               justifyContent: "center",
             }}
           >
-            <View style={{ gap: 16 }}>
-              <View style={{ justifyContent: "center", alignItems: "center" }}>
-                <TouchableOpacity>
-                  <CustomText
-                    variant="medium"
-                    style={{
-                      textDecorationLine: "underline",
-                      color: COLORS.grey,
-                    }}
-                  >
-                    Forgot Password?
-                  </CustomText>
-                </TouchableOpacity>
-              </View>
-              <DebouncedTouchableOpacity
-                style={{ flexDirection: "row", gap: 4 }}
-                onPress={() => {
-                  router.push("/auth/register" as any);
-                }}
-              >
+            <View style={{ justifyContent: "center", alignItems: "center" }}>
+              <TouchableOpacity onPress={handleForgotPassword}>
                 <CustomText
                   variant="medium"
-                  style={{ color: COLORS.primary, fontWeight: "400" }}
+                  style={{
+                    textDecorationLine: "underline",
+                    color: COLORS.grey,
+                  }}
                 >
-                  New Here?
+                  Forgot Password?
                 </CustomText>
-                {ICONS.SPLASH.arrow}
-                <CustomText
-                  variant="semiBold"
-                  style={{ color: COLORS.primary, fontWeight: "500" }}
-                >
-                  SignUp
-                </CustomText>
-              </DebouncedTouchableOpacity>
+              </TouchableOpacity>
             </View>
-            <View style={{ gap: 10, width: "100%" }}>
-              <View
-                style={{
-                  flexDirection: "row",
-                  alignItems: "center",
-                  gap: 20,
-                  width: "90%",
-                }}
+            <DebouncedTouchableOpacity
+              style={{ flexDirection: "row", gap: 4 }}
+              onPress={() => {
+                router.push("/auth/register" as any);
+              }}
+            >
+              <CustomText
+                variant="medium"
+                style={{ color: COLORS.primary, fontWeight: "400" }}
               >
-                <Divider />
-                <CustomText variant="medium" style={{ color: COLORS.grey }}>
-                  Or Login With
-                </CustomText>
-                <Divider />
-              </View>
-              <View
-                style={{
-                  gap: 10,
-                  width: "100%",
-                  paddingVertical: 10,
-                  alignItems: "center",
-                }}
+                New Here?
+              </CustomText>
+              {ICONS.SPLASH.arrow}
+              <CustomText
+                variant="semiBold"
+                style={{ color: COLORS.primary, fontWeight: "500" }}
               >
-                <DebouncedTouchableOpacity style={styles.sso} onPress={() => {}}>
-                  {ICONS.google}
-                  <CustomText>Google</CustomText>
-                </DebouncedTouchableOpacity>
-                <DebouncedTouchableOpacity style={styles.sso}>
-                  {ICONS.apple}
-                  <CustomText>Apple</CustomText>
-                </DebouncedTouchableOpacity>
-              </View>
-            </View>
+                SignUp
+              </CustomText>
+            </DebouncedTouchableOpacity>
           </View>
         </View>
       </ScrollView>
@@ -176,16 +163,5 @@ export default Login;
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-  },
-  sso: {
-    backgroundColor: COLORS.white,
-    gap: 10,
-    alignItems: "center",
-    flexDirection: "row",
-    justifyContent: "center",
-    width: "90%",
-    paddingVertical: 16,
-    paddingHorizontal: 10,
-    borderRadius: 30,
   },
 });

@@ -36,6 +36,9 @@ import ChildSelectionModal from "@/components/modals/ChildSelectionModal";
 import ChildPINModal from "@/components/modals/ChildPINModal";
 import { useFamilyTasks } from "@/hooks/useTaskManagement";
 import CustomText from "@/components/CustomText";
+import { MaterialIcons } from "@expo/vector-icons";
+import { useXummAuth, isXummWalletConnected, XummUserToken } from "@/hooks/useXummAuth";
+import { XummQrModal } from "@/components/modals/XummQrModal";
 
 // Type definitions
 interface TaskSummary {
@@ -67,13 +70,26 @@ interface Kid {
 }
 
 export default function HomeScreen() {
-  const { user } = useAuth();
+  const { user, enterSharedDeviceMode } = useAuth();
+  const { connectWallet, showQrModal, qrUrl, closeModal, isConnecting } = useXummAuth();
+  const walletConnected = isXummWalletConnected(user?.userToken as XummUserToken | undefined);
+
+  const handleWalletPress = () => {
+    if (walletConnected) {
+      Alert.alert("Wallet Connected", "Your Xumm wallet is securely connected.");
+    } else {
+      connectWallet(user!.uid, user?.userToken as XummUserToken | undefined);
+    }
+  };
+
   const [taskSummary, setTaskSummary] = useState<TaskSummary>({ completed: 0, in_progress: 0, total: 0 });
   const [recentTasks, setRecentTasks] = useState<RecentTask[]>([]);
   const [pendingPayouts, setPendingPayouts] = useState<PendingPayout[]>([]);
   const [kidsWithTaskData, setKidsWithTaskData] = useState<Kid[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [payoutLoading, setPayoutLoading] = useState<Record<string, boolean>>({});
+  const [rewardingTaskId, setRewardingTaskId] = useState<string | null>(null);
   const [lastRefreshTime, setLastRefreshTime] = useState<number>(0);
   const [unreadNotifications, setUnreadNotifications] = useState(0);
   const REFRESH_COOLDOWN = 5000; // 5 seconds cooldown
@@ -199,12 +215,8 @@ export default function HomeScreen() {
   const handleChildPINSuccess = (child: Kid) => {
     setChildPINModalVisible(false);
     setSelectedChildForPIN(null);
-    // Navigate to child interface
-    // For now, we'll show an alert - this would be replaced with actual navigation
-    Alert.alert(
-      'Success!',
-      `Switched to ${child.displayName}'s account. This would normally navigate to the child interface.`
-    );
+    enterSharedDeviceMode();
+    router.replace('/(kid)/(app)/(tabs)' as any);
   };
 
   const handleChildModalClose = () => {
@@ -233,27 +245,43 @@ export default function HomeScreen() {
         <View style={{ gap: 20 }}>
           {/* Header */}
           <View style={styles.header}>
-            <Link href="/(parent)/(app)/screens/profile-display" asChild>
-              <Pressable>
-                <Image
-                  source={user?.imageUrl ? { uri: user.imageUrl } : IMAGES.profile}
-                  style={styles.profileImage}
+            <Image
+              source={user?.imageUrl ? { uri: user.imageUrl } : IMAGES.profile}
+              style={styles.profileImage}
+            />
+            <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
+              <TouchableOpacity 
+                onPress={handleWalletPress}
+                style={[
+                  styles.notificationIcon, 
+                  { 
+                    backgroundColor: walletConnected ? COLORS.green : "white",
+                    borderColor: walletConnected ? COLORS.green : "#ccc",
+                    borderWidth: 1,
+                    padding: 10
+                  }
+                ]}
+              >
+                <MaterialIcons 
+                  name="account-balance-wallet" 
+                  size={22} 
+                  color={walletConnected ? "white" : "black"} 
                 />
-              </Pressable>
-            </Link>
-            <View style={styles.notificationIcon}>
-              <Link href="/screens/notification-screen" asChild>
-                <Pressable>
-                    {ICONS.SETTINGS.bell}
-                    {unreadNotifications > 0 && (
-                        <View style={styles.badge}>
-                            <Text style={styles.badgeText}>
-                                {unreadNotifications > 9 ? '9+' : unreadNotifications}
-                            </Text>
-                        </View>
-                    )}
-                </Pressable>
-              </Link>
+              </TouchableOpacity>
+              <View style={styles.notificationIcon}>
+                <Link href="/screens/notification-screen" asChild>
+                  <Pressable>
+                      {ICONS.SETTINGS.bell}
+                      {unreadNotifications > 0 && (
+                          <View style={styles.badge}>
+                              <Text style={styles.badgeText}>
+                                  {unreadNotifications > 9 ? '9+' : unreadNotifications}
+                              </Text>
+                          </View>
+                      )}
+                  </Pressable>
+                </Link>
+              </View>
             </View>
           </View>
 
@@ -332,31 +360,43 @@ export default function HomeScreen() {
                     </CustomText>
                   </View>
                   <View style={styles.payoutActions}>
-                    <TouchableOpacity 
-                      style={[styles.payoutButton, styles.approveButton]}
+                    <TouchableOpacity
+                      style={[styles.payoutButton, styles.approveButton, payoutLoading[payout.request_id] && styles.buttonDisabled]}
+                      disabled={!!payoutLoading[payout.request_id]}
                       onPress={async () => {
+                        setPayoutLoading(prev => ({ ...prev, [payout.request_id]: true }));
                         try {
                           await narrativeService.approvePayout(payout.request_id);
                           setPendingPayouts(prev => prev.filter(p => p.request_id !== payout.request_id));
                         } catch (e) {
-                          console.error("Failed to approve payout", e);
+                          Alert.alert('Error', 'Failed to approve reward. Please try again.');
+                        } finally {
+                          setPayoutLoading(prev => ({ ...prev, [payout.request_id]: false }));
                         }
                       }}
                     >
-                      <Text style={styles.payoutButtonText}>Approve</Text>
+                      {payoutLoading[payout.request_id]
+                        ? <ActivityIndicator size="small" color="#fff" />
+                        : <Text style={styles.payoutButtonText}>Approve</Text>}
                     </TouchableOpacity>
-                    <TouchableOpacity 
-                      style={[styles.payoutButton, styles.rejectButton]}
+                    <TouchableOpacity
+                      style={[styles.payoutButton, styles.rejectButton, payoutLoading[payout.request_id] && styles.buttonDisabled]}
+                      disabled={!!payoutLoading[payout.request_id]}
                       onPress={async () => {
+                        setPayoutLoading(prev => ({ ...prev, [payout.request_id]: true }));
                         try {
                           await narrativeService.rejectPayout(payout.request_id, "Rejected by parent");
                           setPendingPayouts(prev => prev.filter(p => p.request_id !== payout.request_id));
                         } catch (e) {
-                          console.error("Failed to reject payout", e);
+                          Alert.alert('Error', 'Failed to reject reward. Please try again.');
+                        } finally {
+                          setPayoutLoading(prev => ({ ...prev, [payout.request_id]: false }));
                         }
                       }}
                     >
-                      <Text style={styles.payoutButtonText}>Reject</Text>
+                      {payoutLoading[payout.request_id]
+                        ? <ActivityIndicator size="small" color="#fff" />
+                        : <Text style={styles.payoutButtonText}>Reject</Text>}
                     </TouchableOpacity>
                   </View>
                 </View>
@@ -379,25 +419,23 @@ export default function HomeScreen() {
                   name={task.task_title}
                   stars={task.reward_amount}
                   taskData={task}
+                  isRewarding={rewardingTaskId === task.task_id}
                   onReward={async () => {
+                    if (rewardingTaskId) return;
+                    setRewardingTaskId(task.task_id);
+                    const snapshot = [...recentTasks];
                     try {
-                      // Optimistic
-                      setRecentTasks(prev => prev.map(t => 
+                      setRecentTasks(prev => prev.map(t =>
                         t.task_id === task.task_id ? { ...t, rewarded: true, marked_completed: true, status: 'completed' } : t
                       ));
                       await firestoreService.rewardTask(task.task_id);
 
-                      // Milestone 2.1: Post-Approval Payout Hook
                       if (task.assigned_to_ids && task.assigned_to_ids.length > 0) {
                         try {
-                          // Fetch kid's active story progress to get current node
                           const kidId = task.assigned_to_ids[0];
                           const progress = await narrativeService.getProgress(kidId);
-                          
-                          // If there's active progress, create a payout request
                           if (progress && progress.length > 0) {
-                            const activeStory = progress.find(p => p.status === 'in_progress') || progress[0];
-                            
+                            const activeStory = progress.find((p: any) => p.status === 'in_progress') || progress[0];
                             await narrativeService.createPayout({
                               kid_id: kidId,
                               story_id: activeStory.story_id,
@@ -411,8 +449,10 @@ export default function HomeScreen() {
                         }
                       }
                     } catch (e) {
-                      console.error("Error rewarding task", e);
-                      setRecentTasks([...recentTasks]);
+                      setRecentTasks(snapshot);
+                      Alert.alert('Error', 'Failed to reward task. Please try again.');
+                    } finally {
+                      setRewardingTaskId(null);
                     }
                   }}
                   isParentView={true}
@@ -437,6 +477,12 @@ export default function HomeScreen() {
         child={selectedChildForPIN}
         onClose={handleChildModalClose}
         onSuccess={handleChildPINSuccess}
+      />
+
+      <XummQrModal 
+        visible={showQrModal} 
+        qrUrl={qrUrl} 
+        onClose={closeModal} 
       />
     </SafeAreaView>
   );
@@ -540,6 +586,9 @@ const styles = StyleSheet.create({
     },
     rejectButton: {
     backgroundColor: COLORS.grey,
+    },
+    buttonDisabled: {
+    opacity: 0.5,
     },
     payoutButtonText: {
     color: 'white',
