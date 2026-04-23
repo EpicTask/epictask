@@ -1247,6 +1247,17 @@ def calculate_achievements_by_tokens(xrp_earned, rlusd_earned, etask_earned, tas
     return achievements
 
 
+def mark_payment_submitted(task_id: str) -> None:
+    """Flag a task so duplicate payment calls are skipped."""
+    try:
+        db.collection(collections.TASKS).document(task_id).update({
+            "payment_submitted": True,
+            "payment_submitted_at": firestore.SERVER_TIMESTAMP,
+        })
+    except Exception as e:
+        print(f"Warning: Failed to mark payment submitted for task {task_id}: {e}")
+
+
 def update_enhanced_leaderboard(task_data):
     """Update the enhanced leaderboard with token-based scoring for multiple users"""
     try:

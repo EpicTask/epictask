@@ -1,5 +1,8 @@
 from typing import List, Dict, Any, Optional
+import os
 import httpx
+
+from storage import user_db
 from ...storage.db import task_db
 from ...domain.task_models import (
     TaskCreated, TaskAssigned, TaskCancelled, TaskCommentAdded,
@@ -126,43 +129,16 @@ class TaskService:
         """Update task fields."""
         return task_db.update_task_fields("TaskUpdated", request)
 
-    async def verify_task(self, request: TaskVerified) -> str:
+    async def verify_task(self, request: TaskVerified, auth_token: str = "") -> str:
         """Verify a task."""
         response = task_db.update_task("TaskVerified", request)
-        
-        # Trigger XRPL Payment if applicable
+
+        # Trigger XRPL payment for "Pay Directly" tasks
         try:
             task = task_db.get_task(request.task_id)
             if task and isinstance(task, dict):
-                # Check conditions: Pay Directly and verified
                 if task.get("payment_method") == "Pay Directly" and request.verified:
-                    print(f"Triggering payment for task {request.task_id}")
-                    # In a real scenario, you would fetch source and destination details here
-                    # For now, we assume the XRPL service handles lookups or we pass IDs
-                    
-                    payment_payload = {
-                        "task_id": request.task_id,
-                        "user_id": task.get("user_id"), # Payer
-                        "assigned_to_id": task.get("assigned_to_ids")[0] if task.get("assigned_to_ids") else None, # Payee
-                        "amount": task.get("reward_amount"),
-                        "currency": task.get("reward_currency")
-                    }
-                    
-                    # Call XRPL Service
-                    async with httpx.AsyncClient() as client:
-                        # Assuming XRPL service has an internal endpoint or we use the public one
-                        # Since we are internal, maybe a direct call or message queue is better
-                        # But based on plan, we call API.
-                        # Using a placeholder endpoint on xrpl_management for internal trigger
-                        # or reusing /payment_request if it supports this format
-                        
-                        # Note: The existing /payment_request expects PaymentRequest model (source, dest, amount...)
-                        # We might need a new endpoint on XRPL service to handle "Pay for Task" which does the lookups
-                        # OR we do the lookups here.
-                        # Doing lookups here (in mono_service) is cleaner separation if mono_service owns user data.
-                        pass 
-                        # For this step, I'll log it as a TODO since I don't have full user wallet info access here easily without more calls.
-                        # But wait, the original cloud function did this.
+                    await self._trigger_xrpl_payment(task, request.task_id, auth_token)
         except Exception as e:
             print(f"Error triggering XRPL payment: {e}")
 
@@ -187,6 +163,47 @@ class TaskService:
             print(f"Warning: Failed to send verification notification: {e}")
             
         return response
+
+    async def _trigger_xrpl_payment(self, task: dict, task_id: str, auth_token: str) -> None:
+        if task.get("payment_submitted"):
+            print(f"Payment already submitted for task {task_id}, skipping duplicate")
+            return
+
+        xrpl_url = os.getenv("XRPL_SERVICE_URL", "")
+
+        parent_profile = user_db.get_user_profile(task.get("user_id"))
+        assignee_ids = task.get("assigned_to_ids") or []
+        child_profile = user_db.get_user_profile(assignee_ids[0]) if assignee_ids else None
+
+        source_wallet = parent_profile.get("wallet_address") if parent_profile else None
+        dest_wallet = child_profile.get("wallet_address") if child_profile else None
+
+        if not source_wallet or not dest_wallet:
+            print(f"Payment skipped for task {task_id}: missing wallet — source={bool(source_wallet)} dest={bool(dest_wallet)}")
+            return
+
+        xumm_token_obj = (parent_profile.get("userToken") or {})
+        user_token = xumm_token_obj.get("user_token") if isinstance(xumm_token_obj, dict) else None
+
+        xrpl_payload = {
+            "type": "payment",
+            "amount": task.get("reward_amount"),
+            "source": source_wallet,
+            "destination": dest_wallet,
+            "user_token": user_token,
+            "task_id": task_id,
+        }
+
+        async with httpx.AsyncClient() as client:
+            resp = await client.post(
+                f"{xrpl_url}/payment_request",
+                json=xrpl_payload,
+                headers={"Authorization": f"Bearer {auth_token}"},
+                timeout=10.0,
+            )
+            resp.raise_for_status()
+            task_db.mark_payment_submitted(task_id)
+            print(f"Payment request submitted for task {task_id}")
 
     async def get_all_tasks(self, user_id: str) -> Dict[str, Any]:
         """Get all tasks for a user."""

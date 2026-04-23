@@ -1,5 +1,5 @@
 from typing import List, Optional
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from ...domain.task_models import (
     TaskCreated, TaskAssigned, TaskCancelled, TaskCommentAdded,
     TaskCompleted, TaskExpired, TaskRatingUpdate, TaskRewarded,
@@ -119,12 +119,14 @@ async def update_task(task_id: str, request: TaskUpdated, current_user: dict = D
 
 
 @router.post("/{task_id}/verify")
-async def verify_task(task_id: str, request: TaskVerified, current_user: dict = Depends(get_current_user)):
+async def verify_task(task_id: str, request: TaskVerified, raw_request: Request, current_user: dict = Depends(get_current_user)):
     """Mark a task as verified."""
     caller_uid = _require_parent(current_user)
     if request.user_id != caller_uid:
         raise HTTPException(status_code=403, detail="user_id must match your account")
-    response = await task_service.verify_task(request)
+    auth_header = raw_request.headers.get("Authorization", "")
+    token = auth_header.removeprefix("Bearer ").strip()
+    response = await task_service.verify_task(request, auth_token=token)
     return {"response": response}
 
 
