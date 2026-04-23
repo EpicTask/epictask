@@ -5,6 +5,7 @@ import {
   signInWithEmailAndPassword,
   signOut,
   updateProfile,
+  sendPasswordResetEmail,
 } from "firebase/auth";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { firestoreService } from "../api/firestoreService";
@@ -147,6 +148,16 @@ export const authService = {
     }
   },
 
+  // Send password reset email
+  resetPassword: async (email) => {
+    try {
+      await sendPasswordResetEmail(auth, email);
+      return { success: true };
+    } catch (error) {
+      throw new Error(error.message || "Failed to send reset email");
+    }
+  },
+
   // Logout user with cache cleanup
   logout: async () => {
     try {
@@ -181,7 +192,20 @@ export const authService = {
   // Update user profile
   updateProfile: async (profileData) => {
     try {
-      const response = await userApiClient.put("/profileUpdate", profileData);
+      // Map frontend field names to backend field names (camelCase to snake_case)
+      const mappedData = {};
+      if (profileData.displayName) mappedData.display_name = profileData.displayName;
+      if (profileData.imageUrl) mappedData.photo_url = profileData.imageUrl;
+      if (profileData.photoURL) mappedData.photo_url = profileData.photoURL;
+      
+      // Also pass through any other fields like age, etc.
+      Object.keys(profileData).forEach(key => {
+        if (!['displayName', 'imageUrl', 'photoURL'].includes(key)) {
+          mappedData[key] = profileData[key];
+        }
+      });
+
+      const response = await userApiClient.put("/profile", mappedData);
       return response.data;
     } catch (error) {
       console.error("Update profile error:", error);

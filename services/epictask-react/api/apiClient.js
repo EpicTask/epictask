@@ -7,7 +7,6 @@
  *
  * Usage:
  *   import createAuthenticatedClient from '@/api/apiClient';
- *   const myClient = createAuthenticatedClient('https://my-service/');
  */
 
 import axios from "axios";
