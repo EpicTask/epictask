@@ -5,7 +5,6 @@ import {
   ScrollView,
   StyleSheet,
   Text,
-  TouchableOpacity,
   View,
   ActivityIndicator,
   RefreshControl,
@@ -179,24 +178,30 @@ export default function HomeScreen() {
         <View style={{ gap: 10 }}>
           {/* Header */}
           <View
-            style={{ flexDirection: "row", justifyContent: "space-between" }}
+            style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start" }}
           >
-            <View style={{ flex: 1 }}>
-              <CustomText
-                variant="semiBold"
-                style={{ fontSize: FONT_SIZES.display }}
-              >
-                Hello,
-              </CustomText>
-              <CustomText
-                variant="semiBold"
-                style={{ fontSize: FONT_SIZES.title, fontWeight: "500" }}
-              >
-                {user?.displayName || "New User"}! 👋
-              </CustomText>
-              <CustomText style={{ paddingRight: 40, color: COLORS.grey }}>
-                Ready for some fun tasks and rewards today?
-              </CustomText>
+            <View style={{ flex: 1, gap: 10 }}>
+              <Image
+                source={user?.imageUrl ? { uri: user.imageUrl } : IMAGES.profile}
+                style={styles.profileImage}
+              />
+              <View>
+                <CustomText
+                  variant="semiBold"
+                  style={{ fontSize: FONT_SIZES.display }}
+                >
+                  Hello,
+                </CustomText>
+                <CustomText
+                  variant="semiBold"
+                  style={{ fontSize: FONT_SIZES.title, fontWeight: "500" }}
+                >
+                  {user?.displayName || "New User"}! 👋
+                </CustomText>
+                <CustomText style={{ paddingRight: 40, color: COLORS.grey }}>
+                  Ready for some fun tasks and rewards today?
+                </CustomText>
+              </View>
             </View>
             <View>
               <Link href="../screens/notification-screen" asChild>
@@ -363,16 +368,6 @@ export default function HomeScreen() {
             ) : (
               <View style={styles.centered}>
                 <Text>No tasks for today. Great job!</Text>
-                <TouchableOpacity
-                  style={styles.createTaskButton}
-                  onPress={() => {
-                    /* Handle create task */
-                  }}
-                >
-                  <Text style={styles.createTaskButtonText}>
-                    Create Your Own Task
-                  </Text>
-                </TouchableOpacity>
               </View>
             )}
           </View>
@@ -393,6 +388,11 @@ export default function HomeScreen() {
 }
 
 const styles = StyleSheet.create({
+  profileImage: {
+    height: responsiveHeight(8),
+    width: responsiveHeight(8),
+    borderRadius: responsiveHeight(4),
+  },
   safeArea: {
     flex: 1,
     padding: responsiveWidth(4),
@@ -430,17 +430,6 @@ const styles = StyleSheet.create({
     position: "absolute",
     bottom: 6,
     right: 0,
-  },
-  createTaskButton: {
-    marginTop: 20,
-    backgroundColor: COLORS.primary,
-    paddingVertical: 10,
-    paddingHorizontal: 20,
-    borderRadius: 20,
-  },
-  createTaskButtonText: {
-    color: "white",
-    fontWeight: "bold",
   },
   badge: {
     position: 'absolute',

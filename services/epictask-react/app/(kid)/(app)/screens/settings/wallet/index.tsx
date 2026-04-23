@@ -1,227 +1,336 @@
 import { FONT_SIZES } from "@/constants/FontSize";
-import React from "react";
+import React, { useState, useCallback } from "react";
 import CustomText from "@/components/CustomText";
 import ScreenHeading from "@/components/headings/ScreenHeading";
-
+import { SafeAreaView } from "react-native-safe-area-context";
 import {
-  responsiveFontSize,
+  ActivityIndicator,
+  ScrollView,
+  StyleSheet,
+  View,
+} from "react-native";
+import {
   responsiveHeight,
   responsiveWidth,
 } from "react-native-responsive-dimensions";
+import { useFocusEffect } from "expo-router";
+import { MaterialIcons } from "@expo/vector-icons";
+import { useAuth } from "@/context/AuthContext";
+import { firestoreService } from "@/api/firestoreService";
+import { COLORS } from "@/constants/Colors";
+import * as Progress from "react-native-progress";
 
-import { ICONS } from "@/assets";
-import {
-  FlatList,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
-} from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+interface Rewards {
+  tokens_earned: number;
+  level: number;
+  rank: number;
+}
 
-const Transaction = ({ type }: { type: string }) => {
-  return (
-    <View
-      style={{
-        flexDirection: "row",
-        paddingVertical: 10,
-        gap: 20,
-        alignItems: "center",
-        width: responsiveWidth(100),
-      }}
-    >
-      <View>
-        {type == "send"
-          ? ICONS.SETTINGS.WALLET.send
-          : ICONS.SETTINGS.WALLET.recieve}
-      </View>
-      <View
-        style={{
-          flexDirection: "row",
-          width: responsiveWidth(75),
-          justifyContent: "space-between",
-          alignItems: "center",
-          paddingBottom: 10,
-          borderBottomColor: "#00000020",
-          borderBottomWidth: 1,
-        }}
-      >
-        <View style={{ gap: 6 }}>
-          <CustomText
-            variant="semiBold"
-            style={{ fontSize: FONT_SIZES.large }}
-          >
-            Jerome Bell
-          </CustomText>
-          <Text style={{ fontSize: 14, fontWeight: "400", color: "#545454" }}>
-            6776 3253 3532 1211
-          </Text>
-        </View>
-        <View>
-          <CustomText
-            variant="semiBold"
-            style={{
-              fontSize: FONT_SIZES.large,
-              color: type !== "send" ? "green" : "black",
-            }}
-          >
-            -$834
-          </CustomText>
-        </View>
-      </View>
-    </View>
-  );
-};
+interface RewardedTask {
+  id: string;
+  task_title?: string;
+  reward_amount?: number;
+  timestamp?: any;
+}
 
-const Buttoncard = () => {
-  return (
-    <View
-      style={styles.box}
-    >
-      <View style={{ flexDirection: "row", justifyContent: "space-between" }}>
-        <View style={{ alignItems: "center", gap: 4 }}>
-          <TouchableOpacity>
-            <View
-              style={{
-                backgroundColor: "#F6F6F6",
-                borderRadius: 100,
-                padding: 10,
-              }}
-            >
-              {ICONS.SETTINGS.WALLET.upload}
-            </View>
-          </TouchableOpacity>
-          <Text>Send</Text>
-        </View>
-        <View style={{ alignItems: "center", gap: 4 }}>
-          <TouchableOpacity>
-            <View
-              style={{
-                backgroundColor: "#F6F6F6",
-                borderRadius: 100,
-                padding: 10,
-              }}
-            >
-              {ICONS.SETTINGS.WALLET.download}
-            </View>
-          </TouchableOpacity>
-          <Text>Request</Text>
-        </View>
-        <View style={{ alignItems: "center", gap: 4 }}>
-          <TouchableOpacity>
-            <View
-              style={{
-                backgroundColor: "#F6F6F6",
-                borderRadius: 100,
-                padding: 10,
-              }}
-            >
-              {ICONS.SETTINGS.WALLET.transfer}
-            </View>
-          </TouchableOpacity>
-          <Text>Transfer</Text>
-        </View>
-      </View>
-    </View>
-  );
-};
+const TOKENS_PER_LEVEL = 1000;
 
-const Wallet = () => {
+export default function KidWalletScreen() {
+  const { user } = useAuth();
+
+  const [rewards, setRewards] = useState<Rewards | null>(null);
+  const [recentActivity, setRecentActivity] = useState<RewardedTask[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  const loadData = useCallback(async () => {
+    if (!user?.uid) return;
+    setLoading(true);
+    try {
+      const [rewardsData, tasks] = await Promise.all([
+        firestoreService.getUserRewards(user.uid),
+        firestoreService.getRecentTasks(user.uid, 10, 30),
+      ]);
+      setRewards(rewardsData);
+      const rewarded = (tasks as RewardedTask[]).filter(
+        (t: any) => t.rewarded === true || t.status === "completed"
+      );
+      setRecentActivity(rewarded);
+    } catch (e) {
+      console.error("Failed to load wallet data", e);
+    } finally {
+      setLoading(false);
+    }
+  }, [user?.uid]);
+
+  useFocusEffect(loadData);
+
+  const tokensIntoLevel = rewards ? rewards.tokens_earned % TOKENS_PER_LEVEL : 0;
+  const progressToNext = tokensIntoLevel / TOKENS_PER_LEVEL;
+  const tokensToNext = rewards ? TOKENS_PER_LEVEL - tokensIntoLevel : TOKENS_PER_LEVEL;
+  const nextLevel = rewards ? rewards.level + 1 : 2;
+
   return (
     <SafeAreaView style={styles.safeArea}>
-      <ScreenHeading text="Wallet" back={true} plus={false} />
-      <View
-        style={{
-          justifyContent: "space-between",
-          flex: 1,
-          paddingVertical: 20,
-        }}
-      >
-        <View style={{ flex: 1, gap: 30 }}>
-          <View
-            style={{
-              justifyContent: "center",
-              alignItems: "center",
-            }}
-          >
-            <View style={{ alignItems: "center", paddingBottom: 30 }}>
-              <CustomText
-                variant="regular"
-                style={{ fontSize: FONT_SIZES.medium }}
-              >
-                Current balance
-              </CustomText>
-              <CustomText
-                variant="bold"
-                style={{ fontSize: FONT_SIZES.display }}
-              >
-                $ 1,250.45
-              </CustomText>
+      <ScreenHeading text="My Rewards" back={true} plus={false} />
+
+      {loading ? (
+        <View style={styles.centered}>
+          <ActivityIndicator size="large" color={COLORS.primary} />
+        </View>
+      ) : (
+        <ScrollView
+          contentContainerStyle={styles.scroll}
+          showsVerticalScrollIndicator={false}
+        >
+          {/* Token Showcase Card */}
+          <View style={styles.heroCard}>
+            <View style={styles.heroIconRow}>
+              <MaterialIcons name="star" size={32} color="#FFD700" />
+              <MaterialIcons name="star" size={20} color="#FFD700" style={{ marginTop: 10 }} />
+              <MaterialIcons name="star" size={26} color="#FFD700" style={{ marginTop: 4 }} />
             </View>
-            <View>
-              <Buttoncard />
-            </View>
-          </View>
-          <View style={{ alignItems: "flex-start" }}>
-            <CustomText
-              variant="bold"
-              style={{ fontSize: FONT_SIZES.subtitle }}
-            >
-              Transaction History
+            <CustomText variant="bold" style={styles.tokenCount}>
+              {(rewards?.tokens_earned ?? 0).toLocaleString()}
             </CustomText>
-            <View>
-              <FlatList
-                style={{ marginBottom: 250 }}
-                showsVerticalScrollIndicator={false}
-                data={[...new Array(12)]}
-                renderItem={() => <Transaction type={"send"} />}
+            <CustomText variant="regular" style={styles.tokenLabel}>
+              tokens earned
+            </CustomText>
+            {(rewards?.rank ?? 0) > 0 && (
+              <View style={styles.rankBadge}>
+                <CustomText variant="semiBold" style={styles.rankText}>
+                  Rank #{rewards!.rank}
+                </CustomText>
+              </View>
+            )}
+          </View>
+
+          {/* Level Progress Card */}
+          <View style={styles.card}>
+            <View style={styles.levelRow}>
+              <View style={styles.levelBadge}>
+                <CustomText variant="bold" style={styles.levelNumber}>
+                  {rewards?.level ?? 1}
+                </CustomText>
+              </View>
+              <View style={{ flex: 1 }}>
+                <CustomText variant="semiBold" style={styles.levelTitle}>
+                  Level {rewards?.level ?? 1}
+                </CustomText>
+                <CustomText variant="regular" style={styles.levelCaption}>
+                  {tokensToNext} tokens to Level {nextLevel}
+                </CustomText>
+              </View>
+            </View>
+
+            <View style={{ marginTop: 14 }}>
+              <Progress.Bar
+                progress={progressToNext}
+                width={null}
+                height={10}
+                color={COLORS.secondary}
+                unfilledColor="#EEF2FF"
+                borderWidth={0}
+                borderRadius={6}
               />
             </View>
+            <View style={styles.progressLabels}>
+              <CustomText variant="regular" style={styles.progressCaption}>
+                {tokensIntoLevel} / {TOKENS_PER_LEVEL}
+              </CustomText>
+              <CustomText variant="regular" style={styles.progressCaption}>
+                Level {nextLevel}
+              </CustomText>
+            </View>
           </View>
-        </View>
-      </View>
+
+          {/* Recent Rewards */}
+          <View style={{ marginTop: 8 }}>
+            <CustomText variant="bold" style={styles.sectionHeading}>
+              Recent Rewards
+            </CustomText>
+            {recentActivity.length === 0 ? (
+              <View style={styles.emptyState}>
+                <CustomText variant="regular" style={styles.emptyText}>
+                  Complete tasks to earn tokens!
+                </CustomText>
+              </View>
+            ) : (
+              recentActivity.map((task) => (
+                <View key={task.id} style={styles.activityRow}>
+                  <View style={styles.trophyIcon}>
+                    <MaterialIcons name="emoji-events" size={22} color="#FFD700" />
+                  </View>
+                  <View style={styles.activityInfo}>
+                    <CustomText variant="semiBold" style={styles.activityTitle}>
+                      {task.task_title || "Task completed"}
+                    </CustomText>
+                  </View>
+                  <View style={styles.rewardPill}>
+                    <CustomText variant="bold" style={styles.rewardPillText}>
+                      +{task.reward_amount ?? 0}
+                    </CustomText>
+                  </View>
+                </View>
+              ))
+            )}
+          </View>
+        </ScrollView>
+      )}
     </SafeAreaView>
   );
-};
+}
 
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
     backgroundColor: "#F1F6F9",
-    justifyContent: "space-between",
-    height: responsiveHeight(100),
-    width: responsiveWidth(100),
-    padding: responsiveWidth(6),
+    paddingHorizontal: responsiveWidth(4),
+    paddingTop: responsiveHeight(2),
   },
-  codeFieldRoot: { marginTop: 20, justifyContent: "space-between" },
-  cell: {
-    width: 70,
-    height: 70,
-    lineHeight: 68,
-    fontSize: 24,
-    borderWidth: 0,
-    borderColor: "#00000010",
+  scroll: {
+    paddingVertical: 20,
+    paddingBottom: 60,
+    gap: 16,
+  },
+  centered: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  heroCard: {
+    backgroundColor: COLORS.primary,
+    borderRadius: 24,
+    paddingVertical: 32,
+    paddingHorizontal: 24,
+    alignItems: "center",
+    shadowColor: COLORS.primary,
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.3,
+    shadowRadius: 16,
+    elevation: 8,
+  },
+  heroIconRow: {
+    flexDirection: "row",
+    alignItems: "flex-end",
+    gap: 4,
+    marginBottom: 12,
+  },
+  tokenCount: {
+    fontSize: FONT_SIZES.display,
+    color: "#fff",
+    lineHeight: FONT_SIZES.display * 1.1,
+  },
+  tokenLabel: {
+    fontSize: FONT_SIZES.medium,
+    color: "rgba(255,255,255,0.75)",
+    marginTop: 4,
+  },
+  rankBadge: {
+    marginTop: 14,
+    backgroundColor: "rgba(255,255,255,0.2)",
+    borderRadius: 20,
+    paddingHorizontal: 14,
+    paddingVertical: 5,
+  },
+  rankText: {
+    color: "#fff",
+    fontSize: FONT_SIZES.small,
+  },
+  card: {
     backgroundColor: "#fff",
-    textAlign: "center",
-    borderRadius: 8,
-    marginHorizontal: 1,
-  },
-  focusCell: {
-    color: "white",
-    backgroundColor: "#EE4266",
-  },
-  box: {
-    backgroundColor: "white",
-    width: responsiveWidth(90),
-    paddingVertical: 25,
-    borderRadius: 10,
-    paddingHorizontal: 30,
-    elevation: 16,
-    shadowColor: '#000000',
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.1,
+    borderRadius: 20,
+    padding: 20,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
     shadowRadius: 10,
+    elevation: 2,
+  },
+  levelRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 14,
+  },
+  levelBadge: {
+    width: 52,
+    height: 52,
+    borderRadius: 26,
+    backgroundColor: "#EEF2FF",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  levelNumber: {
+    fontSize: FONT_SIZES.large,
+    color: COLORS.primary,
+  },
+  levelTitle: {
+    fontSize: FONT_SIZES.large,
+    color: "#333",
+  },
+  levelCaption: {
+    fontSize: FONT_SIZES.small,
+    color: COLORS.grey,
+    marginTop: 2,
+  },
+  progressLabels: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginTop: 6,
+  },
+  progressCaption: {
+    fontSize: FONT_SIZES.small,
+    color: COLORS.grey,
+  },
+  sectionHeading: {
+    fontSize: FONT_SIZES.subtitle,
+    marginBottom: 12,
+  },
+  emptyState: {
+    backgroundColor: "#fff",
+    borderRadius: 20,
+    padding: 32,
+    alignItems: "center",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 10,
+    elevation: 2,
+  },
+  emptyText: {
+    color: COLORS.grey,
+    fontSize: FONT_SIZES.medium,
+  },
+  activityRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#fff",
+    borderRadius: 14,
+    padding: 14,
+    marginBottom: 8,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.04,
+    shadowRadius: 6,
+    elevation: 1,
+  },
+  trophyIcon: {
+    marginRight: 12,
+  },
+  activityInfo: {
+    flex: 1,
+  },
+  activityTitle: {
+    fontSize: FONT_SIZES.medium,
+    color: "#333",
+  },
+  rewardPill: {
+    backgroundColor: "#EEF2FF",
+    borderRadius: 20,
+    paddingHorizontal: 12,
+    paddingVertical: 4,
+  },
+  rewardPillText: {
+    color: COLORS.primary,
+    fontSize: FONT_SIZES.medium,
   },
 });
-
-export default Wallet;

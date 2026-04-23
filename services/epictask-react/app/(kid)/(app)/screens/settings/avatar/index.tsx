@@ -5,6 +5,7 @@ import CustomButton from "@/components/buttons/CustomButton";
 import ScreenHeading from "@/components/headings/ScreenHeading";
 import { useAuth } from "@/context/AuthContext";
 import * as ImagePicker from "expo-image-picker";
+import storageService from "@/api/storageService";
 
 import {
   responsiveFontSize,
@@ -27,10 +28,15 @@ const AvatarScreen = () => {
   const handleUpdateProfile = async (uri: string) => {
     try {
       setIsSaving(true);
+      
+      // Upload image to Firebase Storage
+      const storagePath = `avatars/${user.uid}_${Date.now()}.jpg`;
+      const downloadURL = await storageService.uploadImage(uri, storagePath);
+      
       await updateProfile({
-        imageUrl: uri,
+        imageUrl: downloadURL,
       });
-      setProfileImage(uri);
+      setProfileImage(downloadURL);
       Alert.alert("Success", "Avatar updated successfully");
     } catch (error) {
       Alert.alert("Error", "Failed to update avatar");

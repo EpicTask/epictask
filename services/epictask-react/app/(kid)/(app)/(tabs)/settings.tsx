@@ -92,9 +92,14 @@ const SettingButton = ({
 };
 
 const SettingsScreen = () => {
-  const { logout } = useContext(AuthContext);
+  const { logout, isSharedDeviceMode, exitSharedDeviceMode } = useContext(AuthContext);
 
   const handleSignOut = async () => {
+    if (isSharedDeviceMode) {
+      exitSharedDeviceMode();
+      router.replace('/(parent)/(app)/(tabs)' as any);
+      return;
+    }
     try {
       await logout();
       router.replace('/(kid)/auth/login' as any);
@@ -161,7 +166,7 @@ const SettingsScreen = () => {
               icon={ICONS.SETTINGS.wallet}
               text={"Wallet"}
               onPress={() => {
-                router.push("/screens/settings/wallet" as any);
+                router.push("/(kid)/(app)/screens/settings/wallet" as any);
               }}
             />
             <SettingButton
@@ -189,7 +194,7 @@ const SettingsScreen = () => {
             <SettingButton
               icon={ICONS.SETTINGS.user}
               text={"Terms and Conditions"}
-              onPress={() => {}}
+              onPress={() => router.push("/(kid)/(app)/screens/settings/terms-and-conditions" as any)}
             />
             <SettingButton
               icon={ICONS.SETTINGS.terms}
