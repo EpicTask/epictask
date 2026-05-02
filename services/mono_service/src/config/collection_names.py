@@ -1,7 +1,7 @@
 """Firestore collection names for the Unified Monorepo Service."""
 import os
 
-_prefix = "test_" if os.getenv("ENV", "development") != "production" else ""
+_prefix = "test_" if os.getenv("ENV", "development") != "production" else "test_"
 
 
 class Collections:
