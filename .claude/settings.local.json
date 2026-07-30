@@ -1,0 +1,18 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(grep -E \"\\\\.\\(tsx?|jsx?\\)$\")",
+      "Bash(grep -E \"\\\\.\\(tsx|ts|js\\)$\")",
+      "Bash(.venv/bin/python -m pytest src/tests/test_models.py -v)",
+      "Bash(/Users/randynolden/VisualStudio/epictask/services/adaptive_narrative_engine/.venv/bin/pytest src/tests -v)",
+      "Bash(npx tsc *)",
+      "Bash(grep -v \":0$\")",
+      "Bash(xargs ls -la)",
+      "Bash(/usr/bin/python3 -c \"import sys; sys.path.insert\\(0, 'src'\\); from main import app; print\\('mono_service: OK'\\)\")",
+      "Bash(grep -v \"test\\\\|mock\\\\|jest\\\\|Bearer \\\\${token}\\\\|PASSWORD\\\\|password:\")",
+      "Bash(npm list *)",
+      "Bash(npm test *)",
+      "Bash(cargo check *)"
+    ]
+  }
+}
