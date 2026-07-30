@@ -163,6 +163,8 @@ export const authService = {
     try {
       await signOut(auth);
       await AsyncStorage.removeItem("authToken");
+      await AsyncStorage.removeItem("cachedUserProfile");
+      await AsyncStorage.removeItem("childContext");
 
       // Clear all caches on logout to prevent data leakage
       firestoreService.cache.clear();
@@ -171,6 +173,7 @@ export const authService = {
     } catch (error) {
       console.error("Logout error:", error);
       // Still clear cache even if logout fails
+      await AsyncStorage.removeItem("childContext").catch(() => {});
       firestoreService.cache.clear();
       throw new Error("Logout failed");
     }
@@ -439,6 +442,9 @@ export const authService = {
           "childContext",
           JSON.stringify({
             childId: childId,
+            childName: result.child.displayName,
+            childImageUrl: result.child.imageUrl || result.child.photoURL,
+            childAge: result.child.age,
             timestamp: Date.now(),
             expires: Date.now() + 15 * 60 * 1000, // 15 minutes
           })
@@ -449,7 +455,7 @@ export const authService = {
       }
     } catch (error) {
       console.error("Switch to child context error:", error);
-      throw new Error("Failed to switch to child account");
+      throw new Error(error?.message || "Failed to switch to child account");
     }
   },
 
@@ -501,12 +507,23 @@ export const authService = {
     }
   },
 
+  getLinkedChildrenWithSharing: async (parentUid, useCache = true) => {
+    try {
+      return await firestoreService.getLinkedChildrenWithSharing(parentUid, useCache);
+    } catch (error) {
+      console.error("Get linked children with sharing error:", error);
+      throw new Error("Failed to get linked children");
+    }
+  },
+
   // Delete account
   deleteAccount: async () => {
     try {
       const response = await userApiClient.delete("/deleteAccount");
       await signOut(auth);
       await AsyncStorage.removeItem("authToken");
+      await AsyncStorage.removeItem("cachedUserProfile");
+      await AsyncStorage.removeItem("childContext");
       return response.data;
     } catch (error) {
       console.error("Delete account error:", error);

@@ -11,6 +11,7 @@ export const useChildTasks = (childId, options = {}) => {
   const [error, setError] = useState(null);
   const [fromCache, setFromCache] = useState(false);
   const unsubscribeRef = useRef(null);
+  const requestIdRef = useRef(0);
 
   const {
     realTime = true,
@@ -20,7 +21,11 @@ export const useChildTasks = (childId, options = {}) => {
   } = options;
 
   // Cleanup function
-  const cleanup = useCallback(() => {
+  const cleanup = useCallback((invalidate = true) => {
+    if (invalidate) {
+      requestIdRef.current += 1;
+    }
+
     if (unsubscribeRef.current) {
       unsubscribeRef.current();
       unsubscribeRef.current = null;
@@ -29,6 +34,9 @@ export const useChildTasks = (childId, options = {}) => {
 
   // Fetch tasks function
   const fetchTasks = useCallback(async () => {
+    const requestId = ++requestIdRef.current;
+    const isCurrentRequest = () => requestId === requestIdRef.current;
+
     if (!childId) {
       setTasks([]);
       setLoading(false);
@@ -40,11 +48,13 @@ export const useChildTasks = (childId, options = {}) => {
       setError(null);
 
       if (realTime) {
-        cleanup(); // Clean up any existing subscription
+        cleanup(false); // Clean up any existing subscription without invalidating this request
         
         const unsubscribe = firestoreService.subscribeToUserTasks(
           childId,
           (result) => {
+            if (!isCurrentRequest()) return;
+
             if (result.success) {
               setTasks(result.tasks);
               setFromCache(false);
@@ -73,6 +83,7 @@ export const useChildTasks = (childId, options = {}) => {
           orderField: "expiration_date",
           orderDirection: "desc"
         });
+        if (!isCurrentRequest()) return;
         
         if (result.success) {
           setTasks(result.tasks);
@@ -85,6 +96,8 @@ export const useChildTasks = (childId, options = {}) => {
         setLoading(false);
       }
     } catch (err) {
+      if (!isCurrentRequest()) return;
+
       console.error('Error fetching child tasks:', err);
       setError(err.message);
       setTasks([]);
@@ -95,6 +108,7 @@ export const useChildTasks = (childId, options = {}) => {
   // Refresh tasks manually with cache invalidation
   const refreshTasks = useCallback(async () => {
     if (!childId) return;
+    const requestId = requestIdRef.current;
     
     try {
       // Invalidate cache first, then fetch fresh data
@@ -107,6 +121,7 @@ export const useChildTasks = (childId, options = {}) => {
         orderField: "expiration_date",
         orderDirection: "desc"
       });
+      if (requestId !== requestIdRef.current) return;
       
       if (result.success) {
         setTasks(result.tasks);
@@ -147,11 +162,16 @@ export const useFamilyTasks = (parentId, options = {}) => {
   const [error, setError] = useState(null);
   const [children, setChildren] = useState([]);
   const unsubscribeRef = useRef(null);
+  const requestIdRef = useRef(0);
 
   const { realTime = true } = options;
 
   // Cleanup function
-  const cleanup = useCallback(() => {
+  const cleanup = useCallback((invalidate = true) => {
+    if (invalidate) {
+      requestIdRef.current += 1;
+    }
+
     if (unsubscribeRef.current) {
       unsubscribeRef.current();
       unsubscribeRef.current = null;
@@ -160,6 +180,9 @@ export const useFamilyTasks = (parentId, options = {}) => {
 
   // Fetch family tasks function
   const fetchFamilyTasks = useCallback(async () => {
+    const requestId = ++requestIdRef.current;
+    const isCurrentRequest = () => requestId === requestIdRef.current;
+
     if (!parentId) {
       setFamilyTasks({});
       setChildren([]);
@@ -173,17 +196,21 @@ export const useFamilyTasks = (parentId, options = {}) => {
 
       // First get children list
       const childrenResult = await firestoreService.getLinkedChildren(parentId);
+      if (!isCurrentRequest()) return;
+
       if (childrenResult.success) {
         setChildren(childrenResult.children);
       }
 
       if (realTime) {
         // Setup real-time subscription for family with enhanced options
-        cleanup(); // Clean up any existing subscription
+        cleanup(false); // Clean up any existing subscription without invalidating this request
         
         const unsubscribe = firestoreService.subscribeToFamilyTasks(
           parentId,
           (result) => {
+            if (!isCurrentRequest()) return;
+
             if (result.success) {
               setFamilyTasks(result.familyTasks);
               setError(null);
@@ -211,6 +238,7 @@ export const useFamilyTasks = (parentId, options = {}) => {
           orderField: "expiration_date",
           orderDirection: "desc"
         });
+        if (!isCurrentRequest()) return;
         
         if (result.success) {
           setFamilyTasks(result.familyTasks);
@@ -222,6 +250,8 @@ export const useFamilyTasks = (parentId, options = {}) => {
         setLoading(false);
       }
     } catch (err) {
+      if (!isCurrentRequest()) return;
+
       console.error('Error fetching family tasks:', err);
       setError(err.message);
       setFamilyTasks({});
@@ -232,6 +262,7 @@ export const useFamilyTasks = (parentId, options = {}) => {
   // Refresh family tasks manually with enhanced cache management
   const refreshFamilyTasks = useCallback(async () => {
     if (!parentId) return;
+    const requestId = requestIdRef.current;
     
     try {
       // Clear specific cache patterns and fetch fresh data
@@ -244,6 +275,7 @@ export const useFamilyTasks = (parentId, options = {}) => {
         orderField: "expiration_date",
         orderDirection: "desc"
       });
+      if (requestId !== requestIdRef.current) return;
       
       if (result.success) {
         setFamilyTasks(result.familyTasks);

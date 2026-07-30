@@ -528,9 +528,14 @@ export const firestoreService = {
       const familyTasks = {};
       let childrenCount = 0;
       let initializedChildren = 0;
+      let cancelled = false;
 
       // Get parent's children first
       firestoreService.getLinkedChildren(parentUid).then((childrenResult) => {
+        if (cancelled) {
+          return;
+        }
+
         if (!childrenResult.success) {
           callback({ success: false, error: "Failed to fetch children" });
           return;
@@ -546,9 +551,17 @@ export const firestoreService = {
 
         // Subscribe to each child's tasks
         children.forEach((child) => {
+          if (cancelled) {
+            return;
+          }
+
           const unsubscribe = firestoreService.subscribeToUserTasks(
             child.uid,
             (result) => {
+              if (cancelled) {
+                return;
+              }
+
               if (result.success) {
                 familyTasks[child.uid] = {
                   childName: child.displayName || child.email,
@@ -581,12 +594,17 @@ export const firestoreService = {
           unsubscribes.push(unsubscribe);
         });
       }).catch((error) => {
+        if (cancelled) {
+          return;
+        }
+
         ErrorHandler.logError(operation, error, { parentUid });
         callback({ success: false, error: error.message });
       });
 
       // Return enhanced cleanup function
       return () => {
+        cancelled = true;
         unsubscribes.forEach(unsubscribe => {
           try {
             unsubscribe();
