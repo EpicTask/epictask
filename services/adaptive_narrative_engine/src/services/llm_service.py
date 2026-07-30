@@ -69,7 +69,7 @@ class LLMService:
             self.openai_client = openai.OpenAI(api_key=self.openai_key)
 
             genai.configure(api_key=self.gemini_key)
-            self.gemini_model = genai.GenerativeModel('gemini-1.0-pro')
+            self.gemini_model = genai.GenerativeModel('gemini-3.1-flash-lite')
 
             logging.info("LLMService: initialized with OpenAI + Gemini.")
 

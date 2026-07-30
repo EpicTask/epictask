@@ -1,7 +1,7 @@
 """Firestore database operations for stories and progress."""
 from datetime import datetime
 from typing import List, Optional, Dict, Any
-from google.cloud.firestore import Query
+from google.cloud.firestore import Query, ArrayUnion
 from google.cloud.firestore_v1.base_query import FieldFilter
 
 from src.config.firebase_config import db
@@ -174,22 +174,44 @@ class FirestoreService:
     async def create_or_update_progress(self, progress: StoryProgress) -> None:
         """
         Create or update user's story progress.
-        
+
         Args:
             progress: Progress model
         """
         progress_dict = progress.model_dump(exclude={"user_id", "story_id"})
         progress_dict["last_updated"] = datetime.utcnow()
-        
+
         if progress_dict.get("started_at") is None:
             progress_dict["started_at"] = datetime.utcnow()
-        
+
         doc_ref = (self.db.collection(collections.STORY_PROGRESS)
                   .document(progress.user_id)
                   .collection(collections.USER_STORIES)
                   .document(progress.story_id))
-        
+
         doc_ref.set(progress_dict, merge=True)
+
+    async def add_completed_money_moment(
+        self, user_id: str, story_id: str, moment_id: str
+    ) -> None:
+        """
+        Idempotently record a completed Money Moment for a user/story.
+
+        Uses ArrayUnion so repeated calls with the same moment_id are no-ops
+        and concurrent calls do not clobber each other.
+        """
+        doc_ref = (self.db.collection(collections.STORY_PROGRESS)
+                  .document(user_id)
+                  .collection(collections.USER_STORIES)
+                  .document(story_id))
+
+        doc_ref.set(
+            {
+                "completed_money_moment_ids": ArrayUnion([moment_id]),
+                "last_updated": datetime.utcnow(),
+            },
+            merge=True,
+        )
     
     async def get_all_user_progress(self, user_id: str) -> List[Dict[str, Any]]:
         """

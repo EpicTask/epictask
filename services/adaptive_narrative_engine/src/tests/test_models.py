@@ -8,7 +8,7 @@ from src.domain.models import (
     StoryProgress, AdvanceRequest, AdvanceResponse,
     NarrativeAward, PayoutRequest, PayoutRequestRecord,
     UserProfile, RecommendRequest, RecommendResponse,
-    HealthResponse
+    HealthResponse, MoneyMomentCompleteRequest
 )
 
 
@@ -125,10 +125,50 @@ class TestStoryNode:
                 options=[]
             )
 
+    def test_node_accepts_money_moment_metadata(self):
+        """StoryNode.metadata carries a Money Moment payload through to clients."""
+        money_moment = {
+            "id": "mia-kite-saving-001",
+            "concept": "saving",
+            "title": "Saving",
+            "simpleDefinition": "Saving means keeping some coins for later.",
+            "scenario": "Mia has 3 coins. She wants a kite that costs 5 coins.",
+            "choices": [
+                {
+                    "id": "save",
+                    "label": "Save the coins",
+                    "resultText": "Mia keeps her coins.",
+                    "rewardType": "badge",
+                    "rewardId": "super_saver",
+                }
+            ],
+        }
+        node = StoryNode(
+            title="Scene 1",
+            lesson_key="saving",
+            age_range=[5, 8],
+            prompt="What now?",
+            options=[NodeOption(text="Continue", leads_to="node_2")],
+            metadata={"money_moment": money_moment},
+        )
+        assert node.metadata is not None
+        assert node.metadata["money_moment"]["concept"] == "saving"
+
+    def test_node_metadata_defaults_to_none(self):
+        """StoryNode.metadata is optional and defaults to None."""
+        node = StoryNode(
+            title="Scene 1",
+            lesson_key="saving",
+            age_range=[5, 8],
+            prompt="What now?",
+            options=[NodeOption(text="Continue", leads_to="node_2")],
+        )
+        assert node.metadata is None
+
 
 class TestStoryProgress:
     """Tests for StoryProgress model."""
-    
+
     def test_valid_progress(self):
         """Test creating valid story progress."""
         progress = StoryProgress(
@@ -141,6 +181,33 @@ class TestStoryProgress:
         assert progress.user_id == "user_123"
         assert progress.total_xp == 50
         assert progress.level == 1  # Default
+        assert progress.completed_money_moment_ids == []
+
+    def test_completed_money_moment_ids_round_trip(self):
+        """completed_money_moment_ids is preserved across model construction."""
+        progress = StoryProgress(
+            user_id="user_123",
+            story_id="story_1",
+            current_node="node_1",
+            completed_money_moment_ids=["m1", "m2"],
+        )
+        assert progress.completed_money_moment_ids == ["m1", "m2"]
+
+
+class TestMoneyMomentCompleteRequest:
+    """Tests for MoneyMomentCompleteRequest model."""
+
+    def test_valid_request(self):
+        request = MoneyMomentCompleteRequest(
+            user_id="user_123",
+            story_id="story_1",
+            moment_id="m1",
+        )
+        assert request.moment_id == "m1"
+
+    def test_moment_id_required(self):
+        with pytest.raises(ValidationError):
+            MoneyMomentCompleteRequest(user_id="u", story_id="s")
 
 
 class TestAdvanceRequest:

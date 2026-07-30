@@ -237,6 +237,65 @@ class TestProgressRoutes:
         
         assert response.status_code == 403
 
+    @patch('src.routes.progress.firestore_service')
+    @patch('src.routes.progress.get_current_user')
+    @patch('src.routes.progress.get_user_id')
+    async def test_complete_money_moment_success(self, mock_user_id, mock_auth, mock_firestore):
+        """Test recording a Money Moment completion for existing progress."""
+        mock_auth.return_value = {"uid": "user_123"}
+        mock_user_id.return_value = "user_123"
+        mock_firestore.get_progress = AsyncMock(return_value={
+            "current_node": "node_1",
+            "completed_nodes": [],
+            "total_xp": 0,
+            "level": 1,
+            "status": "in_progress"
+        })
+        mock_firestore.add_completed_money_moment = AsyncMock()
+
+        response = client.post(
+            "/progress/money-moment/complete",
+            headers={"Authorization": "Bearer fake_token"},
+            json={
+                "user_id": "user_123",
+                "story_id": "story_1",
+                "moment_id": "moment_1"
+            }
+        )
+
+        assert response.status_code == 200
+        assert response.json()["moment_id"] == "moment_1"
+        mock_firestore.add_completed_money_moment.assert_awaited_once_with(
+            user_id="user_123",
+            story_id="story_1",
+            moment_id="moment_1",
+        )
+
+    @patch('src.routes.progress.firestore_service')
+    @patch('src.routes.progress.get_current_user')
+    @patch('src.routes.progress.get_user_id')
+    async def test_complete_money_moment_requires_progress(
+        self, mock_user_id, mock_auth, mock_firestore
+    ):
+        """Test Money Moment completion does not create partial progress docs."""
+        mock_auth.return_value = {"uid": "user_123"}
+        mock_user_id.return_value = "user_123"
+        mock_firestore.get_progress = AsyncMock(return_value=None)
+        mock_firestore.add_completed_money_moment = AsyncMock()
+
+        response = client.post(
+            "/progress/money-moment/complete",
+            headers={"Authorization": "Bearer fake_token"},
+            json={
+                "user_id": "user_123",
+                "story_id": "story_1",
+                "moment_id": "moment_1"
+            }
+        )
+
+        assert response.status_code == 404
+        mock_firestore.add_completed_money_moment.assert_not_awaited()
+
 
 class TestHealthEndpoint:
     """Tests for health endpoint."""

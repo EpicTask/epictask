@@ -1,6 +1,6 @@
 """Pydantic models for Adaptive Narrative Engine."""
 from datetime import datetime
-from typing import Optional, List, Literal
+from typing import Optional, List, Literal, Dict, Any
 from pydantic import BaseModel, Field, field_validator
 
 
@@ -61,6 +61,7 @@ class StoryNode(BaseModel):
     payout_hint: Optional[PayoutHint] = None
     is_terminal: bool = Field(default=False)
     order: int = Field(default=0, ge=0)
+    metadata: Optional[Dict[str, Any]] = None
     
     @field_validator('age_range')
     @classmethod
@@ -88,6 +89,14 @@ class StoryProgress(BaseModel):
     status: Literal["in_progress", "completed", "abandoned"] = Field(default="in_progress")
     started_at: Optional[datetime] = None
     last_updated: Optional[datetime] = None
+    completed_money_moment_ids: List[str] = Field(default_factory=list)
+
+
+class MoneyMomentCompleteRequest(BaseModel):
+    """Request to record a Money Moment completion."""
+    user_id: str
+    story_id: str
+    moment_id: str
 
 
 class AdvanceRequest(BaseModel):

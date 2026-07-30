@@ -3,7 +3,14 @@ from typing import List
 from fastapi import APIRouter, Depends, HTTPException, status
 
 from src.config.security import get_current_user, get_user_id
-from src.domain.models import AdvanceRequest, AdvanceResponse, StoryProgress, StartStoryRequest, StartStoryResponse
+from src.domain.models import (
+    AdvanceRequest,
+    AdvanceResponse,
+    StoryProgress,
+    StartStoryRequest,
+    StartStoryResponse,
+    MoneyMomentCompleteRequest,
+)
 from src.domain.validators import (
     validate_age,
     validate_story_exists,
@@ -151,7 +158,8 @@ async def advance_progress(
             level=new_level,
             preferred_topics=progress.get("preferred_topics", []),
             status=new_status,
-            started_at=progress.get("started_at")
+            started_at=progress.get("started_at"),
+            completed_money_moment_ids=progress.get("completed_money_moment_ids", []),
         )
     else:
         # Create new progress
@@ -255,3 +263,32 @@ async def get_all_progress(
     
     progress_list = await firestore_service.get_all_user_progress(user_id)
     return progress_list
+
+
+@router.post("/money-moment/complete", response_model=dict)
+async def complete_money_moment(
+    request: MoneyMomentCompleteRequest,
+    current_user: dict = Depends(get_current_user)
+):
+    """
+    Record that a Money Moment has been completed for the current user.
+
+    Idempotent: repeated calls with the same moment_id are no-ops.
+    """
+    auth_user_id = get_user_id(current_user)
+    validate_user_ownership(auth_user_id, request.user_id)
+
+    progress = await firestore_service.get_progress(request.user_id, request.story_id)
+    if not progress:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Progress not found for this user and story"
+        )
+
+    await firestore_service.add_completed_money_moment(
+        user_id=request.user_id,
+        story_id=request.story_id,
+        moment_id=request.moment_id,
+    )
+
+    return {"status": "ok", "moment_id": request.moment_id}
