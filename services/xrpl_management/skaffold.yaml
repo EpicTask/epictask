@@ -1,0 +1,15 @@
+apiVersion: skaffold/v4beta7
+kind: Config
+metadata:
+  name: xrpl-management
+build:
+  artifacts:
+    - image: xrpl-management
+      context: .
+manifests:
+  rawYaml:
+    - k8s/service.yaml
+deploy:
+  cloudrun:
+    projectid: task-coin-384722
+    region: us-central1

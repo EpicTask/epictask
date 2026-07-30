@@ -1,0 +1,28 @@
+apiVersion: serving.knative.dev/v1
+kind: Service
+metadata:
+  name: xrpl-management
+spec:
+  template:
+    spec:
+      containers:
+        - image: xrpl-management
+          ports:
+            - containerPort: 3000
+          env:
+            - name: XRPL_CLUSTER_WSS
+              value: "wss://xrplcluster.com"
+            - name: XRPL_WSS
+              value: "wss://xrpl.ws"
+            - name: XRPL_S1_WSS
+              value: "wss://s1.ripple.com"
+            - name: XRPL_S2_WSS
+              value: "wss://s2.ripple.com"
+            - name: XRPL_SOLOGENIC_WSS
+              value: "wss://x1.sologenic.org"
+            - name: XRPL_TESTNET_WSS
+              value: "wss://s.altnet.rippletest.net:51233"
+            - name: PROJECTID
+              value: "task-coin-384722"
+            - name: XUMM_WEBHOOK_TOKEN
+              value: "1234"
