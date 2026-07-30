@@ -8,7 +8,7 @@ import { IMAGES } from '@/assets';
 
 interface StoryNodeCardProps {
   node: Node;
-  onChoice: (optionId: string) => void;
+  onChoice: (optionId: string | undefined, choiceIndex: number) => void;
   disabled?: boolean;
 }
 
@@ -35,10 +35,10 @@ const StoryNodeCard: React.FC<StoryNodeCardProps> = ({ node, onChoice, disabled 
       <View style={styles.choicesArea}>
         {node.options && node.options.map((option, index) => (
           <ChoiceButton 
-            key={option.option_id}
+            key={option.option_id ?? option.leads_to ?? index}
             text={option.text}
             icon={index === 0 ? 'star' : 'heart'} 
-            onPress={() => onChoice(option.option_id)}
+            onPress={() => onChoice(option.option_id, index)}
             disabled={disabled}
           />
         ))}

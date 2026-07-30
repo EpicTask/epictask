@@ -2,21 +2,25 @@ import React, { useContext, useState } from "react";
 import { View, StyleSheet, TextInput, Button, Text, Alert } from "react-native";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { AuthContext } from "@/context/AuthContext";
-import userApiClient from "@/api/userService";
+import { userService } from "@/api/userService";
 import { SafeAreaView } from "react-native-safe-area-context";
 import CustomText from "@/components/CustomText";
 
 const ProfileScreen = () => {
-  const { user, setUser } = useContext(AuthContext);
+  const { user, setUser, isSharedDeviceMode, activeChildContext } = useContext(AuthContext);
   const queryClient = useQueryClient();
-  const [displayName, setDisplayName] = useState(user?.displayName || "");
+  const [displayName, setDisplayName] = useState(
+    isSharedDeviceMode && activeChildContext?.childName
+      ? activeChildContext.childName
+      : user?.displayName || ""
+  );
   const [inviteCode, setInviteCode] = useState("");
 
   const updateProfileMutation = useMutation({
-    mutationFn: (updatedProfile) =>
-      userApiClient.updateProfile( updatedProfile),
-    onSuccess: (data) => {
-      setUser({ ...user, ...data.data });
+    mutationFn: (updatedProfile: any) =>
+      userService.updateProfile(updatedProfile),
+    onSuccess: (data: any) => {
+      setUser({ ...user, ...data });
       Alert.alert("Success", "Profile updated successfully.");
       queryClient.invalidateQueries({ queryKey: ["profile"] });
     },
@@ -29,12 +33,12 @@ const ProfileScreen = () => {
   });
 
   const generateInviteCodeMutation = useMutation({
-    mutationFn: () => userApiClient.generateInviteCode(),
-    onSuccess: (data) => {
-      setInviteCode(data.data.inviteCode);
+    mutationFn: () => userService.generateInviteCode(),
+    onSuccess: (data: any) => {
+      setInviteCode(data.inviteCode);
       Alert.alert(
         "Invite Code",
-        `Your invite code is: ${data.data.inviteCode}`
+        `Your invite code is: ${data.inviteCode}`
       );
     },
     onError: (error) => {
@@ -46,10 +50,20 @@ const ProfileScreen = () => {
   });
 
   const handleUpdateProfile = () => {
-    updateProfileMutation.mutate();
+    if (isSharedDeviceMode) {
+      Alert.alert("Return to Parent", "Return to parent mode to edit child profile details.");
+      return;
+    }
+
+    updateProfileMutation.mutate({ displayName });
   };
 
   const handleGenerateInviteCode = () => {
+    if (isSharedDeviceMode) {
+      Alert.alert("Return to Parent", "Return to parent mode before linking accounts.");
+      return;
+    }
+
     generateInviteCodeMutation.mutate();
   };
 

@@ -12,15 +12,19 @@ import { firestoreService } from "@/api/firestoreService";
 import { AuthContext } from "@/context/AuthContext";
 
 const KidProfiles = () => {
-  const { user } = useContext(AuthContext);
+  const { user, isSharedDeviceMode } = useContext(AuthContext);
   const [siblings, setSiblings] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchSiblings = async () => {
-      if (user?.parent_id) {
+      const parentId = isSharedDeviceMode && user?.role === "parent"
+        ? user.uid
+        : user?.parent_id || user?.parentId;
+
+      if (parentId) {
         try {
-          const result = await firestoreService.getLinkedChildren(user.parent_id);
+          const result = await firestoreService.getLinkedChildren(parentId);
           if (result.success) {
             setSiblings(result.children || []);
           }
@@ -32,7 +36,7 @@ const KidProfiles = () => {
     };
 
     fetchSiblings();
-  }, [user]);
+  }, [user, isSharedDeviceMode]);
 
   return (
     <SafeAreaView style={styles.safeArea}>

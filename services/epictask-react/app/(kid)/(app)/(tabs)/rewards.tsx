@@ -21,22 +21,22 @@ import taskService from "@/api/taskService";
 import narrativeService from "@/api/narrativeService";
 
 export default function TabTwoScreen() {
-  const { user, childAge } = useAuth();
+  const { user, effectiveUserId, childAge } = useAuth();
   const [kidLeaderboardData, setKidLeaderboardData] = useState<any>(null);
   const [progressSummary, setProgressSummary] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
   const fetchData = useCallback(async () => {
-    if (!user) return;
+    if (!effectiveUserId) return;
 
     try {
       setLoading(true);
       
       // Fetch kid's leaderboard view and progress summary
       const [kidData, summary] = await Promise.all([
-        taskService.getKidLeaderboardView(user.uid),
-        narrativeService.getKidProgressSummary(user.uid)
+        taskService.getKidLeaderboardView(effectiveUserId),
+        narrativeService.getKidProgressSummary(effectiveUserId)
       ]);
       
       setKidLeaderboardData(kidData);
@@ -48,7 +48,7 @@ export default function TabTwoScreen() {
       setLoading(false);
       setRefreshing(false);
     }
-  }, [user]);
+  }, [effectiveUserId]);
 
   useEffect(() => {
     fetchData();

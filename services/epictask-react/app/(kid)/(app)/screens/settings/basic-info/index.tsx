@@ -12,6 +12,7 @@ import {
   responsiveWidth,
 } from "react-native-responsive-dimensions";
 import { router } from "expo-router";
+import { firestoreService } from "@/api/firestoreService";
 
 const GRADE_LEVELS = [
   "Pre-K",
@@ -31,7 +32,7 @@ const GRADE_LEVELS = [
 ];
 
 const BasicInfo = () => {
-  const { user, updateProfile, loading } = useAuth();
+  const { user, updateProfile, isSharedDeviceMode, activeChildContext, effectiveUserId } = useAuth();
   
   const [name, setName] = useState("");
   const [dob, setDob] = useState("");
@@ -39,14 +40,48 @@ const BasicInfo = () => {
   const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
-    if (user) {
-      setName(user.displayName || "");
-      setDob(user.dob || user.age || ""); // Handle both if existing
-      setLevel(user.grade_level || user.gradeLevel || "");
-    }
-  }, [user]);
+    let active = true;
+
+    const loadProfile = async () => {
+      if (!effectiveUserId) return;
+
+      if (isSharedDeviceMode && activeChildContext) {
+        try {
+          const result = await firestoreService.getUserProfile(effectiveUserId);
+          if (active && result.success) {
+            const child = result.user;
+            setName(child.displayName || activeChildContext.childName || "");
+            setDob(child.dob || child.age || "");
+            setLevel(child.grade_level || child.gradeLevel || "");
+          }
+        } catch (error) {
+          if (active) {
+            setName(activeChildContext.childName || "");
+          }
+        }
+        return;
+      }
+
+      if (user && active) {
+        setName(user.displayName || "");
+        setDob(user.dob || user.age || "");
+        setLevel(user.grade_level || user.gradeLevel || "");
+      }
+    };
+
+    loadProfile();
+
+    return () => {
+      active = false;
+    };
+  }, [user, effectiveUserId, isSharedDeviceMode, activeChildContext]);
 
   const handleSave = async () => {
+    if (isSharedDeviceMode) {
+      Alert.alert("Return to Parent", "Return to parent mode to edit child profile details.");
+      return;
+    }
+
     try {
       setIsSaving(true);
       await updateProfile({
@@ -92,8 +127,9 @@ const BasicInfo = () => {
           <CustomButton
             fill={true}
             onPress={handleSave}
-            text={isSaving ? "Saving..." : "Save"}
+            text={isSharedDeviceMode ? "Return to Parent to Edit" : isSaving ? "Saving..." : "Save"}
             height={responsiveHeight(8)}
+            disabled={isSaving}
           />
           <CustomButton
             fill={false}

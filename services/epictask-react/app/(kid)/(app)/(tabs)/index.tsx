@@ -8,7 +8,8 @@ import {
   View,
   ActivityIndicator,
   RefreshControl,
-  Pressable
+  Pressable,
+  TouchableOpacity,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useQuery } from "@tanstack/react-query";
@@ -51,7 +52,7 @@ const fetchTasks = async (userId: string) => {
 };
 
 export default function HomeScreen() {
-  const { user } = useAuth();
+  const { user, effectiveUserId } = useAuth();
   const [unreadNotifications, setUnreadNotifications] = useState(0);
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const [modalVisible, setModalVisible] = useState(false);
@@ -63,9 +64,9 @@ export default function HomeScreen() {
     error,
     refetch,
   } = useQuery({
-    queryKey: ["allTasks", user?.uid],
-    queryFn: () => fetchTasks(user?.uid),
-    enabled: !!user,
+    queryKey: ["allTasks", effectiveUserId],
+    queryFn: () => fetchTasks(effectiveUserId || ""),
+    enabled: !!effectiveUserId,
   });
 
   // Fetch story progress
@@ -74,9 +75,9 @@ export default function HomeScreen() {
     isLoading: storyProgressLoading,
     refetch: refetchStoryProgress,
   } = useQuery({
-    queryKey: ["homeStoryProgress", user?.uid],
-    queryFn: () => narrativeService.getProgress(user?.uid),
-    enabled: !!user,
+    queryKey: ["homeStoryProgress", effectiveUserId],
+    queryFn: () => narrativeService.getProgress(effectiveUserId || ""),
+    enabled: !!effectiveUserId,
   });
 
   const [refreshing, setRefreshing] = useState(false);
@@ -129,8 +130,8 @@ export default function HomeScreen() {
   const {
     data: activeNode = null,
   } = useQuery({
-    queryKey: ["activeStoryNode", user?.uid, activeProgress?.story_id, activeProgress?.current_node_id],
-    queryFn: () => activeProgress ? narrativeService.getNode(activeProgress.story_id, activeProgress.current_node_id) : null,
+    queryKey: ["activeStoryNode", effectiveUserId, activeProgress?.story_id, activeProgress?.current_node],
+    queryFn: () => activeProgress ? narrativeService.getNode(activeProgress.story_id, activeProgress.current_node) : null,
     enabled: !!activeProgress,
   });
 

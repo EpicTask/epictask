@@ -19,18 +19,19 @@ import narrativeService, {
   Node,
   StoryProgress,
   Story,
+  MoneyMoment,
 } from "@/api/narrativeService";
 import {
   responsiveHeight,
   responsiveWidth,
 } from "react-native-responsive-dimensions";
 import * as Progress from "react-native-progress";
+import MoneyMomentCard from "@/components/story/MoneyMomentCard";
 
 export default function StoryViewerScreen() {
-  const { user } = useAuth();
+  const { effectiveUserId } = useAuth();
   const params = useLocalSearchParams();
   const storyId = params.storyId as string;
-  const progressId = params.progressId as string;
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -39,10 +40,53 @@ export default function StoryViewerScreen() {
   const [progress, setProgress] = useState<StoryProgress | null>(null);
   const [advancing, setAdvancing] = useState(false);
   const [xpAnimation, setXpAnimation] = useState<number | null>(null);
+  const [activeMoneyMoment, setActiveMoneyMoment] = useState<MoneyMoment | null>(
+    null
+  );
+
+  // Pending Money Moment for the current node, if one is attached and the
+  // child hasn't already completed it. Null when nothing to show.
+  const pendingMoneyMoment = (() => {
+    const moment = currentNode?.metadata?.money_moment;
+    if (!moment) return null;
+    const completed = progress?.completed_money_moment_ids ?? [];
+    if (completed.includes(moment.id)) return null;
+    return moment;
+  })();
+
+  useEffect(() => {
+    setActiveMoneyMoment(pendingMoneyMoment);
+  }, [pendingMoneyMoment?.id]);
+
+  const handleMoneyMomentComplete = async () => {
+    const moment = activeMoneyMoment;
+    setActiveMoneyMoment(null);
+    if (!moment || !effectiveUserId) return;
+
+    // Optimistically mark as completed so the overlay doesn't reappear if
+    // the network call is slow. The backend call is idempotent.
+    setProgress((prev) =>
+      prev
+        ? {
+            ...prev,
+            completed_money_moment_ids: [
+              ...(prev.completed_money_moment_ids ?? []),
+              moment.id,
+            ],
+          }
+        : prev
+    );
+
+    await narrativeService.completeMoneyMoment(
+      effectiveUserId,
+      storyId,
+      moment.id
+    );
+  };
 
   useEffect(() => {
     loadStoryData();
-  }, []);
+  }, [effectiveUserId, storyId]);
 
   const loadStoryData = async () => {
     try {
@@ -53,26 +97,25 @@ export default function StoryViewerScreen() {
       const storyData = await narrativeService.getStory(storyId);
       setStory(storyData);
 
-      if (progressId) {
-        // Continue existing progress
-        const progressList = await narrativeService.getProgress(
-          user?.uid,
-          storyId
+      const progressList = await narrativeService.getProgress(
+        effectiveUserId || "",
+        storyId
+      );
+      const currentProgress =
+        progressList.find((p) => p.status === "in_progress") ??
+        progressList[0];
+
+      if (currentProgress) {
+        setProgress(currentProgress);
+        const node = await narrativeService.getNode(
+          storyId,
+          currentProgress.current_node
         );
-        const currentProgress = progressList.find((p) => p.id === progressId);
-        
-        if (currentProgress) {
-          setProgress(currentProgress);
-          const node = await narrativeService.getNode(
-            storyId,
-            currentProgress.current_node
-          );
-          setCurrentNode(node);
-        }
+        setCurrentNode(node);
       } else {
         // Start new story
         const { node, progress: newProgress } =
-          await narrativeService.startStory(user?.uid, storyId);
+          await narrativeService.startStory(effectiveUserId || "", storyId);
         setCurrentNode(node);
         setProgress(newProgress);
       }
@@ -84,17 +127,22 @@ export default function StoryViewerScreen() {
     }
   };
 
-  const handleOptionSelect = async (optionId: string) => {
+  const handleOptionSelect = async (
+    optionId: string | undefined,
+    choiceIndex: number
+  ) => {
     if (!currentNode || !progress || advancing) return;
 
     try {
       setAdvancing(true);
 
       const response = await narrativeService.advanceProgress({
-        user_id: user?.uid,
+        user_id: effectiveUserId || "",
         story_id: storyId,
-        current_node_id: currentNode.id,
-        selected_option_id: optionId,
+        current_node_id: currentNode.node_id,
+        ...(optionId
+          ? { selected_option_id: optionId }
+          : { choice_index: choiceIndex }),
       });
 
       // Show XP animation
@@ -220,12 +268,12 @@ export default function StoryViewerScreen() {
             </CustomText>
             {currentNode.options.map((option, index) => (
               <TouchableOpacity
-                key={option.option_id}
+                key={option.option_id ?? option.leads_to ?? index}
                 style={[
                   styles.optionButton,
                   advancing && styles.optionButtonDisabled,
                 ]}
-                onPress={() => handleOptionSelect(option.option_id)}
+                onPress={() => handleOptionSelect(option.option_id, index)}
                 disabled={advancing}
                 activeOpacity={0.7}
               >
@@ -238,7 +286,7 @@ export default function StoryViewerScreen() {
           </View>
 
           {/* Node Info */}
-          {currentNode.xp_reward > 0 && (
+          {(currentNode.xp_reward ?? 0) > 0 && (
             <View style={styles.nodeInfo}>
               <Text style={styles.nodeInfoText}>
                 ⭐ {currentNode.xp_reward} XP for this choice
@@ -254,6 +302,15 @@ export default function StoryViewerScreen() {
           <ActivityIndicator size="large" color={COLORS.primary} />
           <Text style={styles.loadingText}>Loading next part...</Text>
         </View>
+      )}
+
+      {/* Money Moment Overlay */}
+      {activeMoneyMoment && (
+        <MoneyMomentCard
+          visible
+          moment={activeMoneyMoment}
+          onComplete={handleMoneyMomentComplete}
+        />
       )}
     </SafeAreaView>
   );

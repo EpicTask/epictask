@@ -18,7 +18,7 @@ import { taskService } from "@/api/taskService";
 import { responsiveWidth, responsiveHeight } from "react-native-responsive-dimensions";
 
 export default function StoryScreen() {
-  const { user, childAge } = useAuth();
+  const { effectiveUserId, childAge } = useAuth();
   const params = useLocalSearchParams();
   const storyId = params.storyId as string;
 
@@ -32,7 +32,7 @@ export default function StoryScreen() {
 
   useEffect(() => {
     loadStoryData();
-  }, [storyId]);
+  }, [storyId, effectiveUserId]);
 
   const loadStoryData = async () => {
     try {
@@ -41,11 +41,11 @@ export default function StoryScreen() {
       const storyData = await narrativeService.getStory(storyId);
       setStory(storyData);
 
-      const progressList = await narrativeService.getProgress(user?.uid, storyId);
+      const progressList = await narrativeService.getProgress(effectiveUserId || "", storyId);
       let currentProgress = progressList.find(p => p.status === 'in_progress');
       
       if (!currentProgress) {
-        const startResult = await narrativeService.startStory(user?.uid, storyId);
+        const startResult = await narrativeService.startStory(effectiveUserId || "", storyId);
         currentProgress = startResult.progress;
         setCurrentNode(startResult.node);
       } else {
@@ -80,24 +80,29 @@ export default function StoryScreen() {
           setTaskGateVisible(true);
           
           // You would call your task service here to see if the gate is satisfied
-          // const isSatisfied = await taskService.checkGate(user.uid, taskGate);
+          // const isSatisfied = await taskService.checkGate(effectiveUserId, taskGate);
           // if (isSatisfied) setTaskGateVisible(false);
       } catch (error) {
           console.error("Task gate check failed:", error);
       }
   };
 
-  const handleChoice = async (optionId: string) => {
+  const handleChoice = async (
+    optionId: string | undefined,
+    choiceIndex: number
+  ) => {
     if (!currentNode || !progress || advancing) return;
 
     try {
       setAdvancing(true);
 
       const response = await narrativeService.advanceProgress({
-        user_id: user?.uid,
+        user_id: effectiveUserId || "",
         story_id: storyId,
         current_node_id: currentNode.node_id,
-        selected_option_id: optionId,
+        ...(optionId
+          ? { selected_option_id: optionId }
+          : { choice_index: choiceIndex }),
       });
 
       if (response.story_completed) {

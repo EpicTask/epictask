@@ -26,8 +26,9 @@ interface Child {
   displayName: string;
   age: number;
   grade_level: string;
-  device_sharing_enabled: boolean;
+  device_sharing_enabled?: boolean;
   canSwitchToChild?: boolean;
+  blockedReason?: string;
 }
 
 interface ChildSelectionModalProps {
@@ -48,6 +49,7 @@ const ChildSelectionModal: React.FC<ChildSelectionModalProps> = ({
 
   useEffect(() => {
     if (visible && user?.uid) {
+      setSelectedChild(null);
       fetchChildren();
     }
   }, [visible, user?.uid]);
@@ -57,14 +59,30 @@ const ChildSelectionModal: React.FC<ChildSelectionModalProps> = ({
 
     try {
       setLoading(true);
-      const result = await authService.getLinkedChildren(user.uid);
+      const result = await authService.getLinkedChildrenWithSharing
+        ? await authService.getLinkedChildrenWithSharing(user.uid)
+        : await authService.getLinkedChildren(user.uid);
       
       if (result.success) {
-        // Filter children who can use device sharing (under 16)
-        const eligibleChildren = result.children.filter((child: Child) => 
-          authService.canSwitchToChild(child.age)
-        );
-        setChildren(eligibleChildren);
+        const childrenWithEligibility = result.children.map((child: Child) => {
+          const ageEligible = authService.canSwitchToChild(child.age);
+          const sharingEnabled = child.device_sharing_enabled !== false;
+          let blockedReason;
+
+          if (!ageEligible) {
+            blockedReason = "Device sharing unavailable: age 16+";
+          } else if (!sharingEnabled) {
+            blockedReason = "Device sharing is disabled for this child";
+          }
+
+          return {
+            ...child,
+            canSwitchToChild: Boolean(child.canSwitchToChild ?? (ageEligible && sharingEnabled)),
+            blockedReason,
+          };
+        });
+
+        setChildren(childrenWithEligibility);
       } else {
         Alert.alert('Error', 'Failed to load children');
       }
@@ -77,6 +95,7 @@ const ChildSelectionModal: React.FC<ChildSelectionModalProps> = ({
   };
 
   const handleChildSelect = (child: Child) => {
+    if (!child.canSwitchToChild) return;
     setSelectedChild(child);
   };
 
@@ -91,9 +110,11 @@ const ChildSelectionModal: React.FC<ChildSelectionModalProps> = ({
     <TouchableOpacity
       style={[
         styles.childItem,
+        !item.canSwitchToChild && styles.disabledChildItem,
         selectedChild?.uid === item.uid && styles.selectedChildItem
       ]}
       onPress={() => handleChildSelect(item)}
+      disabled={!item.canSwitchToChild}
     >
       <View style={styles.childInfo}>
         <CustomText variant="semiBold" style={styles.childName}>
@@ -102,9 +123,15 @@ const ChildSelectionModal: React.FC<ChildSelectionModalProps> = ({
         <CustomText variant="regular" style={styles.childDetails}>
           Age {item.age} • Grade {item.grade_level}
         </CustomText>
+        {item.blockedReason ? (
+          <CustomText variant="regular" style={styles.blockedReason}>
+            {item.blockedReason}
+          </CustomText>
+        ) : null}
       </View>
       <View style={[
         styles.selectionIndicator,
+        !item.canSwitchToChild && styles.disabledIndicator,
         selectedChild?.uid === item.uid && styles.selectedIndicator
       ]} />
     </TouchableOpacity>
@@ -143,8 +170,7 @@ const ChildSelectionModal: React.FC<ChildSelectionModalProps> = ({
             ) : children.length === 0 ? (
               <View style={styles.emptyContainer}>
                 <CustomText variant="regular" style={styles.emptyText}>
-                  No children available for device sharing.
-                  {'\n\n'}Children must be under 16 years old to use this feature.
+                  No linked children found.
                 </CustomText>
               </View>
             ) : (
@@ -170,6 +196,7 @@ const ChildSelectionModal: React.FC<ChildSelectionModalProps> = ({
               fill={true}
               onPress={handleConfirmSelection}
               height={responsiveHeight(6)}
+              disabled={!selectedChild}
             />
           </View>
         </View>
@@ -265,6 +292,9 @@ const styles = StyleSheet.create({
     borderColor: COLORS.primary,
     backgroundColor: '#e3f2fd',
   },
+  disabledChildItem: {
+    opacity: 0.55,
+  },
   childInfo: {
     flex: 1,
   },
@@ -277,6 +307,11 @@ const styles = StyleSheet.create({
     fontSize: FONT_SIZES.medium,
     color: COLORS.grey,
   },
+  blockedReason: {
+    fontSize: FONT_SIZES.small,
+    color: COLORS.grey,
+    marginTop: 4,
+  },
   selectionIndicator: {
     width: 20,
     height: 20,
@@ -287,6 +322,9 @@ const styles = StyleSheet.create({
   selectedIndicator: {
     backgroundColor: COLORS.primary,
     borderColor: COLORS.primary,
+  },
+  disabledIndicator: {
+    borderColor: '#d8d8d8',
   },
   footer: {
     flexDirection: 'row',

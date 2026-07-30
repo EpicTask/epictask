@@ -102,6 +102,7 @@ const SettingsScreen = () => {
   const handleSignOut = async () => {
     try {
       await logout();
+      router.dismissAll();
       router.replace('/(parent)/auth/login' as any);
     } catch (error) {
       Alert.alert("Sign Out Failed", error instanceof Error ? error.message : 'Sign out failed');

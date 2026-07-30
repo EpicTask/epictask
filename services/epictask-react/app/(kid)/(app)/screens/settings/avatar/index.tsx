@@ -1,11 +1,12 @@
 import { FONT_SIZES } from "@/constants/FontSize";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import CustomText from "@/components/CustomText";
 import CustomButton from "@/components/buttons/CustomButton";
 import ScreenHeading from "@/components/headings/ScreenHeading";
 import { useAuth } from "@/context/AuthContext";
 import * as ImagePicker from "expo-image-picker";
 import storageService from "@/api/storageService";
+import { firestoreService } from "@/api/firestoreService";
 
 import {
   responsiveFontSize,
@@ -19,13 +20,53 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { router } from "expo-router";
 
 const AvatarScreen = () => {
-  const { user, updateProfile } = useAuth();
+  const { user, updateProfile, isSharedDeviceMode, activeChildContext, effectiveUserId } = useAuth();
   const [profileImage, setProfileImage] = useState(user?.image || user?.imageUrl || null);
+  const [displayName, setDisplayName] = useState(user?.displayName || user?.name || "Kid");
   const [isSaving, setIsSaving] = useState(false);
 
-  const displayName = user?.displayName || user?.name || "Kid";
+  useEffect(() => {
+    let active = true;
+
+    const loadProfile = async () => {
+      if (isSharedDeviceMode && activeChildContext) {
+        setDisplayName(activeChildContext.childName || "Kid");
+        setProfileImage(activeChildContext.childImageUrl || null);
+
+        if (effectiveUserId) {
+          try {
+            const result = await firestoreService.getUserProfile(effectiveUserId);
+            if (active && result.success) {
+              const child = result.user;
+              setDisplayName(child.displayName || activeChildContext.childName || "Kid");
+              setProfileImage(child.imageUrl || child.photoURL || child.image || activeChildContext.childImageUrl || null);
+            }
+          } catch (error) {
+            console.error("Failed to load child avatar profile", error);
+          }
+        }
+        return;
+      }
+
+      if (active) {
+        setDisplayName(user?.displayName || user?.name || "Kid");
+        setProfileImage(user?.image || user?.imageUrl || user?.photoURL || null);
+      }
+    };
+
+    loadProfile();
+
+    return () => {
+      active = false;
+    };
+  }, [user, isSharedDeviceMode, activeChildContext, effectiveUserId]);
 
   const handleUpdateProfile = async (uri: string) => {
+    if (isSharedDeviceMode) {
+      Alert.alert("Return to Parent", "Return to parent mode to edit child avatar details.");
+      return;
+    }
+
     try {
       setIsSaving(true);
       
@@ -94,6 +135,11 @@ const AvatarScreen = () => {
   };
 
   const showImageOptions = () => {
+    if (isSharedDeviceMode) {
+      Alert.alert("Return to Parent", "Return to parent mode to edit child avatar details.");
+      return;
+    }
+
     Alert.alert(
       "Select Avatar",
       "Choose how you want to select your avatar",
@@ -151,7 +197,7 @@ const AvatarScreen = () => {
             <CustomButton
               fill={true}
               onPress={showImageOptions}
-              text={isSaving ? "Saving..." : "Change Avatar"}
+              text={isSharedDeviceMode ? "Return to Parent to Edit" : isSaving ? "Saving..." : "Change Avatar"}
               height={responsiveHeight(7)}
             />
             <CustomButton

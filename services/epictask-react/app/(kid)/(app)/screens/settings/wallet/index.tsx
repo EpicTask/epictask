@@ -36,21 +36,21 @@ interface RewardedTask {
 const TOKENS_PER_LEVEL = 1000;
 
 export default function KidWalletScreen() {
-  const { user } = useAuth();
+  const { effectiveUserId } = useAuth();
 
   const [rewards, setRewards] = useState<Rewards | null>(null);
   const [recentActivity, setRecentActivity] = useState<RewardedTask[]>([]);
   const [loading, setLoading] = useState(true);
 
   const loadData = useCallback(async () => {
-    if (!user?.uid) return;
+    if (!effectiveUserId) return;
     setLoading(true);
     try {
       const [rewardsData, tasks] = await Promise.all([
-        firestoreService.getUserRewards(user.uid),
-        firestoreService.getRecentTasks(user.uid, 10, 30),
+        firestoreService.getUserRewards(effectiveUserId),
+        firestoreService.getRecentTasks(effectiveUserId, 10, 30),
       ]);
-      setRewards(rewardsData);
+      setRewards(rewardsData as Rewards);
       const rewarded = (tasks as RewardedTask[]).filter(
         (t: any) => t.rewarded === true || t.status === "completed"
       );
@@ -60,9 +60,13 @@ export default function KidWalletScreen() {
     } finally {
       setLoading(false);
     }
-  }, [user?.uid]);
+  }, [effectiveUserId]);
 
-  useFocusEffect(loadData);
+  useFocusEffect(
+    useCallback(() => {
+      loadData();
+    }, [loadData])
+  );
 
   const tokensIntoLevel = rewards ? rewards.tokens_earned % TOKENS_PER_LEVEL : 0;
   const progressToNext = tokensIntoLevel / TOKENS_PER_LEVEL;

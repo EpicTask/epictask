@@ -25,7 +25,7 @@ import {
   RefreshControl,
 } from "react-native";
 import { Link, useFocusEffect } from "expo-router";
-import React, { useEffect, useState, useCallback } from "react";
+import React, { useEffect, useState, useCallback, useRef } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { firestoreService } from "@/api/firestoreService";
 import authService from "@/api/authService";
@@ -92,6 +92,8 @@ export default function HomeScreen() {
   const [rewardingTaskId, setRewardingTaskId] = useState<string | null>(null);
   const [lastRefreshTime, setLastRefreshTime] = useState<number>(0);
   const [unreadNotifications, setUnreadNotifications] = useState(0);
+  const requestIdRef = useRef(0);
+  const currentUserIdRef = useRef<string | undefined>(user?.uid);
   const REFRESH_COOLDOWN = 5000; // 5 seconds cooldown
 
   // Child switching modals
@@ -107,66 +109,96 @@ export default function HomeScreen() {
     refreshFamilyTasks,
   } = useFamilyTasks(user?.uid, { realTime: true });
 
+  useEffect(() => {
+    currentUserIdRef.current = user?.uid;
+    requestIdRef.current += 1;
+
+    if (!user?.uid) {
+      setTaskSummary({ completed: 0, in_progress: 0, total: 0 });
+      setRecentTasks([]);
+      setPendingPayouts([]);
+      setKidsWithTaskData([]);
+      setUnreadNotifications(0);
+      setLoading(false);
+      setRefreshing(false);
+    }
+  }, [user?.uid]);
+
   const fetchData = useCallback(async (isRefresh = false) => {
-    if (user) {
+    const userId = user?.uid;
+    const requestId = ++requestIdRef.current;
+    const isCurrentRequest = () =>
+      requestId === requestIdRef.current && currentUserIdRef.current === userId;
+
+    if (!userId) {
+      return;
+    }
+
+    try {
+      if (!isRefresh) setLoading(true);
+      const summary = (await firestoreService.getTaskSummary(
+        userId
+      )) as TaskSummary;
+      if (!isCurrentRequest()) return;
+      setTaskSummary(summary || { completed: 0, in_progress: 0, total: 0 });
+
+      const tasks = (await firestoreService.getRecentTasks(
+        userId
+      )) as RecentTask[];
+      if (!isCurrentRequest()) return;
+      setRecentTasks(Array.isArray(tasks) ? tasks : []);
+
+      // Fetch pending narrative payouts
       try {
-        if (!isRefresh) setLoading(true);
-        const summary = (await firestoreService.getTaskSummary(
-          user.uid
-        )) as TaskSummary;
-        setTaskSummary(summary || { completed: 0, in_progress: 0, total: 0 });
-
-        const tasks = (await firestoreService.getRecentTasks(
-          user.uid
-        )) as RecentTask[];
-        setRecentTasks(Array.isArray(tasks) ? tasks : []);
-
-        // Fetch pending narrative payouts
-        try {
-            const payouts = await narrativeService.getPendingPayouts(user.uid);
-            setPendingPayouts(Array.isArray(payouts) ? payouts : []);
-        } catch (e) {
-            console.log("Failed to fetch pending payouts", e);
-            setPendingPayouts([]);
-        }
-
-        // Fetch unread notifications count
-        try {
-            const notifications = await notificationService.getNotifications(20, true);
-            setUnreadNotifications(Array.isArray(notifications) ? notifications.length : 0);
-        } catch (e) {
-            console.log("Failed to fetch notifications count", e);
-        }
-
-        const safeChildren = Array.isArray(children) ? children : [];
-        const kidsWithTaskSummary = await Promise.all(
-          safeChildren.map(async (kid: Kid) => {
-            try {
-                const kidTaskSummary =
-                  (await firestoreService.getKidTaskSummary(
-                    kid.uid
-                  )) as TaskSummary;
-                return {
-                  ...kid,
-                  tasks_completed: kidTaskSummary?.completed || 0,
-                  tasks_pending: kidTaskSummary?.in_progress || 0,
-                };
-            } catch (err) {
-                console.log(`Failed to fetch summary for kid ${kid.uid}`, err);
-                return {
-                    ...kid,
-                    tasks_completed: 0,
-                    tasks_pending: 0,
-                }
-            }
-          })
-        );
-        setKidsWithTaskData(kidsWithTaskSummary);
-      } catch (error) {
-        console.error("Failed to fetch dashboard data:", error);
-      } finally {
-        if (!isRefresh) setLoading(false);
+        const payouts = await narrativeService.getPendingPayouts(userId);
+        if (!isCurrentRequest()) return;
+        setPendingPayouts(Array.isArray(payouts) ? payouts : []);
+      } catch (e) {
+        if (!isCurrentRequest()) return;
+        console.log("Failed to fetch pending payouts", e);
+        setPendingPayouts([]);
       }
+
+      // Fetch unread notifications count
+      try {
+        const notifications = await notificationService.getNotifications(20, true);
+        if (!isCurrentRequest()) return;
+        setUnreadNotifications(Array.isArray(notifications) ? notifications.length : 0);
+      } catch (e) {
+        if (!isCurrentRequest()) return;
+        console.log("Failed to fetch notifications count", e);
+      }
+
+      const safeChildren = Array.isArray(children) ? children : [];
+      const kidsWithTaskSummary = await Promise.all(
+        safeChildren.map(async (kid: Kid) => {
+          try {
+            const kidTaskSummary =
+              (await firestoreService.getKidTaskSummary(
+                kid.uid
+              )) as TaskSummary;
+            return {
+              ...kid,
+              tasks_completed: kidTaskSummary?.completed || 0,
+              tasks_pending: kidTaskSummary?.in_progress || 0,
+            };
+          } catch (err) {
+            console.log(`Failed to fetch summary for kid ${kid.uid}`, err);
+            return {
+              ...kid,
+              tasks_completed: 0,
+              tasks_pending: 0,
+            }
+          }
+        })
+      );
+      if (!isCurrentRequest()) return;
+      setKidsWithTaskData(kidsWithTaskSummary);
+    } catch (error) {
+      if (!isCurrentRequest()) return;
+      console.error("Failed to fetch dashboard data:", error);
+    } finally {
+      if (!isRefresh && isCurrentRequest()) setLoading(false);
     }
   }, [user, children]);
 
@@ -177,12 +209,27 @@ export default function HomeScreen() {
   // Refresh notifications when screen comes into focus
   useFocusEffect(
     useCallback(() => {
-        if (user) {
-            notificationService.getNotifications(20, true)
-                .then(notifications => setUnreadNotifications(notifications.length))
-                .catch(e => console.log("Failed to refresh notifications count", e));
-        }
-    }, [user])
+      const userId = user?.uid;
+      let active = true;
+
+      if (userId) {
+        notificationService.getNotifications(20, true)
+          .then(notifications => {
+            if (active && currentUserIdRef.current === userId) {
+              setUnreadNotifications(Array.isArray(notifications) ? notifications.length : 0);
+            }
+          })
+          .catch(e => {
+            if (active && currentUserIdRef.current === userId) {
+              console.log("Failed to refresh notifications count", e);
+            }
+          });
+      }
+
+      return () => {
+        active = false;
+      };
+    }, [user?.uid])
   );
 
   const onRefresh = useCallback(async () => {
@@ -194,12 +241,18 @@ export default function HomeScreen() {
     setRefreshing(true);
     setLastRefreshTime(now);
 
-    if (refreshFamilyTasks) {
-      await refreshFamilyTasks();
+    const userId = user?.uid;
+    try {
+      if (refreshFamilyTasks) {
+        await refreshFamilyTasks();
+      }
+      await fetchData(true);
+    } finally {
+      if (currentUserIdRef.current === userId) {
+        setRefreshing(false);
+      }
     }
-    await fetchData(true);
-    setRefreshing(false);
-  }, [fetchData, refreshFamilyTasks, lastRefreshTime]);
+  }, [fetchData, refreshFamilyTasks, lastRefreshTime, user?.uid]);
 
   // Handler functions for child switching
   const handleChildSwitchPress = () => {
@@ -212,10 +265,10 @@ export default function HomeScreen() {
     setChildPINModalVisible(true);
   };
 
-  const handleChildPINSuccess = (child: Kid) => {
+  const handleChildPINSuccess = async (child: Kid) => {
     setChildPINModalVisible(false);
     setSelectedChildForPIN(null);
-    enterSharedDeviceMode();
+    await enterSharedDeviceMode();
     router.replace('/(kid)/(app)/(tabs)' as any);
   };
 
@@ -255,8 +308,8 @@ export default function HomeScreen() {
                 style={[
                   styles.notificationIcon, 
                   { 
-                    backgroundColor: walletConnected ? COLORS.green : "white",
-                    borderColor: walletConnected ? COLORS.green : "#ccc",
+                    backgroundColor: walletConnected ? COLORS.success : "white",
+                    borderColor: walletConnected ? COLORS.success : "#ccc",
                     borderWidth: 1,
                     padding: 10
                   }

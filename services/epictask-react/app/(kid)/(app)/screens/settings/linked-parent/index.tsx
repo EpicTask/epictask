@@ -16,27 +16,41 @@ import { StyleSheet, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 const LinkedParent = () => {
-  const { user } = useAuth();
+  const { user, isSharedDeviceMode } = useAuth();
   const [parent, setParent] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    let active = true;
+
     const fetchParent = async () => {
-      if (user?.parent_id) {
+      if (isSharedDeviceMode && user?.role === "parent") {
+        setParent(user);
+        setLoading(false);
+        return;
+      }
+
+      const parentId = user?.parent_id || user?.parentId;
+
+      if (parentId) {
         try {
-          const result = await firestoreService.getUserProfile(user.parent_id);
-          if (result.success) {
+          const result = await firestoreService.getUserProfile(parentId);
+          if (active && result.success) {
             setParent(result.user);
           }
         } catch (error) {
           console.error("Error fetching parent:", error);
         }
       }
-      setLoading(false);
+      if (active) setLoading(false);
     };
 
     fetchParent();
-  }, [user]);
+
+    return () => {
+      active = false;
+    };
+  }, [user, isSharedDeviceMode]);
 
   return (
     <SafeAreaView style={styles.safeArea}>

@@ -40,7 +40,8 @@ function RootLayout() {
   useEffect(() => {
     if (loaded && !loading) {
       SplashScreen.hideAsync();
-      const inAuthGroup = segments[0] === 'auth';
+      const segmentList = segments as readonly string[];
+      const inAuthGroup = segmentList.includes('auth');
       const inParentGroup = segments[0] === '(parent)';
       const inKidGroup = segments[0] === '(kid)';
 
@@ -49,9 +50,14 @@ function RootLayout() {
         const userRole = user.role || (user.user && user.user.role);
         console.log("User authenticated with role:", userRole);
         
-        if (inAuthGroup) {
-          // If user is authenticated but in auth screens, redirect to their dashboard
-          const targetPath = userRole === 'parent' ? '/(parent)/(app)/(tabs)' : '/(kid)/(app)/(tabs)';
+        if (inAuthGroup || segmentList[0] === undefined) {
+          // If user is authenticated but in auth screens or root index, redirect to their dashboard
+          let targetPath;
+          if (userRole === 'parent') {
+            targetPath = isSharedDeviceMode ? '/(kid)/(app)/(tabs)' : '/(parent)/(app)/(tabs)';
+          } else {
+            targetPath = '/(kid)/(app)/(tabs)';
+          }
           console.log("Redirecting authenticated user to:", targetPath);
           router.replace(targetPath as any);
         } else if (userRole === 'parent' && !inParentGroup && !isSharedDeviceMode) {
@@ -68,6 +74,7 @@ function RootLayout() {
         if (!inAuthGroup && segments[0] !== undefined) {
           // If user is not authenticated and not in auth group or index, redirect to index
           console.log("Redirecting unauthenticated user to index");
+          router.dismissAll();
           router.replace('/(parent)/auth/login' as any);
         }
       }

@@ -27,7 +27,7 @@ import {
 } from "react-native-responsive-dimensions";
 
 export default function StoriesScreen() {
-  const { user } = useAuth();
+  const { user, effectiveUserId } = useAuth();
 
   // Fetch stories
   const {
@@ -37,9 +37,9 @@ export default function StoriesScreen() {
     error: storiesErrorObj,
     refetch: refetchStories,
   } = useQuery({
-    queryKey: ["stories", user?.uid],
-    queryFn: () => narrativeService.getStories(user?.uid),
-    enabled: !!user,
+    queryKey: ["stories", effectiveUserId],
+    queryFn: () => narrativeService.getStories(effectiveUserId || ""),
+    enabled: !!effectiveUserId,
   });
 
   // Fetch progress for all stories
@@ -48,9 +48,9 @@ export default function StoriesScreen() {
     isLoading: progressLoading,
     refetch: refetchProgress,
   } = useQuery({
-    queryKey: ["storyProgress", user?.uid],
-    queryFn: () => narrativeService.getProgress(user?.uid),
-    enabled: !!user,
+    queryKey: ["storyProgress", effectiveUserId],
+    queryFn: () => narrativeService.getProgress(effectiveUserId || ""),
+    enabled: !!effectiveUserId,
   });
 
   const [refreshing, setRefreshing] = React.useState(false);
@@ -91,7 +91,6 @@ export default function StoriesScreen() {
         pathname: "../screens/story-viewer",
         params: {
           storyId: story.story_id,
-          progressId: progress.id,
         },
       });
     } else {

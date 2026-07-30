@@ -35,7 +35,7 @@ const fetchTasks = async (userId: string) => {
 };
 
 export default function AllTasksScreen() {
-  const { user } = useAuth();
+  const { user, effectiveUserId } = useAuth();
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const [modalVisible, setModalVisible] = useState(false);
   const {
@@ -45,9 +45,9 @@ export default function AllTasksScreen() {
     error,
     refetch,
   } = useQuery({
-    queryKey: ["allTasks", user?.uid],
-    queryFn: () => fetchTasks(user?.uid),
-    enabled: !!user,
+    queryKey: ["allTasks", effectiveUserId],
+    queryFn: () => fetchTasks(effectiveUserId || ""),
+    enabled: !!effectiveUserId,
   });
 
   useFocusEffect(

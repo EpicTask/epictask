@@ -25,7 +25,16 @@ import TaskIcon from "@/assets/icons/tab-bar/Task";
 import { AuthContext } from "@/context/AuthContext";
 
 const ProfileCard = () => {
-  const { user } = useContext(AuthContext);
+  const { user, isSharedDeviceMode, activeChildContext } = useContext(AuthContext);
+
+  const displayName = isSharedDeviceMode && activeChildContext?.childName
+    ? activeChildContext.childName
+    : (user?.displayName || 'Joshua Smith');
+
+  const imageSource = isSharedDeviceMode && activeChildContext?.childImageUrl
+    ? { uri: activeChildContext.childImageUrl }
+    : (user?.photoURL ? { uri: user.photoURL } : IMAGES.profile);
+
   return (
     <View
       style={{
@@ -40,14 +49,14 @@ const ProfileCard = () => {
     >
       <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
         <Image
-          source={user?.photoURL ? { uri: user.photoURL } : IMAGES.profile}
+          source={imageSource}
           style={{ width: responsiveWidth(12), height: responsiveWidth(12), borderRadius: responsiveWidth(6) }}
         />
         <CustomText
           variant="semiBold"
           style={{ fontSize: FONT_SIZES.large }}
         >
-          {user?.displayName || 'Joshua Smith'}
+          {displayName}
         </CustomText>
       </View>
     </View>
@@ -59,7 +68,7 @@ const SettingButton = ({
   onPress,
   icon,
 }: {
-  text: String;
+  text: string;
   onPress?: () => void;
   icon: ReactNode;
 }) => {
@@ -102,6 +111,7 @@ const SettingsScreen = () => {
     }
     try {
       await logout();
+      router.dismissAll();
       router.replace('/(kid)/auth/login' as any);
     } catch (error) {
       Alert.alert("Sign Out Failed", error instanceof Error ? error.message : 'Sign out failed');
@@ -202,8 +212,8 @@ const SettingsScreen = () => {
               onPress={() => router.push("/(kid)/(app)/screens/settings/who-we-are" as any)}
             />
             <SettingButton
-              icon={<MaterialIcons name="logout" size={24} color="red" />}
-              text={"Sign Out"}
+              icon={<MaterialIcons name="logout" size={24} color={isSharedDeviceMode ? COLORS.primary : "red"} />}
+              text={isSharedDeviceMode ? "Return to Parent" : "Sign Out"}
               onPress={handleSignOut}
             />
           </View>

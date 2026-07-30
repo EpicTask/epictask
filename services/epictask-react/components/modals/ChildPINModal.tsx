@@ -24,6 +24,7 @@ import CustomText from '@/components/CustomText';
 import CustomButton from '@/components/buttons/CustomButton';
 import { COLORS } from '@/constants/Colors';
 import authService from '@/api/authService';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 interface Child {
   uid: string;
@@ -46,6 +47,8 @@ const ChildPINModal: React.FC<ChildPINModalProps> = ({
   onSuccess,
 }) => {
   const CELL_COUNT = 4;
+  const MAX_ATTEMPTS = 3;
+  const LOCKOUT_MS = 15 * 60 * 1000;
   const [value, setValue] = useState('');
   const [loading, setLoading] = useState(false);
   const [attempts, setAttempts] = useState(0);
@@ -60,13 +63,73 @@ const ChildPINModal: React.FC<ChildPINModalProps> = ({
 
   // Clear PIN when modal opens/closes
   useEffect(() => {
-    if (visible) {
+    const restoreAttempts = async () => {
+      if (!visible || !child?.uid) return;
+
       setValue('');
+      const stored = await AsyncStorage.getItem(`childPinAttempts:${child.uid}`);
+      if (!stored) {
+        setAttempts(0);
+        setLockoutUntil(null);
+        setTimeRemaining(0);
+        return;
+      }
+
+      const parsed = JSON.parse(stored);
+      const lockoutTime = parsed.lockoutUntil ? new Date(parsed.lockoutUntil) : null;
+      const remaining = lockoutTime
+        ? Math.max(0, Math.floor((lockoutTime.getTime() - Date.now()) / 1000))
+        : 0;
+
+      if (remaining > 0) {
+        setAttempts(parsed.attempts || 0);
+        setLockoutUntil(lockoutTime);
+        setTimeRemaining(remaining);
+      } else {
+        await AsyncStorage.removeItem(`childPinAttempts:${child.uid}`);
+        setAttempts(0);
+        setLockoutUntil(null);
+        setTimeRemaining(0);
+      }
+    };
+
+    restoreAttempts().catch(() => {
       setAttempts(0);
       setLockoutUntil(null);
       setTimeRemaining(0);
+    });
+  }, [visible, child?.uid]);
+
+  const recordFailedAttempt = async () => {
+    if (!child?.uid) return;
+
+    const newAttempts = attempts + 1;
+    setAttempts(newAttempts);
+    setValue('');
+
+    if (newAttempts >= MAX_ATTEMPTS) {
+      const lockoutTime = new Date(Date.now() + LOCKOUT_MS);
+      setLockoutUntil(lockoutTime);
+      setTimeRemaining(Math.floor(LOCKOUT_MS / 1000));
+      await AsyncStorage.setItem(
+        `childPinAttempts:${child.uid}`,
+        JSON.stringify({ attempts: newAttempts, lockoutUntil: lockoutTime.toISOString() })
+      );
+      Alert.alert(
+        'Account Locked',
+        'Too many incorrect attempts. Please wait 15 minutes before trying again.'
+      );
+    } else {
+      await AsyncStorage.setItem(
+        `childPinAttempts:${child.uid}`,
+        JSON.stringify({ attempts: newAttempts })
+      );
+      Alert.alert(
+        'Incorrect PIN',
+        `Please try again. ${MAX_ATTEMPTS - newAttempts} attempts remaining.`
+      );
     }
-  }, [visible]);
+  };
 
   // Handle lockout timer
   useEffect(() => {
@@ -108,32 +171,18 @@ const ChildPINModal: React.FC<ChildPINModalProps> = ({
         setValue('');
         setAttempts(0);
         setLockoutUntil(null);
+        await AsyncStorage.removeItem(`childPinAttempts:${child.uid}`);
         onSuccess(child);
       } else {
-        // Failed attempt
-        const newAttempts = attempts + 1;
-        setAttempts(newAttempts);
-        setValue(''); // Clear PIN on failure
-        
-        if (newAttempts >= 3) {
-          // Lock out for 15 minutes after 3 failed attempts
-          const lockoutTime = new Date(Date.now() + 15 * 60 * 1000);
-          setLockoutUntil(lockoutTime);
-          setTimeRemaining(15 * 60);
-          Alert.alert(
-            'Account Locked',
-            'Too many incorrect attempts. Please wait 15 minutes before trying again.'
-          );
-        } else {
-          Alert.alert(
-            'Incorrect PIN',
-            `Please try again. ${3 - newAttempts} attempts remaining.`
-          );
-        }
+        await recordFailedAttempt();
       }
     } catch (error: any) {
       console.error('PIN verification error:', error);
-      Alert.alert('Error', error?.message || 'Failed to verify PIN');
+      if (error?.message === 'Invalid PIN') {
+        await recordFailedAttempt();
+      } else {
+        Alert.alert('Error', error?.message || 'Failed to verify PIN');
+      }
       setValue('');
     } finally {
       setLoading(false);
