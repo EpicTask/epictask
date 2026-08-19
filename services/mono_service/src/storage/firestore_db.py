@@ -891,6 +891,16 @@ def calculate_user_level(total_tokens, tasks_completed):
 def get_comprehensive_rewards(user_id):
     """Get comprehensive rewards data for a user - token-only"""
     try:
+        # Leaderboard documents may have been created before display names were
+        # stored there, so use the user's profile as the source of truth.
+        user_doc = db.collection(collections.USERS).document(user_id).get()
+        user_data = user_doc.to_dict() if user_doc.exists else {}
+        display_name = (
+            user_data.get("displayName")
+            or user_data.get("display_name")
+            or ""
+        )
+
         leaderboard_ref = db.collection(collections.LEADERBOARD).document(user_id)
         leaderboard_doc = leaderboard_ref.get()
         
@@ -898,7 +908,7 @@ def get_comprehensive_rewards(user_id):
             # Return default data for new users
             return ComprehensiveRewards(
                 user_id=user_id,
-                display_name="",
+                display_name=display_name,
                 currencies={
                     "xrp_earned": 0.0,
                     "rlusd_earned": 0.0,
@@ -944,7 +954,7 @@ def get_comprehensive_rewards(user_id):
         
         return ComprehensiveRewards(
             user_id=user_id,
-            display_name=data.get("display_name", ""),
+            display_name=data.get("display_name") or display_name,
             currencies={
                 "xrp_earned": xrp_earned,
                 "rlusd_earned": rlusd_earned,
