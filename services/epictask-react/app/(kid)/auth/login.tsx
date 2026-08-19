@@ -127,6 +127,12 @@ const Login = () => {
             text={loading ? "Joining..." : "Join Account"}
             height={responsiveHeight(6)}
           />
+          <AuthButton
+            fill={false}
+            onPress={() => router.replace("/auth/login" as any)}
+            text="Return to Main Login"
+            height={responsiveHeight(6)}
+          />
         </View>
         <View
           style={{

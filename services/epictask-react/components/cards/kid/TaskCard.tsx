@@ -20,8 +20,10 @@ interface KidsCardProps {
 
 const TaskCard: React.FC<KidsCardProps> = ({ task, onPress, onComplete, bg, isStoryTask }) => {
   const { task_title, reward_amount, expiration_date, notes } = task || {};
+  const accentColor = bg || COLORS.primary;
   return (
-    <View style={[styles.card, { backgroundColor: bg || "white" }]}>
+    <View style={styles.card}>
+      <View style={[styles.accent, { backgroundColor: accentColor }]} />
       {isStoryTask && (
         <View style={styles.storyBadge}>
           <Ionicons name="star" size={12} color="white" />
@@ -35,7 +37,7 @@ const TaskCard: React.FC<KidsCardProps> = ({ task, onPress, onComplete, bg, isSt
               {task_title}
             </CustomText>
           </View>
-          <View style={styles.levelContainer}>
+          <View style={[styles.levelContainer, { borderColor: accentColor }]}>
             <View style={{ flexDirection: "row", alignItems: "center" }}>
               <Image
                 source={IMAGES.reward}
@@ -56,14 +58,14 @@ const TaskCard: React.FC<KidsCardProps> = ({ task, onPress, onComplete, bg, isSt
               alignItems: "center",
             }}
           >
-            <Ionicons name="calendar-outline" size={12} color="black" />
+            <Ionicons name="calendar-outline" size={12} color={accentColor} />
             <CustomText style={styles.statText}>
               {expiration_date
                 ? new Date(expiration_date*1000).toLocaleDateString()
                 : "No due date"}
             </CustomText>
           </View>
-          <Fontisto name="link" size={16} color="black" />
+          <Fontisto name="link" size={16} color={accentColor} />
         </View>
         {notes && (
           <View>
@@ -121,12 +123,20 @@ const TaskCard: React.FC<KidsCardProps> = ({ task, onPress, onComplete, bg, isSt
 const styles = StyleSheet.create({
   card: {
     backgroundColor: "white",
+    position: "relative",
     overflow: "hidden",
     borderRadius: 25,
     paddingVertical: 15,
     paddingHorizontal: 20,
     flex: 1,
     marginBottom: 15,
+  },
+  accent: {
+    position: "absolute",
+    left: 0,
+    top: 0,
+    bottom: 0,
+    width: 5,
   },
   avatar: {
     width: responsiveHeight(6),

@@ -236,34 +236,31 @@ export default function HomeScreen() {
               <View style={{ width: responsiveWidth(44), height: 165 }}>
                 <View>{ICONS.kidCard}</View>
                 <View style={styles.cardOverlay}>
-                  <CustomText variant="semiBold">
-                    You have {tasks.length} tasks today!
+                  <CustomText variant="semiBold" style={styles.progressTitle}>
+                    ✅ Today's Tasks
                   </CustomText>
-                  <Progress.Circle
-                    size={40}
-                    progress={progress}
-                    thickness={3}
-                    color={COLORS.purple}
-                    unfilledColor="#E5E7EB"
-                    borderWidth={0}
-                    showsText={true}
-                    formatText={() => `${Math.round(progress * 100)}%`}
-                    textStyle={{
-                      fontSize: 12,
-                      fontWeight: "600",
-                      color: COLORS.purple,
-                    }}
-                  />
-                  <View>
-                    <CustomText
-                      variant="semiBold"
-                      style={[styles.completedText, { fontSize: 10 }]}
-                    >
-                      Completed
-                    </CustomText>
-                    <Text
-                      style={styles.fractionText}
-                    >{`${completedTasks}/${tasks.length}`}</Text>
+                  <View style={styles.progressSummaryRow}>
+                    <Progress.Circle
+                      size={48}
+                      progress={progress}
+                      thickness={3}
+                      color={COLORS.purple}
+                      unfilledColor="#E5E7EB"
+                      borderWidth={0}
+                      showsText={true}
+                      formatText={() => `${Math.round(progress * 100)}%`}
+                      textStyle={styles.progressPercent}
+                    />
+                    <View style={styles.progressSummaryText}>
+                      <CustomText variant="semiBold" style={styles.progressStatus}>
+                        {tasks.length > 0 && completedTasks === tasks.length ? "All done!" : "Keep going!"}
+                      </CustomText>
+                      <Text style={styles.progressDetail}>
+                        {tasks.length > 0 && completedTasks === tasks.length
+                          ? "Ready for a new challenge"
+                          : `${completedTasks} of ${tasks.length} complete`}
+                      </Text>
+                    </View>
                   </View>
                 </View>
                 <TouchableOpacity
@@ -286,11 +283,11 @@ export default function HomeScreen() {
 
           {/* Active Story / Adventure Section */}
           <View style={{ paddingVertical: 5 }}>
-            <Heading title="Your Adventure" />
+            <Heading title="Your Lesson" />
             <ActiveStoryCard
               title={activeProgress?.story_id === 'broken-toy-5-7' ? "The Broken Toy" : 
                      activeProgress?.story_id === 'cookie-jar-5-7' ? "The Cookie Jar" :
-                     activeProgress ? "Current Story" : "Start a New Story!"}
+                     activeProgress ? "Current Lesson" : "Start a New Lesson!"}
               progress={activeProgress ? (activeProgress.completed_nodes.length / 3) : 0} // Assuming 3 nodes for seeded stories
               isNew={!activeProgress}
               onPress={() => {
@@ -412,20 +409,36 @@ const styles = StyleSheet.create({
   },
   cardOverlay: {
     position: "absolute",
-    width: 160,
+    width: 155,
     paddingTop: 10,
-    gap: 4,
     paddingLeft: 10,
   },
-  completedText: {
-    marginTop: 10,
-    fontWeight: "600",
-    fontSize: 16,
-    color: COLORS.grey,
+  progressTitle: {
+    fontSize: 12,
+    color: COLORS.black,
   },
-  fractionText: {
-    fontSize: 14,
-    color: "#000",
+  progressSummaryRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    marginTop: 10,
+  },
+  progressPercent: {
+    fontSize: 12,
+    fontWeight: "600",
+    color: COLORS.purple,
+  },
+  progressSummaryText: {
+    flex: 1,
+    gap: 2,
+  },
+  progressStatus: {
+    fontSize: 12,
+    color: COLORS.black,
+  },
+  progressDetail: {
+    fontSize: 9,
+    color: COLORS.grey,
   },
   arrow: {
     position: "absolute",

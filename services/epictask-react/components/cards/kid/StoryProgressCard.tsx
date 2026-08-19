@@ -28,6 +28,7 @@ export default function StoryProgressCard({
 }: StoryProgressCardProps) {
   const totalStories = inProgressCount + completedCount;
   const progress = totalStories > 0 ? completedCount / totalStories : 0;
+  const isComplete = totalStories > 0 && completedCount === totalStories;
 
   return (
     <TouchableOpacity onPress={onPress} activeOpacity={0.8}>
@@ -35,39 +36,34 @@ export default function StoryProgressCard({
         <View>{ICONS.kidCard}</View>
         <View style={styles.overlay}>
           <CustomText variant="semiBold" style={styles.title}>
-            📚 Learning
+            📚 Lessons
           </CustomText>
           
           {totalStories > 0 ? (
             <>
-              <Progress.Circle
-                size={40}
-                progress={progress}
-                thickness={3}
-                color={COLORS.primary}
-                unfilledColor="#E5E7EB"
-                borderWidth={0}
-                showsText={true}
-                formatText={() => `${Math.round(progress * 100)}%`}
-                textStyle={{
-                  fontSize: 12,
-                  fontWeight: "600",
-                  color: COLORS.primary,
-                }}
-              />
-              
-              <View style={styles.statsContainer}>
-                <View style={styles.stat}>
-                  <Text style={styles.statValue}>{inProgressCount}</Text>
-                  <Text style={styles.statLabel}>In Progress</Text>
-                </View>
-                <View style={styles.divider} />
-                <View style={styles.stat}>
-                  <Text style={styles.statValue}>{completedCount}</Text>
-                  <Text style={styles.statLabel}>Completed</Text>
+              <View style={styles.progressSummaryRow}>
+                <Progress.Circle
+                  size={48}
+                  progress={progress}
+                  thickness={3}
+                  color={COLORS.primary}
+                  unfilledColor="#E5E7EB"
+                  borderWidth={0}
+                  showsText={true}
+                  formatText={() => `${Math.round(progress * 100)}%`}
+                  textStyle={styles.progressPercent}
+                />
+                <View style={styles.summaryText}>
+                  <Text style={styles.statusText}>
+                    {isComplete ? "All done!" : "Keep learning!"}
+                  </Text>
+                  <Text style={styles.detailText}>
+                    {isComplete
+                      ? "Ready for a new adventure"
+                      : `${completedCount} of ${totalStories} complete`}
+                  </Text>
                 </View>
               </View>
-
               {totalXpEarned > 0 && (
                 <View style={styles.xpContainer}>
                   <Text style={styles.xpText}>⭐ {totalXpEarned} XP earned</Text>
@@ -97,38 +93,37 @@ const styles = StyleSheet.create({
   },
   overlay: {
     position: "absolute",
-    width: 160,
+    width: 155,
     paddingTop: 10,
-    gap: 6,
     paddingLeft: 10,
   },
   title: {
     fontSize: FONT_SIZES.small,
     color: COLORS.black,
   },
-  statsContainer: {
+  progressSummaryRow: {
     flexDirection: "row",
     alignItems: "center",
     gap: 8,
-    marginTop: 4,
+    marginTop: 10,
   },
-  stat: {
-    alignItems: "center",
+  progressPercent: {
+    fontSize: 12,
+    fontWeight: "600",
+    color: COLORS.primary,
   },
-  statValue: {
-    fontSize: 16,
-    fontWeight: "bold",
+  summaryText: {
+    flex: 1,
+    gap: 2,
+  },
+  statusText: {
+    fontSize: 12,
+    fontWeight: "600",
     color: COLORS.black,
   },
-  statLabel: {
+  detailText: {
     fontSize: 9,
     color: COLORS.grey,
-  },
-  divider: {
-    width: 1,
-    height: 20,
-    backgroundColor: COLORS.grey,
-    opacity: 0.3,
   },
   xpContainer: {
     marginTop: 4,

@@ -37,7 +37,8 @@ export default function StoryCard({
 
   return (
     <TouchableOpacity onPress={onPress} activeOpacity={0.8}>
-      <View style={[styles.card, { backgroundColor: bg }]}>
+      <View style={styles.card}>
+        <View style={[styles.accent, { backgroundColor: bg }]} />
         {/* Thumbnail Section */}
         <View style={styles.thumbnailContainer}>
           {story.thumbnail_url ? (
@@ -47,7 +48,13 @@ export default function StoryCard({
               resizeMode="cover"
             />
           ) : (
-            <View style={[styles.thumbnail, styles.placeholderThumbnail]}>
+            <View
+              style={[
+                styles.thumbnail,
+                styles.placeholderThumbnail,
+                { backgroundColor: bg },
+              ]}
+            >
               <Text style={styles.placeholderText}>📖</Text>
             </View>
           )}
@@ -69,7 +76,7 @@ export default function StoryCard({
               {story.title}
             </CustomText>
             {isInProgress && (
-              <View style={styles.inProgressBadge}>
+              <View style={[styles.inProgressBadge, { backgroundColor: bg }]}>
                 <Text style={styles.inProgressText}>In Progress</Text>
               </View>
             )}
@@ -82,7 +89,7 @@ export default function StoryCard({
           {/* Tags */}
           <View style={styles.tagsContainer}>
             {story.tags.slice(0, 3).map((tag, index) => (
-              <View key={index} style={styles.tag}>
+              <View key={index} style={[styles.tag, { backgroundColor: bg }]}>
                 <Text style={styles.tagText}>{tag}</Text>
               </View>
             ))}
@@ -139,6 +146,9 @@ export default function StoryCard({
 
 const styles = StyleSheet.create({
   card: {
+    position: "relative",
+    overflow: "hidden",
+    backgroundColor: COLORS.white,
     borderRadius: 16,
     padding: 12,
     marginBottom: 12,
@@ -148,6 +158,13 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 3,
+  },
+  accent: {
+    position: "absolute",
+    left: 0,
+    top: 0,
+    bottom: 0,
+    width: 5,
   },
   thumbnailContainer: {
     position: "relative",
@@ -199,7 +216,6 @@ const styles = StyleSheet.create({
     marginRight: 8,
   },
   inProgressBadge: {
-    backgroundColor: COLORS.primary,
     paddingHorizontal: 8,
     paddingVertical: 2,
     borderRadius: 8,
@@ -221,7 +237,6 @@ const styles = StyleSheet.create({
     gap: 4,
   },
   tag: {
-    backgroundColor: "rgba(255,255,255,0.5)",
     paddingHorizontal: 8,
     paddingVertical: 2,
     borderRadius: 8,
@@ -269,4 +284,3 @@ const styles = StyleSheet.create({
     textAlign: "center",
   },
 });
-

@@ -53,7 +53,7 @@ export default function ActiveStoryCard({
           
           <View style={styles.button}>
             <CustomText variant="bold" style={styles.buttonText}>
-              {isNew ? "Start Adventure" : "Keep Going!"}
+              {isNew ? "Start Lesson" : "Keep Going!"}
             </CustomText>
           </View>
         </View>
