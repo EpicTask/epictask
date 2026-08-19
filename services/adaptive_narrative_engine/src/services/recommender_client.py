@@ -1,9 +1,12 @@
 """Client for Lesson Recommender Service integration."""
+import logging
 import os
 from typing import Optional
 import httpx
 
 from src.domain.models import RecommendRequest, RecommendResponse, UserProfile
+
+logger = logging.getLogger(__name__)
 
 
 class RecommenderClient:
@@ -46,13 +49,13 @@ class RecommenderClient:
                 return RecommendResponse(**data)
                 
             except httpx.TimeoutException:
-                print(f"Recommender service timeout after {self.timeout}s")
+                logger.warning(f"Recommender service timeout after {self.timeout}s")
                 return None
             except httpx.HTTPError as e:
-                print(f"Recommender service error: {str(e)}")
+                logger.error(f"Recommender service error: {str(e)}")
                 return None
             except Exception as e:
-                print(f"Unexpected error calling recommender: {str(e)}")
+                logger.error(f"Unexpected error calling recommender: {str(e)}")
                 return None
     
     async def health_check(self) -> bool:

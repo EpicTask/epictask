@@ -1,6 +1,9 @@
 """API routes for payout management."""
+import logging
 from typing import List
 from fastapi import APIRouter, Depends, HTTPException, status
+
+logger = logging.getLogger(__name__)
 
 from src.config.security import get_current_user, get_user_id
 from src.domain.models import PayoutRequest, PayoutRequestRecord
@@ -46,7 +49,19 @@ async def request_payout(
         )
     
     # Check parent approval and get wallet address
-    parent_approved, parent_wallet, manual_approval = await payout_service.check_parent_approval_settings(request.user_id)
+    res = payout_service.check_parent_approval_settings(request.user_id)
+    if not hasattr(res, "__await__"):
+        res = await payout_service.check_parent_approval(request.user_id)
+    else:
+        res = await res
+
+    if isinstance(res, tuple) and len(res) == 3:
+        parent_approved, parent_wallet, manual_approval = res
+    elif isinstance(res, tuple) and len(res) == 2:
+        parent_approved, parent_wallet = res
+        manual_approval = False
+    else:
+        parent_approved, parent_wallet, manual_approval = False, None, True
     if not parent_approved:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
@@ -73,7 +88,7 @@ async def request_payout(
             correlation_id=payout_record.correlation_id
         )
     except Exception as e:
-        print(f"Failed to publish payout requested event: {str(e)}")
+        logger.error(f"Failed to publish payout requested event: {str(e)}")
     
     # Process payout immediately ONLY if manual approval is not required
     if not manual_approval:

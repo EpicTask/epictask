@@ -1,8 +1,11 @@
 """Client for XRPL Management Service integration."""
+import logging
 import os
 from typing import Dict, Any, Optional
 import httpx
 from datetime import datetime
+
+logger = logging.getLogger(__name__)
 
 from src.domain.models import PayoutRequest, PayoutRequestRecord
 
@@ -59,7 +62,7 @@ class XRPLClient:
                 return response.json()
             except httpx.HTTPError as e:
                 # Log the error and re-raise
-                print(f"XRPL Management Service error: {str(e)}")
+                logger.error(f"XRPL Management Service error: {str(e)}")
                 raise
     
     async def get_transaction_status(self, tx_hash: str) -> Dict[str, Any]:
@@ -80,7 +83,7 @@ class XRPLClient:
                 response.raise_for_status()
                 return response.json()
             except httpx.HTTPError as e:
-                print(f"Error getting transaction status: {str(e)}")
+                logger.error(f"Error getting transaction status: {str(e)}")
                 raise
     
     async def get_account_balance(self, address: str) -> Dict[str, Any]:
@@ -101,7 +104,7 @@ class XRPLClient:
                 response.raise_for_status()
                 return response.json()
             except httpx.HTTPError as e:
-                print(f"Error getting account balance: {str(e)}")
+                logger.error(f"Error getting account balance: {str(e)}")
                 raise
 
 

@@ -248,7 +248,7 @@ JSON response:"""
             return variants
 
         except (json.JSONDecodeError, ValueError) as e:
-            print(f"Failed to parse batch variants, falling back to sequential: {e}")
+            logging.warning(f"Failed to parse batch variants, falling back to sequential: {e}")
             return await self.generate_age_variants(base_text, age_ranges, provider)
 
 

@@ -1,23 +1,26 @@
 """Internal routes for service-to-service and Pub/Sub push delivery."""
 import base64
 import json
+import logging
 import os
 from fastapi import APIRouter, HTTPException, Request
 
 from src.domain.models import PayoutRequestRecord
 from src.services.payout_service import payout_service
 
+logger = logging.getLogger(__name__)
+
 router = APIRouter(prefix="/internal", tags=["internal"])
-
-_INTERNAL_TOKEN = os.getenv("PUBSUB_INTERNAL_TOKEN", "")
-
 
 def _verify_token(request: Request) -> None:
     """Reject calls that don't carry the shared internal token."""
-    if not _INTERNAL_TOKEN:
-        return  # token not configured — allow in local dev
-    if request.headers.get("X-Internal-Token") != _INTERNAL_TOKEN:
-        raise HTTPException(status_code=403, detail="Forbidden")
+    expected_token = os.getenv("PUBSUB_INTERNAL_TOKEN", "").strip()
+    if not expected_token:
+        raise HTTPException(status_code=401, detail="Internal token not configured")
+
+    provided_token = request.headers.get("X-Internal-Token", "")
+    if not provided_token or provided_token != expected_token:
+        raise HTTPException(status_code=403, detail="Forbidden: invalid internal token")
 
 
 @router.post("/pubsub/payout_requested")
@@ -52,7 +55,7 @@ async def handle_payout_requested(request: Request):
         data = base64.b64decode(message.get("data", "")).decode("utf-8")
         event = json.loads(data)
     except Exception as e:
-        print(f"[pubsub] Failed to decode payout_requested message: {e}")
+        logger.error(f"[pubsub] Failed to decode payout_requested message: {e}")
         return {"status": "ignored", "reason": "malformed message"}
 
     request_id = event.get("request_id")
@@ -74,5 +77,5 @@ async def handle_payout_requested(request: Request):
         await payout_service.process_payout(payout_record)
         return {"status": "processed", "request_id": request_id}
     except Exception as e:
-        print(f"[pubsub] Failed to process payout {request_id}: {e}")
+        logger.error(f"[pubsub] Failed to process payout {request_id}: {e}")
         raise HTTPException(status_code=500, detail=str(e))

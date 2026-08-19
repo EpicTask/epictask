@@ -1,6 +1,9 @@
 """API routes for parent monitoring and control of narrative features."""
+import logging
 from typing import List, Optional
 from fastapi import APIRouter, Depends, HTTPException, Query, status
+
+logger = logging.getLogger(__name__)
 
 from src.config.security import get_current_user, get_user_id
 from src.domain.models import (
@@ -152,7 +155,7 @@ async def approve_payout(
             wallet_address=payout["wallet_address"]
         )
     except Exception as e:
-        print(f"Failed to publish payout approval event: {str(e)}")
+        logger.error(f"Failed to publish payout approval event: {str(e)}")
     
     return result
 
@@ -201,7 +204,7 @@ async def reject_payout(
             reason=reason
         )
     except Exception as e:
-        print(f"Failed to publish payout rejection event: {str(e)}")
+        logger.error(f"Failed to publish payout rejection event: {str(e)}")
     
     return result
 
@@ -280,7 +283,7 @@ async def update_narrative_settings(
             settings=updated_settings.dict()
         )
     except Exception as e:
-        print(f"Failed to publish settings update event: {str(e)}")
+        logger.error(f"Failed to publish settings update event: {str(e)}")
     
     return updated_settings
 

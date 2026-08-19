@@ -127,6 +127,11 @@ class TestProgressRoutes:
             },
             {
                 "node_id": "node_2",
+                "title": "Node 2 Title",
+                "lesson_key": "lesson_2",
+                "age_range": [5, 18],
+                "prompt": "Prompt for node 2",
+                "options": [],
                 "payout_hint": None
             }
         ])
@@ -146,8 +151,8 @@ class TestProgressRoutes:
         )
         
         assert response.status_code == 200
-        assert response.json()["next_node_id"] == "node_2"
-        assert response.json()["xp_awarded"] == 10
+        assert response.json()["next_node"]["node_id"] == "node_2"
+        assert response.json()["xp_earned"] == 10
     
     @patch('src.routes.progress.firestore_service')
     @patch('src.routes.progress.get_current_user')
@@ -313,5 +318,4 @@ class TestHealthEndpoint:
         response = client.get("/")
         
         assert response.status_code == 200
-        assert "service" in response.json()
-        assert "version" in response.json()
+        assert "Adaptive Narrative Engine" in response.text

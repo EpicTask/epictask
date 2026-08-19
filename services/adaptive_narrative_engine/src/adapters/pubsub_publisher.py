@@ -1,11 +1,13 @@
 """Pub/Sub publisher for narrative events."""
 import asyncio
 import json
+import logging
 import os
 from datetime import datetime
 from typing import Dict, Any, Optional
 import uuid
 
+logger = logging.getLogger(__name__)
 
 try:
     from google.cloud import pubsub_v1
@@ -13,7 +15,7 @@ try:
 except ImportError:
     pubsub_v1 = None
     _PUBSUB_AVAILABLE = False
-    print("WARNING: google-cloud-pubsub not installed. Pub/Sub publishing disabled.")
+    logger.warning("google-cloud-pubsub not installed. Pub/Sub publishing disabled.")
 
 
 class PubSubPublisher:
@@ -291,7 +293,7 @@ class PubSubPublisher:
             Message ID from Pub/Sub
         """
         if not _PUBSUB_AVAILABLE or self.publisher is None:
-            print(f"[PubSub disabled] Would publish to {topic_path}: {event_data.get('event_id')}")
+            logger.info(f"[PubSub disabled] Would publish to {topic_path}: {event_data.get('event_id')}")
             return None
 
         try:
@@ -303,13 +305,13 @@ class PubSubPublisher:
             loop = asyncio.get_event_loop()
             message_id = await loop.run_in_executor(None, future.result)
             
-            print(f"Published event {event_data['event_id']} to {topic_path}: {message_id}")
+            logger.info(f"Published event {event_data['event_id']} to {topic_path}: {message_id}")
             return message_id
             
         except Exception as e:
             # Log error but don't fail the request
-            print(f"Error publishing to Pub/Sub: {str(e)}")
-            print(f"Event data: {event_data}")
+            logger.error(f"Error publishing to Pub/Sub: {str(e)}")
+            logger.error(f"Event data: {event_data}")
             # Re-raise in development, swallow in production
             if os.getenv("ENV") == "development":
                 raise

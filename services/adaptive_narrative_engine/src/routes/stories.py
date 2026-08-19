@@ -11,9 +11,22 @@ from src.domain.validators import (
     validate_node_exists,
     validate_age_for_node
 )
-from src.services.firestore import firestore_service
+from src.services.firestore import firestore_service, resolve_user_age
 
 router = APIRouter(prefix="/stories", tags=["stories"])
+
+
+def verify_admin_or_parent(current_user: dict) -> str:
+    """Verify user has admin or parent role/privileges."""
+    user_id = get_user_id(current_user)
+    role = current_user.get("role")
+    is_admin = current_user.get("admin", False) or role in ("admin", "parent")
+    if not is_admin:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Admin or parent role required"
+        )
+    return user_id
 
 
 @router.get("", response_model=List[Story])
@@ -56,7 +69,7 @@ async def get_story(
 async def get_node(
     story_id: str,
     node_id: str,
-    age: int = Query(..., ge=5, le=18, description="User's age for age-appropriate filtering"),
+    age: Optional[int] = Query(None, ge=5, le=18, description="User's age for age-appropriate filtering"),
     current_user: dict = Depends(get_current_user)
 ):
     """
@@ -64,12 +77,16 @@ async def get_node(
     
     - **story_id**: Story identifier
     - **node_id**: Node identifier
-    - **age**: User's age (required, 5-18)
+    - **age**: Optional user's age (5-18). Resolved server-side from trusted profile if omitted.
     
     Returns node if it exists and is age-appropriate.
     Options may be filtered based on age.
     """
-    validate_age(age)
+    user_id = get_user_id(current_user)
+    if age is None:
+        age = resolve_user_age(user_id)
+    else:
+        validate_age(age)
     
     # Verify story exists and is published
     story = await firestore_service.get_story(story_id)
@@ -100,13 +117,13 @@ async def create_story(
     current_user: dict = Depends(get_current_user)
 ):
     """
-    Create a new story (admin/parent only in future).
+    Create a new story (admin/parent only).
     
     - **story**: Story data
     
     Returns the created story ID.
     """
-    # TODO: Add role-based access control (admin/parent only)
+    verify_admin_or_parent(current_user)
     story_id = await firestore_service.create_story(story)
     return {"story_id": story_id, "message": "Story created successfully"}
 
@@ -118,14 +135,14 @@ async def create_node(
     current_user: dict = Depends(get_current_user)
 ):
     """
-    Create a new node for a story (admin/parent only in future).
+    Create a new node for a story (admin/parent only).
     
     - **story_id**: Story identifier
     - **node**: Node data
     
     Returns the created node ID.
     """
-    # TODO: Add role-based access control (admin/parent only)
+    verify_admin_or_parent(current_user)
     
     # Verify story exists
     story = await firestore_service.get_story(story_id)

@@ -11,11 +11,20 @@ from fastapi.responses import JSONResponse
 from fastapi.templating import Jinja2Templates
 
 from src.domain.models import HealthResponse
+from src.config.settings import validate_production_config
+from src.config.logging_config import configure_logging
+from src.config.rate_limit import RateLimitMiddleware
 
 load_dotenv()
 
-# Setup Jinja2 templates
-templates = Jinja2Templates(directory="templates")
+# Configure logging and validate config
+logger = configure_logging()
+validate_production_config()
+
+# Setup Jinja2 templates relative to source file
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+templates_dir = os.path.join(BASE_DIR, "templates")
+templates = Jinja2Templates(directory=templates_dir)
 
 # Initialize FastAPI app
 app = FastAPI(
@@ -23,6 +32,9 @@ app = FastAPI(
     description="Narrative-first learning engine for ages 5-18 with blockchain rewards",
     version="0.1.0"
 )
+
+# Add API Rate Limiting Middleware
+app.add_middleware(RateLimitMiddleware, max_requests=100, window_seconds=60)
 
 # Get CORS origins from environment variable
 cors_origins_env = os.getenv("CORS_ORIGINS")
@@ -83,9 +95,9 @@ async def root(request: Request):
     base_url = str(request.base_url).rstrip('/')
     
     return templates.TemplateResponse(
-        "index.html",
-        {
-            "request": request,
+        request=request,
+        name="index.html",
+        context={
             "service": "Adaptive Narrative Engine",
             "version": "0.1.0",
             "description": "Narrative-first learning for ages 5-18 with blockchain rewards",

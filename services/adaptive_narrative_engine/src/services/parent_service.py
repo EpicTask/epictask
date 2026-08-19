@@ -1,7 +1,10 @@
 """Service layer for parent monitoring and control."""
+import logging
 from datetime import datetime, timedelta
 from typing import List, Optional, Dict
 from google.cloud.firestore import Query
+
+logger = logging.getLogger(__name__)
 
 from src.config.firebase_config import db
 from src.config.collection_names import collections
@@ -41,7 +44,7 @@ class ParentService:
             return (kid_data.get("parent") == parent_id or
                     parent_id in kid_data.get("linked_parents", []))
         except Exception as e:
-            print(f"Error verifying parent-kid link: {str(e)}")
+            logger.error(f"Error verifying parent-kid link: {str(e)}")
             return False
     
     async def get_kid_narrative_progress(self, kid_id: str) -> List[Dict]:
@@ -86,7 +89,7 @@ class ParentService:
             
             return progress_list
         except Exception as e:
-            print(f"Error getting kid narrative progress: {str(e)}")
+            logger.error(f"Error getting kid narrative progress: {str(e)}")
             return []
     
     async def get_all_kids_progress_summary(self, parent_id: str) -> List[KidProgressSummary]:
@@ -116,7 +119,7 @@ class ParentService:
             
             return summaries
         except Exception as e:
-            print(f"Error getting all kids progress summary: {str(e)}")
+            logger.error(f"Error getting all kids progress summary: {str(e)}")
             return []
     
     async def _calculate_kid_summary(self, kid_id: str) -> KidProgressSummary:
@@ -191,7 +194,7 @@ class ParentService:
                 current_stories=current_stories
             )
         except Exception as e:
-            print(f"Error calculating kid summary: {str(e)}")
+            logger.error(f"Error calculating kid summary: {str(e)}")
             return KidProgressSummary(kid_id=kid_id)
     
     async def get_pending_payouts(self, parent_id: str, kid_id: Optional[str] = None) -> List[Dict]:
@@ -240,7 +243,7 @@ class ParentService:
             
             return pending_payouts
         except Exception as e:
-            print(f"Error getting pending payouts: {str(e)}")
+            logger.error(f"Error getting pending payouts: {str(e)}")
             return []
     
     async def get_payout_request(self, request_id: str) -> Optional[Dict]:
@@ -253,7 +256,7 @@ class ParentService:
                 return data
             return None
         except Exception as e:
-            print(f"Error getting payout request: {str(e)}")
+            logger.error(f"Error getting payout request: {str(e)}")
             return None
     
     async def approve_payout(self, request_id: str, parent_id: str) -> PayoutApprovalResponse:
@@ -294,7 +297,7 @@ class ParentService:
                 transaction_hash=processed.transaction_hash
             )
         except Exception as e:
-            print(f"Error approving payout: {str(e)}")
+            logger.error(f"Error approving payout: {str(e)}")
             return PayoutApprovalResponse(
                 request_id=request_id,
                 status="error",
@@ -329,7 +332,7 @@ class ParentService:
                 message=f"Payout rejected{': ' + reason if reason else ''}"
             )
         except Exception as e:
-            print(f"Error rejecting payout: {str(e)}")
+            logger.error(f"Error rejecting payout: {str(e)}")
             return PayoutApprovalResponse(
                 request_id=request_id,
                 status="error",
@@ -356,7 +359,7 @@ class ParentService:
                 # Return default settings
                 return ParentNarrativeSettings(kid_id=kid_id)
         except Exception as e:
-            print(f"Error getting narrative settings: {str(e)}")
+            logger.error(f"Error getting narrative settings: {str(e)}")
             return ParentNarrativeSettings(kid_id=kid_id)
     
     async def update_narrative_settings(
@@ -386,7 +389,7 @@ class ParentService:
             
             return settings
         except Exception as e:
-            print(f"Error updating narrative settings: {str(e)}")
+            logger.error(f"Error updating narrative settings: {str(e)}")
             raise
     
     async def get_narrative_analytics(self, kid_id: str, days: int = 30) -> Dict:
@@ -470,7 +473,7 @@ class ParentService:
                 "engagement_score": self._calculate_engagement_score(daily_activity, days)
             }
         except Exception as e:
-            print(f"Error getting narrative analytics: {str(e)}")
+            logger.error(f"Error getting narrative analytics: {str(e)}")
             return {
                 "period_days": days,
                 "error": str(e)

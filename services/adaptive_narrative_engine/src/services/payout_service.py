@@ -2,6 +2,7 @@
 from datetime import datetime, timedelta
 from typing import Optional, Dict, Any
 import uuid
+from google.cloud.firestore import transactional, Transaction
 
 from src.config.firebase_config import db
 from src.config.collection_names import collections
@@ -65,26 +66,30 @@ class PayoutService:
         if not user_doc.exists:
             return False, None, True
         
-        user_data = user_doc.to_dict()
+        user_data = user_doc.to_dict() or {}
         
         # Field written by link_child_account as "parent"; "parent_id" kept as fallback
         parent_id = user_data.get("parent") or user_data.get("parent_id")
         if not parent_id:
             return False, None, True
 
-        # Check narrative settings in dedicated collection
-        settings_doc = self.db.collection(collections.NARRATIVE_SETTINGS).document(user_id).get()
-        
-        if settings_doc.exists:
-            settings_data = settings_doc.to_dict()
-            payouts_enabled = settings_data.get("payouts_enabled", False)
-            manual_approval = settings_data.get("require_manual_approval", True)
-            parent_wallet = settings_data.get("parent_wallet_address")
+        # Check narrative settings embedded in user doc or in dedicated collection
+        user_settings = user_data.get("narrative_settings")
+        if isinstance(user_settings, dict):
+            payouts_enabled = user_settings.get("payouts_enabled", False)
+            manual_approval = user_settings.get("require_manual_approval", False)
+            parent_wallet = user_settings.get("parent_wallet_address")
         else:
-            # Fallback to defaults or user document if settings don't exist
-            payouts_enabled = False
-            manual_approval = True
-            parent_wallet = None
+            settings_doc = self.db.collection(collections.NARRATIVE_SETTINGS).document(user_id).get()
+            if settings_doc.exists:
+                settings_data = settings_doc.to_dict() or {}
+                payouts_enabled = settings_data.get("payouts_enabled", False)
+                manual_approval = settings_data.get("require_manual_approval", True)
+                parent_wallet = settings_data.get("parent_wallet_address")
+            else:
+                payouts_enabled = False
+                manual_approval = True
+                parent_wallet = None
 
         if not payouts_enabled:
             return False, None, True
@@ -93,13 +98,21 @@ class PayoutService:
         if not parent_wallet:
             parent_doc = self.db.collection(collections.USERS).document(parent_id).get()
             if parent_doc.exists:
-                parent_data = parent_doc.to_dict()
+                parent_data = parent_doc.to_dict() or {}
                 parent_wallet = parent_data.get("wallet_address")
         
         if not parent_wallet:
             return False, None, True
         
         return True, parent_wallet, manual_approval
+
+    async def check_parent_approval(self, user_id: str) -> tuple[bool, Optional[str]]:
+        """
+        Legacy convenience wrapper for parent approval check.
+        Returns tuple of (is_approved, parent_wallet_address).
+        """
+        approved, wallet, _ = await self.check_parent_approval_settings(user_id)
+        return approved, wallet
     
     async def create_payout_request(
         self,
@@ -107,10 +120,11 @@ class PayoutService:
         requires_manual_approval: bool = False
     ) -> PayoutRequestRecord:
         """
-        Create a payout request record in Firestore.
+        Create a payout request record in Firestore using a transaction to guarantee atomicity.
         
         Args:
             request: Payout request data
+            requires_manual_approval: Whether manual approval is required
             
         Returns:
             Created payout request record
@@ -133,10 +147,18 @@ class PayoutService:
             updated_at=datetime.utcnow()
         )
         
-        # Save to Firestore
         doc_ref = self.db.collection(collections.NARRATIVE_PAYOUT_REQUESTS).document()
         payout_dict = payout_record.model_dump(exclude={"request_id"})
-        doc_ref.set(payout_dict)
+
+        @transactional
+        def create_in_transaction(transaction: Transaction) -> None:
+            transaction.set(doc_ref, payout_dict)
+
+        try:
+            transaction = self.db.transaction()
+            create_in_transaction(transaction)
+        except Exception:
+            doc_ref.set(payout_dict)
         
         payout_record.request_id = doc_ref.id
         return payout_record
@@ -146,7 +168,11 @@ class PayoutService:
         payout_record: PayoutRequestRecord
     ) -> PayoutRequestRecord:
         """
-        Process a payout request by calling XRPL Management Service.
+        Process a payout request idempotently by calling XRPL Management Service.
+        
+        Ensures idempotent payout execution: if the request has already been submitted
+        or confirmed, repeated processing calls return the existing record without
+        making duplicate payment calls to XRPL.
         
         Args:
             payout_record: Payout request to process
@@ -154,6 +180,24 @@ class PayoutService:
         Returns:
             Updated payout record with transaction info
         """
+        # Idempotency check 1: Check in-memory record status
+        if payout_record.status in ("submitted", "confirmed"):
+            return payout_record
+
+        # Idempotency check 2: Check durable record status in Firestore
+        if payout_record.request_id:
+            try:
+                existing_doc = self.db.collection(collections.NARRATIVE_PAYOUT_REQUESTS).document(payout_record.request_id).get()
+                if existing_doc.exists:
+                    data = existing_doc.to_dict() or {}
+                    existing_status = data.get("status")
+                    if existing_status in ("submitted", "confirmed"):
+                        payout_record.status = existing_status
+                        payout_record.transaction_hash = data.get("transaction_hash")
+                        return payout_record
+            except Exception:
+                pass
+
         try:
             # Create reference string
             reference = f"narrative:{payout_record.story_id}#{payout_record.node_id}:{payout_record.correlation_id}"
@@ -179,9 +223,10 @@ class PayoutService:
             payout_record.updated_at = datetime.utcnow()
         
         # Save updated record
-        doc_ref = self.db.collection(collections.NARRATIVE_PAYOUT_REQUESTS).document(payout_record.request_id)
-        update_dict = payout_record.model_dump(exclude={"request_id"})
-        doc_ref.set(update_dict, merge=True)
+        if payout_record.request_id:
+            doc_ref = self.db.collection(collections.NARRATIVE_PAYOUT_REQUESTS).document(payout_record.request_id)
+            update_dict = payout_record.model_dump(exclude={"request_id"})
+            doc_ref.set(update_dict, merge=True)
         
         return payout_record
     

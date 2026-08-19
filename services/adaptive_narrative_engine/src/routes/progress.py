@@ -1,6 +1,9 @@
 """API routes for story progress tracking."""
+import logging
 from typing import List
 from fastapi import APIRouter, Depends, HTTPException, status
+
+logger = logging.getLogger(__name__)
 
 from src.config.security import get_current_user, get_user_id
 from src.domain.models import (
@@ -19,7 +22,7 @@ from src.domain.validators import (
     validate_choice_index,
     validate_user_ownership
 )
-from src.services.firestore import firestore_service
+from src.services.firestore import firestore_service, resolve_user_age
 from src.services.recommender_client import recommender_client
 from src.adapters.pubsub_publisher import pubsub_publisher
 from src.domain.models import RecommendRequest, UserProfile, KidProgressSummary
@@ -100,7 +103,8 @@ async def advance_progress(
     """
     user_id = get_user_id(current_user)
     validate_user_ownership(user_id, request.user_id)
-    validate_age(request.age)
+    user_age = resolve_user_age(user_id)
+    validate_age(user_age)
     
     # Verify story exists and is published
     story = await firestore_service.get_story(request.story_id)
@@ -187,7 +191,7 @@ async def advance_progress(
             from_node=request.current_node_id,
             to_node=next_node_id,
             xp_awarded=xp_awarded,
-            age=request.age
+            age=user_age
         )
         
         # Check if story is completed (terminal node reached)
@@ -200,7 +204,7 @@ async def advance_progress(
             )
     except Exception as e:
         # Log but don't fail the request
-        print(f"Failed to publish progress event: {str(e)}")
+        logger.error(f"Failed to publish progress event: {str(e)}")
     
     # Check for payout hint on next node
     payout_candidate = next_node.get("payout_hint")
