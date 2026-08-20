@@ -1,11 +1,29 @@
 import datetime
+import secrets
+import string
 from typing import Optional, List, Dict, Any
 from firebase_admin import auth, firestore
 from google.cloud.firestore_v1.base_query import FieldFilter
+from passlib.context import CryptContext
+
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 from ..config.firebase_config import db
 from ..config.collection_names import collections
 from ..domain.user_models import UserProfile, InviteCodeResponse, UserMetrics, NotificationPreferences
+
+def hash_pin(pin: str) -> str:
+    """Hash a raw 4-digit PIN securely using bcrypt."""
+    return pwd_context.hash(pin)
+
+def verify_pin(plain_pin: str, hashed_pin: str) -> bool:
+    """Verify a plain PIN against a bcrypt hash."""
+    if not hashed_pin:
+        return False
+    try:
+        return pwd_context.verify(plain_pin, hashed_pin)
+    except Exception:
+        return False
 
 def get_user_profile(uid: str) -> Optional[dict]:
     """Get user profile from Firestore."""
@@ -63,18 +81,24 @@ def delete_user_account(uid: str) -> bool:
         return False
 
 def generate_invite_code(child_id: str) -> InviteCodeResponse:
-    """Generate a unique invite code for a child."""
+    """Generate a 6-character alphanumeric single-use invite code for a child."""
     try:
-        invites_ref = db.collection(collections.INVITES)
-        new_invite_ref = invites_ref.document()
-        invite_code = new_invite_ref.id
+        alphabet = string.ascii_uppercase + string.digits
+        invite_code = ''.join(secrets.choice(alphabet) for _ in range(6))
         
-        # Expires in 24 hours
-        expires_at = datetime.datetime.now() + datetime.timedelta(hours=24)
+        invites_ref = db.collection(collections.INVITES)
+        new_invite_ref = invites_ref.document(invite_code)
+        
+        # Expires in 7 days
+        expires_at = datetime.datetime.now() + datetime.timedelta(days=7)
         
         invite_data = {
             "childId": child_id,
-            "expiresAt": expires_at
+            "expiresAt": expires_at,
+            "code": invite_code,
+            "attempts": 0,
+            "rate_limit_max": 10,
+            "used": False
         }
         
         new_invite_ref.set(invite_data)
@@ -274,3 +298,26 @@ def update_notification_preferences(uid: str, prefs_dict: dict) -> bool:
     except Exception as e:
         print(f"Failed to update notification preferences for {uid}: {e}")
         return False
+
+def verify_child_pin(child_id: str, pin: str) -> dict:
+    """Verify child PIN server-side."""
+    try:
+        user_doc = db.collection(collections.USERS).document(child_id).get()
+        if not user_doc.exists:
+            return {"success": False, "message": "Child user not found"}
+            
+        data = user_doc.to_dict()
+        stored_hash = data.get("pin_hash") or data.get("pinHash")
+        
+        if not stored_hash:
+            return {"success": False, "message": "No PIN configured for child"}
+            
+        is_valid = verify_pin(pin, stored_hash) or (pin == stored_hash)
+        if is_valid:
+            data['uid'] = child_id
+            return {"success": True, "child": data}
+        else:
+            return {"success": False, "message": "Invalid PIN"}
+    except Exception as e:
+        print(f"Failed to verify child PIN: {e}")
+        return {"success": False, "message": str(e)}
