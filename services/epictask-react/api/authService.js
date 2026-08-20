@@ -6,6 +6,7 @@ import {
   signOut,
   updateProfile,
   sendPasswordResetEmail,
+  sendEmailVerification,
 } from "firebase/auth";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { firestoreService } from "../api/firestoreService";
@@ -44,6 +45,13 @@ export const authService = {
       );
       if (!createProfileResult.success) {
         throw new Error("Failed to create user profile in database");
+      }
+
+      // Send email verification
+      try {
+        await sendEmailVerification(user);
+      } catch (evError) {
+        console.warn("Failed to send verification email:", evError);
       }
 
       return {
@@ -158,23 +166,14 @@ export const authService = {
     }
   },
 
-  // Logout user with cache cleanup
+  // Sign out from Firebase. Local session cleanup is handled by the
+  // AuthContext auth-state listener so there is one cleanup path.
   logout: async () => {
     try {
       await signOut(auth);
-      await AsyncStorage.removeItem("authToken");
-      await AsyncStorage.removeItem("cachedUserProfile");
-      await AsyncStorage.removeItem("childContext");
-
-      // Clear all caches on logout to prevent data leakage
-      firestoreService.cache.clear();
-
       return { success: true };
     } catch (error) {
       console.error("Logout error:", error);
-      // Still clear cache even if logout fails
-      await AsyncStorage.removeItem("childContext").catch(() => {});
-      firestoreService.cache.clear();
       throw new Error("Logout failed");
     }
   },
@@ -219,7 +218,7 @@ export const authService = {
   // Generate invite code (for kids)
   generateInviteCode: async () => {
     try {
-      const response = await userApiClient.post("/users/generate-invite-code");
+      const response = await userApiClient.post("/invite-code");
       return response.data;
     } catch (error) {
       console.error("Generate invite code error:", error);
@@ -230,7 +229,7 @@ export const authService = {
   // Link child account (for parents)
   linkChild: async (inviteCode) => {
     try {
-      const response = await userApiClient.post("/users/link-child", {
+      const response = await userApiClient.post("/link-child", {
         inviteCode,
       });
       return response.data;
@@ -245,7 +244,7 @@ export const authService = {
     try {
       // Generate invite code using existing user management service
       const inviteResponse = await userApiClient.post(
-        "/users/generate-invite-code"
+        "/invite-code"
       );
       const inviteCode = inviteResponse.data.inviteCode;
 
@@ -253,12 +252,13 @@ export const authService = {
       const pendingInvite = {
         parent_id: parentId,
         child_name: childData.name,
-        child_email: childData.email,
+        child_email: childData.email || null,
         age: parseInt(childData.age),
         grade_level: childData.gradeLevel,
         image: childData.image || null,
-        pin_hash: childData.pinHash, // Should be hashed before calling this method
+        pin_hash: childData.pinHash || null,
         invite_code: inviteCode,
+        parental_consent: new Date().toISOString(),
         created_at: new Date().toISOString(),
         expires_at: new Date(
           Date.now() + 7 * 24 * 60 * 60 * 1000
@@ -269,8 +269,6 @@ export const authService = {
       const result = await firestoreService.createPendingInvite(pendingInvite);
 
       if (result.success) {
-        // Send email invite (this would integrate with your email service)
-        // For now, we'll just return the invite code to be handled by the UI
         return {
           success: true,
           inviteCode: inviteCode,
@@ -424,6 +422,20 @@ export const authService = {
       }
 
       throw new Error(error.message || "Registration failed");
+    }
+  },
+
+  // Verify child PIN via server
+  verifyChildPIN: async (childId, pin) => {
+    try {
+      const response = await userApiClient.post("/verify-pin", {
+        child_id: childId,
+        pin: pin,
+      });
+      return response.data;
+    } catch (error) {
+      console.error("Verify child PIN error:", error);
+      throw new Error(error.response?.data?.detail || "Failed to verify PIN");
     }
   },
 

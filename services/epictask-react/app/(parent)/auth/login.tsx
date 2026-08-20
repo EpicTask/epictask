@@ -134,7 +134,7 @@ const Login = () => {
             <DebouncedTouchableOpacity
               style={{ flexDirection: "row", gap: 4 }}
               onPress={() => {
-                router.push("/auth/register" as any);
+                router.push("/(parent)/auth/register" as any);
               }}
             >
               <CustomText

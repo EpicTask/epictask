@@ -162,15 +162,20 @@ export const firestoreService = {
         throw new Error('Invalid user data: UID and email are required');
       }
 
+      const role = userData.role;
       const userProfile = {
         uid,
         email: userData.email,
         displayName: userData.displayName || '',
-        role: userData.role || "child",
+        role,
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
-        children: userData.role === "parent" ? [] : undefined,
-        parentId: userData.role === "child" ? null : undefined,
+        ...(userData.age !== undefined ? { age: userData.age } : {}),
+        ...(userData.grade_level ? { grade_level: userData.grade_level, grade: userData.grade_level } : {}),
+        ...(userData.grade ? { grade: userData.grade, grade_level: userData.grade_level } : {}),
+        // Firestore rejects undefined values. Only add role-specific fields
+        // when they have a meaningful value.
+        ...(role === "parent" ? { children: [] } : { parentId: userData.parentId || null }),
       };
 
       await setDoc(doc(db, "users", uid), userProfile);
@@ -1409,13 +1414,15 @@ export const firestoreService = {
         return { success: false, error: "Device sharing not allowed for this child" };
       }
 
-      // Verify PIN (this would use bcrypt in production)
-      // For now, we'll do a simple comparison - in production you'd use bcrypt.compare
-      const bcrypt = require('bcrypt');
-      const pinValid = await bcrypt.compare(pin, child.pin_hash);
-      
-      if (!pinValid) {
-        return { success: false, error: "Invalid PIN" };
+      // Verify PIN via server endpoint
+      const userApiClient = (await import("./userService")).default;
+      const verifyRes = await userApiClient.post("/verify-pin", {
+        child_id: childId,
+        pin: pin,
+      });
+
+      if (!verifyRes.data || !verifyRes.data.success) {
+        return { success: false, error: verifyRes.data?.message || "Invalid PIN" };
       }
 
       PerformanceMonitor.end(operation);

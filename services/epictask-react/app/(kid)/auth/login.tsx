@@ -2,66 +2,57 @@ import { FONT_SIZES } from "@/constants/FontSize";
 import React, { useState } from "react";
 import CustomText from "@/components/CustomText";
 import CustomButton from "@/components/buttons/CustomButton";
+import AvatarPicker from "@/components/avatar/AvatarPicker";
+import PinPad from "@/components/pin/PinPad";
 
 import {
-  responsiveFontSize,
   responsiveHeight,
   responsiveWidth,
 } from "react-native-responsive-dimensions";
-import {
-  CodeField,
-  Cursor,
-  useBlurOnFulfill,
-  useClearByFocusCell,
-} from "react-native-confirmation-code-field";
 
 import { router } from "expo-router";
 import { COLORS } from "@/constants/Colors";
-import { Alert, StyleSheet, TextInput, View } from "react-native";
+import { StyleSheet, View, ScrollView } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import AuthButton from "@/components/buttons/AuthButton";
 import { useAuth } from "@/context/AuthContext";
 
 const Login = () => {
-  const CELL_COUNT = 4;
-  const [value, setValue] = useState("");
-  const ref = useBlurOnFulfill({ value, cellCount: CELL_COUNT });
-  const [props, getCellOnLayoutHandler] = useClearByFocusCell({
-    value,
-    setValue,
-  });
-  const { linkChild, loading, error } = useAuth();
+  const [selectedAvatar, setSelectedAvatar] = useState<string | null>("avatar1");
+  const [pin, setPin] = useState("");
+  const [step, setStep] = useState(1);
+  const [loading, setLoading] = useState(false);
+  const [formError, setFormError] = useState("");
+  const { switchToChildContext } = useAuth();
 
-  const handleLogin = async () => {
-    if (value.length !== CELL_COUNT) {
-      Alert.alert('Invalid Code', 'Please enter a complete invite code');
+  const handlePinSubmit = async () => {
+    setFormError("");
+    if (pin.length !== 4) {
+      setFormError("Please enter your 4-digit PIN.");
       return;
     }
-    
+
     try {
-      await linkChild(value);
-      // Navigation will be handled automatically by the AuthContext and _layout.tsx
-    } catch (error) {
-      Alert.alert('Login Failed', error instanceof Error ? error.message : 'Invalid invite code');
+      setLoading(true);
+      // For shared device mode, verify PIN and enter child context
+      const res = await switchToChildContext("child-profile-id", pin);
+      if (res.success) {
+        router.replace("/(kid)/(app)/(tabs)");
+      } else {
+        setFormError("Incorrect PIN. Please try again.");
+      }
+    } catch (err: any) {
+      setFormError(err.message || "Login failed. Please check your PIN.");
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      <View
-        style={{
-          flex: 1,
-          paddingVertical: 20,
-        }}
-      >
-        <View>
-          <View
-            style={{
-              flexDirection: "row",
-              alignItems: "center",
-              flexWrap: "wrap",
-            }}
-          >
+      <ScrollView showsVerticalScrollIndicator={false}>
+        <View style={{ flex: 1, paddingVertical: 10 }}>
+          <View>
             <CustomText
               variant="semiBold"
               style={{
@@ -69,116 +60,89 @@ const Login = () => {
                 color: COLORS.purple,
               }}
             >
-              Join Your
+              Welcome Back!
             </CustomText>
             <CustomText
-              variant="semiBold"
+              variant="medium"
               style={{
-                fontSize: FONT_SIZES.display,
-                padding: 0,
-                margin: 0,
+                fontSize: FONT_SIZES.small,
+                color: COLORS.grey,
+                marginTop: 4,
               }}
             >
-              {" "}
-              Parent's
-            </CustomText>
-            <CustomText
-              variant="semiBold"
-              style={{ fontSize: FONT_SIZES.display }}
-            >
-              Account
+              Select your profile avatar and enter your PIN to sign in.
             </CustomText>
           </View>
+
+          {formError ? (
+            <View style={{ paddingVertical: 8 }}>
+              <CustomText
+                variant="medium"
+                style={{ color: COLORS.red, fontSize: FONT_SIZES.small }}
+              >
+                {formError}
+              </CustomText>
+            </View>
+          ) : null}
+
+          {step === 1 && (
+            <View style={{ gap: responsiveHeight(2), marginTop: responsiveHeight(2) }}>
+              <AvatarPicker
+                selectedAvatar={selectedAvatar}
+                onSelectAvatar={(av) => {
+                  setSelectedAvatar(av);
+                  setFormError("");
+                }}
+              />
+              <AuthButton
+                fill={true}
+                onPress={() => setStep(2)}
+                text="Next: Enter PIN"
+                height={responsiveHeight(6)}
+              />
+              <CustomButton
+                fill={false}
+                onPress={() => router.replace("/")}
+                text="Choose Role"
+                height={responsiveHeight(6)}
+              />
+            </View>
+          )}
+
+          {step === 2 && (
+            <View style={{ gap: responsiveHeight(2), marginTop: responsiveHeight(2) }}>
+              <CustomText
+                variant="semiBold"
+                style={{ fontSize: FONT_SIZES.title, textAlign: "center" }}
+              >
+                Enter Your PIN
+              </CustomText>
+
+              <PinPad
+                pin={pin}
+                onPinChange={(newPin) => {
+                  setPin(newPin);
+                  setFormError("");
+                }}
+              />
+
+              <AuthButton
+                fill={true}
+                onPress={loading ? () => {} : handlePinSubmit}
+                text={loading ? "Verifying PIN..." : "Sign In"}
+                height={responsiveHeight(6)}
+              />
+
+              <CustomButton
+                fill={false}
+                onPress={() => setStep(1)}
+                text="Back to Avatars"
+                height={responsiveHeight(6)}
+              />
+            </View>
+          )}
         </View>
-        <View style={{ gap: responsiveHeight(3), paddingVertical: 16 }}>
-          <View style={{ justifyContent: "center" }}>
-            <CustomText
-              variant="semiBold"
-              style={{ fontSize: FONT_SIZES.medium }}
-            >
-              Enter Parent's Invite Code
-            </CustomText>
-            <CodeField
-              ref={ref}
-              {...props}
-              value={value}
-              onChangeText={setValue}
-              cellCount={CELL_COUNT}
-              rootStyle={styles.codeFieldRoot}
-              keyboardType="number-pad"
-              textContentType="oneTimeCode"
-              autoComplete="one-time-code"
-              InputComponent={TextInput}
-              testID="my-code-input"
-              renderCell={({ index, symbol, isFocused }) => (
-                <CustomText
-                  key={index}
-                  style={[styles.cell, isFocused && styles.focusCell]}
-                  onLayout={getCellOnLayoutHandler(index)}
-                >
-                  {symbol || (isFocused ? <Cursor /> : null)}
-                </CustomText>
-              )}
-            />
-          </View>
-          <AuthButton
-            fill={true}
-            onPress={loading ? () => {} : handleLogin}
-            text={loading ? "Joining..." : "Join Account"}
-            height={responsiveHeight(6)}
-          />
-          <AuthButton
-            fill={false}
-            onPress={() => router.replace("/auth/login" as any)}
-            text="Return to Main Login"
-            height={responsiveHeight(6)}
-          />
-        </View>
-        <View
-          style={{
-            flexWrap: "wrap",
-            paddingVertical: 30,
-            alignItems: "center",
-            flexDirection: "row",
-            paddingHorizontal: 20,
-            justifyContent: "center",
-          }}
-        >
-          <CustomText
-            style={{
-              color: COLORS.purple,
-              fontWeight: "400",
-              textDecorationLine: "underline",
-              textAlign: "center",
-            }}
-            variant="semiBold"
-          >
-            Request an Invite
-          </CustomText>
-          <CustomText
-            style={{
-              color: COLORS.purple,
-              fontWeight: "400",
-              textAlign: "center",
-              textDecorationLine: "underline",
-              flexWrap: "wrap",
-            }}
-          >
-            (Sends a request to
-          </CustomText>
-          <CustomText
-            style={{
-              color: COLORS.purple,
-              fontWeight: "400",
-              textAlign: "center",
-              textDecorationLine: "underline",
-              flexWrap: "wrap",
-            }}
-          >
-            parent's email/phone)
-          </CustomText>
-        </View>
-      </View>
+      </ScrollView>
     </SafeAreaView>
   );
 };
@@ -188,27 +152,7 @@ export default Login;
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: "#F1F6F9",
-    justifyContent: "space-between",
-    height: responsiveHeight(100),
-    width: responsiveWidth(100),
+    backgroundColor: COLORS.white,
     padding: responsiveWidth(6),
-  },
-  codeFieldRoot: { marginTop: 10, justifyContent: "flex-start" },
-  cell: {
-    width: 72,
-    height: 80,
-    lineHeight: 78,
-    fontSize: 24,
-    borderWidth: 0,
-    borderColor: "#00000010",
-    backgroundColor: "#fff",
-    textAlign: "center",
-    borderRadius: 8,
-    marginHorizontal: "auto",
-  },
-  focusCell: {
-    color: "white",
-    backgroundColor: "#EE4266",
   },
 });

@@ -169,12 +169,19 @@ export const AuthProvider = ({ children }) => {
           }
         }
       } else {
-        await queryClient.cancelQueries();
+        // Firebase Auth is the source of truth for session state. Clean up
+        // local state after it reports that the user is signed out, while
+        // allowing React state to reset even if storage cleanup fails.
+        await Promise.allSettled([
+          queryClient.cancelQueries(),
+          AsyncStorage.multiRemove([
+            'authToken',
+            'cachedUserProfile',
+            'childContext',
+          ]),
+        ]);
         queryClient.clear();
         firestoreService.cache.clear();
-        await AsyncStorage.removeItem('authToken');
-        await AsyncStorage.removeItem('cachedUserProfile');
-        await AsyncStorage.removeItem('childContext');
         if (!isCurrentAuthState()) return;
 
         setIsSharedDeviceMode(false);

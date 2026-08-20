@@ -27,6 +27,7 @@ import {
 import { Link, useFocusEffect } from "expo-router";
 import React, { useEffect, useState, useCallback, useRef } from "react";
 import { useAuth } from "@/context/AuthContext";
+import SetupChecklist from "@/components/onboarding/SetupChecklist";
 import { firestoreService } from "@/api/firestoreService";
 import authService from "@/api/authService";
 import taskService from "@/api/taskService";
@@ -394,7 +395,10 @@ export default function HomeScreen() {
                 )}
               </>
             ) : (
-              <Text>No kids linked yet. Link your first child to get started!</Text>
+              <View>
+                <Text>No kids linked yet. Link your first child to get started!</Text>
+                <SetupChecklist />
+              </View>
             )}
           </View>
 

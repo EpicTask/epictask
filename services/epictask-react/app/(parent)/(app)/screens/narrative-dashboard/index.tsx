@@ -62,6 +62,10 @@ const NarrativeDashboard = () => {
   };
 
   const handleApprovePayout = async (requestId: string) => {
+    if (user && !user.emailVerified) {
+      Alert.alert("Email Verification Required", "Please verify your email address before approving wallet payouts.");
+      return;
+    }
     try {
       await narrativeService.approvePayout(requestId);
       Alert.alert("Success", "Payout approved");

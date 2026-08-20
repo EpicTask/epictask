@@ -13,6 +13,7 @@ jest.mock('@react-native-async-storage/async-storage', () => ({
   setItem: jest.fn(),
   getItem: jest.fn(),
   removeItem: jest.fn(),
+  multiRemove: jest.fn(),
 }));
 
 jest.mock('../../config/firebaseConfig', () => ({
@@ -30,6 +31,7 @@ jest.mock('../../api/authService', () => ({
   login: jest.fn(),
   logout: jest.fn(),
   clearChildContext: jest.fn(),
+  getChildContext: jest.fn().mockResolvedValue({ success: false }),
 }));
 
 jest.mock('../../api/apiClient', () => ({
@@ -146,9 +148,11 @@ describe('AuthContext Caching Logic', () => {
       authCallback(null);
     });
 
-    expect(AsyncStorage.removeItem).toHaveBeenCalledWith('cachedUserProfile');
-    expect(AsyncStorage.removeItem).toHaveBeenCalledWith('authToken');
-    expect(AsyncStorage.removeItem).toHaveBeenCalledWith('childContext');
+    expect(AsyncStorage.multiRemove).toHaveBeenCalledWith([
+      'authToken',
+      'cachedUserProfile',
+      'childContext',
+    ]);
     expect(queryClient.cancelQueries).toHaveBeenCalled();
     expect(queryClient.clear).toHaveBeenCalled();
     expect(firestoreService.cache.clear).toHaveBeenCalled();

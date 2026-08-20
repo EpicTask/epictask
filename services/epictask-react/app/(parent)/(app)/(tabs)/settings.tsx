@@ -17,6 +17,7 @@ import { isAuthorizedTestUser } from "@/constants/TestingConfig";
 import DebouncedTouchableOpacity from "@/components/buttons/DebouncedTouchableOpacity";
 import { useXummAuth, isXummWalletConnected, XummUserToken } from "@/hooks/useXummAuth";
 import { XummQrModal } from "@/components/modals/XummQrModal";
+import { navigateToLogin } from "@/utils/authNavigation";
 
 const ProfileCard = () => {
   const { user } = useContext(AuthContext);
@@ -102,8 +103,7 @@ const SettingsScreen = () => {
   const handleSignOut = async () => {
     try {
       await logout();
-      router.dismissAll();
-      router.replace('/(parent)/auth/login' as any);
+      navigateToLogin(router, 'parent');
     } catch (error) {
       Alert.alert("Sign Out Failed", error instanceof Error ? error.message : 'Sign out failed');
     }

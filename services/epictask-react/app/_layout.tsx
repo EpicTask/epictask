@@ -75,7 +75,7 @@ function RootLayout() {
           // If user is not authenticated and not in auth group or index, redirect to index
           console.log("Redirecting unauthenticated user to index");
           router.dismissAll();
-          router.replace('/(parent)/auth/login' as any);
+          router.replace('/' as any);
         }
       }
     }

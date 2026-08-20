@@ -23,6 +23,7 @@ import CustomText from "@/components/CustomText";
 import LinkIcon from "@/assets/icons/Link";
 import TaskIcon from "@/assets/icons/tab-bar/Task";
 import { AuthContext } from "@/context/AuthContext";
+import { navigateToLogin } from "@/utils/authNavigation";
 
 const ProfileCard = () => {
   const { user, isSharedDeviceMode, activeChildContext } = useContext(AuthContext);
@@ -111,8 +112,7 @@ const SettingsScreen = () => {
     }
     try {
       await logout();
-      router.dismissAll();
-      router.replace('/(kid)/auth/login' as any);
+      navigateToLogin(router, 'child');
     } catch (error) {
       Alert.alert("Sign Out Failed", error instanceof Error ? error.message : 'Sign out failed');
     }

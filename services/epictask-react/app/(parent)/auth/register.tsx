@@ -2,54 +2,53 @@ import { FONT_SIZES } from "@/constants/FontSize";
 import React, { useState } from "react";
 
 import SafeArea from "@/components/SafeArea";
-import Divider from "@/components/Divider/Divider";
 import AuthButton from "@/components/buttons/AuthButton";
 import CustomInput from "@/components/custom-input/CustomInput";
 
-import { Alert, ScrollView, StyleSheet, TouchableOpacity, View } from "react-native";
-import {
-  responsiveFontSize,
-  responsiveHeight,
-} from "react-native-responsive-dimensions";
+import { ScrollView, StyleSheet, TouchableOpacity, View } from "react-native";
+import { responsiveHeight } from "react-native-responsive-dimensions";
 
 import { ICONS } from "@/assets";
 import { router } from "expo-router";
 import { COLORS } from "@/constants/Colors";
-import { Fontisto } from "@expo/vector-icons";
 import CustomText from "@/components/CustomText";
 import { useAuth } from "@/context/AuthContext";
-import DebouncedTouchableOpacity from "@/components/buttons/DebouncedTouchableOpacity";
 
 const Register = () => {
-  const [radio, toggleRadio] = useState(false);
   const [password, setPassword] = useState("");
   const [email, setEmail] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
-  const [displayName, setDisplayName] = useState("");
-  const { register, loading, error } = useAuth();
+  const [formError, setFormError] = useState("");
+  const { register, loading } = useAuth();
+
+  const validateEmail = (text: string) => {
+    const re = /\S+@\S+\.\S+/;
+    return re.test(text);
+  };
 
   const handleRegister = async () => {
-    // Validation
-    if (!email || !password || !confirmPassword || !displayName) {
-      Alert.alert('Error', 'Please fill in all fields');
+    setFormError("");
+    if (!email.trim() || !password.trim()) {
+      setFormError("Please fill in both email and password");
       return;
     }
 
-    if (password !== confirmPassword) {
-      Alert.alert('Error', 'Passwords do not match');
+    if (!validateEmail(email.trim())) {
+      setFormError("Please enter a valid email address");
       return;
     }
 
-    if (!radio) {
-      Alert.alert('Error', 'Please agree to the Terms & Conditions');
+    if (password.length < 6) {
+      setFormError("Password must be at least 6 characters long");
       return;
     }
 
     try {
-      await register(email, password, displayName, 'parent');
-      // Navigation will be handled automatically by the AuthContext and _layout.tsx
-    } catch (error) {
-      Alert.alert('Registration Failed', error instanceof Error ? error.message : 'Registration failed');
+      // Default display name derived from email local-part if not set yet
+      const defaultName = email.split("@")[0] || "Parent";
+      await register(email.trim(), password, defaultName, "parent");
+      // AuthContext and _layout.tsx handle navigation
+    } catch (err: any) {
+      setFormError(err instanceof Error ? err.message : "Registration failed");
     }
   };
 
@@ -84,7 +83,7 @@ const Register = () => {
               </CustomText>
             </View>
           </View>
-          <View style={{}}>
+          <View>
             <CustomText
               variant="medium"
               style={{
@@ -96,31 +95,33 @@ const Register = () => {
               Enter your email and password to continue
             </CustomText>
           </View>
-          <View style={{}}>
-            <CustomInput
-              label="Full Name"
-              placeholder="Enter Your Full Name"
-              value={displayName}
-              onChangeText={setDisplayName}
-            />
+
+          {formError ? (
+            <View style={{ paddingVertical: 8 }}>
+              <CustomText variant="medium" style={{ color: COLORS.red, fontSize: FONT_SIZES.small }}>
+                {formError}
+              </CustomText>
+            </View>
+          ) : null}
+
+          <View style={{ paddingVertical: 10 }}>
             <CustomInput
               label="Your Email"
               placeholder="Enter Your Email"
               value={email}
-              onChangeText={setEmail}
+              onChangeText={(text) => {
+                setEmail(text);
+                setFormError("");
+              }}
             />
             <CustomInput
               label="Password"
               placeholder="Password"
               value={password}
-              onChangeText={setPassword}
-              secureTextEntry={true}
-            />
-            <CustomInput
-              label="Confirm Password"
-              placeholder="Confirm Password"
-              value={confirmPassword}
-              onChangeText={setConfirmPassword}
+              onChangeText={(text) => {
+                setPassword(text);
+                setFormError("");
+              }}
               secureTextEntry={true}
             />
           </View>
@@ -136,29 +137,18 @@ const Register = () => {
               style={{
                 alignItems: "center",
                 width: "100%",
-                paddingVertical: responsiveHeight(2),
+                paddingVertical: responsiveHeight(1),
               }}
             >
-              <TouchableOpacity
-                onPress={() => {
-                  toggleRadio(!radio);
+              <CustomText
+                style={{
+                  color: COLORS.grey,
+                  fontSize: FONT_SIZES.small,
+                  textAlign: "center",
                 }}
-                style={{ flexDirection: "row", gap: 6, alignItems: "center" }}
               >
-                {radio ? (
-                  <Fontisto name="radio-btn-active" size={14} color="black" />
-                ) : (
-                  <Fontisto name="radio-btn-passive" size={14} color="black" />
-                )}
-                <CustomText
-                  style={{
-                    color: COLORS.black,
-                    fontSize: FONT_SIZES.small,
-                  }}
-                >
-                  Yes, I agree to the Terms & Conditioins
-                </CustomText>
-              </TouchableOpacity>
+                By continuing you agree to our Terms & Conditions and Privacy Policy.
+              </CustomText>
             </View>
             <View style={{ width: "100%", paddingVertical: 10 }}>
               <AuthButton
@@ -192,37 +182,6 @@ const Register = () => {
                 Login
               </CustomText>
             </TouchableOpacity>
-            <View
-              style={{
-                flexDirection: "row",
-                alignItems: "center",
-                gap: 20,
-                width: "90%",
-              }}
-            >
-              <Divider />
-              <CustomText variant="medium" style={{ color: COLORS.grey }}>
-                Or Signup With
-              </CustomText>
-              <Divider />
-            </View>
-            <View
-              style={{
-                gap: 10,
-                width: "100%",
-                paddingVertical: 10,
-                alignItems: "center",
-              }}
-            >
-              <DebouncedTouchableOpacity style={styles.sso}>
-                {ICONS.google}
-                <CustomText>Google</CustomText>
-              </DebouncedTouchableOpacity>
-              <DebouncedTouchableOpacity style={styles.sso}>
-                {ICONS.apple}
-                <CustomText>Apple</CustomText>
-              </DebouncedTouchableOpacity>
-            </View>
           </View>
         </View>
       </ScrollView>
@@ -235,16 +194,5 @@ export default Register;
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-  },
-  sso: {
-    backgroundColor: COLORS.white,
-    gap: 10,
-    alignItems: "center",
-    flexDirection: "row",
-    justifyContent: "center",
-    width: "90%",
-    paddingVertical: 16,
-    paddingHorizontal: 10,
-    borderRadius: 30,
   },
 });
