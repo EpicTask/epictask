@@ -40,8 +40,8 @@ class ParentService:
                 return False
             
             kid_data = kid_doc.to_dict()
-            # "parent" is written by link_child_account; "linked_parents" kept as fallback
-            return (kid_data.get("parent") == parent_id or
+            return (kid_data.get("parent_id") == parent_id or
+                    kid_data.get("parent") == parent_id or
                     parent_id in kid_data.get("linked_parents", []))
         except Exception as e:
             logger.error(f"Error verifying parent-kid link: {str(e)}")
@@ -110,7 +110,7 @@ class ParentService:
                 return []
             
             parent_data = parent_doc.to_dict()
-            linked_kids = parent_data.get("linked_kids", [])
+            linked_kids = parent_data.get("children") or parent_data.get("linked_kids", [])
             
             summaries = []
             for kid_id in linked_kids:
@@ -218,7 +218,7 @@ class ParentService:
                 if not parent_doc.exists:
                     return []
                 parent_data = parent_doc.to_dict()
-                kids = parent_data.get("linked_kids", [])
+                kids = parent_data.get("children") or parent_data.get("linked_kids", [])
             
             pending_payouts = []
             for kid in kids:
