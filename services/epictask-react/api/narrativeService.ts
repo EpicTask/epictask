@@ -21,29 +21,70 @@ export interface Story {
   updated_at: string;
 }
 
+export type MoneyMomentConcept =
+  | "saving"
+  | "spending"
+  | "need_vs_want"
+  | "earning"
+  | "sharing";
+
+export type MoneyMomentRewardType =
+  | "badge"
+  | "sticker"
+  | "coin_animation"
+  | "collectible";
+
+export interface MoneyMomentChoice {
+  id: string;
+  label: string;
+  resultText: string;
+  rewardType: MoneyMomentRewardType;
+  rewardId: string;
+}
+
+export interface MoneyMoment {
+  id: string;
+  concept: MoneyMomentConcept;
+  title: string;
+  simpleDefinition: string;
+  scenario: string;
+  choices: MoneyMomentChoice[];
+  recapText?: string;
+  ageBand?: "youngest" | "middle" | "older";
+}
+
+export interface NodeMetadata {
+  money_moment?: MoneyMoment;
+  [key: string]: any;
+}
+
 export interface Node {
   node_id: string;
-  story_id: string;
+  story_id?: string;
   prompt: string;
   options: NodeOption[];
-  node_type: "choice" | "completion" | "checkpoint";
+  node_type?: "choice" | "completion" | "checkpoint";
   task_gate?: string;
-  xp_reward: number;
-  payout_eligible: boolean;
+  xp_reward?: number;
+  payout_eligible?: boolean;
   payout_amount?: number;
   age_variants?: Record<string, string>;
-  metadata?: Record<string, any>;
+  is_terminal?: boolean;
+  order?: number;
+  metadata?: NodeMetadata;
 }
 
 export interface NodeOption {
-  option_id: string;
+  option_id?: string;
   text: string;
-  next_node_id: string | null;
+  next_node_id?: string | null;
+  leads_to?: string;
+  reward_xp?: number;
   is_correct?: boolean;
 }
 
 export interface StoryProgress {
-  id: string;
+  id?: string;
   user_id: string;
   story_id: string;
   current_node: string;
@@ -53,13 +94,15 @@ export interface StoryProgress {
   started_at: string;
   completed_at?: string;
   last_updated: string;
+  completed_money_moment_ids?: string[];
 }
 
 export interface AdvanceProgressRequest {
   user_id: string;
   story_id: string;
   current_node_id: string;
-  selected_option_id: string;
+  selected_option_id?: string;
+  choice_index?: number;
 }
 
 export interface AdvanceProgressResponse {
@@ -258,6 +301,25 @@ export const narrativeService = {
     } catch (error) {
       console.error("Advance progress error:", error);
       throw new Error("Failed to advance progress");
+    }
+  },
+
+  // Record a Money Moment completion (idempotent)
+  completeMoneyMoment: async (
+    userId: string,
+    storyId: string,
+    momentId: string
+  ): Promise<void> => {
+    try {
+      await narrativeApiClient.post("/progress/money-moment/complete", {
+        user_id: userId,
+        story_id: storyId,
+        moment_id: momentId,
+      });
+    } catch (error) {
+      // Failure to persist completion is non-fatal for the child's session —
+      // the worst case is that the moment shows again on a future load.
+      console.error("Complete money moment error:", error);
     }
   },
 
