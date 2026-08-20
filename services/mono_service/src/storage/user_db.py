@@ -65,6 +65,42 @@ def update_user_profile(uid: str, profile_data: dict) -> bool:
         print(f"Failed to update profile: {e}")
         return False
 
+def create_managed_child(parent_uid: str, child_data: dict) -> dict:
+    """Create a child profile controlled by a parent on a shared device."""
+    child_user = None
+    try:
+        child_user = auth.create_user(display_name=child_data["display_name"])
+        now = datetime.datetime.now(datetime.timezone.utc).isoformat()
+        child_profile = {
+            "uid": child_user.uid,
+            "display_name": child_data["display_name"],
+            "role": "child",
+            "age": child_data["age"],
+            "grade_level": child_data["grade_level"],
+            "parent_id": parent_uid,
+            "pin_hash": hash_pin(child_data["pin"]),
+            "device_sharing_enabled": child_data["age"] < 16,
+            "created_at": now,
+            "updated_at": now,
+        }
+
+        batch = db.batch()
+        child_ref = db.collection(collections.USERS).document(child_user.uid)
+        parent_ref = db.collection(collections.USERS).document(parent_uid)
+        batch.set(child_ref, child_profile)
+        batch.update(parent_ref, {"children": firestore.ArrayUnion([child_user.uid])})
+        batch.commit()
+
+        child_response = {key: value for key, value in child_profile.items() if key != "pin_hash"}
+        return {"success": True, "child": child_response}
+    except Exception:
+        if child_user:
+            try:
+                auth.delete_user(child_user.uid)
+            except Exception as cleanup_error:
+                print(f"Failed to clean up managed child Auth user: {cleanup_error}")
+        raise
+
 def delete_user_account(uid: str) -> bool:
     """Delete user account from Firestore and Firebase Auth."""
     try:
@@ -143,7 +179,7 @@ def link_child_account(parent_uid: str, invite_code: str) -> Dict[str, str]:
         # For simplicity following the Node.js implementation which was sequential awaits
         
         parent_ref.update({"children": firestore.ArrayUnion([child_id])})
-        child_ref.update({"parent": parent_uid})
+        child_ref.update({"parent_id": parent_uid})
         
         # Delete the invite code after use
         invite_ref.delete()

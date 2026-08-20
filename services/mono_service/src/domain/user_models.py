@@ -32,6 +32,13 @@ class UserProfileUpdate(BaseModel):
     display_name: Optional[str] = None
     photo_url: Optional[str] = None
 
+class ManagedChildCreate(BaseModel):
+    """Create a parent-managed child profile for shared-device use."""
+    display_name: str
+    age: int
+    grade_level: str
+    pin: str = Field(..., min_length=4, max_length=4, pattern=r"^\d{4}$")
+
 class NotificationPreferences(BaseModel):
     """User notification preferences stored in a sub-collection"""
     email: bool = True

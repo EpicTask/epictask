@@ -1,7 +1,7 @@
 from typing import Dict, Any
 from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel
-from ...domain.user_models import UserProfileUpdate, InviteCodeRequest, LinkChildRequest, FcmTokenUpdate, NotificationPreferencesUpdate
+from ...domain.user_models import ManagedChildCreate, UserProfileUpdate, InviteCodeRequest, LinkChildRequest, FcmTokenUpdate, NotificationPreferencesUpdate
 from ...services.users.user_service import user_service
 from ...config.security import get_current_user
 from ...storage.db import user_db
@@ -26,6 +26,20 @@ async def update_profile(
             detail="Failed to update profile"
         )
     return {"message": "Successful profile update"}
+
+@router.post("/managed-child", dependencies=[Depends(get_current_user)])
+async def create_managed_child(
+    request: ManagedChildCreate,
+    current_user: dict = Depends(get_current_user),
+):
+    """Create a child profile for parent-controlled shared-device sessions."""
+    parent_profile = user_db.get_user_profile(current_user["uid"])
+    if not parent_profile or parent_profile.get("role") not in ("parent", "admin"):
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Only a parent can create a managed child")
+    try:
+        return user_db.create_managed_child(current_user["uid"], request.model_dump())
+    except Exception as e:
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Failed to create managed child") from e
 
 @router.delete("/account", dependencies=[Depends(get_current_user)])
 async def delete_account(current_user: dict = Depends(get_current_user)):
