@@ -14,6 +14,16 @@ export const userService = {
     }
   },
 
+  createManagedChild: async (childData) => {
+    try {
+      const response = await userApiClient.post("/managed-child", childData);
+      return response.data;
+    } catch (error) {
+      console.error("Create managed child error:", error);
+      throw new Error(error.response?.data?.detail || "Failed to create managed child");
+    }
+  },
+
   deleteAccount: async () => {
     try {
       const response = await userApiClient.delete("/account");

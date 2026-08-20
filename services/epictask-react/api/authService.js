@@ -208,11 +208,23 @@ export const authService = {
       });
 
       const response = await userApiClient.put("/profile", mappedData);
+      const uid = auth.currentUser?.uid;
+      if (uid) {
+        firestoreService.cache.invalidateUser(uid);
+      }
       return response.data;
     } catch (error) {
       console.error("Update profile error:", error);
       throw new Error("Failed to update profile");
     }
+  },
+
+  createManagedChild: async (childData) => {
+    const result = await userApiClient.createManagedChild(childData);
+    if (result?.child?.parent_id) {
+      firestoreService.cache.invalidateUser(result.child.parent_id);
+    }
+    return result;
   },
 
   // Generate invite code (for kids)
@@ -246,7 +258,8 @@ export const authService = {
       const inviteResponse = await userApiClient.post(
         "/invite-code"
       );
-      const inviteCode = inviteResponse.data.inviteCode;
+      const inviteCode =
+        inviteResponse.data.inviteCode || inviteResponse.data.invite_code;
 
       // Create pending invite in Firestore
       const pendingInvite = {
@@ -362,16 +375,16 @@ export const authService = {
       // Create user document in Firestore with enhanced data
       const userData = {
         email: user.email,
-        displayName: pendingInvite.child_name,
+        display_name: pendingInvite.child_name,
         role: "child",
         age: pendingInvite.age,
         grade_level: pendingInvite.grade_level,
-        image: pendingInvite.image,
+        photo_url: pendingInvite.image,
         pin_hash: pendingInvite.pin_hash,
         parent_id: pendingInvite.parent_id,
         device_sharing_enabled: pendingInvite.age < 16,
         created_at: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
       };
 
       const createProfileResult = await firestoreService.createUserProfile(

@@ -143,7 +143,8 @@ const AddKid = () => {
 
       const childAgeInt = parseInt(selectedAge, 10);
 
-      // Create pending invite or managed profile
+      // Managed children live directly in users and use the parent account
+      // plus PIN for shared-device access. Teens use the invite flow.
       const childData = {
         name: fullName.trim(),
         age: selectedAge,
@@ -152,6 +153,23 @@ const AddKid = () => {
         image: null,
         parental_consent: new Date().toISOString(),
       };
+
+      if (childAgeInt < 13) {
+        const result = await authService.createManagedChild({
+          display_name: childData.name,
+          age: childAgeInt,
+          grade_level: childData.gradeLevel,
+          pin: childData.pinHash,
+        });
+
+        if (!result.success) {
+          throw new Error(result.error || "Failed to create managed child");
+        }
+
+        setGeneratedCode("");
+        setStep(4);
+        return;
+      }
 
       const result = await authService.createPendingInvite(user.uid, childData);
 
@@ -340,25 +358,29 @@ const AddKid = () => {
                   : `Share this single-use invite code with ${fullName} to link their teen account.`}
               </CustomText>
 
-              <View style={styles.codeContainer}>
-                <CustomText variant="bold" style={styles.codeText}>
-                  {generatedCode}
-                </CustomText>
-              </View>
+              {!isUnder13 && generatedCode ? (
+                <>
+                  <View style={styles.codeContainer}>
+                    <CustomText variant="bold" style={styles.codeText}>
+                      {generatedCode}
+                    </CustomText>
+                  </View>
 
-              <View style={{ flexDirection: "row", gap: 12, marginTop: 10 }}>
-                <TouchableOpacity style={styles.actionBtn} onPress={handleCopyCode}>
-                  <CustomText variant="medium" style={{ color: COLORS.white }}>
-                    {copied ? "Copied!" : "Copy Code"}
-                  </CustomText>
-                </TouchableOpacity>
+                  <View style={{ flexDirection: "row", gap: 12, marginTop: 10 }}>
+                    <TouchableOpacity style={styles.actionBtn} onPress={handleCopyCode}>
+                      <CustomText variant="medium" style={{ color: COLORS.white }}>
+                        {copied ? "Copied!" : "Copy Code"}
+                      </CustomText>
+                    </TouchableOpacity>
 
-                <TouchableOpacity style={[styles.actionBtn, { backgroundColor: COLORS.primary }]} onPress={handleShareCode}>
-                  <CustomText variant="medium" style={{ color: COLORS.white }}>
-                    Share Code
-                  </CustomText>
-                </TouchableOpacity>
-              </View>
+                    <TouchableOpacity style={[styles.actionBtn, { backgroundColor: COLORS.primary }]} onPress={handleShareCode}>
+                      <CustomText variant="medium" style={{ color: COLORS.white }}>
+                        Share Code
+                      </CustomText>
+                    </TouchableOpacity>
+                  </View>
+                </>
+              ) : null}
             </View>
 
             <CustomButton

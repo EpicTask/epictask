@@ -252,7 +252,7 @@ export const AuthProvider = ({ children }) => {
       // Refresh user data - get current Firebase user UID
       const currentFirebaseUser = auth.currentUser;
       if (currentFirebaseUser) {
-        const updatedUserResponse = await authService.getCurrentUser(currentFirebaseUser.uid);
+        const updatedUserResponse = await authService.getCurrentUser(currentFirebaseUser.uid, false);
         const updatedUser = updatedUserResponse.user || updatedUserResponse;
         setUser(updatedUser);
         await AsyncStorage.setItem('cachedUserProfile', JSON.stringify(updatedUser));

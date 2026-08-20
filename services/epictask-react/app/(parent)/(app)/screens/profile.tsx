@@ -12,6 +12,7 @@ import {
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { AuthContext } from "@/context/AuthContext";
 import userApiClient from "@/api/userService";
+import storageService from "@/api/storageService";
 import CustomText from "@/components/CustomText";
 import SafeArea from "@/components/SafeArea";
 import CustomInput from "@/components/custom-input/CustomInput";
@@ -42,11 +43,16 @@ const fetchLinkedChildren = async (uid: string) => {
 };
 
 const ProfileScreen = () => {
-  const { user, setUser } = useContext(AuthContext);
+  const { user, updateProfile } = useContext(AuthContext);
   const queryClient = useQueryClient();
   const [displayName, setDisplayName] = useState(user?.displayName || "");
   const [inviteCode, setInviteCode] = useState("");
   const [profileImage, setProfileImage] = useState(user?.imageUrl || null);
+
+  React.useEffect(() => {
+    setDisplayName(user?.displayName || "");
+    setProfileImage(user?.imageUrl || user?.photoURL || null);
+  }, [user]);
 
   const { data: children, isLoading: isLoadingChildren } = useQuery({
     queryKey: ["linkedChildren", user?.uid],
@@ -55,10 +61,16 @@ const ProfileScreen = () => {
   });
 
   const updateProfileMutation = useMutation({
-    mutationFn: (updatedProfile: { displayName: string; imageUrl?: string }) =>
-      userApiClient.updateProfile(updatedProfile),
-    onSuccess: (data) => {
-      setUser({ ...user, ...data.data });
+    mutationFn: async (updatedProfile: { displayName: string; imageUrl?: string }) => {
+      let profile = updatedProfile;
+      if (updatedProfile.imageUrl && /^(file|content|data):/.test(updatedProfile.imageUrl)) {
+        const storagePath = `avatars/${user?.uid}_${Date.now()}.jpg`;
+        const downloadURL = await storageService.uploadImage(updatedProfile.imageUrl, storagePath);
+        profile = { ...updatedProfile, imageUrl: downloadURL };
+      }
+      return updateProfile(profile);
+    },
+    onSuccess: () => {
       Alert.alert("Success", "Profile updated successfully.");
       queryClient.invalidateQueries({ queryKey: ["profile"] });
     },

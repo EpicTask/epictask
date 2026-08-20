@@ -94,6 +94,46 @@ class EnhancedCache {
 const TaskCache = new EnhancedCache(200, 300000); // 200 items, 5 min TTL
 const UserCache = new EnhancedCache(50, 600000);  // 50 items, 10 min TTL
 
+// User documents are persisted in snake_case to match the user-management
+// service and the rest of the Firestore data model. The app-facing shape is
+// normalized on reads below so screens can continue using camelCase.
+const toStoredUserProfile = (uid, userData, role) => {
+  const now = new Date().toISOString();
+  const parentId = userData.parent_id ?? userData.parentId ?? userData.parent ?? null;
+  const photoUrl = userData.photo_url ?? userData.photoURL ?? userData.imageUrl ?? userData.image ?? null;
+  const gradeLevel = userData.grade_level ?? userData.gradeLevel ?? userData.grade ?? null;
+
+  return {
+    uid,
+    email: userData.email,
+    display_name: userData.display_name ?? userData.displayName ?? '',
+    role,
+    created_at: userData.created_at ?? userData.createdAt ?? now,
+    updated_at: userData.updated_at ?? userData.updatedAt ?? now,
+    ...(userData.age !== undefined ? { age: userData.age } : {}),
+    ...(gradeLevel !== null ? { grade_level: gradeLevel } : {}),
+    ...(photoUrl !== null ? { photo_url: photoUrl } : {}),
+    ...(userData.pin_hash !== undefined || userData.pinHash !== undefined
+      ? { pin_hash: userData.pin_hash ?? userData.pinHash }
+      : {}),
+    ...(userData.device_sharing_enabled !== undefined || userData.deviceSharingEnabled !== undefined
+      ? { device_sharing_enabled: userData.device_sharing_enabled ?? userData.deviceSharingEnabled }
+      : {}),
+    ...(role === 'parent' ? { children: userData.children || [] } : { parent_id: parentId }),
+  };
+};
+
+const fromStoredUserProfile = (userData) => ({
+  ...userData,
+  displayName: userData.display_name ?? userData.displayName ?? '',
+  photoURL: userData.photo_url ?? userData.photoURL ?? null,
+  imageUrl: userData.photo_url ?? userData.imageUrl ?? null,
+  parentId: userData.parent_id ?? userData.parentId ?? userData.parent ?? null,
+  gradeLevel: userData.grade_level ?? userData.gradeLevel ?? null,
+  createdAt: userData.created_at ?? userData.createdAt ?? null,
+  updatedAt: userData.updated_at ?? userData.updatedAt ?? null,
+});
+
 // Performance monitoring utilities
 const PerformanceMonitor = {
   timers: new Map(),
@@ -162,21 +202,8 @@ export const firestoreService = {
         throw new Error('Invalid user data: UID and email are required');
       }
 
-      const role = userData.role;
-      const userProfile = {
-        uid,
-        email: userData.email,
-        displayName: userData.displayName || '',
-        role,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-        ...(userData.age !== undefined ? { age: userData.age } : {}),
-        ...(userData.grade_level ? { grade_level: userData.grade_level, grade: userData.grade_level } : {}),
-        ...(userData.grade ? { grade: userData.grade, grade_level: userData.grade_level } : {}),
-        // Firestore rejects undefined values. Only add role-specific fields
-        // when they have a meaningful value.
-        ...(role === "parent" ? { children: [] } : { parentId: userData.parentId || null }),
-      };
+      const role = userData.role || 'child';
+      const userProfile = toStoredUserProfile(uid, userData, role);
 
       await setDoc(doc(db, "users", uid), userProfile);
       
@@ -215,7 +242,7 @@ export const firestoreService = {
       const userDoc = await getDoc(doc(db, "users", uid));
       
       if (userDoc.exists()) {
-        const userData = userDoc.data();
+        const userData = fromStoredUserProfile(userDoc.data());
         
         // Cache the result
         if (useCache) {
@@ -277,7 +304,7 @@ export const firestoreService = {
       
       const children = childrenDocs
         .filter(doc => doc.exists())
-        .map(doc => ({ uid: doc.id, ...doc.data() }));
+        .map(doc => ({ uid: doc.id, ...fromStoredUserProfile(doc.data()) }));
 
       // Cache the results
       if (useCache) {
@@ -1225,8 +1252,11 @@ export const firestoreService = {
     PerformanceMonitor.start(operation);
     
     try {
-      if (!pendingInvite?.parent_id || !pendingInvite?.child_email) {
-        throw new Error('Parent ID and child email are required');
+      if (!pendingInvite?.parent_id) {
+        throw new Error('Parent ID is required');
+      }
+      if (!pendingInvite?.invite_code) {
+        throw new Error('Invite code is required');
       }
 
       // Create document reference with auto-generated ID
