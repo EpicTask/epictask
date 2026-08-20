@@ -1,9 +1,14 @@
 from typing import Dict, Any
 from fastapi import APIRouter, Depends, HTTPException, status
+from pydantic import BaseModel
 from ...domain.user_models import UserProfileUpdate, InviteCodeRequest, LinkChildRequest, FcmTokenUpdate, NotificationPreferencesUpdate
 from ...services.users.user_service import user_service
 from ...config.security import get_current_user
 from ...storage.db import user_db
+
+class VerifyPinRequest(BaseModel):
+    child_id: str
+    pin: str
 
 router = APIRouter()
 
@@ -119,6 +124,33 @@ async def update_notification_preferences(
             detail="Failed to update notification preferences"
         )
     return {"message": "Successful preferences update"}
+
+@router.post("/verify-pin")
+async def verify_pin(request: VerifyPinRequest):
+    """Verify child PIN server-side with rate limit tracking."""
+    # Track attempts per child ID
+    attempts = getattr(verify_pin, "_attempts", {})
+    count = attempts.get(request.child_id, 0)
+    
+    if count >= 10:
+        raise HTTPException(
+            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+            detail="Rate limit exceeded. Too many failed attempts."
+        )
+        
+    res = user_db.verify_child_pin(request.child_id, request.pin)
+    if not res.get("success"):
+        attempts[request.child_id] = count + 1
+        setattr(verify_pin, "_attempts", attempts)
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=res.get("message", "Invalid PIN")
+        )
+        
+    # Reset attempts on success
+    attempts[request.child_id] = 0
+    setattr(verify_pin, "_attempts", attempts)
+    return res
 
 @router.post("/ask-help", dependencies=[Depends(get_current_user)])
 async def ask_parent_for_help(current_user: dict = Depends(get_current_user)):
