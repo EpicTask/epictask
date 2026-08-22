@@ -1,30 +1,279 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    
-    // User profiles collection
-    match /users/{userId} {
-      allow read: if request.auth != null;
-      // Allow user creation if auth uid matches
-      allow create: if request.auth != null && request.auth.uid == userId;
-      // Prevent client updates to role, parentId, and children fields directly
-      allow update: if request.auth != null && request.auth.uid == userId
-        && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['role', 'parentId', 'children']);
-      allow delete: if false;
-    }
-    
-    // Pending invites collection
-    match /pending_invites/{inviteId} {
-      allow read: if request.auth != null;
-      allow create: if request.auth != null && request.resource.data.parent_id == request.auth.uid;
-      allow update: if request.auth != null;
-      allow delete: if request.auth != null;
+
+    // Helper: checks if request is signed in
+    function signedIn() {
+      return request.auth != null;
     }
 
-    // Invites collection
+    // Helper: returns current user data from /users/{uid}
+    function me() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
+    }
+
+    // Helper: checks if caller is document owner, or parent/child in family
+    function isFamilyMember(userId) {
+      return signedIn() && (
+        request.auth.uid == userId
+        || userId in me().get('children', [])
+        || me().get('parent_id', null) == userId
+      );
+    }
+
+    // Fields a client must never be able to change on itself. Role, family
+    // links, age band and consent are set server-side by mono_service.
+    function protectedUserFields() {
+      return [
+        'role', 'parent_id', 'parentId', 'children', 'uid',
+        'account_type', 'device_sharing_enabled', 'age',
+        'pin_hash', 'pinHash',
+        'parental_consent_at', 'parental_consent_by'
+      ];
+    }
+
+    // User profiles. Readable by the owner, by their parent, and by their children.
+    match /users/{userId} {
+      allow read: if isFamilyMember(userId);
+
+      allow create: if signedIn() && request.auth.uid == userId;
+
+      allow update: if signedIn()
+        && request.auth.uid == userId
+        && !request.resource.data.diff(resource.data)
+              .affectedKeys().hasAny(protectedUserFields());
+
+      allow delete: if false;
+
+      // PIN hashes and lockout state. Admin SDK only — no client path in.
+      match /private/{document=**} {
+        allow read, write: if false;
+      }
+    }
+
+    // Helper: checks access permission for task documents
+    function canAccessTask() {
+      return signedIn() && (
+        resource.data.user_id == request.auth.uid
+        || ('assigned_to_ids' in resource.data && request.auth.uid in resource.data.assigned_to_ids)
+        || ('assigned_to_ids' in resource.data && resource.data.assigned_to_ids.hasAny(me().get('children', [])))
+        || resource.data.user_id == me().get('parent_id', null)
+      );
+    }
+
+    // Task Management
+    match /tasks/{taskId} {
+      allow read: if canAccessTask();
+      allow create: if signedIn() && request.resource.data.user_id == request.auth.uid;
+      allow update: if signedIn() && (
+        resource.data.user_id == request.auth.uid
+        || ('assigned_to_ids' in resource.data && request.auth.uid in resource.data.assigned_to_ids)
+      );
+      allow delete: if signedIn() && resource.data.user_id == request.auth.uid;
+    }
+
+    match /test_tasks/{taskId} {
+      allow read: if canAccessTask();
+      allow create: if signedIn() && request.resource.data.user_id == request.auth.uid;
+      allow update: if signedIn() && (
+        resource.data.user_id == request.auth.uid
+        || ('assigned_to_ids' in resource.data && request.auth.uid in resource.data.assigned_to_ids)
+      );
+      allow delete: if signedIn() && resource.data.user_id == request.auth.uid;
+    }
+
+    // Task Comments
+    match /task_comments/{commentId} {
+      allow read: if signedIn();
+      allow create: if signedIn() && request.resource.data.get('user_id', null) == request.auth.uid;
+      allow update, delete: if signedIn() && resource.data.get('user_id', null) == request.auth.uid;
+    }
+
+    match /test_task_comments/{commentId} {
+      allow read: if signedIn();
+      allow create: if signedIn() && request.resource.data.get('user_id', null) == request.auth.uid;
+      allow update, delete: if signedIn() && resource.data.get('user_id', null) == request.auth.uid;
+    }
+
+    // Task Events & History (Logged server-side or read by authorized family members)
+    match /task_events/{eventId} {
+      allow read: if signedIn() && (
+        resource.data.user_id == request.auth.uid
+        || ('assigned_to_ids' in resource.data && request.auth.uid in resource.data.assigned_to_ids)
+        || ('assigned_to_ids' in resource.data && resource.data.assigned_to_ids.hasAny(me().get('children', [])))
+      );
+      allow write: if false;
+    }
+
+    match /test_task_events/{eventId} {
+      allow read: if signedIn() && (
+        resource.data.user_id == request.auth.uid
+        || ('assigned_to_ids' in resource.data && request.auth.uid in resource.data.assigned_to_ids)
+        || ('assigned_to_ids' in resource.data && resource.data.assigned_to_ids.hasAny(me().get('children', [])))
+      );
+      allow write: if false;
+    }
+
+    // User Rewards & Paid Tasks (Calculated/Updated server-side via Admin SDK)
+    match /paid_tasks/{userId} {
+      allow read: if isFamilyMember(userId);
+      allow write: if false;
+    }
+
+    match /test_paid_tasks/{userId} {
+      allow read: if isFamilyMember(userId);
+      allow write: if false;
+    }
+
+    match /rewards/{rewardId} {
+      allow read: if signedIn() && (
+        resource.data.get('user_id', null) == request.auth.uid
+        || resource.data.get('user_id', null) in me().get('children', [])
+      );
+      allow write: if false;
+    }
+
+    match /test_rewards/{rewardId} {
+      allow read: if signedIn() && (
+        resource.data.get('user_id', null) == request.auth.uid
+        || resource.data.get('user_id', null) in me().get('children', [])
+      );
+      allow write: if false;
+    }
+
+    // Leaderboard (Public read for signed-in users, server-managed writes)
+    match /leaderboard/{docId} {
+      allow read: if signedIn();
+      allow write: if false;
+    }
+
+    match /test_leaderboard/{docId} {
+      allow read: if signedIn();
+      allow write: if false;
+    }
+
+    // Notifications (Read-only for target user, created server-side via Admin SDK)
+    match /notifications/{userId} {
+      allow read: if signedIn() && request.auth.uid == userId;
+      allow write: if false;
+
+      match /notifications/{notificationId} {
+        allow read: if signedIn() && request.auth.uid == userId;
+        allow write: if false;
+      }
+    }
+
+    match /test_notifications/{notificationId} {
+      allow read: if signedIn() && (
+        resource == null || resource.data.get('user_id', null) == request.auth.uid
+      );
+      allow write: if false;
+    }
+
+    // Stories & Educational Content (Published content is read-only, drafts server-only)
+    match /stories/{storyId} {
+      allow read: if signedIn();
+      allow write: if false;
+
+      match /nodes/{nodeId} {
+        allow read: if signedIn();
+        allow write: if false;
+      }
+    }
+
+    match /draft_stories/{storyId} {
+      allow read, write: if false;
+    }
+
+    // Story Progress (User/family progress tracking)
+    match /story_progress/{userId} {
+      allow read: if isFamilyMember(userId);
+      allow write: if signedIn() && request.auth.uid == userId;
+
+      match /{allSubcollections=**} {
+        allow read: if isFamilyMember(userId);
+        allow write: if signedIn() && request.auth.uid == userId;
+      }
+    }
+
+    // User Events / Telemetry
+    match /user_events/{eventId} {
+      allow read: if signedIn() && resource.data.get('user_id', null) == request.auth.uid;
+      allow create: if signedIn() && request.resource.data.get('user_id', null) == request.auth.uid;
+      allow update, delete: if false;
+    }
+
+    match /test_user_events/{eventId} {
+      allow read: if signedIn() && resource.data.get('user_id', null) == request.auth.uid;
+      allow create: if signedIn() && request.resource.data.get('user_id', null) == request.auth.uid;
+      allow update, delete: if false;
+    }
+
+    // XRPL & Xumm Wallet Integration Callbacks / Services
+    match /xumm_callbacks/{payloadId} {
+      allow read: if signedIn();
+      allow write: if false;
+    }
+
+    match /test_xumm_callbacks/{payloadId} {
+      allow read: if signedIn();
+      allow write: if false;
+    }
+
+    match /contracts/{contractId} {
+      allow read: if signedIn();
+      allow write: if false;
+    }
+
+    match /test_contracts/{contractId} {
+      allow read: if signedIn();
+      allow write: if false;
+    }
+
+    match /interactions/{docId} {
+      allow read: if signedIn();
+      allow write: if false;
+    }
+
+    match /test_interactions/{docId} {
+      allow read: if signedIn();
+      allow write: if false;
+    }
+
+    match /xrpl_service/{docId} {
+      allow read: if signedIn();
+      allow write: if false;
+    }
+
+    match /test_xrpl_service/{docId} {
+      allow read: if signedIn();
+      allow write: if false;
+    }
+
+    // Teen signup invites. Issued, previewed and redeemed exclusively through
+    // mono_service (/api/users/child-invite*), never touched by the client.
+    match /test_child_invites/{code} {
+      allow read, write: if false;
+    }
+    match /child_invites/{code} {
+      allow read, write: if false;
+    }
+
+    // Legacy client-written invites, superseded by test_child_invites. Kept
+    // readable by the issuing parent so existing rows can be listed and
+    // cleaned up; no client may create or alter one.
+    match /pending_invites/{inviteId} {
+      allow read: if signedIn() && resource.data.parent_id == request.auth.uid;
+      allow write: if false;
+    }
+
+    // Server-issued child-initiated link codes.
     match /invites/{inviteId} {
-      allow read: if request.auth != null;
-      allow write: if false; // Server-only write
+      allow read, write: if false;
+    }
+    match /test_invites/{inviteId} {
+      allow read, write: if false;
     }
   }
 }
+

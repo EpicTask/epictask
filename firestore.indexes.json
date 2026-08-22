@@ -1,69 +1,55 @@
 {
   "indexes": [
     {
-      "collectionGroup": "test_notifications",
+      "collectionGroup": "child_invites",
       "queryScope": "COLLECTION",
       "fields": [
-        { "fieldPath": "recipient_id", "order": "ASCENDING" },
-        { "fieldPath": "created_at",   "order": "DESCENDING" }
+        { "fieldPath": "parent_id", "order": "ASCENDING" },
+        { "fieldPath": "status", "order": "ASCENDING" }
       ]
     },
     {
-      "collectionGroup": "test_notifications",
+      "collectionGroup": "child_invites",
       "queryScope": "COLLECTION",
       "fields": [
-        { "fieldPath": "recipient_id", "order": "ASCENDING" },
-        { "fieldPath": "is_read",      "order": "ASCENDING" },
-        { "fieldPath": "created_at",   "order": "DESCENDING" }
+        { "fieldPath": "parent_id", "order": "ASCENDING" },
+        { "fieldPath": "child_email", "order": "ASCENDING" },
+        { "fieldPath": "status", "order": "ASCENDING" }
       ]
     },
     {
-      "collectionGroup": "test_task_events",
+      "collectionGroup": "test_child_invites",
       "queryScope": "COLLECTION",
       "fields": [
-        { "fieldPath": "user_id",    "order": "ASCENDING" },
-        { "fieldPath": "created_at", "order": "DESCENDING" }
+        { "fieldPath": "parent_id", "order": "ASCENDING" },
+        { "fieldPath": "status", "order": "ASCENDING" }
       ]
     },
     {
-      "collectionGroup": "test_tasks",
+      "collectionGroup": "test_child_invites",
       "queryScope": "COLLECTION",
       "fields": [
-        { "fieldPath": "user_id",    "order": "ASCENDING" },
-        { "fieldPath": "created_at", "order": "DESCENDING" }
-      ]
-    },
-    {
-      "collectionGroup": "test_tasks",
-      "queryScope": "COLLECTION",
-      "fields": [
-        { "fieldPath": "assigned_to_ids", "arrayConfig": "CONTAINS" },
-        { "fieldPath": "created_at",      "order": "DESCENDING" }
-      ]
-    },
-    {
-      "collectionGroup": "test_tasks",
-      "queryScope": "COLLECTION",
-      "fields": [
-        { "fieldPath": "assigned_to_ids", "arrayConfig": "CONTAINS" },
-        { "fieldPath": "timestamp",       "order": "DESCENDING" }
+        { "fieldPath": "parent_id", "order": "ASCENDING" },
+        { "fieldPath": "child_email", "order": "ASCENDING" },
+        { "fieldPath": "status", "order": "ASCENDING" }
       ]
     },
     {
       "collectionGroup": "narrative_payout_requests",
       "queryScope": "COLLECTION",
       "fields": [
-        { "fieldPath": "user_id",    "order": "ASCENDING" },
-        { "fieldPath": "status",     "order": "ASCENDING" },
+        { "fieldPath": "user_id", "order": "ASCENDING" },
+        { "fieldPath": "status", "order": "ASCENDING" },
         { "fieldPath": "created_at", "order": "ASCENDING" }
       ]
     },
     {
-      "collectionGroup": "notifications",
+      "collectionGroup": "narrative_payout_requests",
       "queryScope": "COLLECTION",
       "fields": [
-        { "fieldPath": "recipient_id", "order": "ASCENDING" },
-        { "fieldPath": "created_at",   "order": "DESCENDING" }
+        { "fieldPath": "user_id", "order": "ASCENDING" },
+        { "fieldPath": "status", "order": "ASCENDING" },
+        { "fieldPath": "created_at", "order": "DESCENDING" }
       ]
     },
     {
@@ -71,15 +57,72 @@
       "queryScope": "COLLECTION",
       "fields": [
         { "fieldPath": "recipient_id", "order": "ASCENDING" },
-        { "fieldPath": "is_read",      "order": "ASCENDING" },
-        { "fieldPath": "created_at",   "order": "DESCENDING" }
+        { "fieldPath": "created_at", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "notifications",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "recipient_id", "order": "ASCENDING" },
+        { "fieldPath": "is_read", "order": "ASCENDING" },
+        { "fieldPath": "created_at", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "test_notifications",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "recipient_id", "order": "ASCENDING" },
+        { "fieldPath": "created_at", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "test_notifications",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "recipient_id", "order": "ASCENDING" },
+        { "fieldPath": "is_read", "order": "ASCENDING" },
+        { "fieldPath": "created_at", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "story_progress",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "user_id", "order": "ASCENDING" },
+        { "fieldPath": "last_updated", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "task_comments",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "task_id", "order": "ASCENDING" },
+        { "fieldPath": "created_at", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "test_task_comments",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "task_id", "order": "ASCENDING" },
+        { "fieldPath": "created_at", "order": "DESCENDING" }
       ]
     },
     {
       "collectionGroup": "task_events",
       "queryScope": "COLLECTION",
       "fields": [
-        { "fieldPath": "user_id",    "order": "ASCENDING" },
+        { "fieldPath": "user_id", "order": "ASCENDING" },
+        { "fieldPath": "created_at", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "test_task_events",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "user_id", "order": "ASCENDING" },
         { "fieldPath": "created_at", "order": "DESCENDING" }
       ]
     },
@@ -87,7 +130,7 @@
       "collectionGroup": "tasks",
       "queryScope": "COLLECTION",
       "fields": [
-        { "fieldPath": "user_id",    "order": "ASCENDING" },
+        { "fieldPath": "user_id", "order": "ASCENDING" },
         { "fieldPath": "created_at", "order": "DESCENDING" }
       ]
     },
@@ -96,7 +139,7 @@
       "queryScope": "COLLECTION",
       "fields": [
         { "fieldPath": "assigned_to_ids", "arrayConfig": "CONTAINS" },
-        { "fieldPath": "created_at",      "order": "DESCENDING" }
+        { "fieldPath": "created_at", "order": "DESCENDING" }
       ]
     },
     {
@@ -104,7 +147,81 @@
       "queryScope": "COLLECTION",
       "fields": [
         { "fieldPath": "assigned_to_ids", "arrayConfig": "CONTAINS" },
-        { "fieldPath": "timestamp",       "order": "DESCENDING" }
+        { "fieldPath": "timestamp", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "tasks",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "assigned_to_ids", "arrayConfig": "CONTAINS" },
+        { "fieldPath": "expiration_date", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "tasks",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "assigned_to_ids", "arrayConfig": "CONTAINS" },
+        { "fieldPath": "status", "order": "ASCENDING" },
+        { "fieldPath": "expiration_date", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "test_tasks",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "user_id", "order": "ASCENDING" },
+        { "fieldPath": "created_at", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "test_tasks",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "assigned_to_ids", "arrayConfig": "CONTAINS" },
+        { "fieldPath": "created_at", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "test_tasks",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "assigned_to_ids", "arrayConfig": "CONTAINS" },
+        { "fieldPath": "timestamp", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "test_tasks",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "assigned_to_ids", "arrayConfig": "CONTAINS" },
+        { "fieldPath": "expiration_date", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "test_tasks",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "assigned_to_ids", "arrayConfig": "CONTAINS" },
+        { "fieldPath": "status", "order": "ASCENDING" },
+        { "fieldPath": "expiration_date", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "user_events",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "user_id", "order": "ASCENDING" },
+        { "fieldPath": "created_at", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "test_user_events",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "user_id", "order": "ASCENDING" },
+        { "fieldPath": "created_at", "order": "DESCENDING" }
       ]
     }
   ],
