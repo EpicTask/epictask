@@ -1,7 +1,7 @@
 import pytest
 from unittest.mock import patch
-from ...services.users.user_service import UserService
-from ...domain.user_models import UserProfileUpdate
+from src.services.users.user_service import UserService
+from src.domain.user_models import UserProfileUpdate
 
 @pytest.mark.asyncio
 async def test_get_user_profile():

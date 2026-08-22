@@ -1,16 +1,46 @@
 from typing import Dict, Any
+from firebase_admin import auth as firebase_auth
 from fastapi import APIRouter, Depends, HTTPException, status
-from pydantic import BaseModel
-from ...domain.user_models import ManagedChildCreate, UserProfileUpdate, InviteCodeRequest, LinkChildRequest, FcmTokenUpdate, NotificationPreferencesUpdate
+from ...domain.user_models import (
+    ManagedChildCreate,
+    ChildInviteCreate,
+    ChildInviteRedeem,
+    ChildPinUpdate,
+    VerifyPinRequest,
+    UserProfileUpdate,
+    InviteCodeRequest,
+    LinkChildRequest,
+    FcmTokenUpdate,
+    NotificationPreferencesUpdate,
+)
 from ...services.users.user_service import user_service
 from ...config.security import get_current_user
+from ...config import age_policy
 from ...storage.db import user_db
 
-class VerifyPinRequest(BaseModel):
-    child_id: str
-    pin: str
-
 router = APIRouter()
+
+
+def _require_parent(uid: str) -> dict:
+    """Load the caller's profile and assert they can manage children."""
+    profile = user_db.get_user_profile(uid)
+    if not profile or profile.get("role") not in ("parent", "admin"):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Only a parent can manage child profiles",
+        )
+    return profile
+
+
+def _require_own_child(parent_profile: dict, child_id: str) -> dict:
+    """Assert child_id belongs to the caller, and return the child profile."""
+    child = user_db.get_user_profile(child_id)
+    if not child or child.get("parent_id") != parent_profile.get("uid"):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="That child is not linked to your account",
+        )
+    return child
 
 @router.put("/profile", dependencies=[Depends(get_current_user)])
 async def update_profile(
@@ -27,19 +57,112 @@ async def update_profile(
         )
     return {"message": "Successful profile update"}
 
+@router.get("/age-policy")
+async def get_age_policy():
+    """Age bands the client uses to pick a signup path. Single source of truth."""
+    return {
+        "min_child_age": age_policy.MIN_CHILD_AGE,
+        "max_child_age": age_policy.MAX_CHILD_AGE,
+        "teen_min_age": age_policy.TEEN_MIN_AGE,
+    }
+
+
 @router.post("/managed-child", dependencies=[Depends(get_current_user)])
 async def create_managed_child(
     request: ManagedChildCreate,
     current_user: dict = Depends(get_current_user),
 ):
     """Create a child profile for parent-controlled shared-device sessions."""
-    parent_profile = user_db.get_user_profile(current_user["uid"])
-    if not parent_profile or parent_profile.get("role") not in ("parent", "admin"):
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Only a parent can create a managed child")
+    _require_parent(current_user["uid"])
     try:
         return user_db.create_managed_child(current_user["uid"], request.model_dump())
+    except ValueError as e:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e)) from e
     except Exception as e:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Failed to create managed child") from e
+
+
+# ---------------------------------------------------------------------------
+# Teen (13+) invites
+# ---------------------------------------------------------------------------
+
+@router.post("/child-invite", dependencies=[Depends(get_current_user)])
+async def create_child_invite(
+    request: ChildInviteCreate,
+    current_user: dict = Depends(get_current_user),
+):
+    """Issue a single-use code a teen redeems to create their own account."""
+    parent_profile = _require_parent(current_user["uid"])
+    parent_name = parent_profile.get("display_name") or "Your parent"
+    try:
+        return user_db.create_child_invite(current_user["uid"], parent_name, request.model_dump())
+    except ValueError as e:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e)) from e
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to create invite",
+        ) from e
+
+
+@router.get("/child-invites", dependencies=[Depends(get_current_user)])
+async def list_child_invites(current_user: dict = Depends(get_current_user)):
+    """Outstanding invites the caller has issued."""
+    _require_parent(current_user["uid"])
+    return {"success": True, "invites": user_db.list_child_invites(current_user["uid"])}
+
+
+@router.delete("/child-invite/{code}", dependencies=[Depends(get_current_user)])
+async def revoke_child_invite(code: str, current_user: dict = Depends(get_current_user)):
+    """Cancel an invite that hasn't been redeemed yet."""
+    _require_parent(current_user["uid"])
+    if not user_db.revoke_child_invite(current_user["uid"], code):
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="No pending invite with that code",
+        )
+    return {"success": True, "message": "Invite cancelled"}
+
+
+@router.get("/child-invite/{code}")
+async def preview_child_invite(code: str):
+    """Public lookup for the teen join screen — they have no account yet.
+
+    Returns only what the join screen needs to render, with the email masked.
+    Possession of the code is the credential; the email typed at redeem time is
+    what actually has to match.
+    """
+    result = user_db.get_child_invite(code)
+    if not result.get("success"):
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=result.get("message"))
+    return result
+
+
+@router.post("/child-invite/{code}/redeem")
+async def redeem_child_invite(code: str, request: ChildInviteRedeem):
+    """Create the teen's account from an invite. Intentionally unauthenticated —
+    the caller is a teen who does not have credentials yet; the invite code plus
+    a matching email is the authorization."""
+    try:
+        return user_db.redeem_child_invite(
+            code=code,
+            email=request.email,
+            password=request.password,
+            pin=request.pin,
+            avatar_key=request.avatar_key,
+        )
+    except ValueError as e:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e)) from e
+    except firebase_auth.EmailAlreadyExistsError as e:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="An account already exists for that email. Try signing in instead.",
+        ) from e
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Could not complete signup. Please try again.",
+        ) from e
 
 @router.delete("/account", dependencies=[Depends(get_current_user)])
 async def delete_account(current_user: dict = Depends(get_current_user)):
@@ -139,32 +262,62 @@ async def update_notification_preferences(
         )
     return {"message": "Successful preferences update"}
 
-@router.post("/verify-pin")
-async def verify_pin(request: VerifyPinRequest):
-    """Verify child PIN server-side with rate limit tracking."""
-    # Track attempts per child ID
-    attempts = getattr(verify_pin, "_attempts", {})
-    count = attempts.get(request.child_id, 0)
-    
-    if count >= 10:
-        raise HTTPException(
-            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
-            detail="Rate limit exceeded. Too many failed attempts."
-        )
-        
+@router.post("/verify-pin", dependencies=[Depends(get_current_user)])
+async def verify_pin(request: VerifyPinRequest, current_user: dict = Depends(get_current_user)):
+    """Unlock a managed child's profile on the parent's device.
+
+    Requires a signed-in parent who owns the child. Attempt counting and
+    lockout are durable (Firestore), so they survive restarts and are shared
+    across instances — see user_db.verify_child_pin.
+    """
+    caller_uid = current_user["uid"]
+    if caller_uid != request.child_id:
+        parent_profile = _require_parent(caller_uid)
+        child = _require_own_child(parent_profile, request.child_id)
+        if not child.get("device_sharing_enabled"):
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail=(
+                    f"{child.get('display_name') or 'This child'} has their own account. "
+                    "Ask them to sign in with their email and password."
+                ),
+            )
+
     res = user_db.verify_child_pin(request.child_id, request.pin)
+
     if not res.get("success"):
-        attempts[request.child_id] = count + 1
-        setattr(verify_pin, "_attempts", attempts)
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=res.get("message", "Invalid PIN")
-        )
-        
-    # Reset attempts on success
-    attempts[request.child_id] = 0
-    setattr(verify_pin, "_attempts", attempts)
+        if res.get("locked"):
+            minutes = max(1, round(res.get("retry_after_seconds", 900) / 60))
+            raise HTTPException(
+                status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+                detail=f"Too many incorrect PINs. Try again in {minutes} minute"
+                       f"{'s' if minutes != 1 else ''}.",
+                headers={"Retry-After": str(res.get("retry_after_seconds", 900))},
+            )
+
+        detail = res.get("message", "Invalid PIN")
+        remaining = res.get("attempts_remaining")
+        if detail == "Invalid PIN" and remaining is not None:
+            detail = (
+                f"That PIN isn't right. {remaining} "
+                f"{'try' if remaining == 1 else 'tries'} left."
+            )
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=detail)
+
     return res
+
+
+@router.put("/child-pin", dependencies=[Depends(get_current_user)])
+async def set_child_pin(request: ChildPinUpdate, current_user: dict = Depends(get_current_user)):
+    """Set or reset a child's PIN. Parents may do this for their own children;
+    a teen may do it for themselves. Also clears any active lockout."""
+    caller_uid = current_user["uid"]
+    if caller_uid != request.child_id:
+        parent_profile = _require_parent(caller_uid)
+        _require_own_child(parent_profile, request.child_id)
+
+    user_db.set_child_pin(request.child_id, request.pin)
+    return {"success": True, "message": "PIN updated"}
 
 @router.post("/ask-help", dependencies=[Depends(get_current_user)])
 async def ask_parent_for_help(current_user: dict = Depends(get_current_user)):

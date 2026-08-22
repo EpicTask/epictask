@@ -2,6 +2,13 @@ from typing import Any, Dict, List, Optional
 from datetime import datetime
 from pydantic import BaseModel, Field
 
+from ..config import age_policy
+
+# Deliberately permissive — Firebase Auth is the authority on what constitutes
+# a deliverable address. This only rejects obvious typos before we spend a
+# round trip, without pulling in the email-validator dependency.
+EMAIL_PATTERN = r"^[^@\s]+@[^@\s]+\.[^@\s]+$"
+
 class UserProfile(BaseModel):
     """User profile model"""
     uid: str
@@ -33,10 +40,44 @@ class UserProfileUpdate(BaseModel):
     photo_url: Optional[str] = None
 
 class ManagedChildCreate(BaseModel):
-    """Create a parent-managed child profile for shared-device use."""
-    display_name: str
-    age: int
+    """Create a parent-managed child profile for shared-device use (under 13)."""
+    display_name: str = Field(..., min_length=1, max_length=60)
+    age: int = Field(..., ge=age_policy.MIN_CHILD_AGE, le=age_policy.TEEN_MIN_AGE - 1)
     grade_level: str
+    pin: str = Field(..., min_length=4, max_length=4, pattern=r"^\d{4}$")
+    avatar_key: Optional[str] = None
+    photo_url: Optional[str] = None
+    # Recorded when the parent completes the add-kid flow. Required for
+    # under-13 profiles, which exist only under parental consent.
+    parental_consent_at: Optional[str] = None
+
+
+class ChildInviteCreate(BaseModel):
+    """Issue a single-use invite so a teen (13+) can create their own account."""
+    display_name: str = Field(..., min_length=1, max_length=60)
+    age: int = Field(..., ge=age_policy.TEEN_MIN_AGE, le=age_policy.MAX_CHILD_AGE)
+    grade_level: str
+    child_email: str = Field(..., pattern=EMAIL_PATTERN)
+    parental_consent_at: Optional[str] = None
+
+
+class ChildInviteRedeem(BaseModel):
+    """A teen claiming their invite and creating their login."""
+    email: str = Field(..., pattern=EMAIL_PATTERN)
+    password: str = Field(..., min_length=8, max_length=128)
+    pin: str = Field(..., min_length=4, max_length=4, pattern=r"^\d{4}$")
+    avatar_key: Optional[str] = None
+
+
+class VerifyPinRequest(BaseModel):
+    """Parent unlocking a managed child's profile on a shared device."""
+    child_id: str
+    pin: str = Field(..., min_length=4, max_length=4, pattern=r"^\d{4}$")
+
+
+class ChildPinUpdate(BaseModel):
+    """Parent setting or resetting a child's PIN."""
+    child_id: str
     pin: str = Field(..., min_length=4, max_length=4, pattern=r"^\d{4}$")
 
 class NotificationPreferences(BaseModel):

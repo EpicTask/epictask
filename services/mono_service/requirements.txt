@@ -14,7 +14,8 @@ openai>=1.0.0
 google-generativeai>=0.3.0
 google-cloud-secret-manager>=2.16.0
 requests>=2.32.0
-passlib[bcrypt]>=1.7.4
+# bcrypt is used directly for PIN hashing (see storage/user_db.py). passlib was
+# dropped: 1.7.x reads bcrypt.__about__, removed in bcrypt 4.1.
 bcrypt>=4.0.1
 pytest>=8.4.0
 pytest-asyncio>=0.21.0

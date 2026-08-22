@@ -3,7 +3,16 @@ import pytest
 import time
 from fastapi.testclient import TestClient
 
-from ..main import app
+from src.main import app
+
+# These target the pre-mono_service endpoint names (/TaskCreated, /get_task/…),
+# which are now mounted under /api/tasks with different shapes, so every call
+# 404s. The file was previously uncollectable — its relative imports had no
+# parent package — so the rot was invisible. Skipping explicitly until the task
+# endpoints get a test pass of their own; unrelated to the account flows.
+pytestmark = pytest.mark.skip(
+    reason="Stale: targets the pre-mono_service task API. Needs rewriting against /api/tasks."
+)
 
 client = TestClient(app)
 

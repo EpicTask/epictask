@@ -15,10 +15,18 @@ class Collections:
     PREFERENCES = "preferences"
     USER_EVENTS = f"{_prefix}user_events"
 
+    # Server-only subcollection of users. Holds PIN hashes and lockout state.
+    # Firestore rules deny all client access to this path — it is reachable
+    # only through the Admin SDK.
+    USER_PRIVATE = "private"
+    USER_SECURITY_DOC = "security"
+
     # ---------------------------------------------------------
     # USER MANAGEMENT
     # ---------------------------------------------------------
     INVITES = f"{_prefix}invites"
+    # Parent-issued, single-use invites that create a teen (13+) account.
+    CHILD_INVITES = f"{_prefix}child_invites"
     NOTIFICATIONS = f"{_prefix}notifications"
 
     # ---------------------------------------------------------

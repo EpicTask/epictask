@@ -13,7 +13,9 @@ def initialize_firebase() -> Client:
         # Check for service account credentials
         service_account_path = os.getenv("CREDENTIALS_PATH")
 
-        if os.path.exists(service_account_path):
+        # Unset is the normal case on Cloud Run and in tests — fall through to
+        # application default credentials rather than stat'ing None.
+        if service_account_path and os.path.exists(service_account_path):
             cred = credentials.Certificate(service_account_path)
             app = firebase_admin.initialize_app(credential=cred)
         else:
