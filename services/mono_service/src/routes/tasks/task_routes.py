@@ -7,15 +7,31 @@ from ...domain.task_models import (
 )
 from ...services import task_service, leaderboard_service
 from ...config.security import get_current_user
+from ...storage import user_db
 
 router = APIRouter()
 
 
+def _get_caller_role(current_user: dict) -> str:
+    """Extract user role from decoded token or fallback to Firestore user profile."""
+    uid = current_user.get("uid")
+    token_role = current_user.get("role")
+    if token_role:
+        return token_role
+    if uid:
+        profile = user_db.get_user_profile(uid)
+        if profile and profile.get("role"):
+            return profile.get("role")
+    return "kid"
+
+
 def _require_parent(current_user: dict) -> str:
     """Return caller UID if parent role, else raise 403."""
-    if current_user.get("role", "kid") != "parent":
+    role = _get_caller_role(current_user)
+    if role not in ("parent", "admin"):
         raise HTTPException(status_code=403, detail="Parent role required")
     return current_user.get("uid")
+
 
 
 async def _require_task_owner(task_id: str, caller_uid: str) -> dict:
@@ -134,8 +150,8 @@ async def verify_task(task_id: str, request: TaskVerified, raw_request: Request,
 async def get_all_tasks(user_id: str, current_user: dict = Depends(get_current_user)):
     """Get all tasks for a user."""
     caller_uid = current_user.get("uid")
-    caller_role = current_user.get("role", "kid")
-    if caller_uid != user_id and caller_role != "parent":
+    caller_role = _get_caller_role(current_user)
+    if caller_uid != user_id and caller_role not in ("parent", "admin"):
         raise HTTPException(status_code=403, detail="Access denied")
     return await task_service.get_all_tasks(user_id)
 
