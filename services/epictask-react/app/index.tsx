@@ -61,35 +61,29 @@ const CustomButton = ({
 const RolesScreen = () => {
   const { user, loading } = useAuth();
 
+  // Route to leaf screens rather than to a group directory — a group with no
+  // index route resolves to "Unmatched Route".
   const handleParentPress = () => {
-    if (user) {
-      // User is authenticated, check their role
-      if (user.role === "parent") {
-        // Navigate to parent main app
-        router.push("/(parent)/(app)" as any);
-      } else {
-        // User is authenticated but not a parent, go to onboarding
-        router.push("/(parent)/on-boarding" as any);
-      }
+    if (!user) {
+      router.push("/(parent)/auth/login" as any);
+      return;
+    }
+    if (user.role === "parent") {
+      router.push("/(parent)/(app)/(tabs)" as any);
     } else {
-      // User is not authenticated, go to parent auth
-      router.push("/(parent)/auth" as any);
+      router.push("/(parent)/on-boarding/screen1" as any);
     }
   };
 
   const handleKidPress = () => {
-    if (user) {
-      // User is authenticated, check their role
-      if (user.role === "child") {
-        // Navigate to kid main app
-        router.push("/(kid)/(app)" as any);
-      } else {
-        // User is authenticated but not a child, go to onboarding
-        router.push("/(kid)/on-boarding" as any);
-      }
+    if (!user) {
+      router.push("/(kid)/auth/login" as any);
+      return;
+    }
+    if (user.role === "child") {
+      router.push("/(kid)/(app)/(tabs)" as any);
     } else {
-      // User is not authenticated, go to kid auth
-      router.push("/(kid)/auth" as any);
+      router.push("/(kid)/on-boarding/screen1" as any);
     }
   };
 

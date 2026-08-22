@@ -1,3 +1,4 @@
+import axios from "axios";
 import userApiClient from "./userService";
 import { auth } from "../config/firebaseConfig";
 import {
@@ -10,6 +11,19 @@ import {
 } from "firebase/auth";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { firestoreService } from "../api/firestoreService";
+import MicroserviceUrls from "../constants/Microservices";
+import { deviceSharingAllowed } from "../constants/AgePolicy";
+
+// The invite preview and redeem endpoints are reached by a teen who has no
+// account yet, so they deliberately bypass the authenticated client.
+const publicUserClient = axios.create({ baseURL: MicroserviceUrls.userManagement });
+
+const apiMessage = (error, fallback) =>
+  error?.response?.data?.detail || error?.message || fallback;
+
+// How long a parent's switched-into-child session lasts before it drops back
+// to parent mode on its own.
+export const CHILD_SESSION_MS = 15 * 60 * 1000;
 
 export const authService = {
   // Register a new user - now handles registration directly with Firebase
@@ -219,12 +233,20 @@ export const authService = {
     }
   },
 
+  // Create an under-13 managed profile. No email, no password — the child
+  // reaches it through the parent's session plus a PIN.
   createManagedChild: async (childData) => {
-    const result = await userApiClient.createManagedChild(childData);
-    if (result?.child?.parent_id) {
-      firestoreService.cache.invalidateUser(result.child.parent_id);
+    try {
+      const response = await userApiClient.post("/managed-child", childData);
+      const result = response.data;
+      if (result?.child?.parent_id) {
+        firestoreService.cache.invalidateUser(result.child.parent_id);
+      }
+      return result;
+    } catch (error) {
+      console.error("Create managed child error:", error);
+      throw new Error(apiMessage(error, "Failed to create child profile"));
     }
-    return result;
   },
 
   // Generate invite code (for kids)
@@ -251,191 +273,108 @@ export const authService = {
     }
   },
 
-  // Create pending invite for child (new method)
-  createPendingInvite: async (parentId, childData) => {
+  // --- Teen (13+) invites -------------------------------------------------
+  //
+  // A parent issues a single-use code; the teen redeems it to create their own
+  // email/password account. Both sides go through mono_service so the code is
+  // validated, the family link is derived from the invite (not from whoever is
+  // signed in), and a failed redeem can't strand a half-made login.
+
+  createChildInvite: async ({ displayName, age, gradeLevel, email, parentalConsentAt }) => {
     try {
-      // Generate invite code using existing user management service
-      const inviteResponse = await userApiClient.post(
-        "/invite-code"
-      );
-      const inviteCode =
-        inviteResponse.data.inviteCode || inviteResponse.data.invite_code;
-
-      // Create pending invite in Firestore
-      const pendingInvite = {
-        parent_id: parentId,
-        child_name: childData.name,
-        child_email: childData.email || null,
-        age: parseInt(childData.age),
-        grade_level: childData.gradeLevel,
-        image: childData.image || null,
-        pin_hash: childData.pinHash || null,
-        invite_code: inviteCode,
-        parental_consent: new Date().toISOString(),
-        created_at: new Date().toISOString(),
-        expires_at: new Date(
-          Date.now() + 7 * 24 * 60 * 60 * 1000
-        ).toISOString(), // 7 days
-        status: "pending",
-      };
-
-      const result = await firestoreService.createPendingInvite(pendingInvite);
-
-      if (result.success) {
-        return {
-          success: true,
-          inviteCode: inviteCode,
-          pendingInviteId: result.pendingInviteId,
-          message: "Invite created successfully",
-        };
-      } else {
-        throw new Error(result.error);
-      }
-    } catch (error) {
-      console.error("Create pending invite error:", error);
-      throw new Error(error.message || "Failed to create pending invite");
-    }
-  },
-
-  // Get pending invites for parent
-  getPendingInvites: async (parentId) => {
-    try {
-      const result = await firestoreService.getPendingInvites(parentId);
-      return result;
-    } catch (error) {
-      console.error("Get pending invites error:", error);
-      throw new Error("Failed to get pending invites");
-    }
-  },
-
-  // Validate invite code and get pending invite data
-  validateInviteCode: async (inviteCode) => {
-    try {
-      const result = await firestoreService.getPendingInviteByCode(inviteCode);
-      if (result.success && result.pendingInvite) {
-        // Check if invite has expired
-        const expiresAt = new Date(result.pendingInvite.expires_at);
-        const now = new Date();
-
-        if (now > expiresAt) {
-          return {
-            success: false,
-            error: "Invite code has expired",
-          };
-        }
-
-        if (result.pendingInvite.status !== "pending") {
-          return {
-            success: false,
-            error: "Invite code has already been used",
-          };
-        }
-
-        return result;
-      } else {
-        return {
-          success: false,
-          error: "Invalid invite code",
-        };
-      }
-    } catch (error) {
-      console.error("Validate invite code error:", error);
-      throw new Error("Failed to validate invite code");
-    }
-  },
-
-  // Complete child registration using invite code
-  completeChildRegistration: async (inviteCode, password) => {
-    try {
-      // First validate the invite code
-      const inviteResult = await authService.validateInviteCode(inviteCode);
-      if (!inviteResult.success) {
-        throw new Error(inviteResult.error);
-      }
-
-      const pendingInvite = inviteResult.pendingInvite;
-
-      // Register the child with Firebase Auth
-      const userCredential = await createUserWithEmailAndPassword(
-        auth,
-        pendingInvite.child_email,
-        password
-      );
-      const user = userCredential.user;
-
-      // Update the user's display name
-      await updateProfile(user, {
-        displayName: pendingInvite.child_name,
+      const response = await userApiClient.post("/child-invite", {
+        display_name: displayName,
+        age: parseInt(age, 10),
+        grade_level: gradeLevel,
+        child_email: String(email || "").trim().toLowerCase(),
+        parental_consent_at: parentalConsentAt || new Date().toISOString(),
       });
-
-      // Get the ID token
-      const token = await user.getIdToken();
-      await AsyncStorage.setItem("authToken", token);
-
-      // Create user document in Firestore with enhanced data
-      const userData = {
-        email: user.email,
-        display_name: pendingInvite.child_name,
-        role: "child",
-        age: pendingInvite.age,
-        grade_level: pendingInvite.grade_level,
-        photo_url: pendingInvite.image,
-        pin_hash: pendingInvite.pin_hash,
-        parent_id: pendingInvite.parent_id,
-        device_sharing_enabled: pendingInvite.age < 16,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-      };
-
-      const createProfileResult = await firestoreService.createUserProfile(
-        user.uid,
-        userData
-      );
-      if (!createProfileResult.success) {
-        throw new Error("Failed to create user profile in database");
-      }
-
-      // Update pending invite status to completed
-      await firestoreService.updateInviteStatus(pendingInvite.id, "completed");
-
-      // Link child to parent automatically
-      await authService.linkChild(inviteCode);
-
-      return {
-        success: true,
-        user: {
-          uid: user.uid,
-          email: user.email,
-          displayName: pendingInvite.child_name,
-          role: "child",
-          age: pendingInvite.age,
-          grade_level: pendingInvite.grade_level,
-          parent_id: pendingInvite.parent_id,
-          device_sharing_enabled: pendingInvite.age < 16,
-        },
-        token,
-      };
+      return response.data;
     } catch (error) {
-      console.error("Complete child registration error:", error);
-
-      // Handle Firebase Auth specific errors
-      if (error.code) {
-        switch (error.code) {
-          case "auth/email-already-in-use":
-            throw new Error("An account with this email already exists");
-          case "auth/invalid-email":
-            throw new Error("Invalid email address");
-          case "auth/weak-password":
-            throw new Error("Password should be at least 6 characters");
-          case "auth/network-request-failed":
-            throw new Error("Network error. Please check your connection");
-          default:
-            throw new Error(error.message || "Registration failed");
-        }
-      }
-
-      throw new Error(error.message || "Registration failed");
+      console.error("Create child invite error:", error);
+      throw new Error(apiMessage(error, "Failed to create invite"));
     }
+  },
+
+  getChildInvites: async () => {
+    try {
+      const response = await userApiClient.get("/child-invites");
+      return response.data;
+    } catch (error) {
+      console.error("List child invites error:", error);
+      return { success: false, invites: [] };
+    }
+  },
+
+  revokeChildInvite: async (code) => {
+    try {
+      const response = await userApiClient.delete(
+        `/child-invite/${encodeURIComponent(String(code).trim().toUpperCase())}`
+      );
+      return response.data;
+    } catch (error) {
+      console.error("Revoke child invite error:", error);
+      throw new Error(apiMessage(error, "Failed to cancel invite"));
+    }
+  },
+
+  // Look up an invite from the teen join screen. No account required.
+  previewChildInvite: async (code) => {
+    const cleaned = String(code || "").trim().toUpperCase();
+    if (!cleaned) {
+      return { success: false, error: "Enter the code your parent gave you." };
+    }
+    try {
+      const response = await publicUserClient.get(
+        `/child-invite/${encodeURIComponent(cleaned)}`
+      );
+      return response.data;
+    } catch (error) {
+      if (error?.response) {
+        return { success: false, error: apiMessage(error, "Invalid invite code") };
+      }
+      return {
+        success: false,
+        error: "Couldn't reach EpicTask. Check your connection and try again.",
+      };
+    }
+  },
+
+  // Redeem an invite: the server creates the account, then we sign in with it.
+  redeemChildInvite: async ({ code, email, password, pin, avatarKey }) => {
+    const cleaned = String(code || "").trim().toUpperCase();
+    const cleanEmail = String(email || "").trim().toLowerCase();
+
+    let redeemed;
+    try {
+      const response = await publicUserClient.post(
+        `/child-invite/${encodeURIComponent(cleaned)}/redeem`,
+        { email: cleanEmail, password, pin, avatar_key: avatarKey || null }
+      );
+      redeemed = response.data;
+    } catch (error) {
+      console.error("Redeem child invite error:", error);
+      throw new Error(apiMessage(error, "Could not complete signup. Please try again."));
+    }
+
+    // The account now exists — sign in so the app has a session.
+    const credential = await signInWithEmailAndPassword(auth, cleanEmail, password);
+    const token = await credential.user.getIdToken();
+    await AsyncStorage.setItem("authToken", token);
+    firestoreService.cache.invalidateUser(redeemed.parent_id);
+
+    return {
+      success: true,
+      user: {
+        uid: redeemed.uid,
+        email: cleanEmail,
+        displayName: redeemed.display_name,
+        role: "child",
+        parent_id: redeemed.parent_id,
+      },
+      parentName: redeemed.parent_name,
+      token,
+    };
   },
 
   // Verify child PIN via server
@@ -448,39 +387,57 @@ export const authService = {
       return response.data;
     } catch (error) {
       console.error("Verify child PIN error:", error);
-      throw new Error(error.response?.data?.detail || "Failed to verify PIN");
+      throw new Error(apiMessage(error, "Failed to verify PIN"));
     }
   },
 
-  // Check if parent can switch to child view (age-based)
-  canSwitchToChild: (childAge) => {
-    return childAge < 16;
+  // Set or reset a PIN. A parent may do this for their own child; a teen for
+  // themselves. Also clears any lockout.
+  setChildPin: async (childId, pin) => {
+    try {
+      const response = await userApiClient.put("/child-pin", {
+        child_id: childId,
+        pin,
+      });
+      return response.data;
+    } catch (error) {
+      console.error("Set child PIN error:", error);
+      throw new Error(apiMessage(error, "Failed to update PIN"));
+    }
   },
 
-  // Switch to child context with PIN verification
+  // Whether a parent may switch into this child's profile. See AgePolicy.
+  canSwitchToChild: (childAge) => deviceSharingAllowed(childAge),
+
+  // Switch to child context with PIN verification. Resolves to a result object
+  // rather than throwing on a wrong PIN, so callers can distinguish "try again"
+  // from "something broke".
   switchToChildContext: async (childId, pin) => {
     try {
       const result = await firestoreService.verifyChildPIN(childId, pin);
-      if (result.success) {
-        // Store child context in session
-        await AsyncStorage.setItem(
-          "childContext",
-          JSON.stringify({
-            childId: childId,
-            childName: result.child.displayName,
-            childImageUrl: result.child.imageUrl || result.child.photoURL,
-            childAge: result.child.age,
-            timestamp: Date.now(),
-            expires: Date.now() + 15 * 60 * 1000, // 15 minutes
-          })
-        );
-        return { success: true, child: result.child };
-      } else {
-        throw new Error(result.error);
+      if (!result.success) {
+        return { success: false, error: result.error || "Invalid PIN", locked: result.locked };
       }
+
+      const child = result.child || {};
+      const context = {
+        childId,
+        childName: child.displayName || child.display_name || "Kid",
+        childImageUrl: child.imageUrl || child.photoURL || child.photo_url || null,
+        childAvatarKey: child.avatar_key || child.avatarKey || null,
+        childAge: child.age ?? null,
+        childGradeLevel: child.grade_level ?? child.gradeLevel ?? null,
+        timestamp: Date.now(),
+        expires: Date.now() + CHILD_SESSION_MS,
+      };
+      await AsyncStorage.setItem("childContext", JSON.stringify(context));
+      return { success: true, child, context };
     } catch (error) {
       console.error("Switch to child context error:", error);
-      throw new Error(error?.message || "Failed to switch to child account");
+      return {
+        success: false,
+        error: error?.message || "Couldn't open that profile. Please try again.",
+      };
     }
   },
 
@@ -544,7 +501,7 @@ export const authService = {
   // Delete account
   deleteAccount: async () => {
     try {
-      const response = await userApiClient.delete("/deleteAccount");
+      const response = await userApiClient.delete("/account");
       await signOut(auth);
       await AsyncStorage.removeItem("authToken");
       await AsyncStorage.removeItem("cachedUserProfile");

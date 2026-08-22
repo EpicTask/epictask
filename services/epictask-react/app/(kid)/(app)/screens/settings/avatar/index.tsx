@@ -70,8 +70,9 @@ const AvatarScreen = () => {
     try {
       setIsSaving(true);
       
-      // Upload image to Firebase Storage
-      const storagePath = `avatars/${user.uid}_${Date.now()}.jpg`;
+      // Always key the upload by whose profile is on screen, not by whoever
+      // holds the session — those differ whenever a parent is viewing as a kid.
+      const storagePath = `avatars/${effectiveUserId}_${Date.now()}.jpg`;
       const downloadURL = await storageService.uploadImage(uri, storagePath);
       
       await updateProfile({

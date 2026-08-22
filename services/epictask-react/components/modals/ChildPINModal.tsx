@@ -1,16 +1,14 @@
 import { FONT_SIZES } from "@/constants/FontSize";
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   Modal,
   View,
   StyleSheet,
   TouchableOpacity,
-  Alert,
   ActivityIndicator,
   TextInput,
 } from 'react-native';
 import {
-  responsiveFontSize,
   responsiveHeight,
   responsiveWidth,
 } from 'react-native-responsive-dimensions';
@@ -20,11 +18,11 @@ import {
   useBlurOnFulfill,
   useClearByFocusCell,
 } from 'react-native-confirmation-code-field';
+import { MaterialIcons } from '@expo/vector-icons';
 import CustomText from '@/components/CustomText';
 import CustomButton from '@/components/buttons/CustomButton';
 import { COLORS } from '@/constants/Colors';
-import authService from '@/api/authService';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useAuth } from '@/context/AuthContext';
 
 interface Child {
   uid: string;
@@ -40,20 +38,26 @@ interface ChildPINModalProps {
   onSuccess: (child: Child) => void;
 }
 
+const CELL_COUNT = 4;
+
+/**
+ * PIN entry for switching into a managed child's profile.
+ *
+ * Attempt counting and lockout are enforced by mono_service and persisted in
+ * Firestore, so they can't be reset by clearing app storage. This screen just
+ * renders whatever the server says.
+ */
 const ChildPINModal: React.FC<ChildPINModalProps> = ({
   visible,
   child,
   onClose,
   onSuccess,
 }) => {
-  const CELL_COUNT = 4;
-  const MAX_ATTEMPTS = 3;
-  const LOCKOUT_MS = 15 * 60 * 1000;
+  const { switchToChildContext } = useAuth();
   const [value, setValue] = useState('');
   const [loading, setLoading] = useState(false);
-  const [attempts, setAttempts] = useState(0);
-  const [lockoutUntil, setLockoutUntil] = useState<Date | null>(null);
-  const [timeRemaining, setTimeRemaining] = useState(0);
+  const [error, setError] = useState('');
+  const [lockedOut, setLockedOut] = useState(false);
 
   const ref = useBlurOnFulfill({ value, cellCount: CELL_COUNT });
   const [props, getCellOnLayoutHandler] = useClearByFocusCell({
@@ -61,147 +65,50 @@ const ChildPINModal: React.FC<ChildPINModalProps> = ({
     setValue,
   });
 
-  // Clear PIN when modal opens/closes
   useEffect(() => {
-    const restoreAttempts = async () => {
-      if (!visible || !child?.uid) return;
-
+    if (visible) {
       setValue('');
-      const stored = await AsyncStorage.getItem(`childPinAttempts:${child.uid}`);
-      if (!stored) {
-        setAttempts(0);
-        setLockoutUntil(null);
-        setTimeRemaining(0);
-        return;
-      }
-
-      const parsed = JSON.parse(stored);
-      const lockoutTime = parsed.lockoutUntil ? new Date(parsed.lockoutUntil) : null;
-      const remaining = lockoutTime
-        ? Math.max(0, Math.floor((lockoutTime.getTime() - Date.now()) / 1000))
-        : 0;
-
-      if (remaining > 0) {
-        setAttempts(parsed.attempts || 0);
-        setLockoutUntil(lockoutTime);
-        setTimeRemaining(remaining);
-      } else {
-        await AsyncStorage.removeItem(`childPinAttempts:${child.uid}`);
-        setAttempts(0);
-        setLockoutUntil(null);
-        setTimeRemaining(0);
-      }
-    };
-
-    restoreAttempts().catch(() => {
-      setAttempts(0);
-      setLockoutUntil(null);
-      setTimeRemaining(0);
-    });
+      setError('');
+      setLockedOut(false);
+    }
   }, [visible, child?.uid]);
 
-  const recordFailedAttempt = async () => {
-    if (!child?.uid) return;
+  const submit = async (pin: string) => {
+    if (!child || pin.length !== CELL_COUNT || loading) return;
 
-    const newAttempts = attempts + 1;
-    setAttempts(newAttempts);
-    setValue('');
+    setLoading(true);
+    setError('');
 
-    if (newAttempts >= MAX_ATTEMPTS) {
-      const lockoutTime = new Date(Date.now() + LOCKOUT_MS);
-      setLockoutUntil(lockoutTime);
-      setTimeRemaining(Math.floor(LOCKOUT_MS / 1000));
-      await AsyncStorage.setItem(
-        `childPinAttempts:${child.uid}`,
-        JSON.stringify({ attempts: newAttempts, lockoutUntil: lockoutTime.toISOString() })
-      );
-      Alert.alert(
-        'Account Locked',
-        'Too many incorrect attempts. Please wait 15 minutes before trying again.'
-      );
-    } else {
-      await AsyncStorage.setItem(
-        `childPinAttempts:${child.uid}`,
-        JSON.stringify({ attempts: newAttempts })
-      );
-      Alert.alert(
-        'Incorrect PIN',
-        `Please try again. ${MAX_ATTEMPTS - newAttempts} attempts remaining.`
-      );
-    }
-  };
+    const result = await switchToChildContext(child.uid, pin);
 
-  // Handle lockout timer
-  useEffect(() => {
-    let interval: ReturnType<typeof setInterval>;
-    
-    if (lockoutUntil && timeRemaining > 0) {
-      interval = setInterval(() => {
-        const now = new Date();
-        const remaining = Math.max(0, Math.floor((lockoutUntil.getTime() - now.getTime()) / 1000));
-        setTimeRemaining(remaining);
-        
-        if (remaining === 0) {
-          setLockoutUntil(null);
-          setAttempts(0);
-        }
-      }, 1000);
-    }
+    setLoading(false);
 
-    return () => {
-      if (interval) clearInterval(interval);
-    };
-  }, [lockoutUntil, timeRemaining]);
-
-  const handlePINSubmit = async () => {
-    if (!child || value.length !== 4) return;
-    
-    // Check if user is locked out
-    if (lockoutUntil && new Date() < lockoutUntil) {
-      Alert.alert('Too Many Attempts', `Please wait ${timeRemaining} seconds before trying again.`);
+    if (result.success) {
+      setValue('');
+      onSuccess(child);
       return;
     }
 
-    try {
-      setLoading(true);
-      const result = await authService.switchToChildContext(child.uid, value);
-      
-      if (result.success) {
-        // Success - clear form and call onSuccess
-        setValue('');
-        setAttempts(0);
-        setLockoutUntil(null);
-        await AsyncStorage.removeItem(`childPinAttempts:${child.uid}`);
-        onSuccess(child);
-      } else {
-        await recordFailedAttempt();
-      }
-    } catch (error: any) {
-      console.error('PIN verification error:', error);
-      if (error?.message === 'Invalid PIN') {
-        await recordFailedAttempt();
-      } else {
-        Alert.alert('Error', error?.message || 'Failed to verify PIN');
-      }
-      setValue('');
-    } finally {
-      setLoading(false);
-    }
+    setValue('');
+    setLockedOut(!!result.locked);
+    setError(result.error || 'That PIN isn\'t right.');
+  };
+
+  const handleChange = (next: string) => {
+    setValue(next);
+    if (error) setError('');
+    // Submitting on the fourth digit saves a tap; a parent typing a PIN on a
+    // shared device shouldn't have to reach for a button.
+    if (next.length === CELL_COUNT) submit(next);
   };
 
   const handleClose = () => {
     setValue('');
-    setAttempts(0);
+    setError('');
     onClose();
   };
 
-  const formatTime = (seconds: number): string => {
-    const minutes = Math.floor(seconds / 60);
-    const remainingSeconds = seconds % 60;
-    return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
-  };
-
-  const isLockedOut = lockoutUntil && new Date() < lockoutUntil;
+  const firstName = (child?.displayName || 'your kid').split(' ')[0];
 
   return (
     <Modal
@@ -214,7 +121,7 @@ const ChildPINModal: React.FC<ChildPINModalProps> = ({
         <View style={styles.modalContainer}>
           <View style={styles.header}>
             <CustomText variant="semiBold" style={styles.title}>
-              Enter PIN for {child?.displayName}
+              {firstName}'s PIN
             </CustomText>
             <TouchableOpacity onPress={handleClose} style={styles.closeButton}>
               <CustomText variant="regular" style={styles.closeText}>✕</CustomText>
@@ -222,82 +129,88 @@ const ChildPINModal: React.FC<ChildPINModalProps> = ({
           </View>
 
           <View style={styles.content}>
-            <View style={styles.pinContainer}>
-              <CustomText variant="regular" style={styles.description}>
-                Enter your 4-digit PIN to access your account
-              </CustomText>
+            <CustomText variant="regular" style={styles.description}>
+              Enter the 4-digit PIN to open this profile.
+            </CustomText>
 
-              {isLockedOut ? (
-                <View style={styles.lockoutContainer}>
-                  <CustomText variant="semiBold" style={styles.lockoutTitle}>
-                    Account Temporarily Locked
-                  </CustomText>
-                  <CustomText variant="regular" style={styles.lockoutText}>
-                    Too many incorrect attempts.{'\n'}
-                    Try again in: {formatTime(timeRemaining)}
-                  </CustomText>
-                </View>
-              ) : (
-                <>
-                  <CodeField
-                    ref={ref}
-                    {...props}
-                    value={value}
-                    onChangeText={setValue}
-                    cellCount={CELL_COUNT}
-                    rootStyle={styles.codeFieldRoot}
-                    keyboardType="number-pad"
-                    textContentType="oneTimeCode"
-                    autoComplete="one-time-code"
-                    InputComponent={TextInput}
-                    testID="pin-input"
-                    autoFocus
-                    secureTextEntry
-                    renderCell={({ index, symbol, isFocused }) => (
-                      <View
-                        key={index}
-                        style={[styles.cell, isFocused && styles.focusCell]}
-                        onLayout={getCellOnLayoutHandler(index)}
-                      >
-                        <CustomText style={styles.cellText}>
-                          {symbol ? '●' : (isFocused ? <Cursor /> : '')}
-                        </CustomText>
-                      </View>
-                    )}
-                  />
-
-                  {attempts > 0 && (
-                    <CustomText variant="regular" style={styles.attemptsWarning}>
-                      {3 - attempts} attempts remaining
-                    </CustomText>
-                  )}
-                </>
-              )}
-            </View>
-
-            {loading && (
-              <View style={styles.loadingContainer}>
-                <ActivityIndicator size="small" color={COLORS.primary} />
-                <CustomText variant="regular" style={styles.loadingText}>
-                  Verifying PIN...
+            {lockedOut ? (
+              <View style={styles.lockoutContainer}>
+                <MaterialIcons name="lock-clock" size={26} color="#856404" />
+                <CustomText variant="semiBold" style={styles.lockoutTitle}>
+                  Locked for now
+                </CustomText>
+                <CustomText variant="regular" style={styles.lockoutText}>
+                  {error}
                 </CustomText>
               </View>
+            ) : (
+              <>
+                <CodeField
+                  ref={ref}
+                  {...props}
+                  value={value}
+                  onChangeText={handleChange}
+                  cellCount={CELL_COUNT}
+                  rootStyle={styles.codeFieldRoot}
+                  keyboardType="number-pad"
+                  textContentType="oneTimeCode"
+                  autoComplete="one-time-code"
+                  InputComponent={TextInput}
+                  testID="pin-input"
+                  autoFocus
+                  secureTextEntry
+                  editable={!loading}
+                  renderCell={({ index, symbol, isFocused }) => (
+                    <View
+                      key={index}
+                      style={[styles.cell, isFocused && styles.focusCell]}
+                      onLayout={getCellOnLayoutHandler(index)}
+                    >
+                      <CustomText style={styles.cellText}>
+                        {symbol ? '●' : (isFocused ? <Cursor /> : '')}
+                      </CustomText>
+                    </View>
+                  )}
+                />
+
+                {error ? (
+                  <CustomText variant="regular" style={styles.errorText}>
+                    {error}
+                  </CustomText>
+                ) : null}
+
+                {loading && (
+                  <View style={styles.loadingContainer}>
+                    <ActivityIndicator size="small" color={COLORS.primary} />
+                    <CustomText variant="regular" style={styles.loadingText}>
+                      Checking...
+                    </CustomText>
+                  </View>
+                )}
+              </>
             )}
+
+            <CustomText style={styles.footnote}>
+              Forgot it? Reset the PIN from Settings → Kid Profiles.
+            </CustomText>
           </View>
 
           <View style={styles.footer}>
             <CustomButton
-              text="Cancel"
+              text={lockedOut ? 'Close' : 'Cancel'}
               fill={false}
               onPress={handleClose}
               height={responsiveHeight(6)}
             />
-            <CustomButton
-              text="Enter"
-              fill={true}
-              onPress={loading || isLockedOut ? () => {} : handlePINSubmit}
-              height={responsiveHeight(6)}
-            />
+            {!lockedOut && (
+              <CustomButton
+                text="Enter"
+                fill={true}
+                onPress={() => submit(value)}
+                height={responsiveHeight(6)}
+                disabled={loading || value.length !== CELL_COUNT}
+              />
+            )}
           </View>
         </View>
       </View>
@@ -316,7 +229,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'white',
     borderRadius: 16,
     width: responsiveWidth(85),
-    maxHeight: responsiveHeight(70),
+    maxHeight: responsiveHeight(75),
     padding: 0,
     overflow: 'hidden',
   },
@@ -345,17 +258,13 @@ const styles = StyleSheet.create({
   },
   content: {
     padding: responsiveWidth(4),
-    minHeight: responsiveHeight(25),
-  },
-  pinContainer: {
     alignItems: 'center',
-    gap: responsiveHeight(3),
+    gap: responsiveHeight(2),
   },
   description: {
     fontSize: FONT_SIZES.medium,
     color: COLORS.grey,
     textAlign: 'center',
-    marginBottom: responsiveHeight(2),
   },
   codeFieldRoot: {
     justifyContent: 'space-between',
@@ -364,12 +273,9 @@ const styles = StyleSheet.create({
   cell: {
     width: responsiveWidth(12),
     height: responsiveWidth(12),
-    lineHeight: responsiveWidth(12) - 4,
-    fontSize: FONT_SIZES.title,
     borderWidth: 2,
     borderColor: '#E0E0E0',
     backgroundColor: '#fff',
-    textAlign: 'center',
     borderRadius: 8,
     justifyContent: 'center',
     alignItems: 'center',
@@ -383,14 +289,14 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     color: COLORS.primary,
   },
-  attemptsWarning: {
-    fontSize: FONT_SIZES.extraSmall,
-    color: '#FF6B6B',
+  errorText: {
+    fontSize: FONT_SIZES.small,
+    color: COLORS.red,
     textAlign: 'center',
-    marginTop: responsiveHeight(1),
   },
   lockoutContainer: {
     alignItems: 'center',
+    gap: 6,
     padding: responsiveWidth(4),
     backgroundColor: '#FFF3CD',
     borderRadius: 8,
@@ -400,24 +306,27 @@ const styles = StyleSheet.create({
   lockoutTitle: {
     fontSize: FONT_SIZES.medium,
     color: '#856404',
-    marginBottom: 8,
   },
   lockoutText: {
-    fontSize: FONT_SIZES.medium,
+    fontSize: FONT_SIZES.small,
     color: '#856404',
     textAlign: 'center',
-    lineHeight: 22,
+    lineHeight: 20,
   },
   loadingContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     gap: 10,
-    marginTop: responsiveHeight(2),
   },
   loadingText: {
     fontSize: FONT_SIZES.medium,
     color: COLORS.grey,
+  },
+  footnote: {
+    fontSize: 12,
+    color: COLORS.grey,
+    textAlign: 'center',
   },
   footer: {
     flexDirection: 'row',

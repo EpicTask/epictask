@@ -29,12 +29,12 @@ import React, { useEffect, useState, useCallback, useRef } from "react";
 import { useAuth } from "@/context/AuthContext";
 import SetupChecklist from "@/components/onboarding/SetupChecklist";
 import { firestoreService } from "@/api/firestoreService";
-import authService from "@/api/authService";
 import taskService from "@/api/taskService";
 import { narrativeService, PendingPayout } from "@/api/narrativeService";
 import { notificationService } from "@/api/notificationService";
 import ChildSelectionModal from "@/components/modals/ChildSelectionModal";
 import ChildPINModal from "@/components/modals/ChildPINModal";
+import { deviceSharingAllowed } from "@/constants/AgePolicy";
 import { useFamilyTasks } from "@/hooks/useTaskManagement";
 import CustomText from "@/components/CustomText";
 import { MaterialIcons } from "@expo/vector-icons";
@@ -71,7 +71,7 @@ interface Kid {
 }
 
 export default function HomeScreen() {
-  const { user, enterSharedDeviceMode } = useAuth();
+  const { user } = useAuth();
   const { connectWallet, showQrModal, qrUrl, closeModal, isConnecting } = useXummAuth();
   const walletConnected = isXummWalletConnected(user?.userToken as XummUserToken | undefined);
 
@@ -108,6 +108,7 @@ export default function HomeScreen() {
     loading: familyTasksLoading,
     error: familyTasksError,
     refreshFamilyTasks,
+    refreshChildren,
   } = useFamilyTasks(user?.uid, { realTime: true });
 
   useEffect(() => {
@@ -207,13 +208,22 @@ export default function HomeScreen() {
     fetchData();
   }, [fetchData]);
 
-  // Refresh notifications when screen comes into focus
+  // Refresh notifications and the kids list when the screen comes into focus.
+  // Coming back from Add Kid is the common case — the new profile has to show
+  // up without the parent restarting the app.
+  const hasFocusedRef = useRef(false);
   useFocusEffect(
     useCallback(() => {
       const userId = user?.uid;
       let active = true;
 
       if (userId) {
+        if (hasFocusedRef.current) {
+          refreshChildren();
+        } else {
+          hasFocusedRef.current = true;
+        }
+
         notificationService.getNotifications(20, true)
           .then(notifications => {
             if (active && currentUserIdRef.current === userId) {
@@ -230,7 +240,7 @@ export default function HomeScreen() {
       return () => {
         active = false;
       };
-    }, [user?.uid])
+    }, [user?.uid, refreshChildren])
   );
 
   const onRefresh = useCallback(async () => {
@@ -244,19 +254,31 @@ export default function HomeScreen() {
 
     const userId = user?.uid;
     try {
-      if (refreshFamilyTasks) {
-        await refreshFamilyTasks();
-      }
+      await Promise.all([
+        refreshChildren?.(),
+        refreshFamilyTasks?.(),
+      ]);
       await fetchData(true);
     } finally {
       if (currentUserIdRef.current === userId) {
         setRefreshing(false);
       }
     }
-  }, [fetchData, refreshFamilyTasks, lastRefreshTime, user?.uid]);
+  }, [fetchData, refreshFamilyTasks, refreshChildren, lastRefreshTime, user?.uid]);
 
   // Handler functions for child switching
+  const switchableKids = kidsWithTaskData.filter(
+    (kid) => deviceSharingAllowed(kid.age) && kid.device_sharing_enabled !== false
+  );
+
   const handleChildSwitchPress = () => {
+    // With a single shared profile there is nothing to choose — go straight to
+    // the PIN, which is the only step that actually gates access.
+    if (switchableKids.length === 1) {
+      setSelectedChildForPIN(switchableKids[0]);
+      setChildPINModalVisible(true);
+      return;
+    }
     setChildSelectionModalVisible(true);
   };
 
@@ -266,10 +288,11 @@ export default function HomeScreen() {
     setChildPINModalVisible(true);
   };
 
-  const handleChildPINSuccess = async (child: Kid) => {
+  // The PIN modal already put the app into shared mode via AuthContext, so all
+  // that's left is to land on the kid dashboard.
+  const handleChildPINSuccess = (_child: Kid) => {
     setChildPINModalVisible(false);
     setSelectedChildForPIN(null);
-    await enterSharedDeviceMode();
     router.replace('/(kid)/(app)/(tabs)' as any);
   };
 
@@ -382,14 +405,19 @@ export default function HomeScreen() {
                   ))}
                 </View>
                 
-                {/* Child Switching Button */}
-                {kidsWithTaskData.some(kid => authService.canSwitchToChild(kid.age)) && (
+                {/* Child Switching Button — only shown when at least one kid
+                    actually has a shared profile on this device. */}
+                {switchableKids.length > 0 && (
                   <TouchableOpacity
                     style={styles.childSwitchButton}
                     onPress={handleChildSwitchPress}
+                    accessibilityRole="button"
                   >
+                    <MaterialIcons name="switch-account" size={18} color="#fff" />
                     <Text style={styles.childSwitchButtonText}>
-                      Switch to Child Account
+                      {switchableKids.length === 1
+                        ? `Switch to ${switchableKids[0].displayName.split(" ")[0]}'s Profile`
+                        : "Switch to Kid Profile"}
                     </Text>
                   </TouchableOpacity>
                 )}
@@ -595,7 +623,10 @@ const styles = StyleSheet.create({
     paddingVertical: responsiveHeight(1.5),
     paddingHorizontal: responsiveWidth(4),
     borderRadius: 8,
+    flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
     marginTop: 10,
   },
   childSwitchButtonText: {

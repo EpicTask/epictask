@@ -39,13 +39,20 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  const enterSharedDeviceMode = async () => {
-    const context = await authService.getChildContext();
-    if (context.success) {
-      setActiveChildContext(context.context);
-      setIsSharedDeviceMode(true);
-      scheduleSharedModeExpiration(context.context.expires);
-    }
+  /**
+   * Verify a child's PIN and switch the app into that child's profile.
+   *
+   * Resolves to `{ success, error? }` — a wrong PIN is a normal outcome the
+   * caller renders inline, not an exception.
+   */
+  const switchToChildContext = async (childId, pin) => {
+    const result = await authService.switchToChildContext(childId, pin);
+    if (!result.success) return result;
+
+    setActiveChildContext(result.context);
+    setIsSharedDeviceMode(true);
+    scheduleSharedModeExpiration(result.context.expires);
+    return result;
   };
 
   const exitSharedDeviceMode = (options = {}) => {
@@ -58,27 +65,19 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  // Restore shared device mode on app start if context is valid
+  // A child session never survives an app restart. Restoring it would leave
+  // the app in a half-state — shared mode on, but the root layout already
+  // routed to the parent dashboard — and it would mean an unattended device
+  // reopens straight into the kid's profile. Re-entering the PIN is one tap.
   useEffect(() => {
-    const restoreSharedMode = async () => {
-      if (user && user.role === 'parent') {
-        const context = await authService.getChildContext();
-        if (context.success) {
-          setActiveChildContext(context.context);
-          setIsSharedDeviceMode(true);
-          scheduleSharedModeExpiration(context.context.expires);
-        } else if (isSharedDeviceMode) {
-          exitSharedDeviceMode({ expired: context.error === "Session expired" });
-        }
-      }
-    };
-
-    restoreSharedMode();
+    if (user?.role === 'parent' && !isSharedDeviceMode) {
+      authService.clearChildContext().catch(() => {});
+    }
 
     return () => {
       clearSharedModeTimer();
     };
-  }, [user]);
+  }, [user?.uid]);
 
   const effectiveUserId = (user?.role === 'parent' && isSharedDeviceMode && activeChildContext)
     ? activeChildContext.childId
@@ -329,7 +328,7 @@ export const AuthProvider = ({ children }) => {
       isSharedDeviceMode,
       activeChildContext,
       effectiveUserId,
-      enterSharedDeviceMode,
+      switchToChildContext,
       exitSharedDeviceMode,
     }}>
       {children}

@@ -183,7 +183,7 @@ const SettingsScreen = () => {
               icon={ICONS.changePin}
               text={"Change PIN"}
               onPress={() => {
-                router.push("/screens/settings/change-pin" as any);
+                router.push("/(kid)/(app)/screens/settings/change-pin" as any);
               }}
             />
             <CustomText

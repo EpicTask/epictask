@@ -3,39 +3,55 @@ import React, { useState, useEffect } from 'react';
 import {
   Modal,
   View,
-  Text,
   StyleSheet,
   TouchableOpacity,
-  Alert,
   FlatList,
   ActivityIndicator,
 } from 'react-native';
 import {
-  responsiveFontSize,
   responsiveHeight,
   responsiveWidth,
 } from 'react-native-responsive-dimensions';
+import { MaterialIcons } from '@expo/vector-icons';
 import CustomText from '@/components/CustomText';
 import CustomButton from '@/components/buttons/CustomButton';
 import { COLORS } from '@/constants/Colors';
 import authService from '@/api/authService';
 import { useAuth } from '@/context/AuthContext';
+import {
+  TEEN_MIN_AGE,
+  deviceSharingAllowed,
+  deviceSharingBlockedReason,
+} from '@/constants/AgePolicy';
 
-interface Child {
+export interface SelectableChild {
   uid: string;
   displayName: string;
   age: number;
   grade_level: string;
   device_sharing_enabled?: boolean;
   canSwitchToChild?: boolean;
-  blockedReason?: string;
+  blockedReason?: string | null;
 }
 
 interface ChildSelectionModalProps {
   visible: boolean;
   onClose: () => void;
-  onChildSelected: (child: Child) => void;
+  onChildSelected: (child: SelectableChild) => void;
 }
+
+/**
+ * Decorate linked children with whether the parent may switch into them.
+ * Exported so callers can run the same check before deciding to show this
+ * modal at all (with one eligible child there's nothing to choose).
+ */
+export const withSwitchEligibility = (children: any[]): SelectableChild[] =>
+  (children || []).map((child) => ({
+    ...child,
+    canSwitchToChild:
+      deviceSharingAllowed(child.age) && child.device_sharing_enabled !== false,
+    blockedReason: deviceSharingBlockedReason(child),
+  }));
 
 const ChildSelectionModal: React.FC<ChildSelectionModalProps> = ({
   visible,
@@ -43,9 +59,10 @@ const ChildSelectionModal: React.FC<ChildSelectionModalProps> = ({
   onChildSelected,
 }) => {
   const { user } = useAuth();
-  const [children, setChildren] = useState<Child[]>([]);
+  const [children, setChildren] = useState<SelectableChild[]>([]);
   const [loading, setLoading] = useState(false);
-  const [selectedChild, setSelectedChild] = useState<Child | null>(null);
+  const [loadError, setLoadError] = useState('');
+  const [selectedChild, setSelectedChild] = useState<SelectableChild | null>(null);
 
   useEffect(() => {
     if (visible && user?.uid) {
@@ -59,42 +76,28 @@ const ChildSelectionModal: React.FC<ChildSelectionModalProps> = ({
 
     try {
       setLoading(true);
-      const result = await authService.getLinkedChildrenWithSharing
-        ? await authService.getLinkedChildrenWithSharing(user.uid)
-        : await authService.getLinkedChildren(user.uid);
-      
+      setLoadError('');
+      const result = await authService.getLinkedChildrenWithSharing(user.uid);
+
       if (result.success) {
-        const childrenWithEligibility = result.children.map((child: Child) => {
-          const ageEligible = authService.canSwitchToChild(child.age);
-          const sharingEnabled = child.device_sharing_enabled !== false;
-          let blockedReason;
-
-          if (!ageEligible) {
-            blockedReason = "Device sharing unavailable: age 16+";
-          } else if (!sharingEnabled) {
-            blockedReason = "Device sharing is disabled for this child";
-          }
-
-          return {
-            ...child,
-            canSwitchToChild: Boolean(child.canSwitchToChild ?? (ageEligible && sharingEnabled)),
-            blockedReason,
-          };
-        });
-
-        setChildren(childrenWithEligibility);
+        const decorated = withSwitchEligibility(result.children);
+        // Switchable profiles first — the blocked teens are context, not choices.
+        decorated.sort(
+          (a, b) => Number(b.canSwitchToChild) - Number(a.canSwitchToChild)
+        );
+        setChildren(decorated);
       } else {
-        Alert.alert('Error', 'Failed to load children');
+        setLoadError("Couldn't load your kids. Pull down to refresh and try again.");
       }
     } catch (error) {
       console.error('Error fetching children:', error);
-      Alert.alert('Error', 'Failed to load children');
+      setLoadError("Couldn't load your kids. Check your connection and try again.");
     } finally {
       setLoading(false);
     }
   };
 
-  const handleChildSelect = (child: Child) => {
+  const handleChildSelect = (child: SelectableChild) => {
     if (!child.canSwitchToChild) return;
     setSelectedChild(child);
   };
@@ -106,15 +109,20 @@ const ChildSelectionModal: React.FC<ChildSelectionModalProps> = ({
     }
   };
 
-  const renderChildItem = ({ item }: { item: Child }) => (
+  const renderChildItem = ({ item }: { item: SelectableChild }) => (
     <TouchableOpacity
       style={[
         styles.childItem,
         !item.canSwitchToChild && styles.disabledChildItem,
-        selectedChild?.uid === item.uid && styles.selectedChildItem
+        selectedChild?.uid === item.uid && styles.selectedChildItem,
       ]}
       onPress={() => handleChildSelect(item)}
       disabled={!item.canSwitchToChild}
+      accessibilityRole="radio"
+      accessibilityState={{
+        selected: selectedChild?.uid === item.uid,
+        disabled: !item.canSwitchToChild,
+      }}
     >
       <View style={styles.childInfo}>
         <CustomText variant="semiBold" style={styles.childName}>
@@ -124,18 +132,38 @@ const ChildSelectionModal: React.FC<ChildSelectionModalProps> = ({
           Age {item.age} • Grade {item.grade_level}
         </CustomText>
         {item.blockedReason ? (
-          <CustomText variant="regular" style={styles.blockedReason}>
-            {item.blockedReason}
-          </CustomText>
+          <View style={styles.blockedRow}>
+            <MaterialIcons name="smartphone" size={13} color={COLORS.grey} />
+            <CustomText variant="regular" style={styles.blockedReason}>
+              {item.blockedReason}
+            </CustomText>
+          </View>
         ) : null}
       </View>
-      <View style={[
-        styles.selectionIndicator,
-        !item.canSwitchToChild && styles.disabledIndicator,
-        selectedChild?.uid === item.uid && styles.selectedIndicator
-      ]} />
+      {item.canSwitchToChild ? (
+        <View
+          style={[
+            styles.selectionIndicator,
+            selectedChild?.uid === item.uid && styles.selectedIndicator,
+          ]}
+        />
+      ) : (
+        <MaterialIcons name="lock-outline" size={18} color="#c7c7c7" />
+      )}
     </TouchableOpacity>
   );
+
+  const renderEmpty = () => (
+    <View style={styles.emptyContainer}>
+      <MaterialIcons name="child-care" size={40} color={COLORS.light_grey} />
+      <CustomText variant="regular" style={styles.emptyText}>
+        {loadError ||
+          'No kid profiles yet. Add one from your home screen to get started.'}
+      </CustomText>
+    </View>
+  );
+
+  const switchableCount = children.filter((c) => c.canSwitchToChild).length;
 
   return (
     <Modal
@@ -148,7 +176,7 @@ const ChildSelectionModal: React.FC<ChildSelectionModalProps> = ({
         <View style={styles.modalContainer}>
           <View style={styles.header}>
             <CustomText variant="semiBold" style={styles.title}>
-              Switch to Child Account
+              Switch to Kid Profile
             </CustomText>
             <TouchableOpacity onPress={onClose} style={styles.closeButton}>
               <CustomText variant="regular" style={styles.closeText}>✕</CustomText>
@@ -157,30 +185,35 @@ const ChildSelectionModal: React.FC<ChildSelectionModalProps> = ({
 
           <View style={styles.content}>
             <CustomText variant="regular" style={styles.description}>
-              Select which child account you'd like to switch to. Only children under 16 can use device sharing.
+              Pick whose profile to open on this device. Kids {TEEN_MIN_AGE} and
+              over sign in with their own email instead.
             </CustomText>
 
             {loading ? (
               <View style={styles.loadingContainer}>
                 <ActivityIndicator size="large" color={COLORS.primary} />
                 <CustomText variant="regular" style={styles.loadingText}>
-                  Loading children...
+                  Loading profiles...
                 </CustomText>
               </View>
             ) : children.length === 0 ? (
-              <View style={styles.emptyContainer}>
-                <CustomText variant="regular" style={styles.emptyText}>
-                  No linked children found.
-                </CustomText>
-              </View>
+              renderEmpty()
             ) : (
-              <FlatList
-                data={children}
-                keyExtractor={(item) => item.uid}
-                renderItem={renderChildItem}
-                style={styles.childrenList}
-                showsVerticalScrollIndicator={false}
-              />
+              <>
+                <FlatList
+                  data={children}
+                  keyExtractor={(item) => item.uid}
+                  renderItem={renderChildItem}
+                  style={styles.childrenList}
+                  showsVerticalScrollIndicator={false}
+                />
+                {switchableCount === 0 ? (
+                  <CustomText variant="regular" style={styles.allBlockedNote}>
+                    None of your kids use a shared profile right now — they each
+                    sign in with their own account.
+                  </CustomText>
+                ) : null}
+              </>
             )}
           </View>
 
@@ -247,10 +280,11 @@ const styles = StyleSheet.create({
     padding: responsiveWidth(4),
   },
   description: {
-    fontSize: FONT_SIZES.medium,
+    fontSize: FONT_SIZES.small,
     color: COLORS.grey,
     marginBottom: responsiveHeight(2),
     textAlign: 'center',
+    lineHeight: 20,
   },
   loadingContainer: {
     flex: 1,
@@ -266,6 +300,7 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+    gap: 12,
     padding: responsiveWidth(4),
   },
   emptyText: {
@@ -273,6 +308,13 @@ const styles = StyleSheet.create({
     color: COLORS.grey,
     textAlign: 'center',
     lineHeight: 24,
+  },
+  allBlockedNote: {
+    fontSize: 12,
+    color: COLORS.grey,
+    textAlign: 'center',
+    lineHeight: 18,
+    marginTop: 8,
   },
   childrenList: {
     flex: 1,
@@ -307,10 +349,16 @@ const styles = StyleSheet.create({
     fontSize: FONT_SIZES.medium,
     color: COLORS.grey,
   },
-  blockedReason: {
-    fontSize: FONT_SIZES.small,
-    color: COLORS.grey,
+  blockedRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
     marginTop: 4,
+  },
+  blockedReason: {
+    flex: 1,
+    fontSize: FONT_SIZES.extraSmall,
+    color: COLORS.grey,
   },
   selectionIndicator: {
     width: 20,
@@ -322,9 +370,6 @@ const styles = StyleSheet.create({
   selectedIndicator: {
     backgroundColor: COLORS.primary,
     borderColor: COLORS.primary,
-  },
-  disabledIndicator: {
-    borderColor: '#d8d8d8',
   },
   footer: {
     flexDirection: 'row',

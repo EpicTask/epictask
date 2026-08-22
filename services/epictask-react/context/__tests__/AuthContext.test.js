@@ -30,8 +30,9 @@ jest.mock('../../api/authService', () => ({
   getCurrentUser: jest.fn(),
   login: jest.fn(),
   logout: jest.fn(),
-  clearChildContext: jest.fn(),
+  clearChildContext: jest.fn().mockResolvedValue({ success: true }),
   getChildContext: jest.fn().mockResolvedValue({ success: false }),
+  switchToChildContext: jest.fn(),
 }));
 
 jest.mock('../../api/apiClient', () => ({
@@ -156,5 +157,145 @@ describe('AuthContext Caching Logic', () => {
     expect(queryClient.cancelQueries).toHaveBeenCalled();
     expect(queryClient.clear).toHaveBeenCalled();
     expect(firestoreService.cache.clear).toHaveBeenCalled();
+  });
+});
+
+describe('Shared device mode', () => {
+  const parentProfile = { uid: 'parent-1', role: 'parent', displayName: 'Sam' };
+
+  const renderAsParent = async () => {
+    onAuthStateChanged.mockImplementation((auth, callback) => {
+      callback({ uid: 'parent-1', getIdToken: jest.fn().mockResolvedValue('t') });
+      return jest.fn();
+    });
+    authService.getCurrentUser.mockResolvedValue({
+      success: true,
+      user: parentProfile,
+    });
+
+    const wrapper = ({ children }) => <AuthProvider>{children}</AuthProvider>;
+    const { result } = renderHook(() => useAuth(), { wrapper });
+    await act(async () => {});
+    return result;
+  };
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  it('starts a parent in parent mode and drops any stored child session', async () => {
+    const result = await renderAsParent();
+
+    // A child session must not survive an app restart — an unattended device
+    // should never reopen straight into the kid's profile.
+    expect(authService.clearChildContext).toHaveBeenCalled();
+    expect(result.current.isSharedDeviceMode).toBe(false);
+    expect(result.current.effectiveUserId).toBe('parent-1');
+  });
+
+  it('switches identity on a correct PIN without changing the signed-in user', async () => {
+    const result = await renderAsParent();
+
+    authService.switchToChildContext.mockResolvedValue({
+      success: true,
+      child: { displayName: 'Ada' },
+      context: {
+        childId: 'child-1',
+        childName: 'Ada',
+        childAge: 8,
+        expires: Date.now() + 15 * 60 * 1000,
+      },
+    });
+
+    let outcome;
+    await act(async () => {
+      outcome = await result.current.switchToChildContext('child-1', '2468');
+    });
+
+    expect(outcome.success).toBe(true);
+    expect(result.current.isSharedDeviceMode).toBe(true);
+    // Data reads follow the child...
+    expect(result.current.effectiveUserId).toBe('child-1');
+    expect(result.current.childAge).toBe(8);
+    expect(result.current.activeChildContext.childName).toBe('Ada');
+    // ...but the session is still the parent's.
+    expect(result.current.user.uid).toBe('parent-1');
+  });
+
+  it('reports a wrong PIN instead of throwing', async () => {
+    const result = await renderAsParent();
+    authService.switchToChildContext.mockResolvedValue({
+      success: false,
+      error: 'That PIN isn\'t right. 3 tries left.',
+    });
+
+    let outcome;
+    await act(async () => {
+      outcome = await result.current.switchToChildContext('child-1', '0000');
+    });
+
+    expect(outcome.success).toBe(false);
+    expect(outcome.error).toMatch('3 tries left');
+    expect(result.current.isSharedDeviceMode).toBe(false);
+    expect(result.current.effectiveUserId).toBe('parent-1');
+  });
+
+  it('returns to the parent identity on exit', async () => {
+    const result = await renderAsParent();
+    authService.switchToChildContext.mockResolvedValue({
+      success: true,
+      child: {},
+      context: {
+        childId: 'child-1',
+        childName: 'Ada',
+        childAge: 8,
+        expires: Date.now() + 15 * 60 * 1000,
+      },
+    });
+
+    await act(async () => {
+      await result.current.switchToChildContext('child-1', '2468');
+    });
+    expect(result.current.effectiveUserId).toBe('child-1');
+
+    await act(async () => {
+      result.current.exitSharedDeviceMode();
+    });
+
+    expect(result.current.isSharedDeviceMode).toBe(false);
+    expect(result.current.activeChildContext).toBeNull();
+    expect(result.current.effectiveUserId).toBe('parent-1');
+    expect(authService.clearChildContext).toHaveBeenCalled();
+  });
+
+  it('expires the child session on its own and returns to parent mode', async () => {
+    jest.useFakeTimers();
+    try {
+      const result = await renderAsParent();
+      authService.switchToChildContext.mockResolvedValue({
+        success: true,
+        child: {},
+        context: {
+          childId: 'child-1',
+          childName: 'Ada',
+          childAge: 8,
+          expires: Date.now() + 1000,
+        },
+      });
+
+      await act(async () => {
+        await result.current.switchToChildContext('child-1', '2468');
+      });
+      expect(result.current.isSharedDeviceMode).toBe(true);
+
+      await act(async () => {
+        jest.advanceTimersByTime(1500);
+      });
+
+      expect(result.current.isSharedDeviceMode).toBe(false);
+      expect(result.current.effectiveUserId).toBe('parent-1');
+    } finally {
+      jest.useRealTimers();
+    }
   });
 });

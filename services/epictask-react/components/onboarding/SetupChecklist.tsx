@@ -25,7 +25,7 @@ export const SetupChecklist = () => {
       id: "task",
       title: "3. Assign First Task",
       description: "Create a starter task like 'Make Bed' or 'Read 15 Minutes'.",
-      route: "/(parent)/(app)/screens/task/create",
+      route: "/(parent)/(app)/screens/manage-tasks/assign-task",
       actionText: "Create Task",
     },
   ];

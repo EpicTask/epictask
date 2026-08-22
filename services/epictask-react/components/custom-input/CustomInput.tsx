@@ -1,7 +1,13 @@
 import React, { ReactNode, useState } from "react";
 import CustomText from "../CustomText";
 
-import { View, TextInput, StyleSheet, TouchableOpacity } from "react-native";
+import {
+  View,
+  TextInput,
+  StyleSheet,
+  TouchableOpacity,
+  KeyboardTypeOptions,
+} from "react-native";
 
 import { COLORS } from "@/constants/Colors";
 import { Ionicons } from "@expo/vector-icons";
@@ -16,6 +22,16 @@ interface CustomInputProps {
   onChangeText: (text: string) => void;
   secureTextEntry?: boolean;
   capitalizeFirstLetter?: boolean;
+  keyboardType?: KeyboardTypeOptions;
+  autoCapitalize?: "none" | "sentences" | "words" | "characters";
+  autoCorrect?: boolean;
+  autoComplete?: React.ComponentProps<typeof TextInput>["autoComplete"];
+  textContentType?: React.ComponentProps<typeof TextInput>["textContentType"];
+  editable?: boolean;
+  /** Inline validation message rendered under the field. */
+  error?: string;
+  /** Muted hint rendered under the field when there is no error. */
+  helperText?: string;
 }
 
 const CustomInput: React.FC<CustomInputProps> = ({
@@ -28,6 +44,14 @@ const CustomInput: React.FC<CustomInputProps> = ({
   date = false,
   secureTextEntry = false,
   capitalizeFirstLetter = false,
+  keyboardType,
+  autoCapitalize,
+  autoCorrect,
+  autoComplete,
+  textContentType,
+  editable = true,
+  error,
+  helperText,
 }) => {
   const [isPasswordVisible, setIsPasswordVisible] = useState(false);
 
@@ -52,6 +76,7 @@ const CustomInput: React.FC<CustomInputProps> = ({
             ? styles.passwordInputContainer
             : styles.inputFieldContainer,
           icon ? styles.iconContainer : styles.inputFieldContainer,
+          !!error && styles.errorFieldContainer,
         ]}
       >
         <TextInput
@@ -60,6 +85,12 @@ const CustomInput: React.FC<CustomInputProps> = ({
           onChangeText={handleTextChange}
           secureTextEntry={secureTextEntry && !isPasswordVisible}
           placeholder={placeholder}
+          keyboardType={keyboardType}
+          autoCapitalize={autoCapitalize}
+          autoCorrect={autoCorrect}
+          autoComplete={autoComplete}
+          textContentType={textContentType}
+          editable={editable}
         />
         {secureTextEntry && (
           <TouchableOpacity
@@ -77,6 +108,11 @@ const CustomInput: React.FC<CustomInputProps> = ({
           <TouchableOpacity onPress={onIconClick}>{icon}</TouchableOpacity>
         )}
       </View>
+      {error ? (
+        <CustomText style={styles.errorText}>{error}</CustomText>
+      ) : helperText ? (
+        <CustomText style={styles.helperText}>{helperText}</CustomText>
+      ) : null}
     </View>
   );
 };
@@ -86,6 +122,21 @@ const styles = StyleSheet.create({
     marginTop: 20,
     width: "100%",
     alignSelf: "center",
+  },
+  errorFieldContainer: {
+    borderColor: COLORS.red,
+  },
+  errorText: {
+    marginTop: 6,
+    marginLeft: 4,
+    fontSize: 12,
+    color: COLORS.red,
+  },
+  helperText: {
+    marginTop: 6,
+    marginLeft: 4,
+    fontSize: 12,
+    color: COLORS.grey,
   },
   label: {
     position: "absolute",

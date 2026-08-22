@@ -15,6 +15,7 @@ import {
 } from "firebase/firestore";
 import { db } from "../config/firebaseConfig";
 import { TestCollections } from "../constants/CollectionNames";
+import { deviceSharingAllowed, deviceSharingBlockedReason } from "../constants/AgePolicy";
 
 // Enhanced Cache System with configurable TTL and size limits
 class EnhancedCache {
@@ -113,9 +114,9 @@ const toStoredUserProfile = (uid, userData, role) => {
     ...(userData.age !== undefined ? { age: userData.age } : {}),
     ...(gradeLevel !== null ? { grade_level: gradeLevel } : {}),
     ...(photoUrl !== null ? { photo_url: photoUrl } : {}),
-    ...(userData.pin_hash !== undefined || userData.pinHash !== undefined
-      ? { pin_hash: userData.pin_hash ?? userData.pinHash }
-      : {}),
+    // PIN hashes are never written from the client. They live in the
+    // server-only users/{uid}/private/security document and are set through
+    // mono_service (PUT /api/users/child-pin).
     ...(userData.device_sharing_enabled !== undefined || userData.deviceSharingEnabled !== undefined
       ? { device_sharing_enabled: userData.device_sharing_enabled ?? userData.deviceSharingEnabled }
       : {}),
@@ -1240,181 +1241,11 @@ export const firestoreService = {
     }
   },
 
-  // Pending Invites Management Functions
-
-  /**
-   * Create a pending invite for a child
-   * @param {object} pendingInvite - The pending invite data
-   * @returns {Promise<object>} Success result with pending invite ID
-   */
-  createPendingInvite: async (pendingInvite) => {
-    const operation = 'createPendingInvite';
-    PerformanceMonitor.start(operation);
-    
-    try {
-      if (!pendingInvite?.parent_id) {
-        throw new Error('Parent ID is required');
-      }
-      if (!pendingInvite?.invite_code) {
-        throw new Error('Invite code is required');
-      }
-
-      // Create document reference with auto-generated ID
-      const pendingInviteRef = doc(collection(db, "pending_invites"));
-      
-      // Add the ID to the pending invite data
-      const inviteData = {
-        ...pendingInvite,
-        id: pendingInviteRef.id,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
-      };
-
-      await setDoc(pendingInviteRef, inviteData);
-      
-      // Clear parent-related caches
-      UserCache.invalidate(`pending-invites:${pendingInvite.parent_id}`);
-      
-      PerformanceMonitor.end(operation);
-      return { success: true, message: "Pending invite created successfully", pendingInviteId: pendingInviteRef.id };
-    } catch (error) {
-      ErrorHandler.logError(operation, error, { parentId: pendingInvite?.parent_id });
-      throw ErrorHandler.createError(operation, error, { parentId: pendingInvite?.parent_id });
-    }
-  },
-
-  /**
-   * Get pending invites for a parent
-   * @param {string} parentId - The parent user ID
-   * @param {object} options - Options for caching
-   * @returns {Promise<object>} Success result with pending invites array
-   */
-  getPendingInvites: async (parentId, options = {}) => {
-    const operation = 'getPendingInvites';
-    PerformanceMonitor.start(operation);
-    
-    try {
-      if (!parentId) {
-        throw new Error('Parent ID is required');
-      }
-
-      const { useCache = true } = options;
-      const cacheKey = `pending-invites:${parentId}`;
-      
-      // Check cache first
-      if (useCache) {
-        const cachedInvites = UserCache.get(cacheKey);
-        if (cachedInvites) {
-          PerformanceMonitor.end(operation);
-          return { success: true, pendingInvites: cachedInvites, fromCache: true };
-        }
-      }
-
-      // Query pending invites for this parent
-      const invitesQuery = query(
-        collection(db, "pending_invites"),
-        where("parent_id", "==", parentId),
-        orderBy("created_at", "desc")
-      );
-
-      const invitesSnapshot = await getDocs(invitesQuery);
-      const pendingInvites = invitesSnapshot.docs.map((doc) => ({
-        id: doc.id,
-        ...doc.data()
-      }));
-
-      // Cache the results
-      if (useCache) {
-        UserCache.set(cacheKey, pendingInvites, 300000); // 5 minutes
-      }
-
-      PerformanceMonitor.end(operation);
-      return { success: true, pendingInvites };
-    } catch (error) {
-      ErrorHandler.logError(operation, error, { parentId });
-      throw ErrorHandler.createError(operation, error, { parentId });
-    }
-  },
-
-  /**
-   * Get pending invite by invite code
-   * @param {string} inviteCode - The invite code
-   * @returns {Promise<object>} Success result with pending invite data
-   */
-  getPendingInviteByCode: async (inviteCode) => {
-    const operation = 'getPendingInviteByCode';
-    PerformanceMonitor.start(operation);
-    
-    try {
-      if (!inviteCode) {
-        throw new Error('Invite code is required');
-      }
-
-      // Query by invite code
-      const inviteQuery = query(
-        collection(db, "pending_invites"),
-        where("invite_code", "==", inviteCode),
-        limit(1)
-      );
-
-      const inviteSnapshot = await getDocs(inviteQuery);
-      
-      if (inviteSnapshot.empty) {
-        PerformanceMonitor.end(operation);
-        return { success: false, error: "Invite code not found" };
-      }
-
-      const inviteDoc = inviteSnapshot.docs[0];
-      const pendingInvite = {
-        id: inviteDoc.id,
-        ...inviteDoc.data()
-      };
-
-      PerformanceMonitor.end(operation);
-      return { success: true, pendingInvite };
-    } catch (error) {
-      ErrorHandler.logError(operation, error, { inviteCode });
-      throw ErrorHandler.createError(operation, error, { inviteCode });
-    }
-  },
-
-  /**
-   * Update the status of a pending invite
-   * @param {string} inviteId - The invite document ID
-   * @param {string} status - New status (pending, completed, expired)
-   * @returns {Promise<object>} Success result
-   */
-  updateInviteStatus: async (inviteId, status) => {
-    const operation = 'updateInviteStatus';
-    PerformanceMonitor.start(operation);
-    
-    try {
-      if (!inviteId || !status) {
-        throw new Error('Invite ID and status are required');
-      }
-
-      const inviteRef = doc(db, "pending_invites", inviteId);
-      const updateData = {
-        status: status,
-        updated_at: new Date().toISOString()
-      };
-
-      if (status === 'completed') {
-        updateData.completed_at = new Date().toISOString();
-      }
-
-      await updateDoc(inviteRef, updateData);
-      
-      // Clear related caches - we don't know the parent_id so clear all pending invite caches
-      UserCache.invalidate(/pending-invites:.*/);
-      
-      PerformanceMonitor.end(operation);
-      return { success: true, message: "Invite status updated successfully" };
-    } catch (error) {
-      ErrorHandler.logError(operation, error, { inviteId, status });
-      throw ErrorHandler.createError(operation, error, { inviteId, status });
-    }
-  },
+  // Teen (13+) invites are issued, previewed and redeemed exclusively through
+  // mono_service (/api/users/child-invite*) so that the family link is derived
+  // from the invite rather than from whoever happens to be signed in. The old
+  // client-written `pending_invites` helpers that used to live here have been
+  // removed; Firestore rules now deny client writes to that collection.
 
   /**
    * Verify child PIN for device switching
@@ -1425,41 +1256,48 @@ export const firestoreService = {
   verifyChildPIN: async (childId, pin) => {
     const operation = 'verifyChildPIN';
     PerformanceMonitor.start(operation);
-    
+
+    if (!childId || !pin) {
+      return { success: false, error: 'Enter the 4-digit PIN to continue.' };
+    }
+
     try {
-      if (!childId || !pin) {
-        throw new Error('Child ID and PIN are required');
-      }
-
-      // Get child user profile
-      const childResult = await firestoreService.getUserProfile(childId);
-      if (!childResult.success) {
-        return { success: false, error: "Child not found" };
-      }
-
-      const child = childResult.user;
-      
-      // Check if device sharing is enabled (age < 16)
-      if (!child.device_sharing_enabled) {
-        return { success: false, error: "Device sharing not allowed for this child" };
-      }
-
-      // Verify PIN via server endpoint
+      // The server owns this decision end to end: it checks that the caller is
+      // this child's parent, that the profile is shareable, and it applies the
+      // durable lockout. It returns only display-safe fields — never the hash.
       const userApiClient = (await import("./userService")).default;
       const verifyRes = await userApiClient.post("/verify-pin", {
         child_id: childId,
-        pin: pin,
+        pin,
       });
 
-      if (!verifyRes.data || !verifyRes.data.success) {
+      PerformanceMonitor.end(operation);
+
+      if (!verifyRes.data?.success) {
         return { success: false, error: verifyRes.data?.message || "Invalid PIN" };
       }
 
-      PerformanceMonitor.end(operation);
-      return { success: true, child: child };
+      return { success: true, child: fromStoredUserProfile(verifyRes.data.child || {}) };
     } catch (error) {
+      PerformanceMonitor.end(operation);
+      const status = error?.response?.status;
+      const detail = error?.response?.data?.detail;
+
+      if (status === 429) {
+        return { success: false, locked: true, error: detail || "Too many incorrect PIN attempts. Try again later." };
+      }
+      if (status === 400) {
+        return { success: false, error: detail || "Invalid PIN" };
+      }
+      if (status === 403) {
+        return { success: false, error: detail || "You can't open that profile." };
+      }
+
       ErrorHandler.logError(operation, error, { childId });
-      throw ErrorHandler.createError(operation, error, { childId });
+      return {
+        success: false,
+        error: "Couldn't check that PIN. Check your connection and try again.",
+      };
     }
   },
 
@@ -1469,25 +1307,27 @@ export const firestoreService = {
   getLinkedChildrenWithSharing: async (parentUid, useCache = true) => {
     const operation = 'getLinkedChildrenWithSharing';
     PerformanceMonitor.start(operation);
-    
+
     try {
       // Get linked children using existing method
       const result = await firestoreService.getLinkedChildren(parentUid, useCache);
-      
+
       if (result.success) {
-        // Add device sharing capability info
+        // Age band is the single gate — see constants/AgePolicy.ts.
         const childrenWithSharing = result.children.map(child => ({
           ...child,
-          canSwitchToChild: child.device_sharing_enabled && (child.age < 16)
+          canSwitchToChild:
+            deviceSharingAllowed(child.age) && child.device_sharing_enabled !== false,
+          blockedReason: deviceSharingBlockedReason(child),
         }));
-        
+
         PerformanceMonitor.end(operation);
         return {
           ...result,
           children: childrenWithSharing
         };
       }
-      
+
       return result;
     } catch (error) {
       ErrorHandler.logError(operation, error, { parentUid });

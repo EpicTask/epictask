@@ -259,6 +259,28 @@ export const useFamilyTasks = (parentId, options = {}) => {
     }
   }, [parentId, realTime, cleanup]);
 
+  /**
+   * Re-read the children list, bypassing the cache.
+   *
+   * The family-task subscription is realtime, but the children list is a
+   * one-shot read at mount — so a kid added on another screen would not show up
+   * until the app restarted. Screens call this when they regain focus.
+   */
+  const refreshChildren = useCallback(async () => {
+    if (!parentId) return;
+    const requestId = requestIdRef.current;
+
+    try {
+      const result = await firestoreService.getLinkedChildren(parentId, false);
+      if (requestId !== requestIdRef.current) return;
+      if (result.success) {
+        setChildren(result.children);
+      }
+    } catch (err) {
+      console.error('Error refreshing children:', err);
+    }
+  }, [parentId]);
+
   // Refresh family tasks manually with enhanced cache management
   const refreshFamilyTasks = useCallback(async () => {
     if (!parentId) return;
@@ -350,6 +372,7 @@ export const useFamilyTasks = (parentId, options = {}) => {
     loading,
     error,
     refreshFamilyTasks,
+    refreshChildren,
     getTasksForChild,
     getTaskCountsForChild,
     getFamilyTaskSummary,

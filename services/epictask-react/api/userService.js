@@ -24,6 +24,48 @@ export const userService = {
     }
   },
 
+  // --- Teen (13+) invites -------------------------------------------------
+
+  createChildInvite: async (inviteData) => {
+    try {
+      const response = await userApiClient.post("/child-invite", inviteData);
+      return response.data;
+    } catch (error) {
+      console.error("Create child invite error:", error);
+      throw new Error(error.response?.data?.detail || "Failed to create invite");
+    }
+  },
+
+  listChildInvites: async () => {
+    try {
+      const response = await userApiClient.get("/child-invites");
+      return response.data;
+    } catch (error) {
+      console.error("List child invites error:", error);
+      return { success: false, invites: [] };
+    }
+  },
+
+  revokeChildInvite: async (code) => {
+    try {
+      const response = await userApiClient.delete(`/child-invite/${encodeURIComponent(code)}`);
+      return response.data;
+    } catch (error) {
+      console.error("Revoke child invite error:", error);
+      throw new Error(error.response?.data?.detail || "Failed to cancel invite");
+    }
+  },
+
+  setChildPin: async (childId, pin) => {
+    try {
+      const response = await userApiClient.put("/child-pin", { child_id: childId, pin });
+      return response.data;
+    } catch (error) {
+      console.error("Set child PIN error:", error);
+      throw new Error(error.response?.data?.detail || "Failed to update PIN");
+    }
+  },
+
   deleteAccount: async () => {
     try {
       const response = await userApiClient.delete("/account");
