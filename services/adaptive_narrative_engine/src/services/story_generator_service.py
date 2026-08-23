@@ -299,6 +299,7 @@ class StoryGeneratorService:
         story_ref.set({
             **story,
             "status": "draft",
+            "published": False,
             "updated_at": datetime.utcnow().isoformat()
         })
         
@@ -330,6 +331,7 @@ class StoryGeneratorService:
         
         # Update status and metadata
         story_data["status"] = "published"
+        story_data["published"] = True
         story_data["published_at"] = datetime.utcnow().isoformat()
         story_data["approved_by"] = approved_by
         
