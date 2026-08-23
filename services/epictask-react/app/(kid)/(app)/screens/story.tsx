@@ -13,9 +13,17 @@ import { useAuth } from "@/context/AuthContext";
 import { COLORS } from "@/constants/Colors";
 import StoryNodeCard from "@/components/story/StoryNodeCard";
 import TaskGateOverlay from "@/components/story/TaskGateOverlay";
-import { narrativeService, Node, StoryProgress, Story } from "@/api/narrativeService";
+import {
+  narrativeService,
+  Node,
+  StoryProgress,
+  Story,
+} from "@/api/narrativeService";
 import { taskService } from "@/api/taskService";
-import { responsiveWidth, responsiveHeight } from "react-native-responsive-dimensions";
+import {
+  responsiveWidth,
+  responsiveHeight,
+} from "react-native-responsive-dimensions";
 
 export default function StoryScreen() {
   const { effectiveUserId, childAge } = useAuth();
@@ -28,7 +36,10 @@ export default function StoryScreen() {
   const [progress, setProgress] = useState<StoryProgress | null>(null);
   const [advancing, setAdvancing] = useState(false);
   const [taskGateVisible, setTaskGateVisible] = useState(false);
-  const [gateTask, setGateTask] = useState<{name: string, reward: number} | null>(null);
+  const [gateTask, setGateTask] = useState<{
+    name: string;
+    reward: number;
+  } | null>(null);
 
   useEffect(() => {
     loadStoryData();
@@ -37,34 +48,47 @@ export default function StoryScreen() {
   const loadStoryData = async () => {
     try {
       setLoading(true);
-      
+
       const storyData = await narrativeService.getStory(storyId);
       setStory(storyData);
 
-      const progressList = await narrativeService.getProgress(effectiveUserId || "", storyId);
-      let currentProgress = progressList.find(p => p.status === 'in_progress');
-      
+      const progressList = await narrativeService.getProgress(
+        effectiveUserId || "",
+        storyId,
+      );
+      let currentProgress = progressList.find(
+        (p) => p.status === "in_progress",
+      );
+
       if (!currentProgress) {
-        const startResult = await narrativeService.startStory(effectiveUserId || "", storyId);
+        const startResult = await narrativeService.startStory(
+          effectiveUserId || "",
+          storyId,
+        );
         currentProgress = startResult.progress;
         setCurrentNode(startResult.node);
       } else {
-        const node = await narrativeService.getNode(storyId, currentProgress.current_node);
+        const node = await narrativeService.getNode(
+          storyId,
+          currentProgress.current_node,
+        );
         setCurrentNode(node);
       }
-      
+
       setProgress(currentProgress);
-      
+
       // Check if current node has a task gate
       if (currentProgress.current_node) {
-          const node = await narrativeService.getNode(storyId, currentProgress.current_node);
-          if (node.task_gate) {
-              await checkTaskGate(node.task_gate);
-          }
+        const node = await narrativeService.getNode(
+          storyId,
+          currentProgress.current_node,
+        );
+        if (node.task_gate) {
+          await checkTaskGate(node.task_gate);
+        }
       }
-
     } catch (error) {
-      console.error("Failed to load story:", error);
+      console.log("Failed to load story:", error);
       Alert.alert("Error", "Failed to load story. Please try again.");
     } finally {
       setLoading(false);
@@ -72,24 +96,24 @@ export default function StoryScreen() {
   };
 
   const checkTaskGate = async (taskGate: string) => {
-      try {
-          // This is a simplified check. In a real app, you'd check if the kid
-          // has completed a task matching this gate category.
-          // For now, we'll assume the gate is active if it exists.
-          setGateTask({ name: taskGate, reward: 5 });
-          setTaskGateVisible(true);
-          
-          // You would call your task service here to see if the gate is satisfied
-          // const isSatisfied = await taskService.checkGate(effectiveUserId, taskGate);
-          // if (isSatisfied) setTaskGateVisible(false);
-      } catch (error) {
-          console.error("Task gate check failed:", error);
-      }
+    try {
+      // This is a simplified check. In a real app, you'd check if the kid
+      // has completed a task matching this gate category.
+      // For now, we'll assume the gate is active if it exists.
+      setGateTask({ name: taskGate, reward: 5 });
+      setTaskGateVisible(true);
+
+      // You would call your task service here to see if the gate is satisfied
+      // const isSatisfied = await taskService.checkGate(effectiveUserId, taskGate);
+      // if (isSatisfied) setTaskGateVisible(false);
+    } catch (error) {
+      console.log("Task gate check failed:", error);
+    }
   };
 
   const handleChoice = async (
     optionId: string | undefined,
-    choiceIndex: number
+    choiceIndex: number,
   ) => {
     if (!currentNode || !progress || advancing) return;
 
@@ -109,19 +133,19 @@ export default function StoryScreen() {
         Alert.alert(
           "🎉 Story Complete!",
           "Great job! You finished the story!",
-          [{ text: "OK", onPress: () => router.back() }]
+          [{ text: "OK", onPress: () => router.back() }],
         );
       } else {
         setCurrentNode(response.next_node);
         setProgress(response.progress);
-        
+
         // Check for new task gate
         if (response.next_node.task_gate) {
-            await checkTaskGate(response.next_node.task_gate);
+          await checkTaskGate(response.next_node.task_gate);
         }
       }
     } catch (error) {
-      console.error("Failed to advance story:", error);
+      console.log("Failed to advance story:", error);
       Alert.alert("Error", "Failed to continue. Please try again.");
     } finally {
       setAdvancing(false);
@@ -142,23 +166,26 @@ export default function StoryScreen() {
     <SafeAreaView style={styles.container}>
       {/* Header */}
       <View style={styles.header}>
-          <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-              <Text style={styles.backButtonText}>← Back</Text>
-          </TouchableOpacity>
+        <TouchableOpacity
+          onPress={() => router.back()}
+          style={styles.backButton}
+        >
+          <Text style={styles.backButtonText}>← Back</Text>
+        </TouchableOpacity>
       </View>
 
-      <StoryNodeCard 
-        node={currentNode} 
-        onChoice={handleChoice} 
+      <StoryNodeCard
+        node={currentNode}
+        onChoice={handleChoice}
         disabled={advancing}
       />
 
       {gateTask && (
-          <TaskGateOverlay 
-            visible={taskGateVisible}
-            taskName={gateTask.name}
-            taskReward={gateTask.reward}
-          />
+        <TaskGateOverlay
+          visible={taskGateVisible}
+          taskName={gateTask.name}
+          taskReward={gateTask.reward}
+        />
       )}
 
       {advancing && (
@@ -181,17 +208,17 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   header: {
-      padding: 10,
-      borderBottomWidth: 1,
-      borderBottomColor: '#eee',
+    padding: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: "#eee",
   },
   backButton: {
-      padding: 10,
+    padding: 10,
   },
   backButtonText: {
-      fontSize: 18,
-      color: COLORS.primary || '#EE4266',
-      fontWeight: 'bold',
+    fontSize: 18,
+    color: COLORS.primary || "#EE4266",
+    fontWeight: "bold",
   },
   loadingOverlay: {
     ...StyleSheet.absoluteFillObject,

@@ -1,11 +1,11 @@
-import { 
-  collection, 
-  query, 
-  where, 
-  getDocs, 
-  getDoc, 
-  doc, 
-  setDoc, 
+import {
+  collection,
+  query,
+  where,
+  getDocs,
+  getDoc,
+  doc,
+  setDoc,
   onSnapshot,
   orderBy,
   limit,
@@ -15,11 +15,15 @@ import {
 } from "firebase/firestore";
 import { db } from "../config/firebaseConfig";
 import { TestCollections } from "../constants/CollectionNames";
-import { deviceSharingAllowed, deviceSharingBlockedReason } from "../constants/AgePolicy";
+import {
+  deviceSharingAllowed,
+  deviceSharingBlockedReason,
+} from "../constants/AgePolicy";
 
 // Enhanced Cache System with configurable TTL and size limits
 class EnhancedCache {
-  constructor(maxSize = 100, defaultTTL = 300000) { // 5 minutes default
+  constructor(maxSize = 100, defaultTTL = 300000) {
+    // 5 minutes default
     this.cache = new Map();
     this.maxSize = maxSize;
     this.defaultTTL = defaultTTL;
@@ -40,7 +44,7 @@ class EnhancedCache {
     // Update access order for LRU
     this.accessOrder.delete(key);
     this.accessOrder.set(key, Date.now());
-    
+
     return item.data;
   }
 
@@ -55,14 +59,14 @@ class EnhancedCache {
     this.cache.set(key, {
       data,
       timestamp: Date.now(),
-      ttl
+      ttl,
     });
-    
+
     this.accessOrder.set(key, Date.now());
   }
 
   invalidate(pattern) {
-    if (typeof pattern === 'string') {
+    if (typeof pattern === "string") {
       // Exact match
       this.cache.delete(pattern);
       this.accessOrder.delete(pattern);
@@ -86,28 +90,35 @@ class EnhancedCache {
     return {
       size: this.cache.size,
       maxSize: this.maxSize,
-      hitRate: this.hitCount / (this.hitCount + this.missCount) || 0
+      hitRate: this.hitCount / (this.hitCount + this.missCount) || 0,
     };
   }
 }
 
 // Initialize enhanced cache
 const TaskCache = new EnhancedCache(200, 300000); // 200 items, 5 min TTL
-const UserCache = new EnhancedCache(50, 600000);  // 50 items, 10 min TTL
+const UserCache = new EnhancedCache(50, 600000); // 50 items, 10 min TTL
 
 // User documents are persisted in snake_case to match the user-management
 // service and the rest of the Firestore data model. The app-facing shape is
 // normalized on reads below so screens can continue using camelCase.
 const toStoredUserProfile = (uid, userData, role) => {
   const now = new Date().toISOString();
-  const parentId = userData.parent_id ?? userData.parentId ?? userData.parent ?? null;
-  const photoUrl = userData.photo_url ?? userData.photoURL ?? userData.imageUrl ?? userData.image ?? null;
-  const gradeLevel = userData.grade_level ?? userData.gradeLevel ?? userData.grade ?? null;
+  const parentId =
+    userData.parent_id ?? userData.parentId ?? userData.parent ?? null;
+  const photoUrl =
+    userData.photo_url ??
+    userData.photoURL ??
+    userData.imageUrl ??
+    userData.image ??
+    null;
+  const gradeLevel =
+    userData.grade_level ?? userData.gradeLevel ?? userData.grade ?? null;
 
   return {
     uid,
     email: userData.email,
-    display_name: userData.display_name ?? userData.displayName ?? '',
+    display_name: userData.display_name ?? userData.displayName ?? "",
     role,
     created_at: userData.created_at ?? userData.createdAt ?? now,
     updated_at: userData.updated_at ?? userData.updatedAt ?? now,
@@ -117,16 +128,22 @@ const toStoredUserProfile = (uid, userData, role) => {
     // PIN hashes are never written from the client. They live in the
     // server-only users/{uid}/private/security document and are set through
     // mono_service (PUT /api/users/child-pin).
-    ...(userData.device_sharing_enabled !== undefined || userData.deviceSharingEnabled !== undefined
-      ? { device_sharing_enabled: userData.device_sharing_enabled ?? userData.deviceSharingEnabled }
+    ...(userData.device_sharing_enabled !== undefined ||
+    userData.deviceSharingEnabled !== undefined
+      ? {
+          device_sharing_enabled:
+            userData.device_sharing_enabled ?? userData.deviceSharingEnabled,
+        }
       : {}),
-    ...(role === 'parent' ? { children: userData.children || [] } : { parent_id: parentId }),
+    ...(role === "parent"
+      ? { children: userData.children || [] }
+      : { parent_id: parentId }),
   };
 };
 
 const fromStoredUserProfile = (userData) => ({
   ...userData,
-  displayName: userData.display_name ?? userData.displayName ?? '',
+  displayName: userData.display_name ?? userData.displayName ?? "",
   photoURL: userData.photo_url ?? userData.photoURL ?? null,
   imageUrl: userData.photo_url ?? userData.imageUrl ?? null,
   parentId: userData.parent_id ?? userData.parentId ?? userData.parent ?? null,
@@ -138,11 +155,11 @@ const fromStoredUserProfile = (userData) => ({
 // Performance monitoring utilities
 const PerformanceMonitor = {
   timers: new Map(),
-  
+
   start(operation) {
     this.timers.set(operation, Date.now());
   },
-  
+
   end(operation) {
     const startTime = this.timers.get(operation);
     if (startTime) {
@@ -152,7 +169,7 @@ const PerformanceMonitor = {
       return duration;
     }
     return 0;
-  }
+  },
 };
 
 // Error handling utilities
@@ -166,13 +183,13 @@ const ErrorHandler = {
   },
 
   logError(operation, error, context = {}) {
-    console.error(`[FirestoreService] ${operation} error:`, {
+    console.log(`[FirestoreService] ${operation} error:`, {
       message: error.message,
       code: error.code,
       context,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     });
-  }
+  },
 };
 
 // Batch operations utility
@@ -184,35 +201,39 @@ const BatchOperations = {
     }
 
     const results = await Promise.all(
-      batches.map(batch => Promise.all(batch.map(ref => getDoc(ref))))
+      batches.map((batch) => Promise.all(batch.map((ref) => getDoc(ref)))),
     );
 
     return results.flat();
-  }
+  },
 };
 
 export const firestoreService = {
   // Enhanced user profile creation with validation
   createUserProfile: async (uid, userData) => {
-    const operation = 'createUserProfile';
+    const operation = "createUserProfile";
     PerformanceMonitor.start(operation);
-    
+
     try {
       // Input validation
       if (!uid || !userData?.email) {
-        throw new Error('Invalid user data: UID and email are required');
+        throw new Error("Invalid user data: UID and email are required");
       }
 
-      const role = userData.role || 'child';
+      const role = userData.role || "child";
       const userProfile = toStoredUserProfile(uid, userData, role);
 
       await setDoc(doc(db, "users", uid), userProfile);
-      
+
       // Cache the created user
       UserCache.set(`user:${uid}`, userProfile);
-      
+
       PerformanceMonitor.end(operation);
-      return { success: true, message: "User profile created successfully", user: userProfile };
+      return {
+        success: true,
+        message: "User profile created successfully",
+        user: userProfile,
+      };
     } catch (error) {
       ErrorHandler.logError(operation, error, { uid, userData });
       throw ErrorHandler.createError(operation, error, { uid });
@@ -221,16 +242,16 @@ export const firestoreService = {
 
   // Enhanced user profile fetching with caching
   getUserProfile: async (uid, useCache = true) => {
-    const operation = 'getUserProfile';
+    const operation = "getUserProfile";
     PerformanceMonitor.start(operation);
-    
+
     try {
       if (!uid) {
-        throw new Error('UID is required');
+        throw new Error("UID is required");
       }
 
       const cacheKey = `user:${uid}`;
-      
+
       // Check cache first
       if (useCache) {
         const cachedUser = UserCache.get(cacheKey);
@@ -241,15 +262,15 @@ export const firestoreService = {
       }
 
       const userDoc = await getDoc(doc(db, "users", uid));
-      
+
       if (userDoc.exists()) {
         const userData = fromStoredUserProfile(userDoc.data());
-        
+
         // Cache the result
         if (useCache) {
           UserCache.set(cacheKey, userData);
         }
-        
+
         PerformanceMonitor.end(operation);
         return { success: true, user: userData };
       } else {
@@ -264,16 +285,16 @@ export const firestoreService = {
 
   // Optimized batch children fetching
   getLinkedChildren: async (parentUid, useCache = true) => {
-    const operation = 'getLinkedChildren';
+    const operation = "getLinkedChildren";
     PerformanceMonitor.start(operation);
-    
+
     try {
       if (!parentUid) {
-        throw new Error('Parent UID is required');
+        throw new Error("Parent UID is required");
       }
 
       const cacheKey = `children:${parentUid}`;
-      
+
       // Check cache first
       if (useCache) {
         const cachedChildren = UserCache.get(cacheKey);
@@ -283,13 +304,16 @@ export const firestoreService = {
         }
       }
 
-      const parentResult = await firestoreService.getUserProfile(parentUid, useCache);
+      const parentResult = await firestoreService.getUserProfile(
+        parentUid,
+        useCache,
+      );
       if (!parentResult.success) {
         return { success: false, error: "Parent user not found" };
       }
 
       const childrenIds = parentResult.user.children || [];
-      
+
       if (childrenIds.length === 0) {
         const emptyResult = [];
         if (useCache) {
@@ -300,12 +324,12 @@ export const firestoreService = {
       }
 
       // Use batch operations for better performance
-      const childRefs = childrenIds.map(childId => doc(db, "users", childId));
+      const childRefs = childrenIds.map((childId) => doc(db, "users", childId));
       const childrenDocs = await BatchOperations.batchGetDocs(childRefs);
-      
+
       const children = childrenDocs
-        .filter(doc => doc.exists())
-        .map(doc => ({ uid: doc.id, ...fromStoredUserProfile(doc.data()) }));
+        .filter((doc) => doc.exists())
+        .map((doc) => ({ uid: doc.id, ...fromStoredUserProfile(doc.data()) }));
 
       // Cache the results
       if (useCache) {
@@ -322,12 +346,12 @@ export const firestoreService = {
 
   // Enhanced task fetching with better query optimization
   getTasksForUser: async (uid, options = {}) => {
-    const operation = 'getTasksForUser';
+    const operation = "getTasksForUser";
     PerformanceMonitor.start(operation);
-    
+
     try {
       if (!uid) {
-        throw new Error('UID is required');
+        throw new Error("UID is required");
       }
 
       const {
@@ -336,11 +360,11 @@ export const firestoreService = {
         orderField = "expiration_date",
         orderDirection = "desc",
         includeCompleted = true,
-        status = null
+        status = null,
       } = options;
 
       const cacheKey = `tasks:${uid}:${JSON.stringify(options)}`;
-      
+
       // Check cache first
       if (useCache) {
         const cachedTasks = TaskCache.get(cacheKey);
@@ -355,7 +379,7 @@ export const firestoreService = {
         collection(db, TestCollections.Tasks),
         where("assigned_to_ids", "array-contains", uid),
         orderBy(orderField, orderDirection),
-        limit(limitCount)
+        limit(limitCount),
       );
 
       // Add status filter if specified
@@ -365,7 +389,7 @@ export const firestoreService = {
           where("assigned_to_ids", "array-contains", uid),
           where("status", "==", status),
           orderBy(orderField, orderDirection),
-          limit(limitCount)
+          limit(limitCount),
         );
       } else if (!includeCompleted) {
         taskQuery = query(
@@ -374,7 +398,7 @@ export const firestoreService = {
           where("status", "!=", "completed"),
           orderBy("status"),
           orderBy(orderField, orderDirection),
-          limit(limitCount)
+          limit(limitCount),
         );
       }
 
@@ -399,28 +423,35 @@ export const firestoreService = {
 
   // Optimized family task fetching with better error handling
   getTasksForFamily: async (parentUid, options = {}) => {
-    const operation = 'getTasksForFamily';
+    const operation = "getTasksForFamily";
     PerformanceMonitor.start(operation);
-    
+
     try {
       if (!parentUid) {
-        throw new Error('Parent UID is required');
+        throw new Error("Parent UID is required");
       }
 
       const { useCache = true, ...taskOptions } = options;
       const cacheKey = `family-tasks:${parentUid}:${JSON.stringify(options)}`;
-      
+
       // Check cache first
       if (useCache) {
         const cachedFamilyTasks = TaskCache.get(cacheKey);
         if (cachedFamilyTasks) {
           PerformanceMonitor.end(operation);
-          return { success: true, familyTasks: cachedFamilyTasks, fromCache: true };
+          return {
+            success: true,
+            familyTasks: cachedFamilyTasks,
+            fromCache: true,
+          };
         }
       }
 
       // Get parent's children
-      const childrenResult = await firestoreService.getLinkedChildren(parentUid, useCache);
+      const childrenResult = await firestoreService.getLinkedChildren(
+        parentUid,
+        useCache,
+      );
       if (!childrenResult.success) {
         return { success: false, error: "Failed to fetch children" };
       }
@@ -438,26 +469,29 @@ export const firestoreService = {
       // Execute parallel queries with better error handling
       const taskPromises = children.map(async (child) => {
         try {
-          const result = await firestoreService.getTasksForUser(child.uid, { ...taskOptions, useCache });
-          return { 
-            childId: child.uid, 
+          const result = await firestoreService.getTasksForUser(child.uid, {
+            ...taskOptions,
+            useCache,
+          });
+          return {
+            childId: child.uid,
             childName: child.displayName || child.email,
-            tasks: result.tasks || [], 
-            fromCache: result.fromCache 
+            tasks: result.tasks || [],
+            fromCache: result.fromCache,
           };
         } catch (error) {
           ErrorHandler.logError(`getTasksForUser-${child.uid}`, error);
-          return { 
-            childId: child.uid, 
+          return {
+            childId: child.uid,
             childName: child.displayName || child.email,
-            tasks: [], 
-            error: error.message 
+            tasks: [],
+            error: error.message,
           };
         }
       });
 
       const results = await Promise.all(taskPromises);
-      
+
       // Organize results by child
       const familyTasks = {};
       results.forEach(({ childId, childName, tasks, error, fromCache }) => {
@@ -466,7 +500,7 @@ export const firestoreService = {
           tasks,
           error: error || null,
           fromCache: fromCache || false,
-          lastUpdated: new Date().toISOString()
+          lastUpdated: new Date().toISOString(),
         };
       });
 
@@ -485,25 +519,25 @@ export const firestoreService = {
 
   // Enhanced real-time subscription with better memory management
   subscribeToUserTasks: (uid, callback, options = {}) => {
-    const operation = 'subscribeToUserTasks';
-    
+    const operation = "subscribeToUserTasks";
+
     try {
-      if (!uid || typeof callback !== 'function') {
-        throw new Error('UID and callback are required');
+      if (!uid || typeof callback !== "function") {
+        throw new Error("UID and callback are required");
       }
 
-      const { 
-        limitCount = 50, 
+      const {
+        limitCount = 50,
         includeCompleted = true,
         orderField = "created_at",
-        orderDirection = "desc"
+        orderDirection = "desc",
       } = options;
-      
+
       let taskQuery = query(
         collection(db, TestCollections.Tasks),
         where("assigned_to_ids", "array-contains", uid),
         orderBy(orderField, orderDirection),
-        limit(limitCount)
+        limit(limitCount),
       );
 
       // Add status filter if needed
@@ -514,7 +548,7 @@ export const firestoreService = {
           where("status", "!=", "completed"),
           orderBy("status"),
           orderBy(orderField, orderDirection),
-          limit(limitCount)
+          limit(limitCount),
         );
       }
 
@@ -525,20 +559,24 @@ export const firestoreService = {
             id: doc.id,
             ...doc.data(),
           }));
-          
+
           // Update cache with fresh data
           const cacheKey = `tasks:${uid}`;
           TaskCache.set(cacheKey, tasks, 180000);
-          
+
           // Invalidate related family cache
           TaskCache.invalidate(new RegExp(`family-tasks:.*`));
-          
+
           callback({ success: true, tasks, timestamp: Date.now() });
         },
         (error) => {
           ErrorHandler.logError(operation, error, { uid, options });
-          callback({ success: false, error: error.message, timestamp: Date.now() });
-        }
+          callback({
+            success: false,
+            error: error.message,
+            timestamp: Date.now(),
+          });
+        },
       );
 
       return unsubscribe;
@@ -550,11 +588,11 @@ export const firestoreService = {
 
   // Enhanced family subscription with better cleanup
   subscribeToFamilyTasks: (parentUid, callback, options = {}) => {
-    const operation = 'subscribeToFamilyTasks';
-    
+    const operation = "subscribeToFamilyTasks";
+
     try {
-      if (!parentUid || typeof callback !== 'function') {
-        throw new Error('Parent UID and callback are required');
+      if (!parentUid || typeof callback !== "function") {
+        throw new Error("Parent UID and callback are required");
       }
 
       const unsubscribes = [];
@@ -564,117 +602,125 @@ export const firestoreService = {
       let cancelled = false;
 
       // Get parent's children first
-      firestoreService.getLinkedChildren(parentUid).then((childrenResult) => {
-        if (cancelled) {
-          return;
-        }
-
-        if (!childrenResult.success) {
-          callback({ success: false, error: "Failed to fetch children" });
-          return;
-        }
-
-        const children = childrenResult.children;
-        childrenCount = children.length;
-        
-        if (childrenCount === 0) {
-          callback({ success: true, familyTasks: {} });
-          return;
-        }
-
-        // Subscribe to each child's tasks
-        children.forEach((child) => {
+      firestoreService
+        .getLinkedChildren(parentUid)
+        .then((childrenResult) => {
           if (cancelled) {
             return;
           }
 
-          const unsubscribe = firestoreService.subscribeToUserTasks(
-            child.uid,
-            (result) => {
-              if (cancelled) {
-                return;
-              }
+          if (!childrenResult.success) {
+            callback({ success: false, error: "Failed to fetch children" });
+            return;
+          }
 
-              if (result.success) {
-                familyTasks[child.uid] = {
-                  childName: child.displayName || child.email,
-                  tasks: result.tasks,
-                  error: null,
-                  lastUpdated: new Date().toISOString()
-                };
-              } else {
-                familyTasks[child.uid] = {
-                  childName: child.displayName || child.email,
-                  tasks: [],
-                  error: result.error,
-                  lastUpdated: new Date().toISOString()
-                };
-              }
-              
-              // Only call callback after first initialization or on updates
-              initializedChildren++;
-              if (initializedChildren >= childrenCount || familyTasks[child.uid]) {
-                callback({ 
-                  success: true, 
-                  familyTasks: { ...familyTasks },
-                  timestamp: Date.now()
-                });
-              }
-            },
-            options
-          );
-          
-          unsubscribes.push(unsubscribe);
+          const children = childrenResult.children;
+          childrenCount = children.length;
+
+          if (childrenCount === 0) {
+            callback({ success: true, familyTasks: {} });
+            return;
+          }
+
+          // Subscribe to each child's tasks
+          children.forEach((child) => {
+            if (cancelled) {
+              return;
+            }
+
+            const unsubscribe = firestoreService.subscribeToUserTasks(
+              child.uid,
+              (result) => {
+                if (cancelled) {
+                  return;
+                }
+
+                if (result.success) {
+                  familyTasks[child.uid] = {
+                    childName: child.displayName || child.email,
+                    tasks: result.tasks,
+                    error: null,
+                    lastUpdated: new Date().toISOString(),
+                  };
+                } else {
+                  familyTasks[child.uid] = {
+                    childName: child.displayName || child.email,
+                    tasks: [],
+                    error: result.error,
+                    lastUpdated: new Date().toISOString(),
+                  };
+                }
+
+                // Only call callback after first initialization or on updates
+                initializedChildren++;
+                if (
+                  initializedChildren >= childrenCount ||
+                  familyTasks[child.uid]
+                ) {
+                  callback({
+                    success: true,
+                    familyTasks: { ...familyTasks },
+                    timestamp: Date.now(),
+                  });
+                }
+              },
+              options,
+            );
+
+            unsubscribes.push(unsubscribe);
+          });
+        })
+        .catch((error) => {
+          if (cancelled) {
+            return;
+          }
+
+          ErrorHandler.logError(operation, error, { parentUid });
+          callback({ success: false, error: error.message });
         });
-      }).catch((error) => {
-        if (cancelled) {
-          return;
-        }
-
-        ErrorHandler.logError(operation, error, { parentUid });
-        callback({ success: false, error: error.message });
-      });
 
       // Return enhanced cleanup function
       return () => {
         cancelled = true;
-        unsubscribes.forEach(unsubscribe => {
+        unsubscribes.forEach((unsubscribe) => {
           try {
             unsubscribe();
           } catch (error) {
-            console.warn('Error during unsubscribe:', error);
+            console.warn("Error during unsubscribe:", error);
           }
         });
         unsubscribes.length = 0; // Clear array
       };
     } catch (error) {
       ErrorHandler.logError(`${operation}-setup`, error, { parentUid });
-      throw ErrorHandler.createError(`${operation}-setup`, error, { parentUid });
+      throw ErrorHandler.createError(`${operation}-setup`, error, {
+        parentUid,
+      });
     }
   },
 
   // Enhanced pagination with better performance
   getTasksWithPagination: async (uid, lastDoc = null, options = {}) => {
-    const operation = 'getTasksWithPagination';
+    const operation = "getTasksWithPagination";
     PerformanceMonitor.start(operation);
-    
+
     try {
       if (!uid) {
-        throw new Error('UID is required');
+        throw new Error("UID is required");
       }
 
       const {
         limitCount = 20,
         orderField = "created_at",
         orderDirection = "desc",
-        status = null
+        status = null,
       } = options;
 
       let taskQuery = query(
         collection(db, TestCollections.Tasks),
         where("assigned_to_ids", "array-contains", uid),
         orderBy(orderField, orderDirection),
-        limit(limitCount)
+        limit(limitCount),
       );
 
       // Add status filter if specified
@@ -684,7 +730,7 @@ export const firestoreService = {
           where("assigned_to_ids", "array-contains", uid),
           where("status", "==", status),
           orderBy(orderField, orderDirection),
-          limit(limitCount)
+          limit(limitCount),
         );
       }
 
@@ -696,19 +742,20 @@ export const firestoreService = {
       const tasks = tasksSnapshot.docs.map((doc) => ({
         id: doc.id,
         ...doc.data(),
-        _doc: doc // Keep reference for pagination
+        _doc: doc, // Keep reference for pagination
       }));
 
       const hasMore = tasks.length === limitCount;
-      const lastDocument = tasks.length > 0 ? tasks[tasks.length - 1]._doc : null;
+      const lastDocument =
+        tasks.length > 0 ? tasks[tasks.length - 1]._doc : null;
 
       PerformanceMonitor.end(operation);
-      return { 
-        success: true, 
+      return {
+        success: true,
         tasks: tasks.map(({ _doc, ...task }) => task), // Remove _doc from returned data
         hasMore,
         lastDocument,
-        totalFetched: tasks.length
+        totalFetched: tasks.length,
       };
     } catch (error) {
       ErrorHandler.logError(operation, error, { uid, options });
@@ -718,13 +765,13 @@ export const firestoreService = {
 
   // Enhanced user fetching with caching and filtering
   getAllUsers: async (options = {}) => {
-    const operation = 'getAllUsers';
+    const operation = "getAllUsers";
     PerformanceMonitor.start(operation);
-    
+
     try {
       const { useCache = true, role = null } = options;
-      const cacheKey = `all-users:${role || 'all'}`;
-      
+      const cacheKey = `all-users:${role || "all"}`;
+
       // Check cache first
       if (useCache) {
         const cachedUsers = UserCache.get(cacheKey);
@@ -735,7 +782,7 @@ export const firestoreService = {
       }
 
       let usersQuery = collection(db, "users");
-      
+
       // Add role filter if specified
       if (role) {
         usersQuery = query(usersQuery, where("role", "==", role));
@@ -762,29 +809,33 @@ export const firestoreService = {
 
   // Enhanced task reward with cache invalidation
   rewardTask: async (taskId, rewardData = {}) => {
-    const operation = 'rewardTask';
+    const operation = "rewardTask";
     PerformanceMonitor.start(operation);
-    
+
     try {
       if (!taskId) {
-        throw new Error('Task ID is required');
+        throw new Error("Task ID is required");
       }
 
       const taskRef = doc(db, TestCollections.Tasks, taskId);
       const updateData = {
         rewarded: true,
         rewardedAt: new Date().toISOString(),
-        ...rewardData
+        ...rewardData,
       };
 
       await updateDoc(taskRef, updateData);
-      
+
       // Invalidate related caches
       TaskCache.invalidate(new RegExp(`tasks:.*`));
       TaskCache.invalidate(new RegExp(`family-tasks:.*`));
-      
+
       PerformanceMonitor.end(operation);
-      return { success: true, message: "Task rewarded successfully", updateData };
+      return {
+        success: true,
+        message: "Task rewarded successfully",
+        updateData,
+      };
     } catch (error) {
       ErrorHandler.logError(operation, error, { taskId, rewardData });
       throw ErrorHandler.createError(operation, error, { taskId });
@@ -793,42 +844,49 @@ export const firestoreService = {
 
   // Batch operations for better performance
   batchUpdateTasks: async (updates) => {
-    const operation = 'batchUpdateTasks';
+    const operation = "batchUpdateTasks";
     PerformanceMonitor.start(operation);
-    
+
     try {
       if (!Array.isArray(updates) || updates.length === 0) {
-        throw new Error('Updates array is required and must not be empty');
+        throw new Error("Updates array is required and must not be empty");
       }
 
       const batch = writeBatch(db);
       const maxBatchSize = 500; // Firestore limit
-      
+
       if (updates.length > maxBatchSize) {
-        throw new Error(`Batch size exceeds limit. Maximum ${maxBatchSize} operations allowed.`);
+        throw new Error(
+          `Batch size exceeds limit. Maximum ${maxBatchSize} operations allowed.`,
+        );
       }
 
       updates.forEach(({ taskId, data }) => {
         if (!taskId || !data) {
-          throw new Error('Each update must have taskId and data');
+          throw new Error("Each update must have taskId and data");
         }
-        
+
         const taskRef = doc(db, TestCollections.Tasks, taskId);
         batch.update(taskRef, {
           ...data,
-          updatedAt: new Date().toISOString()
+          updatedAt: new Date().toISOString(),
         });
       });
 
       await batch.commit();
-      
+
       // Invalidate all task caches
       TaskCache.clear();
-      
+
       PerformanceMonitor.end(operation);
-      return { success: true, message: `${updates.length} tasks updated successfully` };
+      return {
+        success: true,
+        message: `${updates.length} tasks updated successfully`,
+      };
     } catch (error) {
-      ErrorHandler.logError(operation, error, { updatesCount: updates?.length });
+      ErrorHandler.logError(operation, error, {
+        updatesCount: updates?.length,
+      });
       throw ErrorHandler.createError(operation, error);
     }
   },
@@ -839,34 +897,34 @@ export const firestoreService = {
       TaskCache.clear();
       UserCache.clear();
     },
-    
+
     clearTasks: () => TaskCache.clear(),
     clearUsers: () => UserCache.clear(),
-    
+
     invalidateUser: (uid) => {
       UserCache.invalidate(`user:${uid}`);
       UserCache.invalidate(new RegExp(`children:${uid}`));
     },
-    
+
     invalidateUserTasks: (uid) => {
       TaskCache.invalidate(new RegExp(`tasks:${uid}`));
       TaskCache.invalidate(new RegExp(`family-tasks:.*`));
     },
-    
+
     getStats: () => ({
       tasks: TaskCache.getStats(),
-      users: UserCache.getStats()
-    })
+      users: UserCache.getStats(),
+    }),
   },
 
   // Performance monitoring utilities
   performance: {
     getStats: () => PerformanceMonitor.timers.size,
-    clearTimers: () => PerformanceMonitor.timers.clear()
+    clearTimers: () => PerformanceMonitor.timers.clear(),
   },
 
   // Task Summary Functions (moved from backend)
-  
+
   /**
    * Get task summary for a user that created tasks (parent view)
    * @param {string} userId - The user ID who created the tasks
@@ -874,17 +932,17 @@ export const firestoreService = {
    * @returns {Promise<object>} Task summary with completed, in_progress, and total counts
    */
   getTaskSummary: async (userId, options = {}) => {
-    const operation = 'getTaskSummary';
+    const operation = "getTaskSummary";
     PerformanceMonitor.start(operation);
-    
+
     try {
       if (!userId) {
-        throw new Error('User ID is required');
+        throw new Error("User ID is required");
       }
 
       const { useCache = true } = options;
       const cacheKey = `task-summary:${userId}`;
-      
+
       // Check cache first
       if (useCache) {
         const cachedSummary = TaskCache.get(cacheKey);
@@ -897,11 +955,11 @@ export const firestoreService = {
       // Query all tasks created by this user
       const tasksQuery = query(
         collection(db, TestCollections.Tasks),
-        where("user_id", "==", userId)
+        where("user_id", "==", userId),
       );
 
       const tasksSnapshot = await getDocs(tasksQuery);
-      
+
       // Count by status
       let completedCount = 0;
       let inProgressCount = 0;
@@ -909,7 +967,7 @@ export const firestoreService = {
       tasksSnapshot.docs.forEach((doc) => {
         const taskData = doc.data();
         const rewarded = taskData.rewarded || false;
-        
+
         if (rewarded === true) {
           completedCount++;
         } else {
@@ -920,7 +978,7 @@ export const firestoreService = {
       const summary = {
         completed: completedCount,
         in_progress: inProgressCount,
-        total: tasksSnapshot.docs.length
+        total: tasksSnapshot.docs.length,
       };
 
       // Cache the results
@@ -943,17 +1001,17 @@ export const firestoreService = {
    * @returns {Promise<object>} Task summary with completed, in_progress, and total counts
    */
   getKidTaskSummary: async (userId, options = {}) => {
-    const operation = 'getKidTaskSummary';
+    const operation = "getKidTaskSummary";
     PerformanceMonitor.start(operation);
-    
+
     try {
       if (!userId) {
-        throw new Error('User ID is required');
+        throw new Error("User ID is required");
       }
 
       const { useCache = true } = options;
       const cacheKey = `kid-task-summary:${userId}`;
-      
+
       // Check cache first
       if (useCache) {
         const cachedSummary = TaskCache.get(cacheKey);
@@ -966,11 +1024,11 @@ export const firestoreService = {
       // Query all tasks assigned to this user
       const tasksQuery = query(
         collection(db, TestCollections.Tasks),
-        where("assigned_to_ids", "array-contains", userId)
+        where("assigned_to_ids", "array-contains", userId),
       );
 
       const tasksSnapshot = await getDocs(tasksQuery);
-      
+
       // Count by status
       let completedCount = 0;
       let inProgressCount = 0;
@@ -978,7 +1036,7 @@ export const firestoreService = {
       tasksSnapshot.docs.forEach((doc) => {
         const taskData = doc.data();
         const rewarded = taskData.rewarded || false;
-        
+
         if (rewarded === true) {
           completedCount++;
         } else {
@@ -989,7 +1047,7 @@ export const firestoreService = {
       const summary = {
         completed: completedCount,
         in_progress: inProgressCount,
-        total: tasksSnapshot.docs.length
+        total: tasksSnapshot.docs.length,
       };
 
       // Cache the results
@@ -1014,17 +1072,17 @@ export const firestoreService = {
    * @returns {Promise<Array>} Recent tasks array
    */
   getRecentTasks: async (userId, limitCount = 5, days = 7, options = {}) => {
-    const operation = 'getRecentTasks';
+    const operation = "getRecentTasks";
     PerformanceMonitor.start(operation);
-    
+
     try {
       if (!userId) {
-        throw new Error('User ID is required');
+        throw new Error("User ID is required");
       }
 
       const { useCache = true } = options;
       const cacheKey = `recent-tasks:${userId}:${limitCount}:${days}`;
-      
+
       // Check cache first
       if (useCache) {
         const cachedTasks = TaskCache.get(cacheKey);
@@ -1044,13 +1102,13 @@ export const firestoreService = {
         where("assigned_to_ids", "array-contains", userId),
         where("timestamp", ">=", startDate),
         orderBy("timestamp", "desc"),
-        limit(limitCount)
+        limit(limitCount),
       );
 
       const tasksSnapshot = await getDocs(tasksQuery);
       const tasks = tasksSnapshot.docs.map((doc) => ({
         id: doc.id,
-        ...doc.data()
+        ...doc.data(),
       }));
 
       // Cache the results
@@ -1073,17 +1131,17 @@ export const firestoreService = {
    * @returns {Promise<object>} User rewards with tokens_earned, level, and rank
    */
   getUserRewards: async (userId, options = {}) => {
-    const operation = 'getUserRewards';
+    const operation = "getUserRewards";
     PerformanceMonitor.start(operation);
-    
+
     try {
       if (!userId) {
-        throw new Error('User ID is required');
+        throw new Error("User ID is required");
       }
 
       const { useCache = true } = options;
       const cacheKey = `user-rewards:${userId}`;
-      
+
       // Check cache first
       if (useCache) {
         const cachedRewards = UserCache.get(cacheKey);
@@ -1102,7 +1160,7 @@ export const firestoreService = {
         rewards = {
           tokens_earned: 0,
           level: 1,
-          rank: 0
+          rank: 0,
         };
       } else {
         const rewardData = rewardsDoc.data();
@@ -1117,7 +1175,7 @@ export const firestoreService = {
         rewards = {
           tokens_earned: tokensEarned,
           level: level,
-          rank: rank
+          rank: rank,
         };
       }
 
@@ -1141,13 +1199,13 @@ export const firestoreService = {
    * @returns {Promise<number>} User's rank
    */
   getUserRank: async (userId, tokensEarned) => {
-    const operation = 'getUserRank';
-    
+    const operation = "getUserRank";
+
     try {
       // Count users with more tokens
       const leaderboardQuery = query(
         collection(db, TestCollections.LEADERBOARD),
-        where("tokens_earned", ">", tokensEarned)
+        where("tokens_earned", ">", tokensEarned),
       );
 
       const higherUsersSnapshot = await getDocs(leaderboardQuery);
@@ -1165,17 +1223,17 @@ export const firestoreService = {
    * @returns {Promise<Array>} Array of children rewards
    */
   getChildrenRewards: async (parentId, options = {}) => {
-    const operation = 'getChildrenRewards';
+    const operation = "getChildrenRewards";
     PerformanceMonitor.start(operation);
-    
+
     try {
       if (!parentId) {
-        throw new Error('Parent ID is required');
+        throw new Error("Parent ID is required");
       }
 
       const { useCache = true } = options;
       const cacheKey = `children-rewards:${parentId}`;
-      
+
       // Check cache first
       if (useCache) {
         const cachedRewards = UserCache.get(cacheKey);
@@ -1208,11 +1266,13 @@ export const firestoreService = {
       // Get rewards for all children
       const rewardsPromises = childIds.map(async (childId) => {
         try {
-          const rewards = await firestoreService.getUserRewards(childId, { useCache });
+          const rewards = await firestoreService.getUserRewards(childId, {
+            useCache,
+          });
           return {
             user_id: childId,
             ...rewards,
-            error: null
+            error: null,
           };
         } catch (error) {
           ErrorHandler.logError(`getUserRewards-${childId}`, error);
@@ -1221,7 +1281,7 @@ export const firestoreService = {
             tokens_earned: 0,
             level: 1,
             rank: 0,
-            error: error.message
+            error: error.message,
           };
         }
       });
@@ -1254,11 +1314,11 @@ export const firestoreService = {
    * @returns {Promise<object>} Success result with child data
    */
   verifyChildPIN: async (childId, pin) => {
-    const operation = 'verifyChildPIN';
+    const operation = "verifyChildPIN";
     PerformanceMonitor.start(operation);
 
     if (!childId || !pin) {
-      return { success: false, error: 'Enter the 4-digit PIN to continue.' };
+      return { success: false, error: "Enter the 4-digit PIN to continue." };
     }
 
     try {
@@ -1274,23 +1334,36 @@ export const firestoreService = {
       PerformanceMonitor.end(operation);
 
       if (!verifyRes.data?.success) {
-        return { success: false, error: verifyRes.data?.message || "Invalid PIN" };
+        return {
+          success: false,
+          error: verifyRes.data?.message || "Invalid PIN",
+        };
       }
 
-      return { success: true, child: fromStoredUserProfile(verifyRes.data.child || {}) };
+      return {
+        success: true,
+        child: fromStoredUserProfile(verifyRes.data.child || {}),
+      };
     } catch (error) {
       PerformanceMonitor.end(operation);
       const status = error?.response?.status;
       const detail = error?.response?.data?.detail;
 
       if (status === 429) {
-        return { success: false, locked: true, error: detail || "Too many incorrect PIN attempts. Try again later." };
+        return {
+          success: false,
+          locked: true,
+          error: detail || "Too many incorrect PIN attempts. Try again later.",
+        };
       }
       if (status === 400) {
         return { success: false, error: detail || "Invalid PIN" };
       }
       if (status === 403) {
-        return { success: false, error: detail || "You can't open that profile." };
+        return {
+          success: false,
+          error: detail || "You can't open that profile.",
+        };
       }
 
       ErrorHandler.logError(operation, error, { childId });
@@ -1305,26 +1378,30 @@ export const firestoreService = {
    * Enhanced getLinkedChildren to include device sharing capabilities
    */
   getLinkedChildrenWithSharing: async (parentUid, useCache = true) => {
-    const operation = 'getLinkedChildrenWithSharing';
+    const operation = "getLinkedChildrenWithSharing";
     PerformanceMonitor.start(operation);
 
     try {
       // Get linked children using existing method
-      const result = await firestoreService.getLinkedChildren(parentUid, useCache);
+      const result = await firestoreService.getLinkedChildren(
+        parentUid,
+        useCache,
+      );
 
       if (result.success) {
         // Age band is the single gate — see constants/AgePolicy.ts.
-        const childrenWithSharing = result.children.map(child => ({
+        const childrenWithSharing = result.children.map((child) => ({
           ...child,
           canSwitchToChild:
-            deviceSharingAllowed(child.age) && child.device_sharing_enabled !== false,
+            deviceSharingAllowed(child.age) &&
+            child.device_sharing_enabled !== false,
           blockedReason: deviceSharingBlockedReason(child),
         }));
 
         PerformanceMonitor.end(operation);
         return {
           ...result,
-          children: childrenWithSharing
+          children: childrenWithSharing,
         };
       }
 
@@ -1342,23 +1419,27 @@ export const firestoreService = {
    * @returns {Promise<Array>} Array of notifications
    */
   getNotifications: async (userId, options = {}) => {
-    const operation = 'getNotifications';
+    const operation = "getNotifications";
     PerformanceMonitor.start(operation);
-    
+
     try {
       if (!userId) {
-        throw new Error('User ID is required');
+        throw new Error("User ID is required");
       }
 
       const { useCache = true, limitCount = 50 } = options;
       const cacheKey = `notifications:${userId}`;
-      
+
       // Check cache first
       if (useCache) {
         const cachedNotifications = TaskCache.get(cacheKey);
         if (cachedNotifications) {
           PerformanceMonitor.end(operation);
-          return { success: true, notifications: cachedNotifications, fromCache: true };
+          return {
+            success: true,
+            notifications: cachedNotifications,
+            fromCache: true,
+          };
         }
       }
 
@@ -1366,13 +1447,13 @@ export const firestoreService = {
       const notificationsQuery = query(
         collection(db, "notifications", userId, "notifications"),
         orderBy("timestamp", "desc"),
-        limit(limitCount)
+        limit(limitCount),
       );
 
       const notificationsSnapshot = await getDocs(notificationsQuery);
       const notifications = notificationsSnapshot.docs.map((doc) => ({
         id: doc.id,
-        ...doc.data()
+        ...doc.data(),
       }));
 
       // Cache the results
@@ -1386,5 +1467,5 @@ export const firestoreService = {
       ErrorHandler.logError(operation, error, { userId });
       throw ErrorHandler.createError(operation, error, { userId });
     }
-  }
+  },
 };

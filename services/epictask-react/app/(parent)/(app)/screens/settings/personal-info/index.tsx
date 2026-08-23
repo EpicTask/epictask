@@ -12,13 +12,22 @@ import {
 import { ICONS, IMAGES } from "@/assets";
 import { router } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { Image, StyleSheet, Text, TouchableOpacity, View, Alert } from "react-native";
+import {
+  Image,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+  Alert,
+} from "react-native";
 import AuthButton from "@/components/buttons/AuthButton";
 
 const PersonalInformation = () => {
   const { user, updateProfile } = useContext(AuthContext);
   const [name, setName] = useState(user?.displayName || "");
-  const [profileImage, setProfileImage] = useState(user?.imageUrl || user?.photoURL || null);
+  const [profileImage, setProfileImage] = useState(
+    user?.imageUrl || user?.photoURL || null,
+  );
   const [isUpdating, setIsUpdating] = useState(false);
 
   useEffect(() => {
@@ -30,10 +39,14 @@ const PersonalInformation = () => {
 
   const pickImage = async () => {
     try {
-      const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      const permissionResult =
+        await ImagePicker.requestMediaLibraryPermissionsAsync();
 
       if (permissionResult.granted === false) {
-        Alert.alert("Permission Required", "Permission to access camera roll is required!");
+        Alert.alert(
+          "Permission Required",
+          "Permission to access camera roll is required!",
+        );
         return;
       }
 
@@ -63,11 +76,14 @@ const PersonalInformation = () => {
       const updateData: any = {
         displayName: name.trim(),
       };
-      
+
       if (profileImage && profileImage !== (user?.imageUrl || user?.photoURL)) {
         // Upload image to Firebase Storage
         const storagePath = `avatars/${user.uid}_${Date.now()}.jpg`;
-        const downloadURL = await storageService.uploadImage(profileImage, storagePath);
+        const downloadURL = await storageService.uploadImage(
+          profileImage,
+          storagePath,
+        );
         updateData.imageUrl = downloadURL;
       }
 
@@ -76,7 +92,7 @@ const PersonalInformation = () => {
       router.back();
     } catch (error) {
       Alert.alert("Error", "Failed to update profile");
-      console.error(error);
+      console.log(error);
     } finally {
       setIsUpdating(false);
     }
@@ -113,7 +129,7 @@ const PersonalInformation = () => {
         <View style={{ paddingVertical: 10, alignItems: "center" }}>
           <TouchableOpacity onPress={pickImage}>
             <Image
-              source={profileImage ? { uri: profileImage } : IMAGES.profile }
+              source={profileImage ? { uri: profileImage } : IMAGES.profile}
               style={{
                 width: responsiveWidth(30),
                 borderRadius: responsiveWidth(15),
@@ -122,13 +138,24 @@ const PersonalInformation = () => {
                 borderColor: "#EE4266",
               }}
             />
-            <View style={{ position: "absolute", bottom: 0, right: responsiveWidth(35), backgroundColor: 'white', borderRadius: 15, padding: 5 }}>
-                {ICONS.edit}
+            <View
+              style={{
+                position: "absolute",
+                bottom: 0,
+                right: responsiveWidth(35),
+                backgroundColor: "white",
+                borderRadius: 15,
+                padding: 5,
+              }}
+            >
+              {ICONS.edit}
             </View>
           </TouchableOpacity>
         </View>
         <View>
-          <Text style={{ fontWeight: "500", fontSize: FONT_SIZES.large }}>Account Details</Text>
+          <Text style={{ fontWeight: "500", fontSize: FONT_SIZES.large }}>
+            Account Details
+          </Text>
         </View>
         <View style={{ gap: 14 }}>
           <CustomInput

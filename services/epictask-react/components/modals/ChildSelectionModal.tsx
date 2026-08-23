@@ -1,5 +1,5 @@
 import { FONT_SIZES } from "@/constants/FontSize";
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from "react";
 import {
   Modal,
   View,
@@ -7,22 +7,22 @@ import {
   TouchableOpacity,
   FlatList,
   ActivityIndicator,
-} from 'react-native';
+} from "react-native";
 import {
   responsiveHeight,
   responsiveWidth,
-} from 'react-native-responsive-dimensions';
-import { MaterialIcons } from '@expo/vector-icons';
-import CustomText from '@/components/CustomText';
-import CustomButton from '@/components/buttons/CustomButton';
-import { COLORS } from '@/constants/Colors';
-import authService from '@/api/authService';
-import { useAuth } from '@/context/AuthContext';
+} from "react-native-responsive-dimensions";
+import { MaterialIcons } from "@expo/vector-icons";
+import CustomText from "@/components/CustomText";
+import CustomButton from "@/components/buttons/CustomButton";
+import { COLORS } from "@/constants/Colors";
+import authService from "@/api/authService";
+import { useAuth } from "@/context/AuthContext";
 import {
   TEEN_MIN_AGE,
   deviceSharingAllowed,
   deviceSharingBlockedReason,
-} from '@/constants/AgePolicy';
+} from "@/constants/AgePolicy";
 
 export interface SelectableChild {
   uid: string;
@@ -61,8 +61,10 @@ const ChildSelectionModal: React.FC<ChildSelectionModalProps> = ({
   const { user } = useAuth();
   const [children, setChildren] = useState<SelectableChild[]>([]);
   const [loading, setLoading] = useState(false);
-  const [loadError, setLoadError] = useState('');
-  const [selectedChild, setSelectedChild] = useState<SelectableChild | null>(null);
+  const [loadError, setLoadError] = useState("");
+  const [selectedChild, setSelectedChild] = useState<SelectableChild | null>(
+    null,
+  );
 
   useEffect(() => {
     if (visible && user?.uid) {
@@ -76,22 +78,26 @@ const ChildSelectionModal: React.FC<ChildSelectionModalProps> = ({
 
     try {
       setLoading(true);
-      setLoadError('');
+      setLoadError("");
       const result = await authService.getLinkedChildrenWithSharing(user.uid);
 
       if (result.success) {
         const decorated = withSwitchEligibility(result.children);
         // Switchable profiles first — the blocked teens are context, not choices.
         decorated.sort(
-          (a, b) => Number(b.canSwitchToChild) - Number(a.canSwitchToChild)
+          (a, b) => Number(b.canSwitchToChild) - Number(a.canSwitchToChild),
         );
         setChildren(decorated);
       } else {
-        setLoadError("Couldn't load your kids. Pull down to refresh and try again.");
+        setLoadError(
+          "Couldn't load your kids. Pull down to refresh and try again.",
+        );
       }
     } catch (error) {
-      console.error('Error fetching children:', error);
-      setLoadError("Couldn't load your kids. Check your connection and try again.");
+      console.log("Error fetching children:", error);
+      setLoadError(
+        "Couldn't load your kids. Check your connection and try again.",
+      );
     } finally {
       setLoading(false);
     }
@@ -158,7 +164,7 @@ const ChildSelectionModal: React.FC<ChildSelectionModalProps> = ({
       <MaterialIcons name="child-care" size={40} color={COLORS.light_grey} />
       <CustomText variant="regular" style={styles.emptyText}>
         {loadError ||
-          'No kid profiles yet. Add one from your home screen to get started.'}
+          "No kid profiles yet. Add one from your home screen to get started."}
       </CustomText>
     </View>
   );
@@ -179,7 +185,9 @@ const ChildSelectionModal: React.FC<ChildSelectionModalProps> = ({
               Switch to Kid Profile
             </CustomText>
             <TouchableOpacity onPress={onClose} style={styles.closeButton}>
-              <CustomText variant="regular" style={styles.closeText}>✕</CustomText>
+              <CustomText variant="regular" style={styles.closeText}>
+                ✕
+              </CustomText>
             </TouchableOpacity>
           </View>
 
@@ -241,25 +249,25 @@ const ChildSelectionModal: React.FC<ChildSelectionModalProps> = ({
 const styles = StyleSheet.create({
   overlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    justifyContent: 'center',
-    alignItems: 'center',
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    justifyContent: "center",
+    alignItems: "center",
   },
   modalContainer: {
-    backgroundColor: 'white',
+    backgroundColor: "white",
     borderRadius: 16,
     width: responsiveWidth(90),
     maxHeight: responsiveHeight(80),
     padding: 0,
-    overflow: 'hidden',
+    overflow: "hidden",
   },
   header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     padding: responsiveWidth(4),
     borderBottomWidth: 1,
-    borderBottomColor: '#f0f0f0',
+    borderBottomColor: "#f0f0f0",
   },
   title: {
     fontSize: FONT_SIZES.extraLarge,
@@ -268,8 +276,8 @@ const styles = StyleSheet.create({
   closeButton: {
     width: 30,
     height: 30,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
   },
   closeText: {
     fontSize: FONT_SIZES.extraLarge,
@@ -283,13 +291,13 @@ const styles = StyleSheet.create({
     fontSize: FONT_SIZES.small,
     color: COLORS.grey,
     marginBottom: responsiveHeight(2),
-    textAlign: 'center',
+    textAlign: "center",
     lineHeight: 20,
   },
   loadingContainer: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
     gap: 10,
   },
   loadingText: {
@@ -298,21 +306,21 @@ const styles = StyleSheet.create({
   },
   emptyContainer: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
     gap: 12,
     padding: responsiveWidth(4),
   },
   emptyText: {
     fontSize: FONT_SIZES.medium,
     color: COLORS.grey,
-    textAlign: 'center',
+    textAlign: "center",
     lineHeight: 24,
   },
   allBlockedNote: {
     fontSize: 12,
     color: COLORS.grey,
-    textAlign: 'center',
+    textAlign: "center",
     lineHeight: 18,
     marginTop: 8,
   },
@@ -320,19 +328,19 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   childItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
     padding: responsiveWidth(4),
     marginBottom: 8,
-    backgroundColor: '#f8f9fa',
+    backgroundColor: "#f8f9fa",
     borderRadius: 12,
     borderWidth: 2,
-    borderColor: 'transparent',
+    borderColor: "transparent",
   },
   selectedChildItem: {
     borderColor: COLORS.primary,
-    backgroundColor: '#e3f2fd',
+    backgroundColor: "#e3f2fd",
   },
   disabledChildItem: {
     opacity: 0.55,
@@ -350,8 +358,8 @@ const styles = StyleSheet.create({
     color: COLORS.grey,
   },
   blockedRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     gap: 4,
     marginTop: 4,
   },
@@ -372,11 +380,11 @@ const styles = StyleSheet.create({
     borderColor: COLORS.primary,
   },
   footer: {
-    flexDirection: 'row',
+    flexDirection: "row",
     gap: 10,
     padding: responsiveWidth(4),
     borderTopWidth: 1,
-    borderTopColor: '#f0f0f0',
+    borderTopColor: "#f0f0f0",
   },
 });
 

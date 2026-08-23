@@ -112,7 +112,9 @@ const AddKid = () => {
   const [selectedGradeLevel, setSelectedGradeLevel] = useState("");
   const [childEmail, setChildEmail] = useState("");
   const [consentGiven, setConsentGiven] = useState(false);
-  const [selectedAvatar, setSelectedAvatar] = useState<string | null>("avatar1");
+  const [selectedAvatar, setSelectedAvatar] = useState<string | null>(
+    "avatar1",
+  );
   const [pin, setPin] = useState("");
 
   // Result state
@@ -131,7 +133,20 @@ const AddKid = () => {
   const step = steps[Math.min(stepIndex, steps.length - 1)];
 
   const gradeLevelOptions = [
-    "TK", "K", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12",
+    "TK",
+    "K",
+    "1",
+    "2",
+    "3",
+    "4",
+    "5",
+    "6",
+    "7",
+    "8",
+    "9",
+    "10",
+    "11",
+    "12",
   ];
 
   const expiryLabel = useMemo(() => {
@@ -181,7 +196,7 @@ const AddKid = () => {
     }
     if (!consentGiven) {
       setFormError(
-        "Please confirm you're this child's parent or legal guardian to continue."
+        "Please confirm you're this child's parent or legal guardian to continue.",
       );
       return false;
     }
@@ -216,7 +231,7 @@ const AddKid = () => {
           `Use ${childEmail.trim().toLowerCase()} as your email.`,
       });
     } catch (e) {
-      console.error("Share error:", e);
+      console.log("Share error:", e);
     }
   };
 
@@ -255,7 +270,7 @@ const AddKid = () => {
       setGeneratedCode("");
       setStepIndex(steps.indexOf("done"));
     } catch (error: any) {
-      console.error("Add kid error:", error);
+      console.log("Add kid error:", error);
       setFormError(error?.message || "Failed to create child profile.");
     } finally {
       setLoading(false);
@@ -289,7 +304,7 @@ const AddKid = () => {
       setInviteExpiresAt(result.invite?.expires_at || null);
       setStepIndex(steps.indexOf("done"));
     } catch (error: any) {
-      console.error("Create invite error:", error);
+      console.log("Create invite error:", error);
       setFormError(error?.message || "Failed to create invite.");
     } finally {
       setLoading(false);
@@ -298,7 +313,10 @@ const AddKid = () => {
 
   const renderDetails = () => (
     <View style={styles.stepBody}>
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 20 }}>
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={{ paddingBottom: 20 }}
+      >
         <CustomInput
           label="First & Last Name"
           value={fullName}
@@ -332,10 +350,13 @@ const AddKid = () => {
           placeholder="Select grade level (TK-12)"
         />
         {fieldErrors.grade ? (
-          <CustomText style={styles.inlineError}>{fieldErrors.grade}</CustomText>
+          <CustomText style={styles.inlineError}>
+            {fieldErrors.grade}
+          </CustomText>
         ) : (
           <CustomText style={styles.hint}>
-            Filled in from age — change it if your child is in a different grade.
+            Filled in from age — change it if your child is in a different
+            grade.
           </CustomText>
         )}
 
@@ -410,10 +431,20 @@ const AddKid = () => {
       </View>
       <View style={styles.buttonRow}>
         <View style={{ flex: 1 }}>
-          <CustomButton fill={false} onPress={goBack} text="Back" height={responsiveHeight(7)} />
+          <CustomButton
+            fill={false}
+            onPress={goBack}
+            text="Back"
+            height={responsiveHeight(7)}
+          />
         </View>
         <View style={{ flex: 1 }}>
-          <CustomButton fill={true} onPress={goNext} text="Next" height={responsiveHeight(7)} />
+          <CustomButton
+            fill={true}
+            onPress={goNext}
+            text="Next"
+            height={responsiveHeight(7)}
+          />
         </View>
       </View>
     </View>
@@ -426,8 +457,8 @@ const AddKid = () => {
           Create {fullName.split(" ")[0] || "their"} PIN
         </CustomText>
         <CustomText style={styles.stepSubtitle}>
-          They'll type this to open their profile on your device. You can reset it
-          any time from Kid Profiles.
+          They'll type this to open their profile on your device. You can reset
+          it any time from Kid Profiles.
         </CustomText>
         <CodeField
           ref={ref}
@@ -490,8 +521,8 @@ const AddKid = () => {
           Check before we send
         </CustomText>
         <CustomText style={styles.stepSubtitle}>
-          The invite is single-use and tied to this email. If it's wrong, go back
-          and fix it — a typo means the code won't work.
+          The invite is single-use and tied to this email. If it's wrong, go
+          back and fix it — a typo means the code won't work.
         </CustomText>
 
         <View style={styles.summaryCard}>
@@ -536,15 +567,20 @@ const AddKid = () => {
         <View style={{ alignItems: "center", gap: 14, paddingVertical: 12 }}>
           <MaterialIcons name="check-circle" size={56} color={COLORS.success} />
           <CustomText variant="semiBold" style={styles.doneTitle}>
-            {isTeen ? "Invite ready" : `${fullName.split(" ")[0]}'s profile is ready`}
+            {isTeen
+              ? "Invite ready"
+              : `${fullName.split(" ")[0]}'s profile is ready`}
           </CustomText>
 
           {isTeen ? (
             <>
               <CustomText style={styles.doneBody}>
-                Send this code to {fullName.split(" ")[0]}. They'll open EpicTask,
-                tap <CustomText variant="semiBold">Teen/Child → I have an invite
-                code</CustomText>, and sign up with{" "}
+                Send this code to {fullName.split(" ")[0]}. They'll open
+                EpicTask, tap{" "}
+                <CustomText variant="semiBold">
+                  Teen/Child → I have an invite code
+                </CustomText>
+                , and sign up with{" "}
                 <CustomText variant="semiBold">
                   {childEmail.trim().toLowerCase()}
                 </CustomText>
@@ -564,7 +600,10 @@ const AddKid = () => {
               ) : null}
 
               <View style={styles.actionRow}>
-                <TouchableOpacity style={styles.actionBtn} onPress={handleCopyCode}>
+                <TouchableOpacity
+                  style={styles.actionBtn}
+                  onPress={handleCopyCode}
+                >
                   <MaterialIcons
                     name={copied ? "check" : "content-copy"}
                     size={18}
@@ -579,7 +618,11 @@ const AddKid = () => {
                   style={[styles.actionBtn, styles.actionBtnPrimary]}
                   onPress={handleShareCode}
                 >
-                  <MaterialIcons name="ios-share" size={18} color={COLORS.white} />
+                  <MaterialIcons
+                    name="ios-share"
+                    size={18}
+                    color={COLORS.white}
+                  />
                   <CustomText
                     variant="medium"
                     style={[styles.actionBtnText, { color: COLORS.white }]}
@@ -598,12 +641,14 @@ const AddKid = () => {
             <>
               <CustomText style={styles.doneBody}>
                 Open it any time from your home screen — tap{" "}
-                <CustomText variant="semiBold">Switch to Kid Profile</CustomText>{" "}
+                <CustomText variant="semiBold">
+                  Switch to Kid Profile
+                </CustomText>{" "}
                 and enter their PIN.
               </CustomText>
               <CustomText style={styles.doneFootnote}>
-                Under {TEEN_MIN_AGE} means no email and no password. Their session
-                returns to your account automatically after 15 minutes.
+                Under {TEEN_MIN_AGE} means no email and no password. Their
+                session returns to your account automatically after 15 minutes.
               </CustomText>
             </>
           )}
@@ -628,7 +673,10 @@ const AddKid = () => {
           {steps.slice(0, -1).map((s, i) => (
             <View
               key={s}
-              style={[styles.progressPip, i <= stepIndex && styles.progressPipActive]}
+              style={[
+                styles.progressPip,
+                i <= stepIndex && styles.progressPipActive,
+              ]}
             />
           ))}
         </View>

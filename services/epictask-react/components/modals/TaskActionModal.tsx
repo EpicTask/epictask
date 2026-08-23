@@ -1,5 +1,5 @@
 import { FONT_SIZES } from "@/constants/FontSize";
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from "react";
 import {
   Modal,
   View,
@@ -9,18 +9,18 @@ import {
   TextInput,
   StyleSheet,
   Alert,
-} from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
-import CustomText from '../CustomText';
-import CustomButton from '../buttons/CustomButton';
-import { COLORS } from '@/constants/Colors';
+} from "react-native";
+import { Ionicons } from "@expo/vector-icons";
+import CustomText from "../CustomText";
+import CustomButton from "../buttons/CustomButton";
+import { COLORS } from "@/constants/Colors";
 import {
   responsiveFontSize,
   responsiveHeight,
   responsiveWidth,
-} from 'react-native-responsive-dimensions';
-import { Timestamp } from 'firebase/firestore';
-import DebouncedTouchableOpacity from '../buttons/DebouncedTouchableOpacity';
+} from "react-native-responsive-dimensions";
+import { Timestamp } from "firebase/firestore";
+import DebouncedTouchableOpacity from "../buttons/DebouncedTouchableOpacity";
 
 interface Task {
   task_title?: string;
@@ -58,7 +58,7 @@ export const TaskActionModal: React.FC<TaskActionModalProps> = ({
   onDelete,
   onReward,
 }) => {
-  const [activeTab, setActiveTab] = useState<'view' | 'modify'>('view');
+  const [activeTab, setActiveTab] = useState<"view" | "modify">("view");
   const [editedTask, setEditedTask] = useState<Task | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -71,32 +71,43 @@ export const TaskActionModal: React.FC<TaskActionModalProps> = ({
 
   if (!task) return null;
 
-  const taskTitle = task.task_title || 'Untitled Task';
-  const taskDescription = task.task_description || 'No description';
+  const taskTitle = task.task_title || "Untitled Task";
+  const taskDescription = task.task_description || "No description";
   const taskReward = task.reward_amount || task.reward || 0;
-  const taskDueDate = task.expiration_date ? new Date(task.expiration_date * 1000).toLocaleDateString() : 'No due date';
-  const taskStatus = task.status || 'pending';
+  const taskDueDate = task.expiration_date
+    ? new Date(task.expiration_date * 1000).toLocaleDateString()
+    : "No due date";
+  const taskStatus = task.status || "pending";
   const isPending = task.marked_completed === true && !task.rewarded;
-  const taskCreated = task.timestamp ? new Date(task.timestamp.nanoseconds).toLocaleDateString() : 'Unknown';
+  const formatTimestamp = (ts: any): string => {
+    if (!ts) return "Unknown";
+    if (typeof ts.toDate === "function") return ts.toDate().toLocaleDateString();
+    if (typeof ts.seconds === "number") return new Date(ts.seconds * 1000).toLocaleDateString();
+    if (typeof ts === "number") return new Date(ts < 10000000000 ? ts * 1000 : ts).toLocaleDateString();
+    const d = new Date(ts);
+    return isNaN(d.getTime()) ? "Unknown" : d.toLocaleDateString();
+  };
+
+  const taskCreated = formatTimestamp(task.timestamp);
 
   const handleSave = async () => {
     if (!editedTask || !onSave) return;
 
     // Validate required fields
-    const title = editedTask.task_title || '';
+    const title = editedTask.task_title || "";
     if (!title.trim()) {
-      Alert.alert('Validation Error', 'Task title is required');
+      Alert.alert("Validation Error", "Task title is required");
       return;
     }
 
     try {
       setLoading(true);
       await onSave(editedTask);
-      setActiveTab('view');
-      Alert.alert('Success', 'Task updated successfully');
+      setActiveTab("view");
+      Alert.alert("Success", "Task updated successfully");
     } catch (error) {
-      Alert.alert('Error', 'Failed to update task');
-      console.error('Error updating task:', error);
+      Alert.alert("Error", "Failed to update task");
+      console.log("Error updating task:", error);
     } finally {
       setLoading(false);
     }
@@ -106,19 +117,19 @@ export const TaskActionModal: React.FC<TaskActionModalProps> = ({
     if (!onDelete) return;
 
     Alert.alert(
-      'Delete Task',
-      'Are you sure you want to delete this task? This action cannot be undone.',
+      "Delete Task",
+      "Are you sure you want to delete this task? This action cannot be undone.",
       [
-        { text: 'Cancel', style: 'cancel' },
+        { text: "Cancel", style: "cancel" },
         {
-          text: 'Delete',
-          style: 'destructive',
+          text: "Delete",
+          style: "destructive",
           onPress: () => {
             onDelete(task.task_id);
             onClose();
           },
         },
-      ]
+      ],
     );
   };
 
@@ -134,7 +145,7 @@ export const TaskActionModal: React.FC<TaskActionModalProps> = ({
     <ScrollView style={styles.tabContent} showsVerticalScrollIndicator={false}>
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Task Details</Text>
-        
+
         <View style={styles.detailRow}>
           <Text style={styles.detailLabel}>Title:</Text>
           <Text style={styles.detailValue}>{taskTitle}</Text>
@@ -162,7 +173,12 @@ export const TaskActionModal: React.FC<TaskActionModalProps> = ({
 
         <View style={styles.detailRow}>
           <Text style={styles.detailLabel}>Status:</Text>
-          <View style={[styles.statusBadge, { backgroundColor: getStatusColor(taskStatus) }]}>
+          <View
+            style={[
+              styles.statusBadge,
+              { backgroundColor: getStatusColor(taskStatus) },
+            ]}
+          >
             <Text style={styles.statusText}>{taskStatus.toUpperCase()}</Text>
           </View>
         </View>
@@ -188,13 +204,13 @@ export const TaskActionModal: React.FC<TaskActionModalProps> = ({
     <ScrollView style={styles.tabContent} showsVerticalScrollIndicator={false}>
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Edit Task</Text>
-        
+
         <View style={styles.inputGroup}>
           <Text style={styles.inputLabel}>Title *</Text>
           <TextInput
             style={styles.textInput}
-            value={editedTask?.task_title || ''}
-            onChangeText={(value) => updateEditedTask('task_title', value)}
+            value={editedTask?.task_title || ""}
+            onChangeText={(value) => updateEditedTask("task_title", value)}
             placeholder="Enter task title"
             maxLength={100}
           />
@@ -204,8 +220,10 @@ export const TaskActionModal: React.FC<TaskActionModalProps> = ({
           <Text style={styles.inputLabel}>Description</Text>
           <TextInput
             style={[styles.textInput, styles.multilineInput]}
-            value={editedTask?.task_description || ''}
-            onChangeText={(value) => updateEditedTask('task_description', value)}
+            value={editedTask?.task_description || ""}
+            onChangeText={(value) =>
+              updateEditedTask("task_description", value)
+            }
             placeholder="Enter task description"
             multiline
             numberOfLines={4}
@@ -218,7 +236,9 @@ export const TaskActionModal: React.FC<TaskActionModalProps> = ({
           <TextInput
             style={styles.textInput}
             value={String(editedTask?.reward_amount || editedTask?.reward || 0)}
-            onChangeText={(value) => updateEditedTask('reward_amount', parseInt(value) || 0)}
+            onChangeText={(value) =>
+              updateEditedTask("reward_amount", parseInt(value) || 0)
+            }
             placeholder="0"
             keyboardType="numeric"
           />
@@ -227,22 +247,23 @@ export const TaskActionModal: React.FC<TaskActionModalProps> = ({
         <View style={styles.inputGroup}>
           <Text style={styles.inputLabel}>Status</Text>
           <View style={styles.statusSelector}>
-            {['pending', 'in_progress', 'completed'].map((status) => (
+            {["pending", "in_progress", "completed"].map((status) => (
               <TouchableOpacity
                 key={status}
                 style={[
                   styles.statusOption,
                   editedTask?.status === status && styles.selectedStatusOption,
                 ]}
-                onPress={() => updateEditedTask('status', status)}
+                onPress={() => updateEditedTask("status", status)}
               >
                 <Text
                   style={[
                     styles.statusOptionText,
-                    editedTask?.status === status && styles.selectedStatusOptionText,
+                    editedTask?.status === status &&
+                      styles.selectedStatusOptionText,
                   ]}
                 >
-                  {status.replace('_', ' ').toUpperCase()}
+                  {status.replace("_", " ").toUpperCase()}
                 </Text>
               </TouchableOpacity>
             ))}
@@ -265,7 +286,7 @@ export const TaskActionModal: React.FC<TaskActionModalProps> = ({
           >
             <Ionicons name="save-outline" size={20} color="#FFFFFF" />
             <Text style={styles.saveButtonText}>
-              {loading ? 'Saving...' : 'Save Changes'}
+              {loading ? "Saving..." : "Save Changes"}
             </Text>
           </DebouncedTouchableOpacity>
         </View>
@@ -275,14 +296,14 @@ export const TaskActionModal: React.FC<TaskActionModalProps> = ({
 
   const getStatusColor = (status: string) => {
     switch (status.toLowerCase()) {
-      case 'completed':
-        return COLORS.light_green || '#4CAF50';
-      case 'in_progress':
-        return COLORS.light_yellow || '#FF9800';
-      case 'pending':
-        return COLORS.grey || '#9E9E9E';
+      case "completed":
+        return COLORS.light_green || "#4CAF50";
+      case "in_progress":
+        return COLORS.light_yellow || "#FF9800";
+      case "pending":
+        return COLORS.grey || "#9E9E9E";
       default:
-        return COLORS.grey || '#9E9E9E';
+        return COLORS.grey || "#9E9E9E";
     }
   };
 
@@ -299,27 +320,29 @@ export const TaskActionModal: React.FC<TaskActionModalProps> = ({
           <TouchableOpacity onPress={onClose} style={styles.closeButton}>
             <Ionicons name="close" size={24} color="#000" />
           </TouchableOpacity>
-          
+
           <Text style={styles.headerTitle}>Task Actions</Text>
-          
+
           <View style={styles.placeholder} />
         </View>
 
         {/* Tab Navigation */}
         <View style={styles.tabNavigation}>
           <TouchableOpacity
-            style={[styles.tab, activeTab === 'view' && styles.activeTab]}
-            onPress={() => setActiveTab('view')}
+            style={[styles.tab, activeTab === "view" && styles.activeTab]}
+            onPress={() => setActiveTab("view")}
           >
             <Ionicons
               name="eye-outline"
               size={20}
-              color={activeTab === 'view' ? COLORS.primary || '#007AFF' : '#8E8E93'}
+              color={
+                activeTab === "view" ? COLORS.primary || "#007AFF" : "#8E8E93"
+              }
             />
             <Text
               style={[
                 styles.tabText,
-                activeTab === 'view' && styles.activeTabText,
+                activeTab === "view" && styles.activeTabText,
               ]}
             >
               View
@@ -327,18 +350,20 @@ export const TaskActionModal: React.FC<TaskActionModalProps> = ({
           </TouchableOpacity>
 
           <TouchableOpacity
-            style={[styles.tab, activeTab === 'modify' && styles.activeTab]}
-            onPress={() => setActiveTab('modify')}
+            style={[styles.tab, activeTab === "modify" && styles.activeTab]}
+            onPress={() => setActiveTab("modify")}
           >
             <Ionicons
               name="create-outline"
               size={20}
-              color={activeTab === 'modify' ? COLORS.primary || '#007AFF' : '#8E8E93'}
+              color={
+                activeTab === "modify" ? COLORS.primary || "#007AFF" : "#8E8E93"
+              }
             />
             <Text
               style={[
                 styles.tabText,
-                activeTab === 'modify' && styles.activeTabText,
+                activeTab === "modify" && styles.activeTabText,
               ]}
             >
               Modify
@@ -347,7 +372,7 @@ export const TaskActionModal: React.FC<TaskActionModalProps> = ({
         </View>
 
         {/* Tab Content */}
-        {activeTab === 'view' ? renderViewTab() : renderModifyTab()}
+        {activeTab === "view" ? renderViewTab() : renderModifyTab()}
       </View>
     </Modal>
   );
@@ -356,43 +381,43 @@ export const TaskActionModal: React.FC<TaskActionModalProps> = ({
 const styles = StyleSheet.create({
   modalContainer: {
     flex: 1,
-    backgroundColor: COLORS.bg || '#F1F6F9',
+    backgroundColor: COLORS.bg || "#F1F6F9",
   },
   header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
     paddingHorizontal: responsiveWidth(4),
     paddingVertical: responsiveHeight(2),
-    backgroundColor: 'white',
+    backgroundColor: "white",
     borderBottomWidth: 1,
-    borderBottomColor: '#EAEBEC',
+    borderBottomColor: "#EAEBEC",
   },
   closeButton: {
     padding: 4,
   },
   headerTitle: {
     fontSize: FONT_SIZES.large,
-    fontWeight: '600',
-    color: '#000',
+    fontWeight: "600",
+    color: "#000",
   },
   placeholder: {
     width: 32,
   },
   tabNavigation: {
-    flexDirection: 'row',
-    backgroundColor: 'white',
+    flexDirection: "row",
+    backgroundColor: "white",
     paddingHorizontal: responsiveWidth(4),
   },
   tab: {
     flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
     paddingVertical: responsiveHeight(1.5),
     paddingHorizontal: responsiveWidth(4),
     borderBottomWidth: 2,
-    borderBottomColor: 'transparent',
+    borderBottomColor: "transparent",
   },
   activeTab: {
     borderBottomColor: COLORS.primary || COLORS.purple,
@@ -404,42 +429,42 @@ const styles = StyleSheet.create({
   },
   activeTabText: {
     color: COLORS.primary || COLORS.purple,
-    fontWeight: '600',
+    fontWeight: "600",
   },
   tabContent: {
     flex: 1,
     padding: responsiveWidth(4),
   },
   section: {
-    backgroundColor: 'white',
+    backgroundColor: "white",
     borderRadius: 20,
     padding: responsiveWidth(4),
     marginBottom: responsiveHeight(2),
-    borderColor: '#EAEBEC',
+    borderColor: "#EAEBEC",
     borderWidth: 1,
   },
   sectionTitle: {
     fontSize: FONT_SIZES.large,
-    fontWeight: '600',
-    color: '#000',
+    fontWeight: "600",
+    color: "#000",
     marginBottom: responsiveHeight(2),
   },
   detailRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     paddingVertical: responsiveHeight(1),
     borderBottomWidth: 1,
-    borderBottomColor: '#F0F0F0',
+    borderBottomColor: "#F0F0F0",
   },
   detailLabel: {
     fontSize: FONT_SIZES.extraSmall,
     color: COLORS.grey,
     width: responsiveWidth(25),
-    fontWeight: '500',
+    fontWeight: "500",
   },
   detailValue: {
     fontSize: FONT_SIZES.extraSmall,
-    color: '#000',
+    color: "#000",
     flex: 1,
   },
   statusBadge: {
@@ -449,34 +474,34 @@ const styles = StyleSheet.create({
   },
   statusText: {
     fontSize: FONT_SIZES.extraSmall,
-    color: '#FFFFFF',
-    fontWeight: '600',
+    color: "#FFFFFF",
+    fontWeight: "600",
   },
   inputGroup: {
     marginBottom: responsiveHeight(2),
   },
   inputLabel: {
     fontSize: FONT_SIZES.extraSmall,
-    fontWeight: '500',
-    color: '#000',
+    fontWeight: "500",
+    color: "#000",
     marginBottom: responsiveHeight(1),
   },
   textInput: {
-    backgroundColor: COLORS.bg || '#F1F6F9',
+    backgroundColor: COLORS.bg || "#F1F6F9",
     borderRadius: 10,
     paddingHorizontal: responsiveWidth(3),
     paddingVertical: responsiveHeight(1.2),
     fontSize: FONT_SIZES.medium,
-    color: '#000',
+    color: "#000",
     borderWidth: 1,
-    borderColor: '#EAEBEC',
+    borderColor: "#EAEBEC",
   },
   multilineInput: {
     height: responsiveHeight(10),
-    textAlignVertical: 'top',
+    textAlignVertical: "top",
   },
   statusSelector: {
-    flexDirection: 'row',
+    flexDirection: "row",
     gap: responsiveWidth(2),
   },
   statusOption: {
@@ -484,10 +509,10 @@ const styles = StyleSheet.create({
     paddingVertical: responsiveHeight(1),
     paddingHorizontal: responsiveWidth(3),
     borderRadius: 10,
-    backgroundColor: COLORS.bg || '#F1F6F9',
-    alignItems: 'center',
+    backgroundColor: COLORS.bg || "#F1F6F9",
+    alignItems: "center",
     borderWidth: 1,
-    borderColor: '#EAEBEC',
+    borderColor: "#EAEBEC",
   },
   selectedStatusOption: {
     backgroundColor: COLORS.primary || COLORS.purple,
@@ -496,40 +521,40 @@ const styles = StyleSheet.create({
   statusOptionText: {
     fontSize: FONT_SIZES.extraSmall,
     color: COLORS.grey,
-    fontWeight: '500',
+    fontWeight: "500",
   },
   selectedStatusOptionText: {
-    color: '#FFFFFF',
+    color: "#FFFFFF",
   },
   actionButtons: {
-    flexDirection: 'row',
+    flexDirection: "row",
     gap: responsiveWidth(3),
     marginTop: responsiveHeight(2.5),
   },
   actionButton: {
     flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
     paddingVertical: responsiveHeight(1.5),
     borderRadius: 12,
     gap: 8,
   },
   deleteButton: {
-    backgroundColor: '#FF3B30',
+    backgroundColor: "#FF3B30",
   },
   saveButton: {
     backgroundColor: COLORS.primary || COLORS.purple,
   },
   deleteButtonText: {
-    color: '#FFFFFF',
+    color: "#FFFFFF",
     fontSize: FONT_SIZES.extraSmall,
-    fontWeight: '600',
+    fontWeight: "600",
   },
   saveButtonText: {
-    color: '#FFFFFF',
+    color: "#FFFFFF",
     fontSize: FONT_SIZES.extraSmall,
-    fontWeight: '600',
+    fontWeight: "600",
   },
 });
 

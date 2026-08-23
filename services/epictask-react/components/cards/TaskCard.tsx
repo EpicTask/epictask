@@ -61,7 +61,7 @@ const TaskCard: React.FC<TaskCardProps> = ({ name, stars, taskData, kidName, onP
             />
             <CustomText variant="medium" style={styles.statText}>
               {taskData.expiration_date 
-                ? new Date(taskData.expiration_date).toDateString() 
+                ? new Date(typeof taskData.expiration_date === 'number' && taskData.expiration_date < 10000000000 ? taskData.expiration_date * 1000 : taskData.expiration_date).toLocaleDateString() 
                 : "No due date"}
             </CustomText>
           </View>

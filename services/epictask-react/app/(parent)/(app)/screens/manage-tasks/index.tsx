@@ -1,5 +1,12 @@
 import { FONT_SIZES } from "@/constants/FontSize";
-import { ScrollView, StyleSheet, Text, View, ActivityIndicator, FlatList } from "react-native";
+import {
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
+  ActivityIndicator,
+  FlatList,
+} from "react-native";
 import React, { useState, useEffect, useMemo } from "react";
 import {
   responsiveFontSize,
@@ -19,7 +26,6 @@ import { firestoreService } from "@/api/firestoreService";
 import { TaskActionModal } from "@/components/modals/TaskActionModal";
 import { Task } from "@/constants/Interfaces";
 
-
 const ManageTasks = () => {
   const { user } = useAuth();
   const [tasks, setTasks] = useState<Task[]>([]);
@@ -27,18 +33,20 @@ const ManageTasks = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [modalVisible, setModalVisible] = useState(false);
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
-  const [childrenMap, setChildrenMap] = useState<Map<string, string>>(new Map());
+  const [childrenMap, setChildrenMap] = useState<Map<string, string>>(
+    new Map(),
+  );
 
   // Deduplication function to handle tasks assigned to multiple children
   const deduplicateTasks = (tasks: Task[]): Task[] => {
     const taskMap = new Map<string, Task>();
-    
-    tasks.forEach(task => {
+
+    tasks.forEach((task) => {
       if (task.task_id && !taskMap.has(task.task_id)) {
         taskMap.set(task.task_id, task);
       }
     });
-    
+
     return Array.from(taskMap.values());
   };
 
@@ -52,25 +60,29 @@ const ManageTasks = () => {
           if (result.success) {
             // Build children map for name lookup
             const childMap = new Map<string, string>();
-            Object.entries(result.familyTasks || {}).forEach(([childId, childData]: [string, any]) => {
-              childMap.set(childId, childData.childName || "Child");
-            });
+            Object.entries(result.familyTasks || {}).forEach(
+              ([childId, childData]: [string, any]) => {
+                childMap.set(childId, childData.childName || "Child");
+              },
+            );
             setChildrenMap(childMap);
-            
+
             // Flatten all tasks from all children into a single array
             const allTasks: Task[] = [];
-            Object.values(result.familyTasks || {}).forEach((childData: any) => {
-              if (childData.tasks) {
-                allTasks.push(...childData.tasks);
-              }
-            });
-            
+            Object.values(result.familyTasks || {}).forEach(
+              (childData: any) => {
+                if (childData.tasks) {
+                  allTasks.push(...childData.tasks);
+                }
+              },
+            );
+
             // Deduplicate tasks to handle tasks assigned to multiple children
             const uniqueTasks = deduplicateTasks(allTasks);
             setTasks(uniqueTasks);
           }
         } catch (error) {
-          console.error("Failed to fetch family tasks:", error);
+          console.log("Failed to fetch family tasks:", error);
           setTasks([]);
         } finally {
           setLoading(false);
@@ -94,36 +106,51 @@ const ManageTasks = () => {
       const title = (task.task_title || "").toLowerCase();
       const description = (task.task_description || "").toLowerCase();
       const status = (task.status || "").toLowerCase();
-      
+
       // Enhanced search includes title, description, and status
-      return title.includes(query) || 
-             description.includes(query) || 
-             status.includes(query) ||
-             (task.rewarded === true && "completed".includes(query)) ||
-             (task.marked_completed === true && task.rewarded !== true && "pending".includes(query)) ||
-             (task.marked_completed !== true && "in progress".includes(query)) ||
-             (task.marked_completed === true && task.rewarded === false && "unrewarded".includes(query));
+      return (
+        title.includes(query) ||
+        description.includes(query) ||
+        status.includes(query) ||
+        (task.rewarded === true && "completed".includes(query)) ||
+        (task.marked_completed === true &&
+          task.rewarded !== true &&
+          "pending".includes(query)) ||
+        (task.marked_completed !== true && "in progress".includes(query)) ||
+        (task.marked_completed === true &&
+          task.rewarded === false &&
+          "unrewarded".includes(query))
+      );
     });
   }, [tasks, searchQuery]);
 
   // Calculate metrics from filtered tasks with improved logic
   const totalTasks = filteredTasks.length;
-  const completedTasks = filteredTasks.filter(task => task.rewarded === true).length;
-  const pendingTasks = filteredTasks.filter(task => 
-    task.marked_completed === true && task.rewarded !== true && task.rewarded !== false
+  const completedTasks = filteredTasks.filter(
+    (task) => task.rewarded === true,
   ).length;
-  const inProgressTasks = filteredTasks.filter(task => 
-    task.marked_completed !== true
+  const pendingTasks = filteredTasks.filter(
+    (task) =>
+      task.marked_completed === true &&
+      task.rewarded !== true &&
+      task.rewarded !== false,
   ).length;
-  const unrewardedTasks = filteredTasks.filter(task => 
-    task.marked_completed === true && task.rewarded === false
+  const inProgressTasks = filteredTasks.filter(
+    (task) => task.marked_completed !== true,
+  ).length;
+  const unrewardedTasks = filteredTasks.filter(
+    (task) => task.marked_completed === true && task.rewarded === false,
   ).length;
 
   // Calculate percentages for better display
-  const completedPercentage = totalTasks > 0 ? (completedTasks / totalTasks) * 100 : 0;
-  const pendingPercentage = totalTasks > 0 ? (pendingTasks / totalTasks) * 100 : 0;
-  const inProgressPercentage = totalTasks > 0 ? (inProgressTasks / totalTasks) * 100 : 0;
-  const unrewardedPercentage = totalTasks > 0 ? (unrewardedTasks / totalTasks) * 100 : 0;
+  const completedPercentage =
+    totalTasks > 0 ? (completedTasks / totalTasks) * 100 : 0;
+  const pendingPercentage =
+    totalTasks > 0 ? (pendingTasks / totalTasks) * 100 : 0;
+  const inProgressPercentage =
+    totalTasks > 0 ? (inProgressTasks / totalTasks) * 100 : 0;
+  const unrewardedPercentage =
+    totalTasks > 0 ? (unrewardedTasks / totalTasks) * 100 : 0;
 
   // Handle task actions
   const handleTaskView = (task: Task) => {
@@ -134,39 +161,41 @@ const ManageTasks = () => {
   const handleTaskSave = async (updatedTask: Task) => {
     try {
       // TODO: Implement task update API call
-      
+
       // Update local state
-      setTasks(prevTasks => 
-        prevTasks.map(task => 
-          task.task_id === updatedTask.task_id ? updatedTask : task
-        )
+      setTasks((prevTasks) =>
+        prevTasks.map((task) =>
+          task.task_id === updatedTask.task_id ? updatedTask : task,
+        ),
       );
-      
+
       // Refresh tasks from server
       if (user?.uid) {
         const result = await firestoreService.getTasksForFamily(user.uid);
         if (result.success) {
           // Update children map
           const childMap = new Map<string, string>();
-          Object.entries(result.familyTasks || {}).forEach(([childId, childData]: [string, any]) => {
-            childMap.set(childId, childData.childName || "Child");
-          });
+          Object.entries(result.familyTasks || {}).forEach(
+            ([childId, childData]: [string, any]) => {
+              childMap.set(childId, childData.childName || "Child");
+            },
+          );
           setChildrenMap(childMap);
-          
+
           const allTasks: Task[] = [];
           Object.values(result.familyTasks || {}).forEach((childData: any) => {
             if (childData.tasks) {
               allTasks.push(...childData.tasks);
             }
           });
-          
+
           // Deduplicate tasks to handle tasks assigned to multiple children
           const uniqueTasks = deduplicateTasks(allTasks);
           setTasks(uniqueTasks);
         }
       }
     } catch (error) {
-      console.error('Error updating task:', error);
+      console.log("Error updating task:", error);
       throw error;
     }
   };
@@ -174,28 +203,37 @@ const ManageTasks = () => {
   const handleTaskDelete = async (taskId: string) => {
     try {
       // TODO: Implement task delete API call
-      
+
       // Update local state
-      setTasks(prevTasks => prevTasks.filter(task => task.task_id !== taskId));
+      setTasks((prevTasks) =>
+        prevTasks.filter((task) => task.task_id !== taskId),
+      );
     } catch (error) {
-      console.error('Error deleting task:', error);
+      console.log("Error deleting task:", error);
     }
   };
 
   const handleRewardTask = async (taskId: string) => {
     try {
       // Optimistic update
-      setTasks(prevTasks => 
-        prevTasks.map(task => 
-          task.task_id === taskId ? { ...task, rewarded: true, marked_completed: true, status: 'completed' } : task
-        )
+      setTasks((prevTasks) =>
+        prevTasks.map((task) =>
+          task.task_id === taskId
+            ? {
+                ...task,
+                rewarded: true,
+                marked_completed: true,
+                status: "completed",
+              }
+            : task,
+        ),
       );
 
       // Backend logic handles marking complete and rewarding in one step
       await firestoreService.rewardTask(taskId);
       closeModal();
     } catch (error) {
-      console.error('Error rewarding task:', error);
+      console.log("Error rewarding task:", error);
       // Revert optimistic update on failure
       setTasks([...tasks]);
     }
@@ -210,39 +248,51 @@ const ManageTasks = () => {
     if (!task.assigned_to_ids || task.assigned_to_ids.length === 0) {
       return "Unassigned";
     }
-    
+
     if (task.assigned_to_ids.length === 1) {
       return childrenMap.get(task.assigned_to_ids[0]) || "Child";
     }
-    
+
     // Multiple children assigned - show count or first few names
     const childNames = task.assigned_to_ids
-      .map(id => childrenMap.get(id) || "Child")
-      .filter(name => name !== "Child");
-    
+      .map((id) => childrenMap.get(id) || "Child")
+      .filter((name) => name !== "Child");
+
     if (childNames.length === 0) {
       return `${task.assigned_to_ids.length} Children`;
     }
-    
+
     if (childNames.length <= 2) {
       return childNames.join(" & ");
     }
-    
+
     return `${childNames[0]} & ${childNames.length - 1} more`;
   };
 
   return (
     <SafeAreaView style={styles.safeArea}>
       <ScrollView>
-        <View style={{flexDirection:'row', alignItems:"center"}}>
-          <CustomText style={{flex:1, textAlign:"center", fontSize: FONT_SIZES.title, fontWeight: 500, paddingVertical: 10}}>
+        <View style={{ flexDirection: "row", alignItems: "center" }}>
+          <CustomText
+            style={{
+              flex: 1,
+              textAlign: "center",
+              fontSize: FONT_SIZES.title,
+              fontWeight: 500,
+              paddingVertical: 10,
+            }}
+          >
             Manage Tasks
           </CustomText>
-          <PlusButton onPress={() =>{router.push("/screens/parent/manage-tasks/assign-task" as any)}} />
+          <PlusButton
+            onPress={() => {
+              router.push("/screens/parent/manage-tasks/assign-task" as any);
+            }}
+          />
         </View>
         <View style={{ gap: 10 }}>
           <View>
-            <Search 
+            <Search
               placeholder="Search tasks..."
               onSearchChange={setSearchQuery}
               value={searchQuery}
@@ -299,16 +349,40 @@ const ManageTasks = () => {
             </View>
           </View>
         </View>
-        
+
         {/* Tasks Section */}
         <View style={{ flex: 1, paddingVertical: 20 }}>
           {searchQuery.trim() && (
-            <View style={{ marginBottom: 15, padding: 12, backgroundColor: 'white', borderRadius: 8, borderWidth: 1, borderColor: '#EAEBEC' }}>
-              <CustomText style={{ fontSize: FONT_SIZES.medium, color: COLORS.grey, textAlign: 'center' }}>
-                {filteredTasks.length} result{filteredTasks.length !== 1 ? 's' : ''} found for "{searchQuery}"
+            <View
+              style={{
+                marginBottom: 15,
+                padding: 12,
+                backgroundColor: "white",
+                borderRadius: 8,
+                borderWidth: 1,
+                borderColor: "#EAEBEC",
+              }}
+            >
+              <CustomText
+                style={{
+                  fontSize: FONT_SIZES.medium,
+                  color: COLORS.grey,
+                  textAlign: "center",
+                }}
+              >
+                {filteredTasks.length} result
+                {filteredTasks.length !== 1 ? "s" : ""} found for "{searchQuery}
+                "
               </CustomText>
               {filteredTasks.length > 0 && (
-                <CustomText style={{ fontSize: FONT_SIZES.extraSmall, color: COLORS.grey, textAlign: 'center', marginTop: 4 }}>
+                <CustomText
+                  style={{
+                    fontSize: FONT_SIZES.extraSmall,
+                    color: COLORS.grey,
+                    textAlign: "center",
+                    marginTop: 4,
+                  }}
+                >
                   {unrewardedTasks > 0 && `${unrewardedTasks} unrewarded • `}
                   {pendingTasks > 0 && `${pendingTasks} pending • `}
                   {completedTasks > 0 && `${completedTasks} completed • `}
@@ -317,11 +391,23 @@ const ManageTasks = () => {
               )}
             </View>
           )}
-          
+
           {loading ? (
-            <View style={{ flex: 1, justifyContent: "center", alignItems: "center", minHeight: 200 }}>
-              <ActivityIndicator size="large" color={COLORS.primary || COLORS.purple} />
-              <CustomText style={{ marginTop: 10, color: COLORS.grey }}>Loading tasks...</CustomText>
+            <View
+              style={{
+                flex: 1,
+                justifyContent: "center",
+                alignItems: "center",
+                minHeight: 200,
+              }}
+            >
+              <ActivityIndicator
+                size="large"
+                color={COLORS.primary || COLORS.purple}
+              />
+              <CustomText style={{ marginTop: 10, color: COLORS.grey }}>
+                Loading tasks...
+              </CustomText>
             </View>
           ) : filteredTasks.length > 0 ? (
             <FlatList
@@ -329,9 +415,13 @@ const ManageTasks = () => {
               keyExtractor={(item) => item.task_id || Math.random().toString()}
               renderItem={({ item }) => (
                 <View style={{ marginBottom: 10 }}>
-                  <TaskCard 
-                    name={item.task_title || item.task_description || "Untitled Task"} 
-                    stars={item.reward_amount || 0} 
+                  <TaskCard
+                    name={
+                      item.task_title ||
+                      item.task_description ||
+                      "Untitled Task"
+                    }
+                    stars={item.reward_amount || 0}
                     taskData={item}
                     kidName={getChildName(item)}
                     onPress={() => handleTaskView(item)}
@@ -343,12 +433,24 @@ const ManageTasks = () => {
               showsVerticalScrollIndicator={false}
             />
           ) : (
-            <View style={{ flex: 1, justifyContent: "center", alignItems: "center", minHeight: 200 }}>
-              <CustomText style={{ color: COLORS.grey, textAlign: "center", fontSize: FONT_SIZES.medium }}>
-                {searchQuery.trim() 
+            <View
+              style={{
+                flex: 1,
+                justifyContent: "center",
+                alignItems: "center",
+                minHeight: 200,
+              }}
+            >
+              <CustomText
+                style={{
+                  color: COLORS.grey,
+                  textAlign: "center",
+                  fontSize: FONT_SIZES.medium,
+                }}
+              >
+                {searchQuery.trim()
                   ? `No tasks found matching "${searchQuery}"`
-                  : "No tasks created yet.\nCreate your first task to get started!"
-                }
+                  : "No tasks created yet.\nCreate your first task to get started!"}
               </CustomText>
             </View>
           )}

@@ -44,7 +44,7 @@ const NarrativeDashboard = () => {
       setKidsSummary(summaries);
       setPendingPayouts(payouts);
     } catch (error) {
-      console.error("Failed to load narrative dashboard:", error);
+      console.log("Failed to load narrative dashboard:", error);
       Alert.alert("Error", "Failed to load narrative data");
     } finally {
       setLoading(false);
@@ -63,7 +63,10 @@ const NarrativeDashboard = () => {
 
   const handleApprovePayout = async (requestId: string) => {
     if (user && !user.emailVerified) {
-      Alert.alert("Email Verification Required", "Please verify your email address before approving wallet payouts.");
+      Alert.alert(
+        "Email Verification Required",
+        "Please verify your email address before approving wallet payouts.",
+      );
       return;
     }
     try {
@@ -71,7 +74,7 @@ const NarrativeDashboard = () => {
       Alert.alert("Success", "Payout approved");
       loadData();
     } catch (error) {
-      console.error("Failed to approve payout:", error);
+      console.log("Failed to approve payout:", error);
       Alert.alert("Error", "Failed to approve payout");
     }
   };
@@ -91,13 +94,13 @@ const NarrativeDashboard = () => {
               Alert.alert("Success", "Payout rejected");
               loadData();
             } catch (error) {
-              console.error("Failed to reject payout:", error);
+              console.log("Failed to reject payout:", error);
               Alert.alert("Error", "Failed to reject payout");
             }
           },
         },
       ],
-      "plain-text"
+      "plain-text",
     );
   };
 

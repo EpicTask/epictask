@@ -20,9 +20,19 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { router } from "expo-router";
 
 const AvatarScreen = () => {
-  const { user, updateProfile, isSharedDeviceMode, activeChildContext, effectiveUserId } = useAuth();
-  const [profileImage, setProfileImage] = useState(user?.image || user?.imageUrl || null);
-  const [displayName, setDisplayName] = useState(user?.displayName || user?.name || "Kid");
+  const {
+    user,
+    updateProfile,
+    isSharedDeviceMode,
+    activeChildContext,
+    effectiveUserId,
+  } = useAuth();
+  const [profileImage, setProfileImage] = useState(
+    user?.image || user?.imageUrl || null,
+  );
+  const [displayName, setDisplayName] = useState(
+    user?.displayName || user?.name || "Kid",
+  );
   const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
@@ -35,14 +45,23 @@ const AvatarScreen = () => {
 
         if (effectiveUserId) {
           try {
-            const result = await firestoreService.getUserProfile(effectiveUserId);
+            const result =
+              await firestoreService.getUserProfile(effectiveUserId);
             if (active && result.success) {
               const child = result.user;
-              setDisplayName(child.displayName || activeChildContext.childName || "Kid");
-              setProfileImage(child.imageUrl || child.photoURL || child.image || activeChildContext.childImageUrl || null);
+              setDisplayName(
+                child.displayName || activeChildContext.childName || "Kid",
+              );
+              setProfileImage(
+                child.imageUrl ||
+                  child.photoURL ||
+                  child.image ||
+                  activeChildContext.childImageUrl ||
+                  null,
+              );
             }
           } catch (error) {
-            console.error("Failed to load child avatar profile", error);
+            console.log("Failed to load child avatar profile", error);
           }
         }
         return;
@@ -50,7 +69,9 @@ const AvatarScreen = () => {
 
       if (active) {
         setDisplayName(user?.displayName || user?.name || "Kid");
-        setProfileImage(user?.image || user?.imageUrl || user?.photoURL || null);
+        setProfileImage(
+          user?.image || user?.imageUrl || user?.photoURL || null,
+        );
       }
     };
 
@@ -63,18 +84,21 @@ const AvatarScreen = () => {
 
   const handleUpdateProfile = async (uri: string) => {
     if (isSharedDeviceMode) {
-      Alert.alert("Return to Parent", "Return to parent mode to edit child avatar details.");
+      Alert.alert(
+        "Return to Parent",
+        "Return to parent mode to edit child avatar details.",
+      );
       return;
     }
 
     try {
       setIsSaving(true);
-      
+
       // Always key the upload by whose profile is on screen, not by whoever
       // holds the session — those differ whenever a parent is viewing as a kid.
       const storagePath = `avatars/${effectiveUserId}_${Date.now()}.jpg`;
       const downloadURL = await storageService.uploadImage(uri, storagePath);
-      
+
       await updateProfile({
         imageUrl: downloadURL,
       });
@@ -82,7 +106,7 @@ const AvatarScreen = () => {
       Alert.alert("Success", "Avatar updated successfully");
     } catch (error) {
       Alert.alert("Error", "Failed to update avatar");
-      console.error(error);
+      console.log(error);
     } finally {
       setIsSaving(false);
     }
@@ -90,10 +114,14 @@ const AvatarScreen = () => {
 
   const pickImage = async () => {
     try {
-      const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      const permissionResult =
+        await ImagePicker.requestMediaLibraryPermissionsAsync();
 
       if (permissionResult.granted === false) {
-        Alert.alert("Permission Required", "Permission to access camera roll is required!");
+        Alert.alert(
+          "Permission Required",
+          "Permission to access camera roll is required!",
+        );
         return;
       }
 
@@ -114,10 +142,14 @@ const AvatarScreen = () => {
 
   const takePhoto = async () => {
     try {
-      const permissionResult = await ImagePicker.requestCameraPermissionsAsync();
+      const permissionResult =
+        await ImagePicker.requestCameraPermissionsAsync();
 
       if (permissionResult.granted === false) {
-        Alert.alert("Permission Required", "Permission to access camera is required!");
+        Alert.alert(
+          "Permission Required",
+          "Permission to access camera is required!",
+        );
         return;
       }
 
@@ -137,19 +169,18 @@ const AvatarScreen = () => {
 
   const showImageOptions = () => {
     if (isSharedDeviceMode) {
-      Alert.alert("Return to Parent", "Return to parent mode to edit child avatar details.");
+      Alert.alert(
+        "Return to Parent",
+        "Return to parent mode to edit child avatar details.",
+      );
       return;
     }
 
-    Alert.alert(
-      "Select Avatar",
-      "Choose how you want to select your avatar",
-      [
-        { text: "Camera", onPress: takePhoto },
-        { text: "Photo Library", onPress: pickImage },
-        { text: "Cancel", style: "cancel" },
-      ]
-    );
+    Alert.alert("Select Avatar", "Choose how you want to select your avatar", [
+      { text: "Camera", onPress: takePhoto },
+      { text: "Photo Library", onPress: pickImage },
+      { text: "Cancel", style: "cancel" },
+    ]);
   };
 
   return (
@@ -170,10 +201,7 @@ const AvatarScreen = () => {
             }}
           >
             <View style={{ alignItems: "center", paddingBottom: 30 }}>
-              <CustomText
-                variant="bold"
-                style={{ fontSize: FONT_SIZES.title }}
-              >
+              <CustomText variant="bold" style={{ fontSize: FONT_SIZES.title }}>
                 Hallo,
               </CustomText>
               <CustomText
@@ -198,7 +226,13 @@ const AvatarScreen = () => {
             <CustomButton
               fill={true}
               onPress={showImageOptions}
-              text={isSharedDeviceMode ? "Return to Parent to Edit" : isSaving ? "Saving..." : "Change Avatar"}
+              text={
+                isSharedDeviceMode
+                  ? "Return to Parent to Edit"
+                  : isSaving
+                    ? "Saving..."
+                    : "Change Avatar"
+              }
               height={responsiveHeight(7)}
             />
             <CustomButton

@@ -1,6 +1,6 @@
-import axios from 'axios';
-import MicroserviceUrls from '../constants/Microservices';
-import authService from './authService';
+import axios from "axios";
+import MicroserviceUrls from "../constants/Microservices";
+import authService from "./authService";
 
 export interface XummSignInResponse {
   qrUrl?: string;
@@ -24,7 +24,7 @@ xummApiClient.interceptors.request.use(
   },
   (error) => {
     return Promise.reject(error);
-  }
+  },
 );
 
 /**
@@ -32,20 +32,22 @@ xummApiClient.interceptors.request.use(
  * @param uid The user's ID
  * @returns The payload response containing the QR URL and next steps
  */
-export const requestXummSignIn = async (uid: string): Promise<XummSignInResponse> => {
+export const requestXummSignIn = async (
+  uid: string,
+): Promise<XummSignInResponse> => {
   try {
     console.log(`Calling Xumm SignIn endpoint: /xummSignInRequest/${uid}`);
-    
+
     const response = await xummApiClient.get(`/xummSignInRequest/${uid}`);
     return response.data as XummSignInResponse;
   } catch (error) {
-    console.error('Failed to request Xumm sign in:', error);
+    console.log("Failed to request Xumm sign in:", error);
     throw error;
   }
 };
 
 export interface XummPaymentRequest {
-  type: 'Payment';
+  type: "Payment";
   source: string;
   destination: string;
   amount: string;
@@ -53,14 +55,16 @@ export interface XummPaymentRequest {
   task_id?: string;
 }
 
-export const requestPayment = async (payload: XummPaymentRequest): Promise<XummSignInResponse> => {
+export const requestPayment = async (
+  payload: XummPaymentRequest,
+): Promise<XummSignInResponse> => {
   try {
     console.log(`Calling payment_request endpoint`);
-    
-    const response = await xummApiClient.post('/payment_request', payload);
+
+    const response = await xummApiClient.post("/payment_request", payload);
     return response.data as XummSignInResponse;
   } catch (error) {
-    console.error('Failed to request Xumm payment:', error);
+    console.log("Failed to request Xumm payment:", error);
     throw error;
   }
 };
@@ -80,33 +84,38 @@ export interface XummEscrowRequest {
   user_id?: string;
 }
 
-export const createEscrow = async (payload: XummEscrowRequest): Promise<XummSignInResponse> => {
+export const createEscrow = async (
+  payload: XummEscrowRequest,
+): Promise<XummSignInResponse> => {
   try {
-    const response = await xummApiClient.post('/create_escrow', payload);
+    const response = await xummApiClient.post("/create_escrow", payload);
     return response.data as XummSignInResponse;
   } catch (error) {
-    console.error('Failed to create escrow:', error);
+    console.log("Failed to create escrow:", error);
     throw error;
   }
 };
 
-export const finishEscrow = async (payload: XummEscrowRequest): Promise<XummSignInResponse> => {
+export const finishEscrow = async (
+  payload: XummEscrowRequest,
+): Promise<XummSignInResponse> => {
   try {
-    const response = await xummApiClient.post('/finish_escrow_xumm', payload);
+    const response = await xummApiClient.post("/finish_escrow_xumm", payload);
     return response.data as XummSignInResponse;
   } catch (error) {
-    console.error('Failed to finish escrow:', error);
+    console.log("Failed to finish escrow:", error);
     throw error;
   }
 };
 
-export const cancelEscrow = async (payload: XummEscrowRequest): Promise<XummSignInResponse> => {
+export const cancelEscrow = async (
+  payload: XummEscrowRequest,
+): Promise<XummSignInResponse> => {
   try {
-    const response = await xummApiClient.post('/cancel_escrow_xumm', payload);
+    const response = await xummApiClient.post("/cancel_escrow_xumm", payload);
     return response.data as XummSignInResponse;
   } catch (error) {
-    console.error('Failed to cancel escrow:', error);
+    console.log("Failed to cancel escrow:", error);
     throw error;
   }
 };
-    

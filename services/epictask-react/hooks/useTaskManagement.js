@@ -1,5 +1,5 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
-import { firestoreService } from '../api/firestoreService';
+import { useState, useEffect, useCallback, useRef } from "react";
+import { firestoreService } from "../api/firestoreService";
 
 /**
  * Hook for managing tasks for a single user (child)
@@ -17,7 +17,7 @@ export const useChildTasks = (childId, options = {}) => {
     realTime = true,
     limitCount = 50,
     includeCompleted = true,
-    useCache = true
+    useCache = true,
   } = options;
 
   // Cleanup function
@@ -49,7 +49,7 @@ export const useChildTasks = (childId, options = {}) => {
 
       if (realTime) {
         cleanup(false); // Clean up any existing subscription without invalidating this request
-        
+
         const unsubscribe = firestoreService.subscribeToUserTasks(
           childId,
           (result) => {
@@ -65,14 +65,14 @@ export const useChildTasks = (childId, options = {}) => {
             }
             setLoading(false);
           },
-          { 
-            limitCount, 
+          {
+            limitCount,
             includeCompleted,
             orderField: "created_at",
-            orderDirection: "desc"
-          }
+            orderDirection: "desc",
+          },
         );
-        
+
         unsubscribeRef.current = unsubscribe;
       } else {
         // One-time fetch with enhanced options
@@ -81,10 +81,10 @@ export const useChildTasks = (childId, options = {}) => {
           limitCount,
           includeCompleted,
           orderField: "expiration_date",
-          orderDirection: "desc"
+          orderDirection: "desc",
         });
         if (!isCurrentRequest()) return;
-        
+
         if (result.success) {
           setTasks(result.tasks);
           setFromCache(result.fromCache || false);
@@ -98,7 +98,7 @@ export const useChildTasks = (childId, options = {}) => {
     } catch (err) {
       if (!isCurrentRequest()) return;
 
-      console.error('Error fetching child tasks:', err);
+      console.log("Error fetching child tasks:", err);
       setError(err.message);
       setTasks([]);
       setLoading(false);
@@ -109,27 +109,27 @@ export const useChildTasks = (childId, options = {}) => {
   const refreshTasks = useCallback(async () => {
     if (!childId) return;
     const requestId = requestIdRef.current;
-    
+
     try {
       // Invalidate cache first, then fetch fresh data
       firestoreService.cache.invalidateUserTasks(childId);
-      
+
       const result = await firestoreService.getTasksForUser(childId, {
         useCache: false,
         limitCount,
         includeCompleted,
         orderField: "expiration_date",
-        orderDirection: "desc"
+        orderDirection: "desc",
       });
       if (requestId !== requestIdRef.current) return;
-      
+
       if (result.success) {
         setTasks(result.tasks);
         setFromCache(false);
         setError(null);
       }
     } catch (err) {
-      console.error('Error refreshing tasks:', err);
+      console.log("Error refreshing tasks:", err);
       setError(err.message);
     }
   }, [childId, limitCount, includeCompleted]);
@@ -137,7 +137,7 @@ export const useChildTasks = (childId, options = {}) => {
   // Setup effect
   useEffect(() => {
     fetchTasks();
-    
+
     // Cleanup on unmount or childId change
     return cleanup;
   }, [fetchTasks, cleanup]);
@@ -148,7 +148,7 @@ export const useChildTasks = (childId, options = {}) => {
     error,
     fromCache,
     refreshTasks,
-    cleanup
+    cleanup,
   };
 };
 
@@ -205,7 +205,7 @@ export const useFamilyTasks = (parentId, options = {}) => {
       if (realTime) {
         // Setup real-time subscription for family with enhanced options
         cleanup(false); // Clean up any existing subscription without invalidating this request
-        
+
         const unsubscribe = firestoreService.subscribeToFamilyTasks(
           parentId,
           (result) => {
@@ -224,10 +224,10 @@ export const useFamilyTasks = (parentId, options = {}) => {
             limitCount: 50,
             includeCompleted: true,
             orderField: "created_at",
-            orderDirection: "desc"
-          }
+            orderDirection: "desc",
+          },
         );
-        
+
         unsubscribeRef.current = unsubscribe;
       } else {
         // One-time fetch with enhanced options
@@ -236,10 +236,10 @@ export const useFamilyTasks = (parentId, options = {}) => {
           limitCount: 50,
           includeCompleted: true,
           orderField: "expiration_date",
-          orderDirection: "desc"
+          orderDirection: "desc",
         });
         if (!isCurrentRequest()) return;
-        
+
         if (result.success) {
           setFamilyTasks(result.familyTasks);
           setError(null);
@@ -252,7 +252,7 @@ export const useFamilyTasks = (parentId, options = {}) => {
     } catch (err) {
       if (!isCurrentRequest()) return;
 
-      console.error('Error fetching family tasks:', err);
+      console.log("Error fetching family tasks:", err);
       setError(err.message);
       setFamilyTasks({});
       setLoading(false);
@@ -277,7 +277,7 @@ export const useFamilyTasks = (parentId, options = {}) => {
         setChildren(result.children);
       }
     } catch (err) {
-      console.error('Error refreshing children:', err);
+      console.log("Error refreshing children:", err);
     }
   }, [parentId]);
 
@@ -285,48 +285,59 @@ export const useFamilyTasks = (parentId, options = {}) => {
   const refreshFamilyTasks = useCallback(async () => {
     if (!parentId) return;
     const requestId = requestIdRef.current;
-    
+
     try {
       // Clear specific cache patterns and fetch fresh data
       firestoreService.cache.clearTasks();
-      
+
       const result = await firestoreService.getTasksForFamily(parentId, {
         useCache: false,
         limitCount: 50,
         includeCompleted: true,
         orderField: "expiration_date",
-        orderDirection: "desc"
+        orderDirection: "desc",
       });
       if (requestId !== requestIdRef.current) return;
-      
+
       if (result.success) {
         setFamilyTasks(result.familyTasks);
         setError(null);
       }
     } catch (err) {
-      console.error('Error refreshing family tasks:', err);
+      console.log("Error refreshing family tasks:", err);
       setError(err.message);
     }
   }, [parentId]);
 
   // Get tasks for a specific child
-  const getTasksForChild = useCallback((childId) => {
-    return familyTasks[childId]?.tasks || [];
-  }, [familyTasks]);
+  const getTasksForChild = useCallback(
+    (childId) => {
+      return familyTasks[childId]?.tasks || [];
+    },
+    [familyTasks],
+  );
 
   // Get task counts for a specific child
-  const getTaskCountsForChild = useCallback((childId) => {
-    const childTasks = familyTasks[childId]?.tasks || [];
-    return {
-      total: childTasks.length,
-      completed: childTasks.filter(task => task.status === 'completed').length,
-      inProgress: childTasks.filter(task => task.status === 'in_progress' || task.status === 'assigned').length,
-      overdue: childTasks.filter(task => {
-        const dueDate = task.expiration_date ? new Date(task.expiration_date * 1000) : null;
-        return dueDate && dueDate < new Date() && task.status !== 'completed';
-      }).length
-    };
-  }, [familyTasks]);
+  const getTaskCountsForChild = useCallback(
+    (childId) => {
+      const childTasks = familyTasks[childId]?.tasks || [];
+      return {
+        total: childTasks.length,
+        completed: childTasks.filter((task) => task.status === "completed")
+          .length,
+        inProgress: childTasks.filter(
+          (task) => task.status === "in_progress" || task.status === "assigned",
+        ).length,
+        overdue: childTasks.filter((task) => {
+          const dueDate = task.expiration_date
+            ? new Date(task.expiration_date * 1000)
+            : null;
+          return dueDate && dueDate < new Date() && task.status !== "completed";
+        }).length,
+      };
+    },
+    [familyTasks],
+  );
 
   // Get overall family task summary
   const getFamilyTaskSummary = useCallback(() => {
@@ -335,22 +346,28 @@ export const useFamilyTasks = (parentId, options = {}) => {
       completedTasks: 0,
       inProgressTasks: 0,
       overdueTasks: 0,
-      childrenWithTasks: 0
+      childrenWithTasks: 0,
     };
 
-    Object.keys(familyTasks).forEach(childId => {
+    Object.keys(familyTasks).forEach((childId) => {
       const childTasks = familyTasks[childId]?.tasks || [];
       if (childTasks.length > 0) {
         summary.childrenWithTasks++;
       }
-      
+
       summary.totalTasks += childTasks.length;
-      summary.completedTasks += childTasks.filter(task => task.status === 'completed').length;
-      summary.inProgressTasks += childTasks.filter(task => task.status === 'in_progress' || task.status === 'assigned').length;
-      
-      const overdue = childTasks.filter(task => {
-        const dueDate = task.expiration_date ? new Date(task.expiration_date * 1000) : null;
-        return dueDate && dueDate < new Date() && task.status !== 'completed';
+      summary.completedTasks += childTasks.filter(
+        (task) => task.status === "completed",
+      ).length;
+      summary.inProgressTasks += childTasks.filter(
+        (task) => task.status === "in_progress" || task.status === "assigned",
+      ).length;
+
+      const overdue = childTasks.filter((task) => {
+        const dueDate = task.expiration_date
+          ? new Date(task.expiration_date * 1000)
+          : null;
+        return dueDate && dueDate < new Date() && task.status !== "completed";
       }).length;
       summary.overdueTasks += overdue;
     });
@@ -361,7 +378,7 @@ export const useFamilyTasks = (parentId, options = {}) => {
   // Setup effect
   useEffect(() => {
     fetchFamilyTasks();
-    
+
     // Cleanup on unmount or parentId change
     return cleanup;
   }, [fetchFamilyTasks, cleanup]);
@@ -376,7 +393,7 @@ export const useFamilyTasks = (parentId, options = {}) => {
     getTasksForChild,
     getTaskCountsForChild,
     getFamilyTaskSummary,
-    cleanup
+    cleanup,
   };
 };
 
@@ -398,13 +415,17 @@ export const usePaginatedTasks = (userId, pageSize = 20) => {
     try {
       setLoading(true);
       setError(null);
-      
-      const result = await firestoreService.getTasksWithPagination(userId, null, {
-        limitCount: pageSize,
-        orderField: "created_at",
-        orderDirection: "desc"
-      });
-      
+
+      const result = await firestoreService.getTasksWithPagination(
+        userId,
+        null,
+        {
+          limitCount: pageSize,
+          orderField: "created_at",
+          orderDirection: "desc",
+        },
+      );
+
       if (result.success) {
         setTasks(result.tasks);
         setHasMore(result.hasMore);
@@ -413,7 +434,7 @@ export const usePaginatedTasks = (userId, pageSize = 20) => {
         setError(result.error);
       }
     } catch (err) {
-      console.error('Error loading initial tasks:', err);
+      console.log("Error loading initial tasks:", err);
       setError(err.message);
     } finally {
       setLoading(false);
@@ -427,22 +448,26 @@ export const usePaginatedTasks = (userId, pageSize = 20) => {
     try {
       setLoading(true);
       setError(null);
-      
-      const result = await firestoreService.getTasksWithPagination(userId, lastDocument, {
-        limitCount: pageSize,
-        orderField: "created_at",
-        orderDirection: "desc"
-      });
-      
+
+      const result = await firestoreService.getTasksWithPagination(
+        userId,
+        lastDocument,
+        {
+          limitCount: pageSize,
+          orderField: "created_at",
+          orderDirection: "desc",
+        },
+      );
+
       if (result.success) {
-        setTasks(prevTasks => [...prevTasks, ...result.tasks]);
+        setTasks((prevTasks) => [...prevTasks, ...result.tasks]);
         setHasMore(result.hasMore);
         setLastDocument(result.lastDocument);
       } else {
         setError(result.error);
       }
     } catch (err) {
-      console.error('Error loading more tasks:', err);
+      console.log("Error loading more tasks:", err);
       setError(err.message);
     } finally {
       setLoading(false);
@@ -470,7 +495,7 @@ export const usePaginatedTasks = (userId, pageSize = 20) => {
     hasMore,
     loadMoreTasks,
     resetPagination,
-    refresh: loadInitialTasks
+    refresh: loadInitialTasks,
   };
 };
 
@@ -509,6 +534,6 @@ export const useTaskCache = () => {
     clearUserCache,
     clearAllCache,
     getCacheStats,
-    getPerformanceStats
+    getPerformanceStats,
   };
 };

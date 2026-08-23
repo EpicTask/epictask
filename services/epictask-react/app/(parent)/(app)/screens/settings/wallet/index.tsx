@@ -33,7 +33,8 @@ const abbreviateAddress = (address: string) =>
     ? `${address.slice(0, 6)}...${address.slice(-4)}`
     : address;
 
-interface Rewards {
+interface ChildReward {
+  user_id: string;
   tokens_earned: number;
   level: number;
   rank: number;
@@ -44,7 +45,8 @@ interface RewardedTask {
   task_title?: string;
   reward_amount?: number;
   timestamp?: any;
-  assigned_to_ids?: string[];
+  status?: string;
+  rewarded?: boolean;
 }
 
 export default function ParentWalletScreen() {
@@ -57,7 +59,7 @@ export default function ParentWalletScreen() {
   );
   const walletAddress: string = user?.wallet_address || "";
 
-  const [rewards, setRewards] = useState<Rewards | null>(null);
+  const [childrenRewards, setChildrenRewards] = useState<ChildReward[]>([]);
   const [recentActivity, setRecentActivity] = useState<RewardedTask[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -65,26 +67,43 @@ export default function ParentWalletScreen() {
     if (!user?.uid) return;
     setLoading(true);
     try {
-      const [rewardsData, tasks] = await Promise.all([
-        firestoreService.getUserRewards(user.uid),
-        firestoreService.getRecentTasks(user.uid, 10, 30),
+      const [rewardsResult, familyTasksResult] = await Promise.all([
+        firestoreService.getChildrenRewards(user.uid).catch(() => []),
+        firestoreService.getTasksForFamily(user.uid).catch(() => ({ familyTasks: {} })),
       ]);
-      setRewards(rewardsData);
-      const rewarded = (tasks as RewardedTask[]).filter(
-        (t: any) => t.rewarded === true || t.status === "completed"
+
+      setChildrenRewards(Array.isArray(rewardsResult) ? rewardsResult : []);
+
+      const allFamilyTasks: RewardedTask[] = [];
+      if (familyTasksResult?.familyTasks) {
+        Object.values(familyTasksResult.familyTasks).forEach((childObj: any) => {
+          if (childObj?.tasks) {
+            allFamilyTasks.push(...childObj.tasks);
+          }
+        });
+      }
+
+      const rewarded = allFamilyTasks.filter(
+        (t: any) => t.rewarded === true || t.status === "completed" || t.status === "verified"
       );
-      setRecentActivity(rewarded);
+      setRecentActivity(rewarded.slice(0, 10));
     } catch (e) {
-      console.error("Failed to load wallet data", e);
+      console.log("Failed to load wallet data", e);
     } finally {
       setLoading(false);
     }
   }, [user?.uid]);
 
-  useFocusEffect(loadData);
+  useFocusEffect(
+    useCallback(() => {
+      loadData();
+    }, [loadData])
+  );
 
   const handleConnect = () => {
-    connectWallet(user!.uid, user?.userToken as XummUserToken | undefined);
+    if (user?.uid) {
+      connectWallet(user.uid, user?.userToken as XummUserToken | undefined);
+    }
   };
 
   const handleSend = () => {
@@ -102,9 +121,10 @@ export default function ParentWalletScreen() {
     Alert.alert("Your Wallet Address", walletAddress);
   };
 
-  const tokensToNextLevel = rewards
-    ? 1000 - (rewards.tokens_earned % 1000)
-    : 1000;
+  const totalTokensDistributed = childrenRewards.reduce(
+    (sum, c) => sum + (c.tokens_earned || 0),
+    0
+  );
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -169,46 +189,31 @@ export default function ParentWalletScreen() {
             )}
           </View>
 
-          {/* Rewards Summary Card */}
-          {rewards && (
-            <View style={styles.card}>
-              <CustomText variant="regular" style={styles.sectionLabel}>
-                EpicTask Rewards
-              </CustomText>
-              <View style={styles.rewardsRow}>
-                <View style={styles.rewardStat}>
-                  <CustomText variant="bold" style={styles.rewardBig}>
-                    {rewards.tokens_earned.toLocaleString()}
-                  </CustomText>
-                  <CustomText variant="regular" style={styles.rewardCaption}>
-                    tokens distributed
-                  </CustomText>
-                </View>
-                <View style={styles.rewardDivider} />
-                <View style={styles.rewardStat}>
-                  <CustomText variant="bold" style={styles.rewardBig}>
-                    {rewards.level}
-                  </CustomText>
-                  <CustomText variant="regular" style={styles.rewardCaption}>
-                    level
-                  </CustomText>
-                </View>
-                {rewards.rank > 0 && (
-                  <>
-                    <View style={styles.rewardDivider} />
-                    <View style={styles.rewardStat}>
-                      <CustomText variant="bold" style={styles.rewardBig}>
-                        #{rewards.rank}
-                      </CustomText>
-                      <CustomText variant="regular" style={styles.rewardCaption}>
-                        rank
-                      </CustomText>
-                    </View>
-                  </>
-                )}
+          {/* Family Rewards Summary Card */}
+          <View style={styles.card}>
+            <CustomText variant="regular" style={styles.sectionLabel}>
+              Family Task Rewards
+            </CustomText>
+            <View style={styles.rewardsRow}>
+              <View style={styles.rewardStat}>
+                <CustomText variant="bold" style={styles.rewardBig}>
+                  {totalTokensDistributed.toLocaleString()}
+                </CustomText>
+                <CustomText variant="regular" style={styles.rewardCaption}>
+                  tokens distributed
+                </CustomText>
+              </View>
+              <View style={styles.rewardDivider} />
+              <View style={styles.rewardStat}>
+                <CustomText variant="bold" style={styles.rewardBig}>
+                  {childrenRewards.length}
+                </CustomText>
+                <CustomText variant="regular" style={styles.rewardCaption}>
+                  linked kids
+                </CustomText>
               </View>
             </View>
-          )}
+          </View>
 
           {/* Action Buttons */}
           <View style={[styles.card, styles.actionsCard]}>

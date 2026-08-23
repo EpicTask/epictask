@@ -38,7 +38,11 @@ import { deviceSharingAllowed } from "@/constants/AgePolicy";
 import { useFamilyTasks } from "@/hooks/useTaskManagement";
 import CustomText from "@/components/CustomText";
 import { MaterialIcons } from "@expo/vector-icons";
-import { useXummAuth, isXummWalletConnected, XummUserToken } from "@/hooks/useXummAuth";
+import {
+  useXummAuth,
+  isXummWalletConnected,
+  XummUserToken,
+} from "@/hooks/useXummAuth";
 import { XummQrModal } from "@/components/modals/XummQrModal";
 
 // Type definitions
@@ -72,24 +76,36 @@ interface Kid {
 
 export default function HomeScreen() {
   const { user } = useAuth();
-  const { connectWallet, showQrModal, qrUrl, closeModal, isConnecting } = useXummAuth();
-  const walletConnected = isXummWalletConnected(user?.userToken as XummUserToken | undefined);
+  const { connectWallet, showQrModal, qrUrl, closeModal, isConnecting } =
+    useXummAuth();
+  const walletConnected = isXummWalletConnected(
+    user?.userToken as XummUserToken | undefined,
+  );
 
   const handleWalletPress = () => {
     if (walletConnected) {
-      Alert.alert("Wallet Connected", "Your Xumm wallet is securely connected.");
+      Alert.alert(
+        "Wallet Connected",
+        "Your Xumm wallet is securely connected.",
+      );
     } else {
       connectWallet(user!.uid, user?.userToken as XummUserToken | undefined);
     }
   };
 
-  const [taskSummary, setTaskSummary] = useState<TaskSummary>({ completed: 0, in_progress: 0, total: 0 });
+  const [taskSummary, setTaskSummary] = useState<TaskSummary>({
+    completed: 0,
+    in_progress: 0,
+    total: 0,
+  });
   const [recentTasks, setRecentTasks] = useState<RecentTask[]>([]);
   const [pendingPayouts, setPendingPayouts] = useState<PendingPayout[]>([]);
   const [kidsWithTaskData, setKidsWithTaskData] = useState<Kid[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
-  const [payoutLoading, setPayoutLoading] = useState<Record<string, boolean>>({});
+  const [payoutLoading, setPayoutLoading] = useState<Record<string, boolean>>(
+    {},
+  );
   const [rewardingTaskId, setRewardingTaskId] = useState<string | null>(null);
   const [lastRefreshTime, setLastRefreshTime] = useState<number>(0);
   const [unreadNotifications, setUnreadNotifications] = useState(0);
@@ -98,9 +114,12 @@ export default function HomeScreen() {
   const REFRESH_COOLDOWN = 5000; // 5 seconds cooldown
 
   // Child switching modals
-  const [childSelectionModalVisible, setChildSelectionModalVisible] = useState(false);
+  const [childSelectionModalVisible, setChildSelectionModalVisible] =
+    useState(false);
   const [childPINModalVisible, setChildPINModalVisible] = useState(false);
-  const [selectedChildForPIN, setSelectedChildForPIN] = useState<Kid | null>(null);
+  const [selectedChildForPIN, setSelectedChildForPIN] = useState<Kid | null>(
+    null,
+  );
 
   const {
     familyTasks,
@@ -126,83 +145,91 @@ export default function HomeScreen() {
     }
   }, [user?.uid]);
 
-  const fetchData = useCallback(async (isRefresh = false) => {
-    const userId = user?.uid;
-    const requestId = ++requestIdRef.current;
-    const isCurrentRequest = () =>
-      requestId === requestIdRef.current && currentUserIdRef.current === userId;
+  const fetchData = useCallback(
+    async (isRefresh = false) => {
+      const userId = user?.uid;
+      const requestId = ++requestIdRef.current;
+      const isCurrentRequest = () =>
+        requestId === requestIdRef.current &&
+        currentUserIdRef.current === userId;
 
-    if (!userId) {
-      return;
-    }
-
-    try {
-      if (!isRefresh) setLoading(true);
-      const summary = (await firestoreService.getTaskSummary(
-        userId
-      )) as TaskSummary;
-      if (!isCurrentRequest()) return;
-      setTaskSummary(summary || { completed: 0, in_progress: 0, total: 0 });
-
-      const tasks = (await firestoreService.getRecentTasks(
-        userId
-      )) as RecentTask[];
-      if (!isCurrentRequest()) return;
-      setRecentTasks(Array.isArray(tasks) ? tasks : []);
-
-      // Fetch pending narrative payouts
-      try {
-        const payouts = await narrativeService.getPendingPayouts(userId);
-        if (!isCurrentRequest()) return;
-        setPendingPayouts(Array.isArray(payouts) ? payouts : []);
-      } catch (e) {
-        if (!isCurrentRequest()) return;
-        console.log("Failed to fetch pending payouts", e);
-        setPendingPayouts([]);
+      if (!userId) {
+        return;
       }
 
-      // Fetch unread notifications count
       try {
-        const notifications = await notificationService.getNotifications(20, true);
+        if (!isRefresh) setLoading(true);
+        const summary = (await firestoreService.getTaskSummary(
+          userId,
+        )) as TaskSummary;
         if (!isCurrentRequest()) return;
-        setUnreadNotifications(Array.isArray(notifications) ? notifications.length : 0);
-      } catch (e) {
-        if (!isCurrentRequest()) return;
-        console.log("Failed to fetch notifications count", e);
-      }
+        setTaskSummary(summary || { completed: 0, in_progress: 0, total: 0 });
 
-      const safeChildren = Array.isArray(children) ? children : [];
-      const kidsWithTaskSummary = await Promise.all(
-        safeChildren.map(async (kid: Kid) => {
-          try {
-            const kidTaskSummary =
-              (await firestoreService.getKidTaskSummary(
-                kid.uid
+        const tasks = (await firestoreService.getRecentTasks(
+          userId,
+        )) as RecentTask[];
+        if (!isCurrentRequest()) return;
+        setRecentTasks(Array.isArray(tasks) ? tasks : []);
+
+        // Fetch pending narrative payouts
+        try {
+          const payouts = await narrativeService.getPendingPayouts(userId);
+          if (!isCurrentRequest()) return;
+          setPendingPayouts(Array.isArray(payouts) ? payouts : []);
+        } catch (e) {
+          if (!isCurrentRequest()) return;
+          console.log("Failed to fetch pending payouts", e);
+          setPendingPayouts([]);
+        }
+
+        // Fetch unread notifications count
+        try {
+          const notifications = await notificationService.getNotifications(
+            20,
+            true,
+          );
+          if (!isCurrentRequest()) return;
+          setUnreadNotifications(
+            Array.isArray(notifications) ? notifications.length : 0,
+          );
+        } catch (e) {
+          if (!isCurrentRequest()) return;
+          console.log("Failed to fetch notifications count", e);
+        }
+
+        const safeChildren = Array.isArray(children) ? children : [];
+        const kidsWithTaskSummary = await Promise.all(
+          safeChildren.map(async (kid: Kid) => {
+            try {
+              const kidTaskSummary = (await firestoreService.getKidTaskSummary(
+                kid.uid,
               )) as TaskSummary;
-            return {
-              ...kid,
-              tasks_completed: kidTaskSummary?.completed || 0,
-              tasks_pending: kidTaskSummary?.in_progress || 0,
-            };
-          } catch (err) {
-            console.log(`Failed to fetch summary for kid ${kid.uid}`, err);
-            return {
-              ...kid,
-              tasks_completed: 0,
-              tasks_pending: 0,
+              return {
+                ...kid,
+                tasks_completed: kidTaskSummary?.completed || 0,
+                tasks_pending: kidTaskSummary?.in_progress || 0,
+              };
+            } catch (err) {
+              console.log(`Failed to fetch summary for kid ${kid.uid}`, err);
+              return {
+                ...kid,
+                tasks_completed: 0,
+                tasks_pending: 0,
+              };
             }
-          }
-        })
-      );
-      if (!isCurrentRequest()) return;
-      setKidsWithTaskData(kidsWithTaskSummary);
-    } catch (error) {
-      if (!isCurrentRequest()) return;
-      console.error("Failed to fetch dashboard data:", error);
-    } finally {
-      if (!isRefresh && isCurrentRequest()) setLoading(false);
-    }
-  }, [user, children]);
+          }),
+        );
+        if (!isCurrentRequest()) return;
+        setKidsWithTaskData(kidsWithTaskSummary);
+      } catch (error) {
+        if (!isCurrentRequest()) return;
+        console.log("Failed to fetch dashboard data:", error);
+      } finally {
+        if (!isRefresh && isCurrentRequest()) setLoading(false);
+      }
+    },
+    [user, children],
+  );
 
   useEffect(() => {
     fetchData();
@@ -224,13 +251,16 @@ export default function HomeScreen() {
           hasFocusedRef.current = true;
         }
 
-        notificationService.getNotifications(20, true)
-          .then(notifications => {
+        notificationService
+          .getNotifications(20, true)
+          .then((notifications) => {
             if (active && currentUserIdRef.current === userId) {
-              setUnreadNotifications(Array.isArray(notifications) ? notifications.length : 0);
+              setUnreadNotifications(
+                Array.isArray(notifications) ? notifications.length : 0,
+              );
             }
           })
-          .catch(e => {
+          .catch((e) => {
             if (active && currentUserIdRef.current === userId) {
               console.log("Failed to refresh notifications count", e);
             }
@@ -240,7 +270,7 @@ export default function HomeScreen() {
       return () => {
         active = false;
       };
-    }, [user?.uid, refreshChildren])
+    }, [user?.uid, refreshChildren]),
   );
 
   const onRefresh = useCallback(async () => {
@@ -248,27 +278,31 @@ export default function HomeScreen() {
     if (now - lastRefreshTime < REFRESH_COOLDOWN) {
       return; // Skip if cooling down
     }
-    
+
     setRefreshing(true);
     setLastRefreshTime(now);
 
     const userId = user?.uid;
     try {
-      await Promise.all([
-        refreshChildren?.(),
-        refreshFamilyTasks?.(),
-      ]);
+      await Promise.all([refreshChildren?.(), refreshFamilyTasks?.()]);
       await fetchData(true);
     } finally {
       if (currentUserIdRef.current === userId) {
         setRefreshing(false);
       }
     }
-  }, [fetchData, refreshFamilyTasks, refreshChildren, lastRefreshTime, user?.uid]);
+  }, [
+    fetchData,
+    refreshFamilyTasks,
+    refreshChildren,
+    lastRefreshTime,
+    user?.uid,
+  ]);
 
   // Handler functions for child switching
   const switchableKids = kidsWithTaskData.filter(
-    (kid) => deviceSharingAllowed(kid.age) && kid.device_sharing_enabled !== false
+    (kid) =>
+      deviceSharingAllowed(kid.age) && kid.device_sharing_enabled !== false,
   );
 
   const handleChildSwitchPress = () => {
@@ -293,7 +327,7 @@ export default function HomeScreen() {
   const handleChildPINSuccess = (_child: Kid) => {
     setChildPINModalVisible(false);
     setSelectedChildForPIN(null);
-    router.replace('/(kid)/(app)/(tabs)' as any);
+    router.replace("/(kid)/(app)/(tabs)" as any);
   };
 
   const handleChildModalClose = () => {
@@ -326,36 +360,38 @@ export default function HomeScreen() {
               source={user?.imageUrl ? { uri: user.imageUrl } : IMAGES.profile}
               style={styles.profileImage}
             />
-            <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
-              <TouchableOpacity 
+            <View
+              style={{ flexDirection: "row", alignItems: "center", gap: 10 }}
+            >
+              <TouchableOpacity
                 onPress={handleWalletPress}
                 style={[
-                  styles.notificationIcon, 
-                  { 
+                  styles.notificationIcon,
+                  {
                     backgroundColor: walletConnected ? COLORS.success : "white",
                     borderColor: walletConnected ? COLORS.success : "#ccc",
                     borderWidth: 1,
-                    padding: 10
-                  }
+                    padding: 10,
+                  },
                 ]}
               >
-                <MaterialIcons 
-                  name="account-balance-wallet" 
-                  size={22} 
-                  color={walletConnected ? "white" : "black"} 
+                <MaterialIcons
+                  name="account-balance-wallet"
+                  size={22}
+                  color={walletConnected ? "white" : "black"}
                 />
               </TouchableOpacity>
               <View style={styles.notificationIcon}>
                 <Link href="/screens/notification-screen" asChild>
                   <Pressable>
-                      {ICONS.SETTINGS.bell}
-                      {unreadNotifications > 0 && (
-                          <View style={styles.badge}>
-                              <Text style={styles.badgeText}>
-                                  {unreadNotifications > 9 ? '9+' : unreadNotifications}
-                              </Text>
-                          </View>
-                      )}
+                    {ICONS.SETTINGS.bell}
+                    {unreadNotifications > 0 && (
+                      <View style={styles.badge}>
+                        <Text style={styles.badgeText}>
+                          {unreadNotifications > 9 ? "9+" : unreadNotifications}
+                        </Text>
+                      </View>
+                    )}
                   </Pressable>
                 </Link>
               </View>
@@ -368,7 +404,11 @@ export default function HomeScreen() {
             <View style={{ flexDirection: "row", gap: 10 }}>
               <ProgressCard
                 tab={true}
-                progress={(taskSummary?.total || 0) > 0 ? (taskSummary?.completed || 0) / (taskSummary?.total || 1) : 0}
+                progress={
+                  (taskSummary?.total || 0) > 0
+                    ? (taskSummary?.completed || 0) / (taskSummary?.total || 1)
+                    : 0
+                }
                 completed={taskSummary?.completed || 0}
                 total={taskSummary?.total || 0}
                 text="Completed"
@@ -376,7 +416,12 @@ export default function HomeScreen() {
               />
               <ProgressCard
                 tab={true}
-                progress={(taskSummary?.total || 0) > 0 ? (taskSummary?.in_progress || 0) / (taskSummary?.total || 1) : 0}
+                progress={
+                  (taskSummary?.total || 0) > 0
+                    ? (taskSummary?.in_progress || 0) /
+                      (taskSummary?.total || 1)
+                    : 0
+                }
                 completed={taskSummary?.in_progress || 0}
                 text="In Progress"
                 total={taskSummary?.total || 0}
@@ -387,8 +432,16 @@ export default function HomeScreen() {
 
           {/* Kids Profiles */}
           <View style={{ gap: 10 }}>
-            <Heading title="Kids Profiles" icon={
-              <PlusButton onPress={() =>{router.push("/screens/add-kid" as any)}}/>} />
+            <Heading
+              title="Kids Profiles"
+              icon={
+                <PlusButton
+                  onPress={() => {
+                    router.push("/screens/add-kid" as any);
+                  }}
+                />
+              }
+            />
             {kidsWithTaskData.length > 0 ? (
               <>
                 <View style={{ flexDirection: "row", gap: 10, flex: 1 }}>
@@ -404,7 +457,7 @@ export default function HomeScreen() {
                     />
                   ))}
                 </View>
-                
+
                 {/* Child Switching Button — only shown when at least one kid
                     actually has a shared profile on this device. */}
                 {switchableKids.length > 0 && (
@@ -413,7 +466,11 @@ export default function HomeScreen() {
                     onPress={handleChildSwitchPress}
                     accessibilityRole="button"
                   >
-                    <MaterialIcons name="switch-account" size={18} color="#fff" />
+                    <MaterialIcons
+                      name="switch-account"
+                      size={18}
+                      color="#fff"
+                    />
                     <Text style={styles.childSwitchButtonText}>
                       {switchableKids.length === 1
                         ? `Switch to ${switchableKids[0].displayName.split(" ")[0]}'s Profile`
@@ -424,7 +481,9 @@ export default function HomeScreen() {
               </>
             ) : (
               <View>
-                <Text>No kids linked yet. Link your first child to get started!</Text>
+                <Text>
+                  No kids linked yet. Link your first child to get started!
+                </Text>
                 <SetupChecklist />
               </View>
             )}
@@ -446,42 +505,87 @@ export default function HomeScreen() {
                   </View>
                   <View style={styles.payoutActions}>
                     <TouchableOpacity
-                      style={[styles.payoutButton, styles.approveButton, payoutLoading[payout.request_id] && styles.buttonDisabled]}
+                      style={[
+                        styles.payoutButton,
+                        styles.approveButton,
+                        payoutLoading[payout.request_id] &&
+                          styles.buttonDisabled,
+                      ]}
                       disabled={!!payoutLoading[payout.request_id]}
                       onPress={async () => {
-                        setPayoutLoading(prev => ({ ...prev, [payout.request_id]: true }));
+                        setPayoutLoading((prev) => ({
+                          ...prev,
+                          [payout.request_id]: true,
+                        }));
                         try {
-                          await narrativeService.approvePayout(payout.request_id);
-                          setPendingPayouts(prev => prev.filter(p => p.request_id !== payout.request_id));
+                          await narrativeService.approvePayout(
+                            payout.request_id,
+                          );
+                          setPendingPayouts((prev) =>
+                            prev.filter(
+                              (p) => p.request_id !== payout.request_id,
+                            ),
+                          );
                         } catch (e) {
-                          Alert.alert('Error', 'Failed to approve reward. Please try again.');
+                          Alert.alert(
+                            "Error",
+                            "Failed to approve reward. Please try again.",
+                          );
                         } finally {
-                          setPayoutLoading(prev => ({ ...prev, [payout.request_id]: false }));
+                          setPayoutLoading((prev) => ({
+                            ...prev,
+                            [payout.request_id]: false,
+                          }));
                         }
                       }}
                     >
-                      {payoutLoading[payout.request_id]
-                        ? <ActivityIndicator size="small" color="#fff" />
-                        : <Text style={styles.payoutButtonText}>Approve</Text>}
+                      {payoutLoading[payout.request_id] ? (
+                        <ActivityIndicator size="small" color="#fff" />
+                      ) : (
+                        <Text style={styles.payoutButtonText}>Approve</Text>
+                      )}
                     </TouchableOpacity>
                     <TouchableOpacity
-                      style={[styles.payoutButton, styles.rejectButton, payoutLoading[payout.request_id] && styles.buttonDisabled]}
+                      style={[
+                        styles.payoutButton,
+                        styles.rejectButton,
+                        payoutLoading[payout.request_id] &&
+                          styles.buttonDisabled,
+                      ]}
                       disabled={!!payoutLoading[payout.request_id]}
                       onPress={async () => {
-                        setPayoutLoading(prev => ({ ...prev, [payout.request_id]: true }));
+                        setPayoutLoading((prev) => ({
+                          ...prev,
+                          [payout.request_id]: true,
+                        }));
                         try {
-                          await narrativeService.rejectPayout(payout.request_id, "Rejected by parent");
-                          setPendingPayouts(prev => prev.filter(p => p.request_id !== payout.request_id));
+                          await narrativeService.rejectPayout(
+                            payout.request_id,
+                            "Rejected by parent",
+                          );
+                          setPendingPayouts((prev) =>
+                            prev.filter(
+                              (p) => p.request_id !== payout.request_id,
+                            ),
+                          );
                         } catch (e) {
-                          Alert.alert('Error', 'Failed to reject reward. Please try again.');
+                          Alert.alert(
+                            "Error",
+                            "Failed to reject reward. Please try again.",
+                          );
                         } finally {
-                          setPayoutLoading(prev => ({ ...prev, [payout.request_id]: false }));
+                          setPayoutLoading((prev) => ({
+                            ...prev,
+                            [payout.request_id]: false,
+                          }));
                         }
                       }}
                     >
-                      {payoutLoading[payout.request_id]
-                        ? <ActivityIndicator size="small" color="#fff" />
-                        : <Text style={styles.payoutButtonText}>Reject</Text>}
+                      {payoutLoading[payout.request_id] ? (
+                        <ActivityIndicator size="small" color="#fff" />
+                      ) : (
+                        <Text style={styles.payoutButtonText}>Reject</Text>
+                      )}
                     </TouchableOpacity>
                   </View>
                 </View>
@@ -494,7 +598,11 @@ export default function HomeScreen() {
             <Heading
               title="Recent tasks"
               icon={
-            <PlusButton onPress={() =>{router.push("/screens/manage-tasks/assign-task" as any)}} />
+                <PlusButton
+                  onPress={() => {
+                    router.push("/screens/manage-tasks/assign-task" as any);
+                  }}
+                />
               }
             />
             {recentTasks.length > 0 ? (
@@ -510,17 +618,33 @@ export default function HomeScreen() {
                     setRewardingTaskId(task.task_id);
                     const snapshot = [...recentTasks];
                     try {
-                      setRecentTasks(prev => prev.map(t =>
-                        t.task_id === task.task_id ? { ...t, rewarded: true, marked_completed: true, status: 'completed' } : t
-                      ));
+                      setRecentTasks((prev) =>
+                        prev.map((t) =>
+                          t.task_id === task.task_id
+                            ? {
+                                ...t,
+                                rewarded: true,
+                                marked_completed: true,
+                                status: "completed",
+                              }
+                            : t,
+                        ),
+                      );
                       await firestoreService.rewardTask(task.task_id);
 
-                      if (task.assigned_to_ids && task.assigned_to_ids.length > 0) {
+                      if (
+                        task.assigned_to_ids &&
+                        task.assigned_to_ids.length > 0
+                      ) {
                         try {
                           const kidId = task.assigned_to_ids[0];
-                          const progress = await narrativeService.getProgress(kidId);
+                          const progress =
+                            await narrativeService.getProgress(kidId);
                           if (progress && progress.length > 0) {
-                            const activeStory = progress.find((p: any) => p.status === 'in_progress') || progress[0];
+                            const activeStory =
+                              progress.find(
+                                (p: any) => p.status === "in_progress",
+                              ) || progress[0];
                             await narrativeService.createPayout({
                               kid_id: kidId,
                               story_id: activeStory.story_id,
@@ -530,12 +654,18 @@ export default function HomeScreen() {
                             });
                           }
                         } catch (payoutError) {
-                          console.error("Failed to create narrative payout:", payoutError);
+                          console.log(
+                            "Failed to create narrative payout:",
+                            payoutError,
+                          );
                         }
                       }
                     } catch (e) {
                       setRecentTasks(snapshot);
-                      Alert.alert('Error', 'Failed to reward task. Please try again.');
+                      Alert.alert(
+                        "Error",
+                        "Failed to reward task. Please try again.",
+                      );
                     } finally {
                       setRewardingTaskId(null);
                     }
@@ -549,14 +679,14 @@ export default function HomeScreen() {
           </View>
         </View>
       </ScrollView>
-      
+
       {/* Child Selection and PIN Modals */}
       <ChildSelectionModal
         visible={childSelectionModalVisible}
         onClose={handleChildModalClose}
         onChildSelected={handleChildSelected}
       />
-      
+
       <ChildPINModal
         visible={childPINModalVisible}
         child={selectedChildForPIN}
@@ -564,11 +694,7 @@ export default function HomeScreen() {
         onSuccess={handleChildPINSuccess}
       />
 
-      <XummQrModal 
-        visible={showQrModal} 
-        qrUrl={qrUrl} 
-        onClose={closeModal} 
-      />
+      <XummQrModal visible={showQrModal} qrUrl={qrUrl} onClose={closeModal} />
     </SafeAreaView>
   );
 }
@@ -599,88 +725,88 @@ const styles = StyleSheet.create({
     padding: 14,
     backgroundColor: "white",
     borderRadius: responsiveWidth(100),
-    position: 'relative',
+    position: "relative",
   },
   badge: {
-    position: 'absolute',
+    position: "absolute",
     top: 5,
     right: 5,
-    backgroundColor: 'red',
+    backgroundColor: "red",
     borderRadius: 10,
     width: 20,
     height: 20,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
     zIndex: 1,
   },
   badgeText: {
-    color: 'white',
+    color: "white",
     fontSize: 10,
-    fontWeight: 'bold',
+    fontWeight: "bold",
   },
   childSwitchButton: {
     backgroundColor: COLORS.primary,
     paddingVertical: responsiveHeight(1.5),
     paddingHorizontal: responsiveWidth(4),
     borderRadius: 8,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
     gap: 8,
     marginTop: 10,
   },
   childSwitchButtonText: {
-    color: 'white',
+    color: "white",
     fontSize: 16,
-    fontWeight: '600',
-    },
-    payoutCard: {
-    backgroundColor: 'white',
+    fontWeight: "600",
+  },
+  payoutCard: {
+    backgroundColor: "white",
     borderRadius: 15,
     padding: 15,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    shadowColor: '#000',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 3,
     marginBottom: 10,
-    },
-    payoutInfo: {
+  },
+  payoutInfo: {
     flex: 1,
-    },
-    payoutTitle: {
+  },
+  payoutTitle: {
     fontSize: 14,
     color: COLORS.black,
-    },
-    payoutDetail: {
+  },
+  payoutDetail: {
     fontSize: 12,
     color: COLORS.grey,
     marginTop: 2,
-    },
-    payoutActions: {
-    flexDirection: 'row',
+  },
+  payoutActions: {
+    flexDirection: "row",
     gap: 8,
-    },
-    payoutButton: {
+  },
+  payoutButton: {
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 8,
-    },
-    approveButton: {
+  },
+  approveButton: {
     backgroundColor: COLORS.primary,
-    },
-    rejectButton: {
+  },
+  rejectButton: {
     backgroundColor: COLORS.grey,
-    },
-    buttonDisabled: {
+  },
+  buttonDisabled: {
     opacity: 0.5,
-    },
-    payoutButtonText: {
-    color: 'white',
+  },
+  payoutButtonText: {
+    color: "white",
     fontSize: 12,
-    fontWeight: 'bold',
-    },
-    });
+    fontWeight: "bold",
+  },
+});

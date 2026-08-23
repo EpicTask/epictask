@@ -86,7 +86,7 @@ export const KidTaskModal: React.FC<KidTaskModalProps> = ({
   const taskDescription = task.task_description || "No description";
   const taskReward = task.reward_amount || task.reward || 0;
   const taskDueDate = task.expiration_date
-    ? new Date(task.expiration_date).toLocaleDateString()
+    ? new Date(typeof task.expiration_date === 'number' && task.expiration_date < 10000000000 ? task.expiration_date * 1000 : task.expiration_date).toLocaleDateString()
     : "No due date";
   const taskStatus = task.status || "pending";
   const isPendingReward = task.marked_completed === true && !task.rewarded;
@@ -118,7 +118,7 @@ export const KidTaskModal: React.FC<KidTaskModalProps> = ({
       onClose();
     } catch (error) {
       Alert.alert("Error", "Failed to update task. Please try again.");
-      console.error("KidTaskModal save error:", error);
+      console.log("KidTaskModal save error:", error);
     } finally {
       setLoading(false);
     }
@@ -203,7 +203,8 @@ export const KidTaskModal: React.FC<KidTaskModalProps> = ({
                 <Text
                   style={[
                     styles.statusOptionText,
-                    selectedStatus === status && styles.selectedStatusOptionText,
+                    selectedStatus === status &&
+                      styles.selectedStatusOptionText,
                   ]}
                 >
                   {status.replace("_", " ").toUpperCase()}
@@ -292,9 +293,7 @@ export const KidTaskModal: React.FC<KidTaskModalProps> = ({
               name="create-outline"
               size={20}
               color={
-                activeTab === "modify"
-                  ? COLORS.primary || "#007AFF"
-                  : "#8E8E93"
+                activeTab === "modify" ? COLORS.primary || "#007AFF" : "#8E8E93"
               }
             />
             <Text

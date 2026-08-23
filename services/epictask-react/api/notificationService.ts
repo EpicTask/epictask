@@ -10,7 +10,7 @@ notificationApiClient.interceptors.request.use(
   async (config) => {
     // Refresh base URL in case MicroserviceUrls changes (e.g. strict mode)
     config.baseURL = MicroserviceUrls.notificationsManagement;
-    
+
     const token = await authService.refreshToken();
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
@@ -30,17 +30,19 @@ export const notificationService = {
       });
       return response.data;
     } catch (error) {
-      console.error("Get notifications error:", error);
+      console.log("Get notifications error:", error);
       throw new Error("Failed to get notifications");
     }
   },
 
   markAsRead: async (notificationId: string) => {
     try {
-      const response = await notificationApiClient.patch(`/${notificationId}/read`);
+      const response = await notificationApiClient.patch(
+        `/${notificationId}/read`,
+      );
       return response.data;
     } catch (error) {
-      console.error("Mark as read error:", error);
+      console.log("Mark as read error:", error);
       throw new Error("Failed to mark notification as read");
     }
   },
@@ -50,7 +52,7 @@ export const notificationService = {
       const response = await notificationApiClient.post("/mark-all-read");
       return response.data;
     } catch (error) {
-      console.error("Mark all as read error:", error);
+      console.log("Mark all as read error:", error);
       throw new Error("Failed to mark all notifications as read");
     }
   },
@@ -60,11 +62,11 @@ export const notificationService = {
       const response = await notificationApiClient.delete(`/${notificationId}`);
       return response.data;
     } catch (error) {
-      console.error("Delete notification error:", error);
+      console.log("Delete notification error:", error);
       throw new Error("Failed to delete notification");
     }
   },
-  
+
   // NOTE: createNotification has been intentionally removed.
   // Notifications are created exclusively server-side on real events.
   // See: mono_service/src/routes/notifications/notification_routes.py for context.

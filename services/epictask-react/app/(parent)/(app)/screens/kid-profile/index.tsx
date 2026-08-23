@@ -72,7 +72,7 @@ const KidProfile = () => {
             setTasks(result.tasks || []);
           }
         } catch (error) {
-          console.error("Failed to fetch kid tasks:", error);
+          console.log("Failed to fetch kid tasks:", error);
           setTasks([]);
         } finally {
           setLoading(false);
@@ -111,7 +111,7 @@ const KidProfile = () => {
         }
       }
     } catch (error) {
-      console.error("Error updating task:", error);
+      console.log("Error updating task:", error);
       throw error;
     }
   };
@@ -125,24 +125,31 @@ const KidProfile = () => {
         prevTasks.filter((task) => task.task_id !== taskId),
       );
     } catch (error) {
-      console.error("Error deleting task:", error);
+      console.log("Error deleting task:", error);
     }
   };
 
   const handleRewardTask = async (taskId: string) => {
     try {
       // Optimistic update
-      setTasks(prevTasks => 
-        prevTasks.map(task => 
-          task.task_id === taskId ? { ...task, rewarded: true, marked_completed: true, status: 'completed' } : task
-        )
+      setTasks((prevTasks) =>
+        prevTasks.map((task) =>
+          task.task_id === taskId
+            ? {
+                ...task,
+                rewarded: true,
+                marked_completed: true,
+                status: "completed",
+              }
+            : task,
+        ),
       );
 
       // Backend logic handles marking complete and rewarding in one step
       await firestoreService.rewardTask(taskId);
       closeModal();
     } catch (error) {
-      console.error("Error rewarding task:", error);
+      console.log("Error rewarding task:", error);
       // Revert optimistic update on failure
       setTasks([...tasks]);
     }

@@ -107,7 +107,12 @@ const ResetPinModal = ({
   const firstName = (kid?.displayName || kid?.name || "your kid").split(" ")[0];
 
   return (
-    <Modal visible={!!kid} transparent animationType="fade" onRequestClose={onClose}>
+    <Modal
+      visible={!!kid}
+      transparent
+      animationType="fade"
+      onRequestClose={onClose}
+    >
       <View style={styles.overlay}>
         <View style={styles.modalCard}>
           <CustomText variant="semiBold" style={styles.modalTitle}>
@@ -198,7 +203,7 @@ const KidProfiles = () => {
       if (childResult?.success) setChildren(childResult.children || []);
       if (inviteResult?.success) setInvites(inviteResult.invites || []);
     } catch (error) {
-      console.error("Error loading kid profiles:", error);
+      console.log("Error loading kid profiles:", error);
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -234,11 +239,14 @@ const KidProfiles = () => {
               await authService.revokeChildInvite(invite.code);
               setInvites((prev) => prev.filter((i) => i.code !== invite.code));
             } catch (e: any) {
-              Alert.alert("Error", e?.message || "Couldn't cancel that invite.");
+              Alert.alert(
+                "Error",
+                e?.message || "Couldn't cancel that invite.",
+              );
             }
           },
         },
-      ]
+      ],
     );
   };
 
@@ -261,7 +269,7 @@ const KidProfiles = () => {
               ? setResetTarget(item)
               : Alert.alert(
                   "They manage their own PIN",
-                  `${(item.displayName || "They").split(" ")[0]} is ${TEEN_MIN_AGE} or older, so they set their own PIN in Settings → Change PIN. If they're locked out of the app, they can reset their password from the sign-in screen.`
+                  `${(item.displayName || "They").split(" ")[0]} is ${TEEN_MIN_AGE} or older, so they set their own PIN in Settings → Change PIN. If they're locked out of the app, they can reset their password from the sign-in screen.`,
                 )
           }
         >
@@ -310,7 +318,11 @@ const KidProfiles = () => {
             />
           ) : (
             <View style={styles.emptyState}>
-              <MaterialIcons name="child-care" size={44} color={COLORS.light_grey} />
+              <MaterialIcons
+                name="child-care"
+                size={44}
+                color={COLORS.light_grey}
+              />
               <CustomText style={styles.emptyText}>
                 No kid profiles yet. Tap + to add your first one.
               </CustomText>
@@ -335,10 +347,12 @@ const KidProfiles = () => {
                     <CustomText style={styles.inviteMeta}>
                       {invite.child_email_masked}
                       {invite.expires_at
-                        ? ` · expires ${new Date(invite.expires_at).toLocaleDateString(
-                            undefined,
-                            { month: "short", day: "numeric" }
-                          )}`
+                        ? ` · expires ${new Date(
+                            invite.expires_at,
+                          ).toLocaleDateString(undefined, {
+                            month: "short",
+                            day: "numeric",
+                          })}`
                         : ""}
                     </CustomText>
                     <CustomText variant="bold" style={styles.inviteCode}>
@@ -351,7 +365,9 @@ const KidProfiles = () => {
                       onPress={() => handleCopy(invite.code)}
                     >
                       <MaterialIcons
-                        name={copiedCode === invite.code ? "check" : "content-copy"}
+                        name={
+                          copiedCode === invite.code ? "check" : "content-copy"
+                        }
                         size={16}
                         color={COLORS.primary}
                       />
@@ -360,7 +376,11 @@ const KidProfiles = () => {
                       style={styles.inviteBtn}
                       onPress={() => handleCancelInvite(invite)}
                     >
-                      <MaterialIcons name="close" size={16} color={COLORS.red} />
+                      <MaterialIcons
+                        name="close"
+                        size={16}
+                        color={COLORS.red}
+                      />
                     </TouchableOpacity>
                   </View>
                 </View>

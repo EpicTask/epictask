@@ -39,7 +39,7 @@ function RootLayout() {
 
   useEffect(() => {
     if (loaded && !loading) {
-      SplashScreen.hideAsync();
+      SplashScreen.hideAsync().catch(() => {});
       const segmentList = segments as readonly string[];
       const inAuthGroup = segmentList.includes('auth');
       const inParentGroup = segments[0] === '(parent)';

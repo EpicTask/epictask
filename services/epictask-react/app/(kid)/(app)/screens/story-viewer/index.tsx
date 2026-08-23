@@ -40,9 +40,8 @@ export default function StoryViewerScreen() {
   const [progress, setProgress] = useState<StoryProgress | null>(null);
   const [advancing, setAdvancing] = useState(false);
   const [xpAnimation, setXpAnimation] = useState<number | null>(null);
-  const [activeMoneyMoment, setActiveMoneyMoment] = useState<MoneyMoment | null>(
-    null
-  );
+  const [activeMoneyMoment, setActiveMoneyMoment] =
+    useState<MoneyMoment | null>(null);
 
   // Pending Money Moment for the current node, if one is attached and the
   // child hasn't already completed it. Null when nothing to show.
@@ -74,13 +73,13 @@ export default function StoryViewerScreen() {
               moment.id,
             ],
           }
-        : prev
+        : prev,
     );
 
     await narrativeService.completeMoneyMoment(
       effectiveUserId,
       storyId,
-      moment.id
+      moment.id,
     );
   };
 
@@ -99,17 +98,16 @@ export default function StoryViewerScreen() {
 
       const progressList = await narrativeService.getProgress(
         effectiveUserId || "",
-        storyId
+        storyId,
       );
       const currentProgress =
-        progressList.find((p) => p.status === "in_progress") ??
-        progressList[0];
+        progressList.find((p) => p.status === "in_progress") ?? progressList[0];
 
       if (currentProgress) {
         setProgress(currentProgress);
         const node = await narrativeService.getNode(
           storyId,
-          currentProgress.current_node
+          currentProgress.current_node,
         );
         setCurrentNode(node);
       } else {
@@ -120,7 +118,7 @@ export default function StoryViewerScreen() {
         setProgress(newProgress);
       }
     } catch (error) {
-      console.error("Failed to load story:", error);
+      console.log("Failed to load story:", error);
       setError("Failed to load story. Please try again.");
     } finally {
       setLoading(false);
@@ -129,7 +127,7 @@ export default function StoryViewerScreen() {
 
   const handleOptionSelect = async (
     optionId: string | undefined,
-    choiceIndex: number
+    choiceIndex: number,
   ) => {
     if (!currentNode || !progress || advancing) return;
 
@@ -164,14 +162,14 @@ export default function StoryViewerScreen() {
               text: "Continue",
               onPress: () => router.back(),
             },
-          ]
+          ],
         );
       } else {
         // Move to next node
         setCurrentNode(response.next_node);
       }
     } catch (error) {
-      console.error("Failed to advance progress:", error);
+      console.log("Failed to advance progress:", error);
       Alert.alert("Error", "Failed to continue story. Please try again.");
     } finally {
       setAdvancing(false);
@@ -188,7 +186,7 @@ export default function StoryViewerScreen() {
           text: "Exit",
           onPress: () => router.back(),
         },
-      ]
+      ],
     );
   };
 
@@ -204,15 +202,17 @@ export default function StoryViewerScreen() {
     return (
       <ANEErrorScreen
         title="Story Load Failed"
-        message={error || "We couldn't load this story. This might be a connection issue with our story service."}
+        message={
+          error ||
+          "We couldn't load this story. This might be a connection issue with our story service."
+        }
         onRetry={loadStoryData}
         onGoBack={() => router.back()}
       />
     );
   }
 
-  const progressPercent =
-    progress.completed_nodes.length / story.total_nodes;
+  const progressPercent = progress.completed_nodes.length / story.total_nodes;
 
   return (
     <SafeAreaView style={styles.safeArea}>

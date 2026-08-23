@@ -56,7 +56,7 @@ export default function HomeScreen() {
   const [unreadNotifications, setUnreadNotifications] = useState(0);
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const [modalVisible, setModalVisible] = useState(false);
-  
+
   const {
     data: tasks = [],
     isLoading,
@@ -87,12 +87,15 @@ export default function HomeScreen() {
   // Fetch notifications count
   const fetchNotificationCount = useCallback(async () => {
     if (user) {
-        try {
-            const notifications = await notificationService.getNotifications(20, true);
-            setUnreadNotifications(notifications.length);
-        } catch (e) {
-            console.log("Failed to fetch notifications count", e);
-        }
+      try {
+        const notifications = await notificationService.getNotifications(
+          20,
+          true,
+        );
+        setUnreadNotifications(notifications.length);
+      } catch (e) {
+        console.log("Failed to fetch notifications count", e);
+      }
     }
   }, [user]);
 
@@ -103,10 +106,10 @@ export default function HomeScreen() {
   // Refresh tasks, story progress, and notifications when screen comes into focus
   useFocusEffect(
     useCallback(() => {
-        refetch();
-        refetchStoryProgress();
-        fetchNotificationCount();
-    }, [refetch, refetchStoryProgress, fetchNotificationCount])
+      refetch();
+      refetchStoryProgress();
+      fetchNotificationCount();
+    }, [refetch, refetchStoryProgress, fetchNotificationCount]),
   );
 
   const onRefresh = useCallback(async () => {
@@ -117,21 +120,34 @@ export default function HomeScreen() {
 
     setRefreshing(true);
     setLastRefreshTime(now);
-    await Promise.all([refetch(), refetchStoryProgress(), fetchNotificationCount()]);
+    await Promise.all([
+      refetch(),
+      refetchStoryProgress(),
+      fetchNotificationCount(),
+    ]);
     setRefreshing(false);
   }, [refetch, refetchStoryProgress, fetchNotificationCount, lastRefreshTime]);
 
   // Derive activeProgress before any early returns so hooks stay stable
   const activeProgress = storyProgress.find(
-    (p: StoryProgress) => p.status === "in_progress"
+    (p: StoryProgress) => p.status === "in_progress",
   );
 
   // Fetch active node to check for task gates — must be above early returns
-  const {
-    data: activeNode = null,
-  } = useQuery({
-    queryKey: ["activeStoryNode", effectiveUserId, activeProgress?.story_id, activeProgress?.current_node],
-    queryFn: () => activeProgress ? narrativeService.getNode(activeProgress.story_id, activeProgress.current_node) : null,
+  const { data: activeNode = null } = useQuery({
+    queryKey: [
+      "activeStoryNode",
+      effectiveUserId,
+      activeProgress?.story_id,
+      activeProgress?.current_node,
+    ],
+    queryFn: () =>
+      activeProgress
+        ? narrativeService.getNode(
+            activeProgress.story_id,
+            activeProgress.current_node,
+          )
+        : null,
     enabled: !!activeProgress,
   });
 
@@ -151,20 +167,20 @@ export default function HomeScreen() {
   }
 
   const completedTasks = tasks.filter(
-    (task: Task) => task.status === "completed"
+    (task: Task) => task.status === "completed",
   ).length;
   const progress = tasks.length > 0 ? completedTasks / tasks.length : 0;
 
   // Calculate story stats
   const inProgressStories = storyProgress.filter(
-    (p: StoryProgress) => p.status === "in_progress"
+    (p: StoryProgress) => p.status === "in_progress",
   ).length;
   const completedStories = storyProgress.filter(
-    (p: StoryProgress) => p.status === "completed"
+    (p: StoryProgress) => p.status === "completed",
   ).length;
   const totalStoryXp = storyProgress.reduce(
     (sum: number, p: StoryProgress) => sum + p.total_xp,
-    0
+    0,
   );
 
   return (
@@ -179,11 +195,17 @@ export default function HomeScreen() {
         <View style={{ gap: 10 }}>
           {/* Header */}
           <View
-            style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start" }}
+            style={{
+              flexDirection: "row",
+              justifyContent: "space-between",
+              alignItems: "flex-start",
+            }}
           >
             <View style={{ flex: 1, gap: 10 }}>
               <Image
-                source={user?.imageUrl ? { uri: user.imageUrl } : IMAGES.profile}
+                source={
+                  user?.imageUrl ? { uri: user.imageUrl } : IMAGES.profile
+                }
                 style={styles.profileImage}
               />
               <View>
@@ -207,23 +229,23 @@ export default function HomeScreen() {
             <View>
               <Link href="../screens/notification-screen" asChild>
                 <TouchableOpacity>
-                    <View
+                  <View
                     style={{
-                        padding: 14,
-                        backgroundColor: "white",
-                        borderRadius: responsiveWidth(100),
-                        position: 'relative',
+                      padding: 14,
+                      backgroundColor: "white",
+                      borderRadius: responsiveWidth(100),
+                      position: "relative",
                     }}
-                    >
+                  >
                     {ICONS.SETTINGS.bell}
                     {unreadNotifications > 0 && (
-                        <View style={styles.badge}>
-                            <Text style={styles.badgeText}>
-                                {unreadNotifications > 9 ? '9+' : unreadNotifications}
-                            </Text>
-                        </View>
+                      <View style={styles.badge}>
+                        <Text style={styles.badgeText}>
+                          {unreadNotifications > 9 ? "9+" : unreadNotifications}
+                        </Text>
+                      </View>
                     )}
-                    </View>
+                  </View>
                 </TouchableOpacity>
               </Link>
             </View>
@@ -252,8 +274,13 @@ export default function HomeScreen() {
                       textStyle={styles.progressPercent}
                     />
                     <View style={styles.progressSummaryText}>
-                      <CustomText variant="semiBold" style={styles.progressStatus}>
-                        {tasks.length > 0 && completedTasks === tasks.length ? "All done!" : "Keep going!"}
+                      <CustomText
+                        variant="semiBold"
+                        style={styles.progressStatus}
+                      >
+                        {tasks.length > 0 && completedTasks === tasks.length
+                          ? "All done!"
+                          : "Keep going!"}
                       </CustomText>
                       <Text style={styles.progressDetail}>
                         {tasks.length > 0 && completedTasks === tasks.length
@@ -285,16 +312,24 @@ export default function HomeScreen() {
           <View style={{ paddingVertical: 5 }}>
             <Heading title="Your Lesson" />
             <ActiveStoryCard
-              title={activeProgress?.story_id === 'broken-toy-5-7' ? "The Broken Toy" : 
-                     activeProgress?.story_id === 'cookie-jar-5-7' ? "The Cookie Jar" :
-                     activeProgress ? "Current Lesson" : "Start a New Lesson!"}
-              progress={activeProgress ? (activeProgress.completed_nodes.length / 3) : 0} // Assuming 3 nodes for seeded stories
+              title={
+                activeProgress?.story_id === "broken-toy-5-7"
+                  ? "The Broken Toy"
+                  : activeProgress?.story_id === "cookie-jar-5-7"
+                    ? "The Cookie Jar"
+                    : activeProgress
+                      ? "Current Lesson"
+                      : "Start a New Lesson!"
+              }
+              progress={
+                activeProgress ? activeProgress.completed_nodes.length / 3 : 0
+              } // Assuming 3 nodes for seeded stories
               isNew={!activeProgress}
               onPress={() => {
                 if (activeProgress) {
                   router.push({
                     pathname: "../screens/story",
-                    params: { storyId: activeProgress.story_id }
+                    params: { storyId: activeProgress.story_id },
                   });
                 } else {
                   router.push("./stories");
@@ -343,8 +378,8 @@ export default function HomeScreen() {
                     index % 3 === 0
                       ? COLORS.light_grey
                       : index % 3 === 1
-                      ? COLORS.light_yellow
-                      : COLORS.light_purple
+                        ? COLORS.light_yellow
+                        : COLORS.light_purple
                   }
                   key={index}
                   task={task}
@@ -355,10 +390,13 @@ export default function HomeScreen() {
                   }}
                   onComplete={async () => {
                     try {
-                      await taskService.taskCompleted({ task_id: task.task_id });
+                      await taskService.taskCompleted({
+                        task_id: task.task_id,
+                        completed_by_id: effectiveUserId || user?.uid || "",
+                      });
                       refetch();
                     } catch (e) {
-                      console.error("Failed to complete task:", e);
+                      console.log("Failed to complete task:", e);
                     }
                   }}
                 />
@@ -446,20 +484,20 @@ const styles = StyleSheet.create({
     right: 0,
   },
   badge: {
-    position: 'absolute',
+    position: "absolute",
     top: 5,
     right: 5,
-    backgroundColor: 'red',
+    backgroundColor: "red",
     borderRadius: 10,
     width: 20,
     height: 20,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
     zIndex: 1,
   },
   badgeText: {
-    color: 'white',
+    color: "white",
     fontSize: 10,
-    fontWeight: 'bold',
+    fontWeight: "bold",
   },
 });

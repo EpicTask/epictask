@@ -37,7 +37,7 @@ const fetchLinkedChildren = async (uid: string) => {
     }
     return [];
   } catch (error) {
-    console.error("Error fetching linked children:", error);
+    console.log("Error fetching linked children:", error);
     return [];
   }
 };
@@ -61,11 +61,20 @@ const ProfileScreen = () => {
   });
 
   const updateProfileMutation = useMutation({
-    mutationFn: async (updatedProfile: { displayName: string; imageUrl?: string }) => {
+    mutationFn: async (updatedProfile: {
+      displayName: string;
+      imageUrl?: string;
+    }) => {
       let profile = updatedProfile;
-      if (updatedProfile.imageUrl && /^(file|content|data):/.test(updatedProfile.imageUrl)) {
+      if (
+        updatedProfile.imageUrl &&
+        /^(file|content|data):/.test(updatedProfile.imageUrl)
+      ) {
         const storagePath = `avatars/${user?.uid}_${Date.now()}.jpg`;
-        const downloadURL = await storageService.uploadImage(updatedProfile.imageUrl, storagePath);
+        const downloadURL = await storageService.uploadImage(
+          updatedProfile.imageUrl,
+          storagePath,
+        );
         profile = { ...updatedProfile, imageUrl: downloadURL };
       }
       return updateProfile(profile);
@@ -77,14 +86,13 @@ const ProfileScreen = () => {
     onError: (error: any) => {
       Alert.alert(
         "Error",
-        error.response?.data?.error || "Failed to update profile."
+        error.response?.data?.error || "Failed to update profile.",
       );
     },
   });
 
   const linkChildMutation = useMutation({
-    mutationFn: (code: string) =>
-      userApiClient.linkChild({ inviteCode: code }),
+    mutationFn: (code: string) => userApiClient.linkChild({ inviteCode: code }),
     onSuccess: () => {
       Alert.alert("Success", "Child account linked successfully.");
       queryClient.invalidateQueries({ queryKey: ["linkedChildren"] });
@@ -93,7 +101,7 @@ const ProfileScreen = () => {
     onError: (error: any) => {
       Alert.alert(
         "Error",
-        error.response?.data?.error || "Failed to link child account."
+        error.response?.data?.error || "Failed to link child account.",
       );
     },
   });
@@ -121,7 +129,7 @@ const ProfileScreen = () => {
       if (permissionResult.granted === false) {
         Alert.alert(
           "Permission Required",
-          "Permission to access camera roll is required!"
+          "Permission to access camera roll is required!",
         );
         return;
       }
@@ -151,7 +159,7 @@ const ProfileScreen = () => {
       if (permissionResult.granted === false) {
         Alert.alert(
           "Permission Required",
-          "Permission to access camera is required!"
+          "Permission to access camera is required!",
         );
         return;
       }
@@ -179,7 +187,7 @@ const ProfileScreen = () => {
         { text: "Camera", onPress: takePhoto },
         { text: "Photo Library", onPress: pickImage },
         { text: "Cancel", style: "cancel" },
-      ]
+      ],
     );
   };
 

@@ -8,7 +8,7 @@ import {
   Platform,
   RefreshControl,
   TouchableOpacity,
-  Alert
+  Alert,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import ScreenHeading from "@/components/headings/ScreenHeading";
@@ -40,7 +40,7 @@ interface NotificationItemProps {
 const NotificationItem: React.FC<NotificationItemProps> = ({
   notification,
   onDelete,
-  onMarkRead
+  onMarkRead,
 }) => {
   const handlePress = () => {
     if (!notification.is_read) {
@@ -54,36 +54,49 @@ const NotificationItem: React.FC<NotificationItemProps> = ({
       "Are you sure you want to delete this notification?",
       [
         { text: "Cancel", style: "cancel" },
-        { text: "Delete", style: "destructive", onPress: () => onDelete(notification.id) }
-      ]
+        {
+          text: "Delete",
+          style: "destructive",
+          onPress: () => onDelete(notification.id),
+        },
+      ],
     );
   };
 
   const date = new Date(notification.created_at);
   const formattedDate = date.toLocaleDateString(undefined, {
-    month: 'short', day: 'numeric'
+    month: "short",
+    day: "numeric",
   });
   const formattedTime = date.toLocaleTimeString(undefined, {
-    hour: '2-digit', minute: '2-digit'
+    hour: "2-digit",
+    minute: "2-digit",
   });
 
   return (
-    <TouchableOpacity 
+    <TouchableOpacity
       style={[
-        styles.notificationRow, 
-        !notification.is_read && styles.unreadNotification
+        styles.notificationRow,
+        !notification.is_read && styles.unreadNotification,
       ]}
       onPress={handlePress}
     >
       <View style={styles.notificationContent}>
         <View style={styles.headerRow}>
-            <Text style={[styles.notificationTitle, !notification.is_read && styles.unreadText]}>
-                {notification.title}
-            </Text>
-            {!notification.is_read && <View style={styles.unreadDot} />}
+          <Text
+            style={[
+              styles.notificationTitle,
+              !notification.is_read && styles.unreadText,
+            ]}
+          >
+            {notification.title}
+          </Text>
+          {!notification.is_read && <View style={styles.unreadDot} />}
         </View>
         <Text style={styles.notificationMessage}>{notification.message}</Text>
-        <Text style={styles.notificationTimestamp}>{`${formattedDate} at ${formattedTime}`}</Text>
+        <Text
+          style={styles.notificationTimestamp}
+        >{`${formattedDate} at ${formattedTime}`}</Text>
       </View>
       <TouchableOpacity onPress={handleDelete} style={styles.deleteButton}>
         <MaterialIcons name="delete-outline" size={24} color="#FF6B6B" />
@@ -102,7 +115,7 @@ const NotificationList: React.FC = () => {
       const data = await notificationService.getNotifications(50); // Get last 50
       setNotifications(data);
     } catch (error) {
-      console.error("Failed to fetch notifications:", error);
+      console.log("Failed to fetch notifications:", error);
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -124,7 +137,7 @@ const NotificationList: React.FC = () => {
       setNotifications((prev) => prev.filter((n) => n.id !== id));
       await notificationService.deleteNotification(id);
     } catch (error) {
-      console.error("Failed to delete notification:", error);
+      console.log("Failed to delete notification:", error);
       Alert.alert("Error", "Failed to delete notification");
       fetchNotifications(); // Revert on error
     }
@@ -133,31 +146,31 @@ const NotificationList: React.FC = () => {
   const handleMarkRead = async (id: string) => {
     try {
       // Optimistic update
-      setNotifications((prev) => prev.map(n => 
-        n.id === id ? { ...n, is_read: true } : n
-      ));
+      setNotifications((prev) =>
+        prev.map((n) => (n.id === id ? { ...n, is_read: true } : n)),
+      );
       await notificationService.markAsRead(id);
     } catch (error) {
-      console.error("Failed to mark as read:", error);
+      console.log("Failed to mark as read:", error);
     }
   };
 
   const handleMarkAllRead = async () => {
     try {
-        setNotifications((prev) => prev.map(n => ({ ...n, is_read: true })));
-        await notificationService.markAllAsRead();
+      setNotifications((prev) => prev.map((n) => ({ ...n, is_read: true })));
+      await notificationService.markAllAsRead();
     } catch (error) {
-        console.error("Failed to mark all as read:", error);
+      console.log("Failed to mark all as read:", error);
     }
   };
 
   if (loading) {
     return (
       <SafeAreaView style={styles.safeArea}>
-         <ScreenHeading text="Notifications" back={true} plus={false} />
-         <View style={styles.centered}>
-            <ActivityIndicator size="large" color="#0000ff" />
-         </View>
+        <ScreenHeading text="Notifications" back={true} plus={false} />
+        <View style={styles.centered}>
+          <ActivityIndicator size="large" color="#0000ff" />
+        </View>
       </SafeAreaView>
     );
   }
@@ -166,22 +179,27 @@ const NotificationList: React.FC = () => {
     <SafeAreaView style={styles.safeArea}>
       <View style={styles.headerContainer}>
         <ScreenHeading text="Notifications" back={true} plus={false} />
-        {notifications.some(n => !n.is_read) && (
-            <TouchableOpacity onPress={handleMarkAllRead} style={styles.markAllButton}>
-                <Text style={styles.markAllText}>Mark all read</Text>
-            </TouchableOpacity>
+        {notifications.some((n) => !n.is_read) && (
+          <TouchableOpacity
+            onPress={handleMarkAllRead}
+            style={styles.markAllButton}
+          >
+            <Text style={styles.markAllText}>Mark all read</Text>
+          </TouchableOpacity>
         )}
       </View>
-      
-      <ScrollView 
+
+      <ScrollView
         style={styles.scrollView}
         refreshControl={
-            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
         }
       >
         {notifications.length === 0 ? (
           <View style={styles.centered}>
-            <Text style={styles.noNotificationsText}>No notifications yet.</Text>
+            <Text style={styles.noNotificationsText}>
+              No notifications yet.
+            </Text>
           </View>
         ) : (
           notifications.map((notification) => (
@@ -207,26 +225,26 @@ const styles = StyleSheet.create({
     paddingHorizontal: responsiveWidth(4),
   },
   headerContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     marginBottom: responsiveHeight(1),
   },
   markAllButton: {
     padding: 8,
   },
   markAllText: {
-    color: '#007AFF',
+    color: "#007AFF",
     fontSize: 14,
-    fontWeight: '600',
+    fontWeight: "600",
   },
   scrollView: {
     flex: 1,
   },
   centered: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
     marginTop: responsiveHeight(20),
   },
   notificationRow: {
@@ -234,50 +252,50 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     marginBottom: responsiveHeight(1.5),
     padding: 16,
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.05,
     shadowRadius: 4,
     elevation: 2,
     borderLeftWidth: 4,
-    borderLeftColor: 'transparent',
+    borderLeftColor: "transparent",
   },
   unreadNotification: {
     backgroundColor: "#fff",
-    borderLeftColor: '#007AFF',
+    borderLeftColor: "#007AFF",
   },
   notificationContent: {
     flex: 1,
     marginRight: 10,
   },
   headerRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     marginBottom: 4,
   },
   notificationTitle: {
     fontSize: 16,
-    fontWeight: '600',
-    color: '#333',
+    fontWeight: "600",
+    color: "#333",
     flex: 1,
   },
   unreadText: {
-    color: '#000',
-    fontWeight: '700',
+    color: "#000",
+    fontWeight: "700",
   },
   unreadDot: {
     width: 8,
     height: 8,
     borderRadius: 4,
-    backgroundColor: '#007AFF',
+    backgroundColor: "#007AFF",
     marginLeft: 8,
   },
   notificationMessage: {
     fontSize: 14,
-    color: '#555',
+    color: "#555",
     marginBottom: 8,
     lineHeight: 20,
   },
@@ -291,6 +309,6 @@ const styles = StyleSheet.create({
   noNotificationsText: {
     fontSize: 16,
     color: "#666",
-    textAlign: 'center',
+    textAlign: "center",
   },
 });

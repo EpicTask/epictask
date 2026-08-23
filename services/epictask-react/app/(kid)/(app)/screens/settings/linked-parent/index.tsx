@@ -39,7 +39,7 @@ const LinkedParent = () => {
             setParent(result.user);
           }
         } catch (error) {
-          console.error("Error fetching parent:", error);
+          console.log("Error fetching parent:", error);
         }
       }
       if (active) setLoading(false);
@@ -86,7 +86,7 @@ const LinkedParent = () => {
             top: 50,
             borderRadius: 40,
             alignItems: "center",
-            position:"absolute",
+            position: "absolute",
             justifyContent: "center",
             width: responsiveWidth(90),
           }}
@@ -108,11 +108,11 @@ const LinkedParent = () => {
               color: COLORS.secondary,
             }}
           >
-            {loading ? "" : (parent?.displayName || parent?.email || "Unknown Parent")}
+            {loading
+              ? ""
+              : parent?.displayName || parent?.email || "Unknown Parent"}
           </Text>
-          <View style={{ marginTop: 20 }}>
-            {ICONS.link}
-          </View>
+          <View style={{ marginTop: 20 }}>{ICONS.link}</View>
         </View>
       </View>
     </SafeAreaView>

@@ -12,11 +12,7 @@ import {
 
 import { router } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
-import {
-  ScrollView,
-  StyleSheet,
-  View,
-} from "react-native";
+import { ScrollView, StyleSheet, View } from "react-native";
 import CustomText from "@/components/CustomText";
 import DateInput from "@/components/DateInput";
 import taskService from "@/api/taskService";
@@ -33,16 +29,16 @@ const AssignTask = () => {
   });
 
   const handleInputChange = (field: string, value: string) => {
-    setTaskData(prev => ({
+    setTaskData((prev) => ({
       ...prev,
-      [field]: value
+      [field]: value,
     }));
   };
 
   const handleChildSelectionChange = (selectedIds: string[]) => {
-    setTaskData(prev => ({
+    setTaskData((prev) => ({
       ...prev,
-      assigned_to_ids: selectedIds
+      assigned_to_ids: selectedIds,
     }));
   };
 
@@ -52,12 +48,12 @@ const AssignTask = () => {
       alert("Please enter a task title");
       return;
     }
-    
+
     if (!taskData.task_description.trim()) {
       alert("Please enter a task description");
       return;
     }
-    
+
     if (taskData.assigned_to_ids.length === 0) {
       alert("Please select at least one child");
       return;
@@ -70,12 +66,16 @@ const AssignTask = () => {
 
     try {
       setLoading(true);
-      
+
       // Create task data object matching TaskCreated model
       const newTask = {
         task_description: taskData.task_description,
         task_id: "", // Generated on backend
-        expiration_date: taskData.expiration_date ? taskData.expiration_date : Math.floor(Date.now() / 1000) + (3 * 24 * 60 * 60), // Default 3 days from now in Unix seconds
+        expiration_date: taskData.expiration_date
+          ? typeof taskData.expiration_date === "number"
+            ? taskData.expiration_date
+            : parseInt(taskData.expiration_date, 10) || Math.floor(Date.now() / 1000) + 3 * 24 * 60 * 60
+          : Math.floor(Date.now() / 1000) + 3 * 24 * 60 * 60, // Default 3 days from now in Unix seconds
         payment_method: "Pay Directly",
         reward_amount: parseFloat(taskData.reward_amount),
         reward_currency: "eTask",
@@ -83,13 +83,13 @@ const AssignTask = () => {
         assigned_to_ids: taskData.assigned_to_ids,
         task_title: taskData.task_title,
       };
-      
+
       await taskService.createTask(newTask);
-      
+
       alert("Task created successfully!");
       router.back();
     } catch (error) {
-      console.error("Failed to create task:", error);
+      console.log("Failed to create task:", error);
       alert("Failed to create task. Please try again.");
     } finally {
       setLoading(false);
@@ -111,30 +111,37 @@ const AssignTask = () => {
           <CustomInput
             label="Task Description"
             value={taskData.task_description}
-            onChangeText={(value) => handleInputChange("task_description", value)}
+            onChangeText={(value) =>
+              handleInputChange("task_description", value)
+            }
             capitalizeFirstLetter={true}
           />
-          <DateInput 
-            title="Due Date" 
+          <DateInput
+            title="Due Date"
             value={taskData.expiration_date}
             onDateChange={(date) => {
-              // Convert date string (YYYY-MM-DD) to Unix timestamp
-              const unixTimestamp = Math.floor(new Date(date).getTime() / 1000);
+              // Parse YYYY-MM-DD as a local calendar date. JavaScript parses
+              // that string as UTC by default, which shifts the date back a
+              // day in western time zones.
+              const [year, month, day] = date.split("-").map(Number);
+              const unixTimestamp = Math.floor(
+                new Date(year, month - 1, day, 23, 59, 59).getTime() / 1000,
+              );
               handleInputChange("expiration_date", unixTimestamp.toString());
             }}
           />
-          <CustomInput 
-            label="Reward Amount" 
-            value={taskData.reward_amount} 
-            onChangeText={(value) => handleInputChange("reward_amount", value)} 
+          <CustomInput
+            label="Reward Amount"
+            value={taskData.reward_amount}
+            onChangeText={(value) => handleInputChange("reward_amount", value)}
           />
-          
+
           <View style={{ gap: 6, marginVertical: 8 }}>
             <CustomText variant="semiBold" style={{ fontWeight: "500" }}>
               Select Child
             </CustomText>
             <ChildSelector
-              parentId={user?.uid || ''}
+              parentId={user?.uid || ""}
               selectedChildren={taskData.assigned_to_ids}
               onSelectionChange={handleChildSelectionChange}
               placeholder="Select children for this task"
@@ -143,7 +150,7 @@ const AssignTask = () => {
               style={{ marginVertical: 0 }}
             />
           </View>
-          
+
           <View>
             <CustomButton
               fill={true}

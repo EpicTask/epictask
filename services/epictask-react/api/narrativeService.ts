@@ -3,7 +3,7 @@ import createAuthenticatedClient from "./apiClient";
 
 // Create API client for Adaptive Narrative Engine
 const narrativeApiClient = createAuthenticatedClient(
-  MicroserviceUrls.narrativeEngine
+  MicroserviceUrls.narrativeEngine,
 );
 
 export interface Story {
@@ -121,12 +121,22 @@ export interface PayoutRequest {
   amount: number;
   wallet_address?: string;
   token?: "eTask" | "RLUSD" | "XRP";
-  reason?: "chapter_completion" | "story_completion" | "streak_bonus" | "milestone";
+  reason?:
+    | "chapter_completion"
+    | "story_completion"
+    | "streak_bonus"
+    | "milestone";
 }
 
 export interface PayoutResponse {
   request_id: string;
-  status: "pending" | "submitted" | "confirmed" | "failed" | "approved" | "rejected";
+  status:
+    | "pending"
+    | "submitted"
+    | "confirmed"
+    | "failed"
+    | "approved"
+    | "rejected";
   message?: string;
   transaction_hash?: string;
 }
@@ -227,7 +237,7 @@ export const narrativeService = {
       const response = await narrativeApiClient.get(`/stories?${params}`);
       return response.data.stories || response.data;
     } catch (error) {
-      console.error("Get stories error:", error);
+      console.log("Get stories error:", error);
       throw new Error("Failed to get stories");
     }
   },
@@ -238,20 +248,24 @@ export const narrativeService = {
       const response = await narrativeApiClient.get(`/stories/${storyId}`);
       return response.data;
     } catch (error) {
-      console.error("Get story error:", error);
+      console.log("Get story error:", error);
       throw new Error("Failed to get story");
     }
   },
 
   // Get a specific node
-  getNode: async (storyId: string, nodeId: string, age: number = 10): Promise<Node> => {
+  getNode: async (
+    storyId: string,
+    nodeId: string,
+    age: number = 10,
+  ): Promise<Node> => {
     try {
       const response = await narrativeApiClient.get(
-        `/stories/${storyId}/nodes/${nodeId}?age=${age}`
+        `/stories/${storyId}/nodes/${nodeId}?age=${age}`,
       );
       return response.data;
     } catch (error) {
-      console.error("Get node error:", error);
+      console.log("Get node error:", error);
       throw new Error("Failed to get node");
     }
   },
@@ -259,16 +273,18 @@ export const narrativeService = {
   // Get user's story progress
   getProgress: async (
     userId: string,
-    storyId?: string
+    storyId?: string,
   ): Promise<StoryProgress[]> => {
     try {
-      const url = storyId ? `/progress/${userId}/${storyId}` : `/progress/${userId}`;
+      const url = storyId
+        ? `/progress/${userId}/${storyId}`
+        : `/progress/${userId}`;
       const response = await narrativeApiClient.get(url);
       // Backend returns a single object if storyId is provided, or an array if not
       const data = response.data.progress || response.data;
       return Array.isArray(data) ? data : [data];
     } catch (error) {
-      console.error("Get story progress error:", error);
+      console.log("Get story progress error:", error);
       // Return empty array instead of throwing to avoid breaking the UI on fresh starts
       return [];
     }
@@ -277,7 +293,7 @@ export const narrativeService = {
   // Start a new story
   startStory: async (
     userId: string,
-    storyId: string
+    storyId: string,
   ): Promise<{ node: Node; progress: StoryProgress }> => {
     try {
       const response = await narrativeApiClient.post("/progress/start", {
@@ -286,20 +302,20 @@ export const narrativeService = {
       });
       return response.data;
     } catch (error) {
-      console.error("Start story error:", error);
+      console.log("Start story error:", error);
       throw new Error("Failed to start story");
     }
   },
 
   // Advance progress (make a choice)
   advanceProgress: async (
-    data: AdvanceProgressRequest
+    data: AdvanceProgressRequest,
   ): Promise<AdvanceProgressResponse> => {
     try {
       const response = await narrativeApiClient.post("/progress/advance", data);
       return response.data;
     } catch (error) {
-      console.error("Advance progress error:", error);
+      console.log("Advance progress error:", error);
       throw new Error("Failed to advance progress");
     }
   },
@@ -308,7 +324,7 @@ export const narrativeService = {
   completeMoneyMoment: async (
     userId: string,
     storyId: string,
-    momentId: string
+    momentId: string,
   ): Promise<void> => {
     try {
       await narrativeApiClient.post("/progress/money-moment/complete", {
@@ -319,7 +335,7 @@ export const narrativeService = {
     } catch (error) {
       // Failure to persist completion is non-fatal for the child's session —
       // the worst case is that the moment shows again on a future load.
-      console.error("Complete money moment error:", error);
+      console.log("Complete money moment error:", error);
     }
   },
 
@@ -329,7 +345,7 @@ export const narrativeService = {
       const response = await narrativeApiClient.post("/payouts/request", data);
       return response.data;
     } catch (error) {
-      console.error("Request payout error:", error);
+      console.log("Request payout error:", error);
       throw new Error("Failed to request payout");
     }
   },
@@ -345,7 +361,7 @@ export const narrativeService = {
       amount: data.token_amount || data.amount,
       wallet_address: data.wallet_address || "", // Will be overridden by parent wallet in backend
       token: data.token || "eTask",
-      reason: data.reason || "chapter_completion"
+      reason: data.reason || "chapter_completion",
     };
     return narrativeService.requestPayout(mappedData);
   },
@@ -356,7 +372,7 @@ export const narrativeService = {
       const response = await narrativeApiClient.get(`/payouts/${requestId}`);
       return response.data;
     } catch (error) {
-      console.error("Get payout status error:", error);
+      console.log("Get payout status error:", error);
       throw new Error("Failed to get payout status");
     }
   },
@@ -365,15 +381,15 @@ export const narrativeService = {
 
   // Get narrative progress for a specific kid
   getKidNarrativeProgress: async (
-    kidId: string
+    kidId: string,
   ): Promise<KidNarrativeProgress[]> => {
     try {
       const response = await narrativeApiClient.get(
-        `/parent/kids/${kidId}/progress`
+        `/parent/kids/${kidId}/progress`,
       );
       return response.data;
     } catch (error) {
-      console.error("Get kid narrative progress error:", error);
+      console.log("Get kid narrative progress error:", error);
       throw new Error("Failed to get kid narrative progress");
     }
   },
@@ -382,11 +398,11 @@ export const narrativeService = {
   getAllKidsProgressSummary: async (): Promise<KidProgressSummary[]> => {
     try {
       const response = await narrativeApiClient.get(
-        "/parent/kids/progress/summary"
+        "/parent/kids/progress/summary",
       );
       return response.data;
     } catch (error) {
-      console.error("Get all kids progress summary error:", error);
+      console.log("Get all kids progress summary error:", error);
       throw new Error("Failed to get kids progress summary");
     }
   },
@@ -400,22 +416,20 @@ export const narrativeService = {
       });
       return response.data;
     } catch (error) {
-      console.error("Get pending payouts error:", error);
+      console.log("Get pending payouts error:", error);
       throw new Error("Failed to get pending payouts");
     }
   },
 
   // Approve a payout request
-  approvePayout: async (
-    requestId: string
-  ): Promise<PayoutApprovalResponse> => {
+  approvePayout: async (requestId: string): Promise<PayoutApprovalResponse> => {
     try {
       const response = await narrativeApiClient.post(
-        `/parent/payouts/${requestId}/approve`
+        `/parent/payouts/${requestId}/approve`,
       );
       return response.data;
     } catch (error) {
-      console.error("Approve payout error:", error);
+      console.log("Approve payout error:", error);
       throw new Error("Failed to approve payout");
     }
   },
@@ -423,31 +437,31 @@ export const narrativeService = {
   // Reject a payout request
   rejectPayout: async (
     requestId: string,
-    reason?: string
+    reason?: string,
   ): Promise<PayoutApprovalResponse> => {
     try {
       const response = await narrativeApiClient.post(
         `/parent/payouts/${requestId}/reject`,
-        { reason }
+        { reason },
       );
       return response.data;
     } catch (error) {
-      console.error("Reject payout error:", error);
+      console.log("Reject payout error:", error);
       throw new Error("Failed to reject payout");
     }
   },
 
   // Get narrative settings for a kid
   getNarrativeSettings: async (
-    kidId: string
+    kidId: string,
   ): Promise<ParentNarrativeSettings> => {
     try {
       const response = await narrativeApiClient.get(
-        `/parent/settings/${kidId}`
+        `/parent/settings/${kidId}`,
       );
       return response.data;
     } catch (error) {
-      console.error("Get narrative settings error:", error);
+      console.log("Get narrative settings error:", error);
       throw new Error("Failed to get narrative settings");
     }
   },
@@ -455,16 +469,16 @@ export const narrativeService = {
   // Update narrative settings for a kid
   updateNarrativeSettings: async (
     kidId: string,
-    settings: ParentNarrativeSettings
+    settings: ParentNarrativeSettings,
   ): Promise<ParentNarrativeSettings> => {
     try {
       const response = await narrativeApiClient.put(
         `/parent/settings/${kidId}`,
-        settings
+        settings,
       );
       return response.data;
     } catch (error) {
-      console.error("Update narrative settings error:", error);
+      console.log("Update narrative settings error:", error);
       throw new Error("Failed to update narrative settings");
     }
   },
@@ -472,18 +486,18 @@ export const narrativeService = {
   // Get narrative analytics for a kid
   getNarrativeAnalytics: async (
     kidId: string,
-    days: number = 30
+    days: number = 30,
   ): Promise<NarrativeAnalytics> => {
     try {
       const response = await narrativeApiClient.get(
         `/parent/analytics/${kidId}`,
         {
           params: { days },
-        }
+        },
       );
       return response.data;
     } catch (error) {
-      console.error("Get narrative analytics error:", error);
+      console.log("Get narrative analytics error:", error);
       throw new Error("Failed to get narrative analytics");
     }
   },
@@ -491,10 +505,12 @@ export const narrativeService = {
   // Get kid progress summary
   getKidProgressSummary: async (kidId: string): Promise<KidProgressSummary> => {
     try {
-      const response = await narrativeApiClient.get(`/progress/summary/${kidId}`);
+      const response = await narrativeApiClient.get(
+        `/progress/summary/${kidId}`,
+      );
       return response.data;
     } catch (error) {
-      console.error("Get kid progress summary error:", error);
+      console.log("Get kid progress summary error:", error);
       throw new Error("Failed to get progress summary");
     }
   },

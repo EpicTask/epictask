@@ -32,18 +32,17 @@ export default function TabTwoScreen() {
 
     try {
       setLoading(true);
-      
+
       // Fetch kid's leaderboard view and progress summary
       const [kidData, summary] = await Promise.all([
         taskService.getKidLeaderboardView(effectiveUserId),
-        narrativeService.getKidProgressSummary(effectiveUserId)
+        narrativeService.getKidProgressSummary(effectiveUserId),
       ]);
-      
+
       setKidLeaderboardData(kidData);
       setProgressSummary(summary);
-
     } catch (error) {
-      console.error("Failed to fetch kid rewards data:", error);
+      console.log("Failed to fetch kid rewards data:", error);
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -61,7 +60,7 @@ export default function TabTwoScreen() {
 
   const handleAchievementPress = (achievement: string) => {
     // Show achievement details or celebration animation
-    console.log('Achievement pressed:', achievement);
+    console.log("Achievement pressed:", achievement);
   };
 
   if (loading) {
@@ -91,7 +90,7 @@ export default function TabTwoScreen() {
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      <KidRewardsView 
+      <KidRewardsView
         kidData={kidLeaderboardData}
         childAge={childAge}
         progressSummary={progressSummary}
@@ -111,25 +110,25 @@ const styles = StyleSheet.create({
   },
   loadingContainer: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
   },
   loadingText: {
     marginTop: responsiveHeight(2),
     fontSize: FONT_SIZES.extraSmall,
     color: COLORS.grey,
-    textAlign: 'center',
+    textAlign: "center",
   },
   errorContainer: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
     paddingHorizontal: responsiveWidth(8),
   },
   errorText: {
     fontSize: FONT_SIZES.extraSmall,
     color: COLORS.grey,
-    textAlign: 'center',
+    textAlign: "center",
     lineHeight: 24,
   },
 });

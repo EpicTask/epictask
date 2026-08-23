@@ -53,7 +53,7 @@ export default function AllTasksScreen() {
   useFocusEffect(
     useCallback(() => {
       refetch();
-    }, [refetch])
+    }, [refetch]),
   );
 
   if (isLoading) {
@@ -68,7 +68,10 @@ export default function AllTasksScreen() {
     <SafeAreaView style={styles.safeArea}>
       <View style={styles.container}>
         <View style={styles.header}>
-          <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+          <TouchableOpacity
+            onPress={() => router.back()}
+            style={styles.backButton}
+          >
             <Ionicons name="chevron-back" size={28} color={COLORS.primary} />
           </TouchableOpacity>
           <CustomText variant="semiBold" style={styles.title}>
@@ -84,8 +87,8 @@ export default function AllTasksScreen() {
                 index % 3 === 0
                   ? COLORS.light_grey
                   : index % 3 === 1
-                  ? COLORS.light_yellow
-                  : COLORS.light_purple
+                    ? COLORS.light_yellow
+                    : COLORS.light_purple
               }
               task={item}
               onPress={() => {
@@ -94,10 +97,13 @@ export default function AllTasksScreen() {
               }}
               onComplete={async () => {
                 try {
-                  await taskService.taskCompleted({ task_id: item.task_id });
+                  await taskService.taskCompleted({
+                    task_id: item.task_id,
+                    completed_by_id: effectiveUserId || user?.uid || "",
+                  });
                   refetch();
                 } catch (e) {
-                  console.error("Failed to complete task:", e);
+                  console.log("Failed to complete task:", e);
                 }
               }}
             />

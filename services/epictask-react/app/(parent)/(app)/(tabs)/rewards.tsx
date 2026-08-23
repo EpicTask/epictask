@@ -51,23 +51,30 @@ interface AchievementData {
   description: string;
 }
 
-const RewardHistoryComponent: React.FC<{ history: RewardHistory }> = ({ history }) => (
+const RewardHistoryComponent: React.FC<{ history: RewardHistory }> = ({
+  history,
+}) => (
   <View style={{ gap: 4, width: responsiveWidth(70) }}>
     <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
       `<MaterialIcons name="check-circle" size={20} color="#0ECC44" />`
-      <CustomText style={{ color: "#000", fontSize: FONT_SIZES.small }} variant="medium">
+      <CustomText
+        style={{ color: "#000", fontSize: FONT_SIZES.small }}
+        variant="medium"
+      >
         {history.message}
       </CustomText>
     </View>
     <View style={{ gap: responsiveWidth(2), marginLeft: 28 }}>
       <CustomText style={{ color: COLORS.grey, fontSize: 12 }} variant="medium">
-        {new Date(history.timestamp).toLocaleString()}
+        {history.timestamp ? (typeof history.timestamp === 'number' && history.timestamp < 10000000000 ? new Date(history.timestamp * 1000).toLocaleString() : new Date(history.timestamp).toLocaleString()) : 'Not available'}
       </CustomText>
     </View>
   </View>
 );
 
-const Achievement: React.FC<{ achievement: AchievementData }> = ({ achievement }) => (
+const Achievement: React.FC<{ achievement: AchievementData }> = ({
+  achievement,
+}) => (
   <View style={styles.achievementContainer}>
     {ICONS.achievement}
     <View style={{ paddingRight: 35 }}>
@@ -93,7 +100,7 @@ export default function TabTwoScreen() {
 
     try {
       setLoading(true);
-      
+
       // Fetch family leaderboard
       const familyData = await taskService.getFamilyLeaderboard(user.uid);
       setFamilyLeaderboard(familyData);
@@ -101,9 +108,8 @@ export default function TabTwoScreen() {
       // Fetch enhanced global leaderboard
       const globalData = await taskService.getEnhancedGlobalLeaderboard(50);
       setGlobalLeaderboard(globalData.leaderboard || []);
-
     } catch (error) {
-      console.error("Failed to fetch rewards data:", error);
+      console.log("Failed to fetch rewards data:", error);
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -121,12 +127,12 @@ export default function TabTwoScreen() {
 
   const handleChildPress = (childId: string) => {
     // Navigate to child detail view or show modal
-    console.log('Child pressed:', childId);
+    console.log("Child pressed:", childId);
   };
 
   const handleViewAllGlobal = () => {
     // Navigate to full global leaderboard
-    console.log('View all global leaderboard');
+    console.log("View all global leaderboard");
   };
 
   if (loading) {
@@ -144,8 +150,8 @@ export default function TabTwoScreen() {
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      <ScrollView 
-        showsVerticalScrollIndicator={false} 
+      <ScrollView
+        showsVerticalScrollIndicator={false}
         style={styles.scrollView}
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
@@ -168,7 +174,11 @@ export default function TabTwoScreen() {
           <View style={styles.overviewSection}>
             <View style={styles.statsGrid}>
               <View style={styles.statCard}>
-                <MaterialIcons name="family-restroom" size={32} color={COLORS.primary} />
+                <MaterialIcons
+                  name="family-restroom"
+                  size={32}
+                  color={COLORS.primary}
+                />
                 <CustomText variant="bold" style={styles.statNumber}>
                   {familyLeaderboard.children?.length || 0}
                 </CustomText>
@@ -176,7 +186,7 @@ export default function TabTwoScreen() {
                   Children
                 </CustomText>
               </View>
-              
+
               <View style={styles.statCard}>
                 <MaterialIcons name="stars" size={32} color="#4CAF50" />
                 <CustomText variant="bold" style={styles.statNumber}>
@@ -186,7 +196,7 @@ export default function TabTwoScreen() {
                   Tasks Done
                 </CustomText>
               </View>
-              
+
               <View style={styles.statCard}>
                 <MaterialIcons name="emoji-events" size={32} color="#FF9800" />
                 <CustomText variant="bold" style={styles.statNumber}>
@@ -202,7 +212,7 @@ export default function TabTwoScreen() {
 
         {/* Family Leaderboard */}
         {familyLeaderboard && (
-          <FamilyLeaderboardCard 
+          <FamilyLeaderboardCard
             familyData={familyLeaderboard}
             onChildPress={handleChildPress}
           />
@@ -220,7 +230,7 @@ export default function TabTwoScreen() {
               </CustomText>
             </TouchableOpacity>
           </View>
-          
+
           <View style={styles.globalLeaderboardCard}>
             {globalLeaderboard.length > 0 ? (
               globalLeaderboard.slice(0, 5).map((entry, index) => (
@@ -264,7 +274,11 @@ export default function TabTwoScreen() {
               ))
             ) : (
               <View style={styles.emptyGlobal}>
-                <MaterialIcons name="leaderboard" size={48} color={COLORS.grey} />
+                <MaterialIcons
+                  name="leaderboard"
+                  size={48}
+                  color={COLORS.grey}
+                />
                 <CustomText variant="medium" style={styles.emptyText}>
                   Global leaderboard will appear here
                 </CustomText>
@@ -282,13 +296,15 @@ export default function TabTwoScreen() {
             <View style={styles.tip}>
               <Text style={styles.tipEmoji}>🎯</Text>
               <CustomText variant="medium" style={styles.tipText}>
-                Set clear, achievable goals for your children to keep them motivated
+                Set clear, achievable goals for your children to keep them
+                motivated
               </CustomText>
             </View>
             <View style={styles.tip}>
               <Text style={styles.tipEmoji}>🏆</Text>
               <CustomText variant="medium" style={styles.tipText}>
-                Celebrate achievements to build confidence and encourage progress
+                Celebrate achievements to build confidence and encourage
+                progress
               </CustomText>
             </View>
             <View style={styles.tip}>
@@ -314,8 +330,8 @@ const styles = StyleSheet.create({
   },
   loadingContainer: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
   },
   loadingText: {
     marginTop: responsiveHeight(2),
@@ -335,31 +351,31 @@ const styles = StyleSheet.create({
   },
   headerTitle: {
     fontSize: FONT_SIZES.subtitle,
-    color: '#333',
+    color: "#333",
     marginBottom: 8,
-    textAlign: 'center',
+    textAlign: "center",
   },
   headerSubtitle: {
     fontSize: FONT_SIZES.extraSmall,
     color: COLORS.grey,
-    textAlign: 'center',
+    textAlign: "center",
   },
   overviewSection: {
     paddingHorizontal: responsiveWidth(4),
     marginBottom: responsiveHeight(2),
   },
   statsGrid: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    justifyContent: "space-between",
   },
   statCard: {
     backgroundColor: COLORS.white,
     borderRadius: 16,
     padding: responsiveWidth(4),
-    alignItems: 'center',
+    alignItems: "center",
     flex: 1,
     marginHorizontal: responsiveWidth(1),
-    shadowColor: '#000',
+    shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 8,
@@ -367,13 +383,13 @@ const styles = StyleSheet.create({
   },
   statNumber: {
     fontSize: FONT_SIZES.large,
-    color: '#333',
+    color: "#333",
     marginVertical: 8,
   },
   statLabel: {
     fontSize: FONT_SIZES.extraSmall,
     color: COLORS.grey,
-    textAlign: 'center',
+    textAlign: "center",
   },
   currencySection: {
     paddingHorizontal: responsiveWidth(4),
@@ -381,22 +397,22 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     fontSize: FONT_SIZES.medium,
-    color: '#333',
+    color: "#333",
     marginBottom: responsiveHeight(1.5),
   },
   currencyRatesCard: {
     backgroundColor: COLORS.white,
     borderRadius: 16,
     padding: responsiveWidth(4),
-    shadowColor: '#000',
+    shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 8,
     elevation: 5,
   },
   currencyRate: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     marginBottom: 12,
   },
   currencyDot: {
@@ -407,16 +423,16 @@ const styles = StyleSheet.create({
   },
   currencyRateText: {
     fontSize: FONT_SIZES.extraSmall,
-    color: '#333',
+    color: "#333",
   },
   globalSection: {
     paddingHorizontal: responsiveWidth(4),
     marginBottom: responsiveHeight(2),
   },
   sectionHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     marginBottom: responsiveHeight(1.5),
   },
   viewAllButton: {
@@ -427,22 +443,22 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.white,
     borderRadius: 16,
     padding: responsiveWidth(4),
-    shadowColor: '#000',
+    shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 8,
     elevation: 5,
   },
   globalEntry: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     paddingVertical: 12,
     borderBottomWidth: 1,
-    borderBottomColor: '#F0F0F0',
+    borderBottomColor: "#F0F0F0",
   },
   globalRank: {
     width: responsiveWidth(12),
-    alignItems: 'center',
+    alignItems: "center",
   },
   rankNumber: {
     fontSize: FONT_SIZES.extraSmall,
@@ -454,7 +470,7 @@ const styles = StyleSheet.create({
   },
   globalName: {
     fontSize: FONT_SIZES.extraSmall,
-    color: '#333',
+    color: "#333",
     marginBottom: 4,
   },
   globalStats: {
@@ -462,25 +478,25 @@ const styles = StyleSheet.create({
     color: COLORS.grey,
   },
   globalLevel: {
-    alignItems: 'center',
+    alignItems: "center",
   },
   levelBadge: {
     fontSize: FONT_SIZES.extraSmall,
     color: COLORS.primary,
-    backgroundColor: '#E3F2FD',
+    backgroundColor: "#E3F2FD",
     paddingHorizontal: 8,
     paddingVertical: 4,
     borderRadius: 12,
   },
   emptyGlobal: {
-    alignItems: 'center',
+    alignItems: "center",
     paddingVertical: responsiveHeight(4),
   },
   emptyText: {
     fontSize: FONT_SIZES.extraSmall,
     color: COLORS.grey,
     marginTop: responsiveHeight(1),
-    textAlign: 'center',
+    textAlign: "center",
   },
   tipsSection: {
     paddingHorizontal: responsiveWidth(4),
@@ -490,15 +506,15 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.white,
     borderRadius: 16,
     padding: responsiveWidth(4),
-    shadowColor: '#000',
+    shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 8,
     elevation: 5,
   },
   tip: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
+    flexDirection: "row",
+    alignItems: "flex-start",
     marginBottom: responsiveHeight(2),
   },
   tipEmoji: {
@@ -509,7 +525,7 @@ const styles = StyleSheet.create({
   tipText: {
     flex: 1,
     fontSize: FONT_SIZES.extraSmall,
-    color: '#333',
+    color: "#333",
     lineHeight: 22,
   },
   // Legacy styles (keeping for compatibility)
@@ -553,15 +569,15 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   tokenDisplay: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    alignItems: 'center',
+    flexDirection: "row",
+    flexWrap: "wrap",
+    alignItems: "center",
   },
   tokenAmount: {
     fontSize: FONT_SIZES.extraSmall,
     color: COLORS.primary,
     marginRight: 8,
-    fontWeight: '600',
+    fontWeight: "600",
   },
   taskCount: {
     fontSize: FONT_SIZES.extraSmall,

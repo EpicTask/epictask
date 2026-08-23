@@ -17,7 +17,10 @@ import { auth } from "../config/firebaseConfig";
  * Returns true if the given JWT is missing, unparseable, or will expire
  * within `bufferMs` milliseconds (default 5 minutes).
  */
-export const isTokenExpiredOrExpiringSoon = (token, bufferMs = 5 * 60 * 1000) => {
+export const isTokenExpiredOrExpiringSoon = (
+  token,
+  bufferMs = 5 * 60 * 1000,
+) => {
   if (!token) return true;
   try {
     // JWT payload is the second segment, base-64 encoded
@@ -87,7 +90,7 @@ const createAuthenticatedClient = (baseURL) => {
       }
       return config;
     },
-    (error) => Promise.reject(error)
+    (error) => Promise.reject(error),
   );
 
   // ── Response interceptor ─────────────────────────────────────────────────
@@ -106,15 +109,15 @@ const createAuthenticatedClient = (baseURL) => {
             return client(originalRequest);
           }
         } catch (refreshError) {
-          console.error(
+          console.log(
             "[apiClient] Token refresh failed during 401 retry:",
-            refreshError
+            refreshError,
           );
         }
       }
 
       return Promise.reject(error);
-    }
+    },
   );
 
   return client;

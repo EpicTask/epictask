@@ -32,8 +32,14 @@ const GRADE_LEVELS = [
 ];
 
 const BasicInfo = () => {
-  const { user, updateProfile, isSharedDeviceMode, activeChildContext, effectiveUserId } = useAuth();
-  
+  const {
+    user,
+    updateProfile,
+    isSharedDeviceMode,
+    activeChildContext,
+    effectiveUserId,
+  } = useAuth();
+
   const [name, setName] = useState("");
   const [dob, setDob] = useState("");
   const [level, setLevel] = useState("");
@@ -78,7 +84,10 @@ const BasicInfo = () => {
 
   const handleSave = async () => {
     if (isSharedDeviceMode) {
-      Alert.alert("Return to Parent", "Return to parent mode to edit child profile details.");
+      Alert.alert(
+        "Return to Parent",
+        "Return to parent mode to edit child profile details.",
+      );
       return;
     }
 
@@ -93,7 +102,7 @@ const BasicInfo = () => {
       router.back();
     } catch (error) {
       Alert.alert("Error", "Failed to update profile");
-      console.error(error);
+      console.log(error);
     } finally {
       setIsSaving(false);
     }
@@ -110,14 +119,10 @@ const BasicInfo = () => {
             onChangeText={setName}
             placeholder="Full name"
           />
-          <DateInput
-            title="Date of Birth"
-            value={dob}
-            onDateChange={setDob}
-          />
+          <DateInput title="Date of Birth" value={dob} onDateChange={setDob} />
           <CustomDropdown
             label="Grade or Learning Level"
-            placeholder="Select Grade or Learning Level" 
+            placeholder="Select Grade or Learning Level"
             value={level}
             options={GRADE_LEVELS}
             onSelect={setLevel}
@@ -127,7 +132,13 @@ const BasicInfo = () => {
           <CustomButton
             fill={true}
             onPress={handleSave}
-            text={isSharedDeviceMode ? "Return to Parent to Edit" : isSaving ? "Saving..." : "Save"}
+            text={
+              isSharedDeviceMode
+                ? "Return to Parent to Edit"
+                : isSaving
+                  ? "Saving..."
+                  : "Save"
+            }
             height={responsiveHeight(8)}
             disabled={isSaving}
           />

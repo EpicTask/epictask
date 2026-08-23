@@ -56,7 +56,7 @@ export default function KidWalletScreen() {
       );
       setRecentActivity(rewarded);
     } catch (e) {
-      console.error("Failed to load wallet data", e);
+      console.log("Failed to load wallet data", e);
     } finally {
       setLoading(false);
     }

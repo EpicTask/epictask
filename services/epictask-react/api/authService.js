@@ -16,7 +16,9 @@ import { deviceSharingAllowed } from "../constants/AgePolicy";
 
 // The invite preview and redeem endpoints are reached by a teen who has no
 // account yet, so they deliberately bypass the authenticated client.
-const publicUserClient = axios.create({ baseURL: MicroserviceUrls.userManagement });
+const publicUserClient = axios.create({
+  baseURL: MicroserviceUrls.userManagement,
+});
 
 const apiMessage = (error, fallback) =>
   error?.response?.data?.detail || error?.message || fallback;
@@ -33,7 +35,7 @@ export const authService = {
       const userCredential = await createUserWithEmailAndPassword(
         auth,
         email,
-        password
+        password,
       );
       const user = userCredential.user;
 
@@ -55,7 +57,7 @@ export const authService = {
 
       const createProfileResult = await firestoreService.createUserProfile(
         user.uid,
-        userData
+        userData,
       );
       if (!createProfileResult.success) {
         throw new Error("Failed to create user profile in database");
@@ -79,7 +81,7 @@ export const authService = {
         token,
       };
     } catch (error) {
-      console.error("Registration error:", error);
+      console.log("Registration error:", error);
 
       // Handle Firebase Auth specific errors
       if (error.code) {
@@ -108,7 +110,7 @@ export const authService = {
       const userCredential = await signInWithEmailAndPassword(
         auth,
         email,
-        password
+        password,
       );
       const uid = userCredential.user.uid;
       const token = await userCredential.user.getIdToken();
@@ -128,7 +130,7 @@ export const authService = {
         // If profile fetch fails, return basic Firebase user info
         console.warn(
           "Profile fetch failed, using basic Firebase user info:",
-          profileResponse.error
+          profileResponse.error,
         );
         return {
           success: true,
@@ -141,7 +143,7 @@ export const authService = {
         };
       }
     } catch (error) {
-      console.error("Login error:", error);
+      console.log("Login error:", error);
 
       // Handle Firebase Auth specific errors
       if (error.code) {
@@ -165,7 +167,7 @@ export const authService = {
 
       // Handle API errors
       throw new Error(
-        error.response?.data?.error || error.message || "Login failed"
+        error.response?.data?.error || error.message || "Login failed",
       );
     }
   },
@@ -187,7 +189,7 @@ export const authService = {
       await signOut(auth);
       return { success: true };
     } catch (error) {
-      console.error("Logout error:", error);
+      console.log("Logout error:", error);
       throw new Error("Logout failed");
     }
   },
@@ -198,7 +200,7 @@ export const authService = {
       const response = await firestoreService.getUserProfile(uid, useCache);
       return response;
     } catch (error) {
-      console.error("Get current user error:", error);
+      console.log("Get current user error:", error);
       // Clear user cache on error to prevent stale data
       firestoreService.cache.invalidateUser(uid);
       throw new Error("Failed to get user profile");
@@ -210,13 +212,14 @@ export const authService = {
     try {
       // Map frontend field names to backend field names (camelCase to snake_case)
       const mappedData = {};
-      if (profileData.displayName) mappedData.display_name = profileData.displayName;
+      if (profileData.displayName)
+        mappedData.display_name = profileData.displayName;
       if (profileData.imageUrl) mappedData.photo_url = profileData.imageUrl;
       if (profileData.photoURL) mappedData.photo_url = profileData.photoURL;
-      
+
       // Also pass through any other fields like age, etc.
-      Object.keys(profileData).forEach(key => {
-        if (!['displayName', 'imageUrl', 'photoURL'].includes(key)) {
+      Object.keys(profileData).forEach((key) => {
+        if (!["displayName", "imageUrl", "photoURL"].includes(key)) {
           mappedData[key] = profileData[key];
         }
       });
@@ -228,7 +231,7 @@ export const authService = {
       }
       return response.data;
     } catch (error) {
-      console.error("Update profile error:", error);
+      console.log("Update profile error:", error);
       throw new Error("Failed to update profile");
     }
   },
@@ -244,7 +247,7 @@ export const authService = {
       }
       return result;
     } catch (error) {
-      console.error("Create managed child error:", error);
+      console.log("Create managed child error:", error);
       throw new Error(apiMessage(error, "Failed to create child profile"));
     }
   },
@@ -255,7 +258,7 @@ export const authService = {
       const response = await userApiClient.post("/invite-code");
       return response.data;
     } catch (error) {
-      console.error("Generate invite code error:", error);
+      console.log("Generate invite code error:", error);
       throw new Error("Failed to generate invite code");
     }
   },
@@ -268,7 +271,7 @@ export const authService = {
       });
       return response.data;
     } catch (error) {
-      console.error("Link child error:", error);
+      console.log("Link child error:", error);
       throw new Error("Failed to link child account");
     }
   },
@@ -280,18 +283,26 @@ export const authService = {
   // validated, the family link is derived from the invite (not from whoever is
   // signed in), and a failed redeem can't strand a half-made login.
 
-  createChildInvite: async ({ displayName, age, gradeLevel, email, parentalConsentAt }) => {
+  createChildInvite: async ({
+    displayName,
+    age,
+    gradeLevel,
+    email,
+    parentalConsentAt,
+  }) => {
     try {
       const response = await userApiClient.post("/child-invite", {
         display_name: displayName,
         age: parseInt(age, 10),
         grade_level: gradeLevel,
-        child_email: String(email || "").trim().toLowerCase(),
+        child_email: String(email || "")
+          .trim()
+          .toLowerCase(),
         parental_consent_at: parentalConsentAt || new Date().toISOString(),
       });
       return response.data;
     } catch (error) {
-      console.error("Create child invite error:", error);
+      console.log("Create child invite error:", error);
       throw new Error(apiMessage(error, "Failed to create invite"));
     }
   },
@@ -301,7 +312,7 @@ export const authService = {
       const response = await userApiClient.get("/child-invites");
       return response.data;
     } catch (error) {
-      console.error("List child invites error:", error);
+      console.log("List child invites error:", error);
       return { success: false, invites: [] };
     }
   },
@@ -309,29 +320,34 @@ export const authService = {
   revokeChildInvite: async (code) => {
     try {
       const response = await userApiClient.delete(
-        `/child-invite/${encodeURIComponent(String(code).trim().toUpperCase())}`
+        `/child-invite/${encodeURIComponent(String(code).trim().toUpperCase())}`,
       );
       return response.data;
     } catch (error) {
-      console.error("Revoke child invite error:", error);
+      console.log("Revoke child invite error:", error);
       throw new Error(apiMessage(error, "Failed to cancel invite"));
     }
   },
 
   // Look up an invite from the teen join screen. No account required.
   previewChildInvite: async (code) => {
-    const cleaned = String(code || "").trim().toUpperCase();
+    const cleaned = String(code || "")
+      .trim()
+      .toUpperCase();
     if (!cleaned) {
       return { success: false, error: "Enter the code your parent gave you." };
     }
     try {
       const response = await publicUserClient.get(
-        `/child-invite/${encodeURIComponent(cleaned)}`
+        `/child-invite/${encodeURIComponent(cleaned)}`,
       );
       return response.data;
     } catch (error) {
       if (error?.response) {
-        return { success: false, error: apiMessage(error, "Invalid invite code") };
+        return {
+          success: false,
+          error: apiMessage(error, "Invalid invite code"),
+        };
       }
       return {
         success: false,
@@ -342,23 +358,33 @@ export const authService = {
 
   // Redeem an invite: the server creates the account, then we sign in with it.
   redeemChildInvite: async ({ code, email, password, pin, avatarKey }) => {
-    const cleaned = String(code || "").trim().toUpperCase();
-    const cleanEmail = String(email || "").trim().toLowerCase();
+    const cleaned = String(code || "")
+      .trim()
+      .toUpperCase();
+    const cleanEmail = String(email || "")
+      .trim()
+      .toLowerCase();
 
     let redeemed;
     try {
       const response = await publicUserClient.post(
         `/child-invite/${encodeURIComponent(cleaned)}/redeem`,
-        { email: cleanEmail, password, pin, avatar_key: avatarKey || null }
+        { email: cleanEmail, password, pin, avatar_key: avatarKey || null },
       );
       redeemed = response.data;
     } catch (error) {
-      console.error("Redeem child invite error:", error);
-      throw new Error(apiMessage(error, "Could not complete signup. Please try again."));
+      console.log("Redeem child invite error:", error);
+      throw new Error(
+        apiMessage(error, "Could not complete signup. Please try again."),
+      );
     }
 
     // The account now exists — sign in so the app has a session.
-    const credential = await signInWithEmailAndPassword(auth, cleanEmail, password);
+    const credential = await signInWithEmailAndPassword(
+      auth,
+      cleanEmail,
+      password,
+    );
     const token = await credential.user.getIdToken();
     await AsyncStorage.setItem("authToken", token);
     firestoreService.cache.invalidateUser(redeemed.parent_id);
@@ -386,7 +412,7 @@ export const authService = {
       });
       return response.data;
     } catch (error) {
-      console.error("Verify child PIN error:", error);
+      console.log("Verify child PIN error:", error);
       throw new Error(apiMessage(error, "Failed to verify PIN"));
     }
   },
@@ -401,7 +427,7 @@ export const authService = {
       });
       return response.data;
     } catch (error) {
-      console.error("Set child PIN error:", error);
+      console.log("Set child PIN error:", error);
       throw new Error(apiMessage(error, "Failed to update PIN"));
     }
   },
@@ -416,14 +442,19 @@ export const authService = {
     try {
       const result = await firestoreService.verifyChildPIN(childId, pin);
       if (!result.success) {
-        return { success: false, error: result.error || "Invalid PIN", locked: result.locked };
+        return {
+          success: false,
+          error: result.error || "Invalid PIN",
+          locked: result.locked,
+        };
       }
 
       const child = result.child || {};
       const context = {
         childId,
         childName: child.displayName || child.display_name || "Kid",
-        childImageUrl: child.imageUrl || child.photoURL || child.photo_url || null,
+        childImageUrl:
+          child.imageUrl || child.photoURL || child.photo_url || null,
         childAvatarKey: child.avatar_key || child.avatarKey || null,
         childAge: child.age ?? null,
         childGradeLevel: child.grade_level ?? child.gradeLevel ?? null,
@@ -433,10 +464,11 @@ export const authService = {
       await AsyncStorage.setItem("childContext", JSON.stringify(context));
       return { success: true, child, context };
     } catch (error) {
-      console.error("Switch to child context error:", error);
+      console.log("Switch to child context error:", error);
       return {
         success: false,
-        error: error?.message || "Couldn't open that profile. Please try again.",
+        error:
+          error?.message || "Couldn't open that profile. Please try again.",
       };
     }
   },
@@ -447,7 +479,7 @@ export const authService = {
       await AsyncStorage.removeItem("childContext");
       return { success: true };
     } catch (error) {
-      console.error("Clear child context error:", error);
+      console.log("Clear child context error:", error);
       throw new Error("Failed to clear child context");
     }
   },
@@ -468,7 +500,7 @@ export const authService = {
       }
       return { success: false, error: "No child context found" };
     } catch (error) {
-      console.error("Get child context error:", error);
+      console.log("Get child context error:", error);
       return { success: false, error: "Failed to get child context" };
     }
   },
@@ -478,11 +510,11 @@ export const authService = {
     try {
       const response = await firestoreService.getLinkedChildren(
         parentUid,
-        useCache
+        useCache,
       );
       return response;
     } catch (error) {
-      console.error("Get linked children error:", error);
+      console.log("Get linked children error:", error);
       // Clear related cache on error
       firestoreService.cache.invalidateUser(parentUid);
       throw new Error("Failed to get linked children");
@@ -491,9 +523,12 @@ export const authService = {
 
   getLinkedChildrenWithSharing: async (parentUid, useCache = true) => {
     try {
-      return await firestoreService.getLinkedChildrenWithSharing(parentUid, useCache);
+      return await firestoreService.getLinkedChildrenWithSharing(
+        parentUid,
+        useCache,
+      );
     } catch (error) {
-      console.error("Get linked children with sharing error:", error);
+      console.log("Get linked children with sharing error:", error);
       throw new Error("Failed to get linked children");
     }
   },
@@ -508,7 +543,7 @@ export const authService = {
       await AsyncStorage.removeItem("childContext");
       return response.data;
     } catch (error) {
-      console.error("Delete account error:", error);
+      console.log("Delete account error:", error);
       throw new Error("Failed to delete account");
     }
   },
@@ -519,7 +554,7 @@ export const authService = {
       const { smartRefreshToken } = await import("./apiClient");
       return await smartRefreshToken();
     } catch (error) {
-      console.error("Token refresh error:", error);
+      console.log("Token refresh error:", error);
       throw new Error("Failed to refresh token");
     }
   },
