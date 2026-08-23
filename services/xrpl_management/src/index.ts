@@ -13,7 +13,7 @@ import { PaymentHandler } from "./wallets/xumm/payments.js";
 import { EscrowService } from "./wallets/xumm/escrow.js";
 import { handleXummWebhook, XummWebhookBody } from "./wallets/xumm/webhook.js";
 import { crossmarkService } from "./wallets/crossmark/index.js";
-import { requireAuth } from "./middleware/firebase_auth.js";
+import { requireAuth, requireAuthStrict } from "./middleware/firebase_auth.js";
 import { accountService } from "./ledger/account.js";
 import { ledgerListener } from "./ledger/listener.js";
 import { TransactionBuilder } from "./ledger/builder.js";
@@ -70,21 +70,21 @@ app.use(serve(path.join(__dirname, "../src/static")));
 // *** Primary Functions - Placeholder Handlers ***
 
 // GET /xchain_payment_request
-router.get("/xchain_payment_request", requireAuth, async (ctx) => {
+router.get("/xchain_payment_request", requireAuthStrict, async (ctx) => {
   // TODO: Implement actual logic similar to handle_xchain_payment_request
   // Example: const queryParams = ctx.query;
   ctx.body = { message: "XChain payment request placeholder", data: {} };
 });
 
 // GET /xummSignInRequest/:uid
-router.get("/xummSignInRequest/:uid", requireAuth, async (ctx) => {
+router.get("/xummSignInRequest/:uid", requireAuthStrict, async (ctx) => {
   const { uid } = ctx.params;
   const payloadResponse = await connectWallet(uid);
   ctx.body = payloadResponse;
 });
 
 // POST /payment_request
-router.post("/payment_request", requireAuth, async (ctx) => {
+router.post("/payment_request", requireAuthStrict, async (ctx) => {
   const paymentRequest = ctx.request.body as PaymentRequest;
   const paymentHandler = new PaymentHandler();
   const result = await paymentHandler.handlePaymentRequest(paymentRequest);
@@ -99,7 +99,7 @@ router.get("/lookup_escrow/:account", requireAuth, async (ctx) => {
 });
 
 // POST /create_escrow
-router.post("/create_escrow", requireAuth, async (ctx) => {
+router.post("/create_escrow", requireAuthStrict, async (ctx) => {
   const createEscrowModel = ctx.request.body as CreateEscrowModel;
   const escrowService = new EscrowService();
   const result = await escrowService.createEscrowXumm(createEscrowModel);
@@ -107,7 +107,7 @@ router.post("/create_escrow", requireAuth, async (ctx) => {
 });
 
 // POST /cancel_escrow_xumm
-router.post("/cancel_escrow_xumm", requireAuth, async (ctx) => {
+router.post("/cancel_escrow_xumm", requireAuthStrict, async (ctx) => {
   const escrowModel = ctx.request.body as EscrowModel;
   const escrowService = new EscrowService();
   const result = await escrowService.cancelEscrowXumm(escrowModel);
@@ -115,7 +115,7 @@ router.post("/cancel_escrow_xumm", requireAuth, async (ctx) => {
 });
 
 // POST /finish_escrow_xumm
-router.post("/finish_escrow_xumm", requireAuth, async (ctx) => {
+router.post("/finish_escrow_xumm", requireAuthStrict, async (ctx) => {
   const escrowModel = ctx.request.body as EscrowModel;
   const escrowService = new EscrowService();
   const result = await escrowService.finishEscrowXumm(escrowModel);
