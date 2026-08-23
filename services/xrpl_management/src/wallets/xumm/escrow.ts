@@ -39,18 +39,15 @@ export class EscrowService {
   }
 
   private createCancelAfterTimestamp(finish_after: number): number {
-    const cancelAfterDatetime = new Date(
-      finish_after * 1000 + 24 * 3600 * 1000,
-    );
-    return this.generateXRPLTimestamp(
-      Math.floor(
-        (cancelAfterDatetime.getTime() - new Date(1970, 0, 1).getTime()) / 1000,
-      ),
-    );
+    // finish_after is an XRPL timestamp (seconds since Ripple Epoch Jan 1 2000).
+    // Adding 24 hours (86400 seconds) yields the XRPL CancelAfter timestamp directly.
+    return finish_after + 24 * 3600;
   }
 
   private isTimestampAfterCurrent(timestamp: number): boolean {
-    return timestamp > Math.floor(new Date().getTime() / 1000);
+    // timestamp is an XRPL epoch timestamp. Convert to Unix timestamp before comparing with current time.
+    const unixTimestamp = timestamp + 946684800;
+    return unixTimestamp > Math.floor(new Date().getTime() / 1000);
   }
 
   public async createEscrowXumm(

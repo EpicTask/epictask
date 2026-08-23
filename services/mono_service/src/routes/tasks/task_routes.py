@@ -87,6 +87,8 @@ async def complete_task(task_id: str, request: TaskCompleted, current_user: dict
     caller_uid = current_user.get("uid")
     if request.completed_by_id != caller_uid:
         raise HTTPException(status_code=403, detail="completed_by_id must match your account")
+    if request.task_id != task_id:
+        raise HTTPException(status_code=400, detail="task_id in payload does not match route task_id")
     task = await task_service.get_task(request.task_id)
     if not task:
         raise HTTPException(status_code=404, detail="Task not found")

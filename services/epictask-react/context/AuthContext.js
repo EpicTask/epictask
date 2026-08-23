@@ -1,12 +1,18 @@
-import React, { createContext, useState, useEffect, useContext, useRef } from 'react';
-import { Alert, AppState } from 'react-native';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import { auth } from '../config/firebaseConfig';
-import { onAuthStateChanged } from 'firebase/auth';
-import authService from '../api/authService';
-import { forceRefreshToken } from '../api/apiClient';
-import { queryClient } from '../api/queryClient';
-import { firestoreService } from '../api/firestoreService';
+import React, {
+  createContext,
+  useState,
+  useEffect,
+  useContext,
+  useRef,
+} from "react";
+import { Alert, AppState } from "react-native";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { auth } from "../config/firebaseConfig";
+import { onAuthStateChanged } from "firebase/auth";
+import authService from "../api/authService";
+import { forceRefreshToken } from "../api/apiClient";
+import { queryClient } from "../api/queryClient";
+import { firestoreService } from "../api/firestoreService";
 
 export const AuthContext = createContext();
 
@@ -70,7 +76,7 @@ export const AuthProvider = ({ children }) => {
   // routed to the parent dashboard — and it would mean an unattended device
   // reopens straight into the kid's profile. Re-entering the PIN is one tap.
   useEffect(() => {
-    if (user?.role === 'parent' && !isSharedDeviceMode) {
+    if (user?.role === "parent" && !isSharedDeviceMode) {
       authService.clearChildContext().catch(() => {});
     }
 
@@ -79,65 +85,85 @@ export const AuthProvider = ({ children }) => {
     };
   }, [user?.uid]);
 
-  const effectiveUserId = (user?.role === 'parent' && isSharedDeviceMode && activeChildContext)
-    ? activeChildContext.childId
-    : user?.uid;
+  const effectiveUserId =
+    user?.role === "parent" && isSharedDeviceMode && activeChildContext
+      ? activeChildContext.childId
+      : user?.uid;
 
-  const childAge = (user?.role === 'parent' && isSharedDeviceMode && activeChildContext)
-    ? activeChildContext.childAge
-    : user?.age;
+  const childAge =
+    user?.role === "parent" && isSharedDeviceMode && activeChildContext
+      ? activeChildContext.childAge
+      : user?.age;
 
   // Proactively refresh the Firebase ID token whenever the app comes back to
   // the foreground. This prevents stale-token errors after the device has been
   // idle / the app has been backgrounded for longer than 1 hour.
   useEffect(() => {
-    const subscription = AppState.addEventListener('change', async (nextState) => {
-      if (nextState === 'active' && auth.currentUser) {
-        try {
-          await forceRefreshToken();
-        } catch (e) {
-          console.warn('[AuthContext] Foreground token refresh failed:', e);
-        }
+    const subscription = AppState.addEventListener(
+      "change",
+      async (nextState) => {
+        if (nextState === "active" && auth.currentUser) {
+          try {
+            await forceRefreshToken();
+          } catch (e) {
+            console.warn("[AuthContext] Foreground token refresh failed:", e);
+          }
 
-        if (isSharedDeviceMode) {
-          const context = await authService.getChildContext();
-          if (!context.success) {
-            exitSharedDeviceMode({ expired: context.error === "Session expired" });
-          } else {
-            scheduleSharedModeExpiration(context.context.expires);
+          if (isSharedDeviceMode) {
+            const context = await authService.getChildContext();
+            if (!context.success) {
+              exitSharedDeviceMode({
+                expired: context.error === "Session expired",
+              });
+            } else {
+              scheduleSharedModeExpiration(context.context.expires);
+            }
           }
         }
-      }
-    });
+      },
+    );
     return () => subscription.remove();
   }, [isSharedDeviceMode]);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       const authStateChangeId = ++authStateChangeRef.current;
-      const isCurrentAuthState = () => authStateChangeId === authStateChangeRef.current;
+      const isCurrentAuthState = () =>
+        authStateChangeId === authStateChangeRef.current;
 
       if (firebaseUser) {
         try {
           const token = await firebaseUser.getIdToken();
           if (!isCurrentAuthState()) return;
-          await AsyncStorage.setItem('authToken', token);
-          
+          await AsyncStorage.setItem("authToken", token);
+
           // Fetch user profile from user management service
-          const userProfileResponse = await authService.getCurrentUser(firebaseUser.uid);
+          const userProfileResponse = await authService.getCurrentUser(
+            firebaseUser.uid,
+          );
           if (!isCurrentAuthState()) return;
-          
+
           // Handle the response structure properly
-          if (userProfileResponse && userProfileResponse.success && userProfileResponse.user) {
+          if (
+            userProfileResponse &&
+            userProfileResponse.success &&
+            userProfileResponse.user
+          ) {
             setUser(userProfileResponse.user);
-            await AsyncStorage.setItem('cachedUserProfile', JSON.stringify(userProfileResponse.user));
+            await AsyncStorage.setItem(
+              "cachedUserProfile",
+              JSON.stringify(userProfileResponse.user),
+            );
           } else if (userProfileResponse && userProfileResponse.user) {
             // Handle case where response doesn't have success flag but has user data
             setUser(userProfileResponse.user);
-            await AsyncStorage.setItem('cachedUserProfile', JSON.stringify(userProfileResponse.user));
+            await AsyncStorage.setItem(
+              "cachedUserProfile",
+              JSON.stringify(userProfileResponse.user),
+            );
           } else {
             // If profile fetch fails, try to load from cache first
-            const cachedData = await AsyncStorage.getItem('cachedUserProfile');
+            const cachedData = await AsyncStorage.getItem("cachedUserProfile");
             if (cachedData) {
               setUser(JSON.parse(cachedData));
             } else {
@@ -151,9 +177,9 @@ export const AuthProvider = ({ children }) => {
           }
         } catch (error) {
           if (!isCurrentAuthState()) return;
-          console.error("Failed to fetch user profile:", error);
+          console.log("Failed to fetch user profile:", error);
           // If profile fetch fails, try to load from cache first
-          const cachedData = await AsyncStorage.getItem('cachedUserProfile');
+          const cachedData = await AsyncStorage.getItem("cachedUserProfile");
           if (!isCurrentAuthState()) return;
 
           if (cachedData) {
@@ -174,9 +200,9 @@ export const AuthProvider = ({ children }) => {
         await Promise.allSettled([
           queryClient.cancelQueries(),
           AsyncStorage.multiRemove([
-            'authToken',
-            'cachedUserProfile',
-            'childContext',
+            "authToken",
+            "cachedUserProfile",
+            "childContext",
           ]),
         ]);
         queryClient.clear();
@@ -203,7 +229,10 @@ export const AuthProvider = ({ children }) => {
       setError(null);
       const result = await authService.login(email, password);
       if (result && result.user) {
-        await AsyncStorage.setItem('cachedUserProfile', JSON.stringify(result.user));
+        await AsyncStorage.setItem(
+          "cachedUserProfile",
+          JSON.stringify(result.user),
+        );
       }
       return result;
     } catch (error) {
@@ -218,9 +247,17 @@ export const AuthProvider = ({ children }) => {
     try {
       setLoading(true);
       setError(null);
-      const result = await authService.register(email, password, displayName, role);
+      const result = await authService.register(
+        email,
+        password,
+        displayName,
+        role,
+      );
       if (result && result.user) {
-        await AsyncStorage.setItem('cachedUserProfile', JSON.stringify(result.user));
+        await AsyncStorage.setItem(
+          "cachedUserProfile",
+          JSON.stringify(result.user),
+        );
       }
       return result;
     } catch (error) {
@@ -251,10 +288,16 @@ export const AuthProvider = ({ children }) => {
       // Refresh user data - get current Firebase user UID
       const currentFirebaseUser = auth.currentUser;
       if (currentFirebaseUser) {
-        const updatedUserResponse = await authService.getCurrentUser(currentFirebaseUser.uid, false);
+        const updatedUserResponse = await authService.getCurrentUser(
+          currentFirebaseUser.uid,
+          false,
+        );
         const updatedUser = updatedUserResponse.user || updatedUserResponse;
         setUser(updatedUser);
-        await AsyncStorage.setItem('cachedUserProfile', JSON.stringify(updatedUser));
+        await AsyncStorage.setItem(
+          "cachedUserProfile",
+          JSON.stringify(updatedUser),
+        );
       }
       return result;
     } catch (error) {
@@ -310,27 +353,29 @@ export const AuthProvider = ({ children }) => {
   const clearError = () => setError(null);
 
   return (
-    <AuthContext.Provider value={{
-      user,
-      setUser,
-      childAge,
-      loading,
-      error,
-      login,
-      register,
-      logout,
-      updateProfile,
-      generateInviteCode,
-      linkChild,
-      getLinkedChildren,
-      deleteAccount,
-      clearError,
-      isSharedDeviceMode,
-      activeChildContext,
-      effectiveUserId,
-      switchToChildContext,
-      exitSharedDeviceMode,
-    }}>
+    <AuthContext.Provider
+      value={{
+        user,
+        setUser,
+        childAge,
+        loading,
+        error,
+        login,
+        register,
+        logout,
+        updateProfile,
+        generateInviteCode,
+        linkChild,
+        getLinkedChildren,
+        deleteAccount,
+        clearError,
+        isSharedDeviceMode,
+        activeChildContext,
+        effectiveUserId,
+        switchToChildContext,
+        exitSharedDeviceMode,
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );
@@ -340,7 +385,7 @@ export const AuthProvider = ({ children }) => {
 export const useAuth = () => {
   const context = useContext(AuthContext);
   if (!context) {
-    throw new Error('useAuth must be used within an AuthProvider');
+    throw new Error("useAuth must be used within an AuthProvider");
   }
   return context;
 };

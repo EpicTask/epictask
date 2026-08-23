@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react';
-import NetInfo from '@react-native-community/netinfo';
+import { useState, useEffect } from "react";
+import NetInfo from "@react-native-community/netinfo";
 
 /**
  * Enhanced error handling and offline support utilities for task management
@@ -7,13 +7,13 @@ import NetInfo from '@react-native-community/netinfo';
 
 // Error types for better error handling
 export const TaskErrorTypes = {
-  NETWORK_ERROR: 'NETWORK_ERROR',
-  PERMISSION_ERROR: 'PERMISSION_ERROR',
-  FIRESTORE_ERROR: 'FIRESTORE_ERROR',
-  CACHE_ERROR: 'CACHE_ERROR',
-  VALIDATION_ERROR: 'VALIDATION_ERROR',
-  TIMEOUT_ERROR: 'TIMEOUT_ERROR',
-  UNKNOWN_ERROR: 'UNKNOWN_ERROR'
+  NETWORK_ERROR: "NETWORK_ERROR",
+  PERMISSION_ERROR: "PERMISSION_ERROR",
+  FIRESTORE_ERROR: "FIRESTORE_ERROR",
+  CACHE_ERROR: "CACHE_ERROR",
+  VALIDATION_ERROR: "VALIDATION_ERROR",
+  TIMEOUT_ERROR: "TIMEOUT_ERROR",
+  UNKNOWN_ERROR: "UNKNOWN_ERROR",
 };
 
 // Network status manager
@@ -25,17 +25,17 @@ class NetworkStatusManager {
   }
 
   initialize() {
-    NetInfo.addEventListener(state => {
+    NetInfo.addEventListener((state) => {
       const wasConnected = this.isConnected;
       this.isConnected = state.isConnected;
-      
+
       // Notify listeners of network status change
       if (wasConnected !== this.isConnected) {
-        this.listeners.forEach(listener => {
+        this.listeners.forEach((listener) => {
           try {
             listener(this.isConnected);
           } catch (error) {
-            console.error('Error in network status listener:', error);
+            console.log("Error in network status listener:", error);
           }
         });
       }
@@ -59,7 +59,7 @@ class OfflineQueue {
   constructor() {
     this.queue = [];
     this.processing = false;
-    
+
     // Listen for network status changes
     networkStatusManager.addListener((isConnected) => {
       if (isConnected && this.queue.length > 0) {
@@ -72,34 +72,41 @@ class OfflineQueue {
     this.queue.push({
       ...operation,
       timestamp: Date.now(),
-      retryCount: 0
+      retryCount: 0,
     });
   }
 
   async processQueue() {
     if (this.processing || this.queue.length === 0) return;
-    
+
     this.processing = true;
-    
+
     while (this.queue.length > 0) {
       const operation = this.queue.shift();
-      
+
       try {
         await operation.execute();
-        console.log('Offline operation completed:', operation.type);
+        console.log("Offline operation completed:", operation.type);
       } catch (error) {
         operation.retryCount++;
-        
+
         if (operation.retryCount < 3) {
           // Re-queue for retry
           this.queue.push(operation);
-          console.log(`Retrying offline operation (${operation.retryCount}/3):`, operation.type);
+          console.log(
+            `Retrying offline operation (${operation.retryCount}/3):`,
+            operation.type,
+          );
         } else {
-          console.error('Failed to execute offline operation after 3 retries:', operation.type, error);
+          console.log(
+            "Failed to execute offline operation after 3 retries:",
+            operation.type,
+            error,
+          );
         }
       }
     }
-    
+
     this.processing = false;
   }
 
@@ -118,35 +125,40 @@ export const offlineQueue = new OfflineQueue();
 export const classifyError = (error) => {
   if (!error) return TaskErrorTypes.UNKNOWN_ERROR;
 
-  const errorMessage = error.message?.toLowerCase() || '';
-  const errorCode = error.code?.toLowerCase() || '';
+  const errorMessage = error.message?.toLowerCase() || "";
+  const errorCode = error.code?.toLowerCase() || "";
 
   // Network errors
-  if (errorMessage.includes('network') || 
-      errorMessage.includes('connection') ||
-      errorCode.includes('unavailable') ||
-      errorCode.includes('deadline-exceeded')) {
+  if (
+    errorMessage.includes("network") ||
+    errorMessage.includes("connection") ||
+    errorCode.includes("unavailable") ||
+    errorCode.includes("deadline-exceeded")
+  ) {
     return TaskErrorTypes.NETWORK_ERROR;
   }
 
   // Permission errors
-  if (errorMessage.includes('permission') ||
-      errorMessage.includes('unauthorized') ||
-      errorCode.includes('permission-denied')) {
+  if (
+    errorMessage.includes("permission") ||
+    errorMessage.includes("unauthorized") ||
+    errorCode.includes("permission-denied")
+  ) {
     return TaskErrorTypes.PERMISSION_ERROR;
   }
 
   // Firestore specific errors
-  if (errorCode.includes('firestore') ||
-      errorMessage.includes('firestore') ||
-      errorCode.includes('invalid-argument') ||
-      errorCode.includes('not-found')) {
+  if (
+    errorCode.includes("firestore") ||
+    errorMessage.includes("firestore") ||
+    errorCode.includes("invalid-argument") ||
+    errorCode.includes("not-found")
+  ) {
     return TaskErrorTypes.FIRESTORE_ERROR;
   }
 
   // Timeout errors
-  if (errorMessage.includes('timeout') ||
-      errorCode.includes('timeout')) {
+  if (errorMessage.includes("timeout") || errorCode.includes("timeout")) {
     return TaskErrorTypes.TIMEOUT_ERROR;
   }
 
@@ -160,61 +172,67 @@ export const handleTaskError = async (error, operation, options = {}) => {
     retryDelay = 1000,
     enableOfflineQueue = true,
     onRetry = null,
-    onFinalFailure = null
+    onFinalFailure = null,
   } = options;
 
   const errorType = classifyError(error);
-  console.error(`Task operation failed (${errorType}):`, error);
+  console.log(`Task operation failed (${errorType}):`, error);
 
   // If offline and operation supports queuing
   if (!networkStatusManager.getStatus() && enableOfflineQueue && operation) {
     offlineQueue.add({
-      type: operation.type || 'unknown',
+      type: operation.type || "unknown",
       execute: operation.execute,
-      data: operation.data
+      data: operation.data,
     });
-    
+
     return {
       success: false,
-      error: 'Operation queued for when connection is restored',
+      error: "Operation queued for when connection is restored",
       errorType: TaskErrorTypes.NETWORK_ERROR,
-      queued: true
+      queued: true,
     };
   }
 
   // Retry logic for certain error types
-  if (errorType === TaskErrorTypes.NETWORK_ERROR || 
-      errorType === TaskErrorTypes.TIMEOUT_ERROR) {
-    
+  if (
+    errorType === TaskErrorTypes.NETWORK_ERROR ||
+    errorType === TaskErrorTypes.TIMEOUT_ERROR
+  ) {
     for (let attempt = 1; attempt <= maxRetries; attempt++) {
       try {
         if (onRetry) {
           onRetry(attempt, maxRetries);
         }
-        
+
         // Wait before retry
-        await new Promise(resolve => setTimeout(resolve, retryDelay * attempt));
-        
+        await new Promise((resolve) =>
+          setTimeout(resolve, retryDelay * attempt),
+        );
+
         // Execute the operation again
         if (operation && operation.execute) {
           const result = await operation.execute();
           return { success: true, data: result, retriedAfter: attempt };
         }
-        
+
         break;
       } catch (retryError) {
-        console.error(`Retry attempt ${attempt}/${maxRetries} failed:`, retryError);
-        
+        console.log(
+          `Retry attempt ${attempt}/${maxRetries} failed:`,
+          retryError,
+        );
+
         if (attempt === maxRetries) {
           if (onFinalFailure) {
             onFinalFailure(retryError);
           }
-          
+
           return {
             success: false,
             error: retryError.message,
             errorType: classifyError(retryError),
-            retriesExhausted: true
+            retriesExhausted: true,
           };
         }
       }
@@ -225,8 +243,9 @@ export const handleTaskError = async (error, operation, options = {}) => {
     success: false,
     error: error.message,
     errorType,
-    retryable: errorType === TaskErrorTypes.NETWORK_ERROR || 
-               errorType === TaskErrorTypes.TIMEOUT_ERROR
+    retryable:
+      errorType === TaskErrorTypes.NETWORK_ERROR ||
+      errorType === TaskErrorTypes.TIMEOUT_ERROR,
   };
 };
 
@@ -234,25 +253,27 @@ export const handleTaskError = async (error, operation, options = {}) => {
 export const getErrorMessage = (errorType, error) => {
   switch (errorType) {
     case TaskErrorTypes.NETWORK_ERROR:
-      return 'Unable to connect. Please check your internet connection and try again.';
-    
+      return "Unable to connect. Please check your internet connection and try again.";
+
     case TaskErrorTypes.PERMISSION_ERROR:
-      return 'You don\'t have permission to perform this action. Please contact support.';
-    
+      return "You don't have permission to perform this action. Please contact support.";
+
     case TaskErrorTypes.FIRESTORE_ERROR:
-      return 'There was a problem with the database. Please try again in a moment.';
-    
+      return "There was a problem with the database. Please try again in a moment.";
+
     case TaskErrorTypes.CACHE_ERROR:
-      return 'There was a problem loading cached data. Refreshing...';
-    
+      return "There was a problem loading cached data. Refreshing...";
+
     case TaskErrorTypes.VALIDATION_ERROR:
-      return 'The information provided is invalid. Please check and try again.';
-    
+      return "The information provided is invalid. Please check and try again.";
+
     case TaskErrorTypes.TIMEOUT_ERROR:
-      return 'The request took too long. Please try again.';
-    
+      return "The request took too long. Please try again.";
+
     default:
-      return error?.message || 'An unexpected error occurred. Please try again.';
+      return (
+        error?.message || "An unexpected error occurred. Please try again."
+      );
   }
 };
 
@@ -269,10 +290,10 @@ export class OfflineDataManager {
       this.storage.set(key, {
         data,
         timestamp: Date.now(),
-        synced: false
+        synced: false,
       });
     } catch (error) {
-      console.error('Error storing offline data:', error);
+      console.log("Error storing offline data:", error);
     }
   }
 
@@ -285,12 +306,12 @@ export class OfflineDataManager {
         const isStale = Date.now() - item.timestamp > 24 * 60 * 60 * 1000;
         return {
           ...item,
-          isStale
+          isStale,
         };
       }
       return null;
     } catch (error) {
-      console.error('Error retrieving offline data:', error);
+      console.log("Error retrieving offline data:", error);
       return null;
     }
   }
@@ -329,7 +350,9 @@ export const offlineDataManager = new OfflineDataManager();
 
 // Connection status hook
 export const useNetworkStatus = () => {
-  const [isConnected, setIsConnected] = useState(networkStatusManager.getStatus());
+  const [isConnected, setIsConnected] = useState(
+    networkStatusManager.getStatus(),
+  );
 
   useEffect(() => {
     const unsubscribe = networkStatusManager.addListener(setIsConnected);
@@ -346,11 +369,15 @@ export const withErrorHandling = (operation, options = {}) => {
       const result = await operation(...args);
       return { success: true, data: result };
     } catch (error) {
-      return await handleTaskError(error, {
-        type: operation.name || 'task_operation',
-        execute: () => operation(...args),
-        data: args
-      }, options);
+      return await handleTaskError(
+        error,
+        {
+          type: operation.name || "task_operation",
+          execute: () => operation(...args),
+          data: args,
+        },
+        options,
+      );
     }
   };
 };
@@ -360,32 +387,35 @@ export const validateTaskData = (taskData) => {
   const errors = [];
 
   if (!taskData.title || taskData.title.trim().length === 0) {
-    errors.push('Task title is required');
+    errors.push("Task title is required");
   }
 
   if (taskData.title && taskData.title.length > 100) {
-    errors.push('Task title must be less than 100 characters');
+    errors.push("Task title must be less than 100 characters");
   }
 
   if (!taskData.assigned_to_ids || taskData.assigned_to_ids.length === 0) {
-    errors.push('Task must be assigned to at least one user');
+    errors.push("Task must be assigned to at least one user");
   }
 
   if (taskData.due_date) {
     const dueDate = new Date(taskData.due_date);
     if (isNaN(dueDate.getTime())) {
-      errors.push('Invalid due date format');
+      errors.push("Invalid due date format");
     } else if (dueDate < new Date()) {
-      errors.push('Due date cannot be in the past');
+      errors.push("Due date cannot be in the past");
     }
   }
 
-  if (taskData.reward_amount && (isNaN(taskData.reward_amount) || taskData.reward_amount < 0)) {
-    errors.push('Reward amount must be a positive number');
+  if (
+    taskData.reward_amount &&
+    (isNaN(taskData.reward_amount) || taskData.reward_amount < 0)
+  ) {
+    errors.push("Reward amount must be a positive number");
   }
 
   return {
     isValid: errors.length === 0,
-    errors
+    errors,
   };
 };

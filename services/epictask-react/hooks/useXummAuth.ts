@@ -1,19 +1,22 @@
-import { useState, useEffect } from 'react';
-import { Platform, Linking, Alert } from 'react-native';
-import { 
-  requestXummSignIn, 
-  XummSignInResponse, 
-  requestPayment, 
-  createEscrow, 
-  finishEscrow, 
+import { useState, useEffect } from "react";
+import { Platform, Linking, Alert } from "react-native";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import {
+  requestXummSignIn,
+  XummSignInResponse,
+  requestPayment,
+  createEscrow,
+  finishEscrow,
   cancelEscrow,
   XummPaymentRequest,
-  XummEscrowRequest
-} from '../api/xummService';
-import { getFirestore, doc, onSnapshot } from 'firebase/firestore';
+  XummEscrowRequest,
+} from "../api/xummService";
+import { getFirestore, doc, onSnapshot } from "firebase/firestore";
+import { useAuth } from "../context/AuthContext";
+import { firestoreService } from "../api/firestoreService";
 
 // Ensure the collection matches your environment config (e.g. 'xumm_callbacks' vs 'test_xumm_callbacks')
-const XUMM_CALLBACK_COLLECTION = 'test_xumm_callbacks';
+const XUMM_CALLBACK_COLLECTION = "test_xumm_callbacks";
 
 export interface XummUserToken {
   user_token: string;
@@ -28,19 +31,30 @@ export interface XummUserToken {
  *
  * @param userToken  The userToken object from the user's profile (may be null/undefined)
  */
-export const isXummWalletConnected = (userToken?: XummUserToken | null): boolean => {
+export const isXummWalletConnected = (
+  userToken?: XummUserToken | null,
+): boolean => {
   if (!userToken?.user_token) return false;
   return userToken.token_expiration > Math.floor(Date.now() / 1000);
 };
 
-type XummActionType = 'SIGN_IN' | 'PAYMENT' | 'CREATE_ESCROW' | 'FINISH_ESCROW' | 'CANCEL_ESCROW';
+type XummActionType =
+  | "SIGN_IN"
+  | "PAYMENT"
+  | "CREATE_ESCROW"
+  | "FINISH_ESCROW"
+  | "CANCEL_ESCROW";
 
 export const useXummAuth = () => {
+  const { setUser } = useAuth();
   const [isConnecting, setIsConnecting] = useState(false);
   const [showQrModal, setShowQrModal] = useState(false);
   const [qrUrl, setQrUrl] = useState<string | null>(null);
   const [payloadId, setPayloadId] = useState<string | null>(null);
-  const [currentAction, setCurrentAction] = useState<XummActionType | null>(null);
+  const [payloadUid, setPayloadUid] = useState<string | null>(null);
+  const [currentAction, setCurrentAction] = useState<XummActionType | null>(
+    null,
+  );
 
   useEffect(() => {
     let unsubscribe: () => void;
@@ -49,49 +63,73 @@ export const useXummAuth = () => {
       const db = getFirestore();
       const docRef = doc(db, XUMM_CALLBACK_COLLECTION, payloadId);
 
-      unsubscribe = onSnapshot(docRef, (docSnap) => {
-        if (docSnap.exists()) {
-          const data = docSnap.data();
-          console.log('Xumm callback received:', data);
-          
-          if (data.payload?.response?.resolved_at) {
-             // Handle the successful sign-in resolution here
-             // E.g., Save user token, update profile, etc.
-             
-             
-             let title = 'Xumm Success';
-             let message = 'Your Xumm request was completed successfully.';
-             
-             switch (currentAction) {
-               case 'SIGN_IN':
-                 title = 'Wallet Connected';
-                 message = 'Your Xumm wallet was connected successfully.';
-                 break;
-               case 'PAYMENT':
-                 title = 'Payment Complete';
-                 message = 'Your payment was successfully processed.';
-                 break;
-               case 'CREATE_ESCROW':
-                 title = 'Escrow Created';
-                 message = 'Your escrow has been successfully created.';
-                 break;
-               case 'FINISH_ESCROW':
-                 title = 'Escrow Finished';
-                 message = 'Your escrow has been successfully finished.';
-                 break;
-               case 'CANCEL_ESCROW':
-                 title = 'Escrow Cancelled';
-                 message = 'Your escrow has been successfully cancelled.';
-                 break;
-             }
+      unsubscribe = onSnapshot(
+        docRef,
+        async (docSnap) => {
+          if (docSnap.exists()) {
+            const data = docSnap.data();
+            console.log("Xumm callback received:", data);
 
-             Alert.alert('Success', message);
-             closeModal();
+            if (data.payload?.response?.resolved_at) {
+              // Handle the successful sign-in resolution here
+              // E.g., Save user token, update profile, etc.
+
+              let title = "Xumm Success";
+              let message = "Your Xumm request was completed successfully.";
+
+              switch (currentAction) {
+                case "SIGN_IN":
+                  title = "Wallet Connected";
+                  message = "Your Xumm wallet was connected successfully.";
+                  break;
+                case "PAYMENT":
+                  title = "Payment Complete";
+                  message = "Your payment was successfully processed.";
+                  break;
+                case "CREATE_ESCROW":
+                  title = "Escrow Created";
+                  message = "Your escrow has been successfully created.";
+                  break;
+                case "FINISH_ESCROW":
+                  title = "Escrow Finished";
+                  message = "Your escrow has been successfully finished.";
+                  break;
+                case "CANCEL_ESCROW":
+                  title = "Escrow Cancelled";
+                  message = "Your escrow has been successfully cancelled.";
+                  break;
+              }
+
+              if (currentAction === "SIGN_IN" && payloadUid) {
+                try {
+                  const profileResponse = await firestoreService.getUserProfile(
+                    payloadUid,
+                    false,
+                  );
+                  if (profileResponse.success && profileResponse.user) {
+                    setUser(profileResponse.user);
+                    await AsyncStorage.setItem(
+                      "cachedUserProfile",
+                      JSON.stringify(profileResponse.user),
+                    );
+                  }
+                } catch (refreshError) {
+                  console.log(
+                    "Failed to refresh wallet profile:",
+                    refreshError,
+                  );
+                }
+              }
+
+              Alert.alert("Success", message);
+              closeModal();
+            }
           }
-        }
-      }, (error) => {
-        console.error("Firestore listen error:", error);
-      });
+        },
+        (error) => {
+          console.log("Firestore listen error:", error);
+        },
+      );
     }
 
     return () => {
@@ -99,9 +137,12 @@ export const useXummAuth = () => {
         unsubscribe();
       }
     };
-  }, [payloadId, currentAction]);
+  }, [payloadId, payloadUid, currentAction, setUser]);
 
-  const handlePayloadResponse = async (response: XummSignInResponse, actionType: XummActionType) => {
+  const handlePayloadResponse = async (
+    response: XummSignInResponse,
+    actionType: XummActionType,
+  ) => {
     if (response.uuid) {
       setPayloadId(response.uuid);
       setCurrentAction(actionType);
@@ -110,7 +151,7 @@ export const useXummAuth = () => {
     const deepLinkUrl = response.next?.always;
     const responseQrUrl = response.qrUrl;
 
-    if (Platform.OS === 'web') {
+    if (Platform.OS === "web") {
       setQrUrl(responseQrUrl || null);
       setShowQrModal(true);
     } else {
@@ -123,11 +164,11 @@ export const useXummAuth = () => {
           setShowQrModal(true);
         }
       } else {
-         setQrUrl(responseQrUrl || null);
-         setShowQrModal(true);
+        setQrUrl(responseQrUrl || null);
+        setShowQrModal(true);
       }
     }
-  }
+  };
 
   /**
    * Initiates a Xumm sign-in payload to connect the user's wallet.
@@ -137,23 +178,27 @@ export const useXummAuth = () => {
    * @param uid               Firebase UID of the current user
    * @param existingUserToken The userToken from the user's profile (if any)
    */
-  const connectWallet = async (uid: string, existingUserToken?: XummUserToken | null) => {
+  const connectWallet = async (
+    uid: string,
+    existingUserToken?: XummUserToken | null,
+  ) => {
     // Guard: skip QR flow if user already has a valid push token
     if (isXummWalletConnected(existingUserToken)) {
       Alert.alert(
-        'Wallet Already Connected',
-        'Your Xumm wallet is already connected. Transactions will be sent directly to your Xumm app.'
+        "Wallet Already Connected",
+        "Your Xumm wallet is already connected. Transactions will be sent directly to your Xumm app.",
       );
       return;
     }
 
     setIsConnecting(true);
     try {
+      setPayloadUid(uid);
       const response = await requestXummSignIn(uid);
-      await handlePayloadResponse(response, 'SIGN_IN');
+      await handlePayloadResponse(response, "SIGN_IN");
     } catch (error) {
-      console.error('Error connecting Xumm wallet:', error);
-      Alert.alert('Error', 'Failed to request Xumm sign in. Please try again.');
+      console.log("Error connecting Xumm wallet:", error);
+      Alert.alert("Error", "Failed to request Xumm sign in. Please try again.");
     } finally {
       setIsConnecting(false);
     }
@@ -163,10 +208,10 @@ export const useXummAuth = () => {
     setIsConnecting(true);
     try {
       const response = await requestPayment(payload);
-      await handlePayloadResponse(response, 'PAYMENT');
+      await handlePayloadResponse(response, "PAYMENT");
     } catch (error) {
-      console.error('Error sending payment:', error);
-      Alert.alert('Error', 'Failed to request payment. Please try again.');
+      console.log("Error sending payment:", error);
+      Alert.alert("Error", "Failed to request payment. Please try again.");
     } finally {
       setIsConnecting(false);
     }
@@ -176,10 +221,10 @@ export const useXummAuth = () => {
     setIsConnecting(true);
     try {
       const response = await createEscrow(payload);
-      await handlePayloadResponse(response, 'CREATE_ESCROW');
+      await handlePayloadResponse(response, "CREATE_ESCROW");
     } catch (error) {
-      console.error('Error creating escrow:', error);
-      Alert.alert('Error', 'Failed to create escrow. Please try again.');
+      console.log("Error creating escrow:", error);
+      Alert.alert("Error", "Failed to create escrow. Please try again.");
     } finally {
       setIsConnecting(false);
     }
@@ -189,10 +234,10 @@ export const useXummAuth = () => {
     setIsConnecting(true);
     try {
       const response = await finishEscrow(payload);
-      await handlePayloadResponse(response, 'FINISH_ESCROW');
+      await handlePayloadResponse(response, "FINISH_ESCROW");
     } catch (error) {
-      console.error('Error finishing escrow:', error);
-      Alert.alert('Error', 'Failed to finish escrow. Please try again.');
+      console.log("Error finishing escrow:", error);
+      Alert.alert("Error", "Failed to finish escrow. Please try again.");
     } finally {
       setIsConnecting(false);
     }
@@ -202,10 +247,10 @@ export const useXummAuth = () => {
     setIsConnecting(true);
     try {
       const response = await cancelEscrow(payload);
-      await handlePayloadResponse(response, 'CANCEL_ESCROW');
+      await handlePayloadResponse(response, "CANCEL_ESCROW");
     } catch (error) {
-      console.error('Error cancelling escrow:', error);
-      Alert.alert('Error', 'Failed to cancel escrow. Please try again.');
+      console.log("Error cancelling escrow:", error);
+      Alert.alert("Error", "Failed to cancel escrow. Please try again.");
     } finally {
       setIsConnecting(false);
     }

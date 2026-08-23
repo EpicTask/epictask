@@ -13,9 +13,23 @@ const DateInput = ({ title, value, onDateChange }: DateInputProps) => {
   const [showDateModal, setShowDateModal] = useState(false);
   const [selectedDate, setSelectedDate] = useState(new Date());
 
+  const parseDateValue = (dateValue: string): Date => {
+    const numericValue = Number(dateValue);
+    if (dateValue && Number.isFinite(numericValue)) {
+      // Support Unix seconds and Unix milliseconds.
+      return new Date(numericValue < 1_000_000_000_000 ? numericValue * 1000 : numericValue);
+    }
+    return new Date(dateValue);
+  };
+
+  const formatDateForDisplay = (date: Date): string => {
+    if (Number.isNaN(date.getTime())) return "";
+    return date.toLocaleDateString();
+  };
+
   useEffect(() => {
     if (value) {
-      const parsedDate = new Date(value);
+      const parsedDate = parseDateValue(value);
       if (!isNaN(parsedDate.getTime())) {
         setSelectedDate(parsedDate);
       }
@@ -24,7 +38,11 @@ const DateInput = ({ title, value, onDateChange }: DateInputProps) => {
 
   const handleDateSelect = (date: Date): void => {
     setSelectedDate(date);
-    onDateChange(date.toISOString().split('T')[0]); // Use YYYY-MM-DD format
+    // Keep the date value timezone-safe for the caller's machine logic.
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const day = String(date.getDate()).padStart(2, "0");
+    onDateChange(`${year}-${month}-${day}`);
     setShowDateModal(false);
   };
 
@@ -41,7 +59,7 @@ const DateInput = ({ title, value, onDateChange }: DateInputProps) => {
           setShowDateModal(true);
         }}
         label={title}
-        value={value || selectedDate.toLocaleDateString()}
+        value={value ? formatDateForDisplay(parseDateValue(value)) : formatDateForDisplay(selectedDate)}
         icon={ICONS.calendar}
         onChangeText={() => {}}
       />
