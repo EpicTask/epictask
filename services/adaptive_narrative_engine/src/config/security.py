@@ -1,3 +1,4 @@
+import logging
 import os
 from typing import Optional
 from fastapi import Depends, HTTPException, status
@@ -5,7 +6,29 @@ from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from firebase_admin import auth
 
 
+logger = logging.getLogger(__name__)
+
 security = HTTPBearer()
+
+
+def _auth_disabled() -> bool:
+    """
+    True only when auth has been deliberately disabled for local testing.
+
+    Refuses to activate on Cloud Run (K_SERVICE is injected by the runtime) so
+    that a stray env var can never open up a deployed instance. Tests should
+    prefer FastAPI dependency overrides (see src/tests/conftest.py) over this
+    flag.
+    """
+    if os.getenv("AUTH_DISABLED_FOR_TESTING") != "true":
+        return False
+    if os.getenv("K_SERVICE"):
+        logger.error(
+            "AUTH_DISABLED_FOR_TESTING is set on a deployed instance; ignoring it."
+        )
+        return False
+    logger.warning("AUTH_DISABLED_FOR_TESTING is active - all requests run as admin.")
+    return True
 
 
 async def get_current_user(
@@ -13,35 +36,31 @@ async def get_current_user(
 ) -> dict:
     """
     Verify Firebase ID token and return user information.
-    
+
     For local testing, auth can be disabled by setting the
     AUTH_DISABLED_FOR_TESTING environment variable to "true".
-    
+
     Args:
         credentials: HTTP Bearer token from request header
-        
+
     Returns:
         dict: Decoded token with user information
-        
+
     Raises:
         HTTPException: If token is invalid or expired
     """
+    if _auth_disabled():
+        return {"uid": "user_123", "role": "admin", "admin": True}
+
     if credentials is None:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Authentication credentials were not provided",
             headers={"WWW-Authenticate": "Bearer"},
         )
-        
-    token = credentials.credentials
-    
-    # Test token bypass for unit tests and local testing
-    if token in ("fake_token", "test_token"):
-        return {"uid": "user_123", "role": "admin", "admin": True}
 
-    if os.getenv("AUTH_DISABLED_FOR_TESTING") == "true":
-        return {"uid": "user_123", "role": "admin", "admin": True}
-    
+    token = credentials.credentials
+
     try:
         # Verify the ID token
         decoded_token = auth.verify_id_token(token)
@@ -69,10 +88,10 @@ async def get_current_user(
 def get_user_id(current_user: dict = Depends(get_current_user)) -> str:
     """
     Extract user ID from decoded token.
-    
+
     Args:
         current_user: Decoded token from get_current_user
-        
+
     Returns:
         str: User ID (uid)
     """
@@ -82,10 +101,10 @@ def get_user_id(current_user: dict = Depends(get_current_user)) -> str:
 def get_user_role(current_user: dict = Depends(get_current_user)) -> str:
     """
     Extract user role from decoded token custom claims.
-    
+
     Args:
         current_user: Decoded token from get_current_user
-        
+
     Returns:
         str: User role (parent, kid, admin)
     """
