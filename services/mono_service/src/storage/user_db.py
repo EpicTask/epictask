@@ -9,6 +9,7 @@ from google.cloud.firestore_v1.base_query import FieldFilter
 from ..config.firebase_config import db
 from ..config.collection_names import collections
 from ..config import age_policy
+from ..config.role_claims import set_role_claim
 from ..domain.user_models import UserProfile, InviteCodeResponse, UserMetrics, NotificationPreferences
 
 # PIN brute-force protection. Enforced server-side and persisted in Firestore
@@ -155,6 +156,7 @@ def create_managed_child(parent_uid: str, child_data: dict) -> dict:
     child_user = None
     try:
         child_user = auth.create_user(display_name=child_data["display_name"])
+        set_role_claim(child_user.uid, "child")
         now = _utc_now().isoformat()
         child_profile = {
             "uid": child_user.uid,
@@ -699,6 +701,7 @@ def redeem_child_invite(code: str, email: str, password: str, pin: str, avatar_k
             password=password,
             display_name=invite["child_name"],
         )
+        set_role_claim(child_user.uid, "child")
         now = _utc_now().isoformat()
         parent_uid = invite["parent_id"]
         profile = {

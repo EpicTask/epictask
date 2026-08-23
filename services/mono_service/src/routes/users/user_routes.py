@@ -14,7 +14,8 @@ from ...domain.user_models import (
     NotificationPreferencesUpdate,
 )
 from ...services.users.user_service import user_service
-from ...config.security import get_current_user
+from ...config.security import get_current_user, get_current_user_strict
+from ...config.role_claims import sync_role_claim
 from ...config import age_policy
 from ...storage.db import user_db
 
@@ -22,13 +23,20 @@ router = APIRouter()
 
 
 def _require_parent(uid: str) -> dict:
-    """Load the caller's profile and assert they can manage children."""
+    """
+    Load the caller's profile and assert they can manage children.
+
+    Unlike the task routes this genuinely needs the profile document (callers
+    read `children` and `uid` off it), so the read stays. It still repairs the
+    role claim so the cheaper token-only checks elsewhere stop falling back.
+    """
     profile = user_db.get_user_profile(uid)
     if not profile or profile.get("role") not in ("parent", "admin"):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Only a parent can manage child profiles",
         )
+    sync_role_claim(uid, profile.get("role"))
     return profile
 
 
@@ -67,10 +75,10 @@ async def get_age_policy():
     }
 
 
-@router.post("/managed-child", dependencies=[Depends(get_current_user)])
+@router.post("/managed-child")
 async def create_managed_child(
     request: ManagedChildCreate,
-    current_user: dict = Depends(get_current_user),
+    current_user: dict = Depends(get_current_user_strict),
 ):
     """Create a child profile for parent-controlled shared-device sessions."""
     _require_parent(current_user["uid"])
@@ -86,10 +94,10 @@ async def create_managed_child(
 # Teen (13+) invites
 # ---------------------------------------------------------------------------
 
-@router.post("/child-invite", dependencies=[Depends(get_current_user)])
+@router.post("/child-invite")
 async def create_child_invite(
     request: ChildInviteCreate,
-    current_user: dict = Depends(get_current_user),
+    current_user: dict = Depends(get_current_user_strict),
 ):
     """Issue a single-use code a teen redeems to create their own account."""
     parent_profile = _require_parent(current_user["uid"])
@@ -112,8 +120,8 @@ async def list_child_invites(current_user: dict = Depends(get_current_user)):
     return {"success": True, "invites": user_db.list_child_invites(current_user["uid"])}
 
 
-@router.delete("/child-invite/{code}", dependencies=[Depends(get_current_user)])
-async def revoke_child_invite(code: str, current_user: dict = Depends(get_current_user)):
+@router.delete("/child-invite/{code}")
+async def revoke_child_invite(code: str, current_user: dict = Depends(get_current_user_strict)):
     """Cancel an invite that hasn't been redeemed yet."""
     _require_parent(current_user["uid"])
     if not user_db.revoke_child_invite(current_user["uid"], code):
@@ -164,8 +172,8 @@ async def redeem_child_invite(code: str, request: ChildInviteRedeem):
             detail="Could not complete signup. Please try again.",
         ) from e
 
-@router.delete("/account", dependencies=[Depends(get_current_user)])
-async def delete_account(current_user: dict = Depends(get_current_user)):
+@router.delete("/account")
+async def delete_account(current_user: dict = Depends(get_current_user_strict)):
     """Delete user account."""
     uid = current_user['uid']
     success = await user_service.delete_account(uid)
@@ -184,10 +192,10 @@ async def generate_invite_code(current_user: dict = Depends(get_current_user)):
     uid = current_user['uid']
     return await user_service.generate_invite_code(uid)
 
-@router.post("/link-child", dependencies=[Depends(get_current_user)])
+@router.post("/link-child")
 async def link_child(
     request: LinkChildRequest,
-    current_user: dict = Depends(get_current_user)
+    current_user: dict = Depends(get_current_user_strict)
 ):
     """Link child account (for parents)."""
     uid = current_user['uid']
@@ -262,8 +270,8 @@ async def update_notification_preferences(
         )
     return {"message": "Successful preferences update"}
 
-@router.post("/verify-pin", dependencies=[Depends(get_current_user)])
-async def verify_pin(request: VerifyPinRequest, current_user: dict = Depends(get_current_user)):
+@router.post("/verify-pin")
+async def verify_pin(request: VerifyPinRequest, current_user: dict = Depends(get_current_user_strict)):
     """Unlock a managed child's profile on the parent's device.
 
     Requires a signed-in parent who owns the child. Attempt counting and
@@ -307,8 +315,8 @@ async def verify_pin(request: VerifyPinRequest, current_user: dict = Depends(get
     return res
 
 
-@router.put("/child-pin", dependencies=[Depends(get_current_user)])
-async def set_child_pin(request: ChildPinUpdate, current_user: dict = Depends(get_current_user)):
+@router.put("/child-pin")
+async def set_child_pin(request: ChildPinUpdate, current_user: dict = Depends(get_current_user_strict)):
     """Set or reset a child's PIN. Parents may do this for their own children;
     a teen may do it for themselves. Also clears any active lockout."""
     caller_uid = current_user["uid"]

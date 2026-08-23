@@ -1,6 +1,5 @@
-import axios from "axios";
 import MicroserviceUrls from "../constants/Microservices";
-import authService from "./authService";
+import createAuthenticatedClient from "./apiClient";
 
 export interface XummSignInResponse {
   qrUrl?: string;
@@ -10,22 +9,9 @@ export interface XummSignInResponse {
   uuid?: string;
 }
 
-const xummApiClient = axios.create({
-  baseURL: MicroserviceUrls.xrplManagement,
-});
-
-xummApiClient.interceptors.request.use(
-  async (config) => {
-    const token = await authService.refreshToken();
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
-    }
-    return config;
-  },
-  (error) => {
-    return Promise.reject(error);
-  },
-);
+// Shares the one place that knows how to attach a token and how to recover
+// from a 401 (this client used to attach a token but never retry).
+const xummApiClient = createAuthenticatedClient(MicroserviceUrls.xrplManagement);
 
 /**
  * Requests a Xumm sign-in payload for a given user.

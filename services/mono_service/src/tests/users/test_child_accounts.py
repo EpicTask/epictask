@@ -11,6 +11,7 @@ import types
 
 import pytest
 
+from src.config import role_claims
 from src.tests.users.fake_firestore import (
     EmailAlreadyExistsError,
     FakeAuth,
@@ -39,6 +40,11 @@ def db_and_auth(monkeypatch):
     monkeypatch.setattr(user_db, "auth", fake_auth)
     monkeypatch.setattr(user_db, "firestore", FakeFirestoreModule)
     monkeypatch.setattr(user_db, "FieldFilter", FieldFilter)
+    # Role claims are written through firebase_admin.auth directly, so the fake
+    # has to be swapped in there too - otherwise set_role_claim silently
+    # swallows a credentials error and the assertions below prove nothing.
+    monkeypatch.setattr(role_claims, "auth", fake_auth)
+    role_claims.reset_cache()
 
     # A signed-up parent.
     fake_db.docs["users/parent_1"] = {
@@ -89,6 +95,9 @@ def test_managed_child_is_created_and_linked(db_and_auth):
     # Linked both ways, and the child can never sign in on their own.
     assert child_uid in fake_db.docs["users/parent_1"]["children"]
     assert fake_auth.users[child_uid].email is None
+
+    # Role rides in the token so authorization doesn't re-read Firestore.
+    assert fake_auth.users[child_uid].custom_claims == {"role": "child"}
 
     # The PIN hash never touches the profile document.
     assert "pin_hash" not in profile
@@ -289,6 +298,9 @@ def test_redeem_creates_a_linked_independent_account(db_and_auth):
 
     # Teens are not switchable from the parent's device — UC8.
     assert profile["device_sharing_enabled"] is False
+
+    # Role rides in the token so authorization doesn't re-read Firestore.
+    assert fake_auth.users[uid].custom_claims == {"role": "child"}
 
     # Consent captured at invite time carries onto the profile.
     assert profile["parental_consent_at"] == "2026-08-22T10:00:00+00:00"

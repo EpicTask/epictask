@@ -36,6 +36,7 @@ jest.mock('../../api/authService', () => ({
 }));
 
 jest.mock('../../api/apiClient', () => ({
+  getToken: jest.fn().mockResolvedValue('t'),
   forceRefreshToken: jest.fn(),
 }));
 

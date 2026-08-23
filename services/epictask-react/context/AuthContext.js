@@ -10,7 +10,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { auth } from "../config/firebaseConfig";
 import { onAuthStateChanged } from "firebase/auth";
 import authService from "../api/authService";
-import { forceRefreshToken } from "../api/apiClient";
+import { getToken } from "../api/apiClient";
 import { queryClient } from "../api/queryClient";
 import { firestoreService } from "../api/firestoreService";
 
@@ -95,16 +95,18 @@ export const AuthProvider = ({ children }) => {
       ? activeChildContext.childAge
       : user?.age;
 
-  // Proactively refresh the Firebase ID token whenever the app comes back to
-  // the foreground. This prevents stale-token errors after the device has been
-  // idle / the app has been backgrounded for longer than 1 hour.
+  // Warm the Firebase ID token whenever the app comes back to the foreground,
+  // so the first screen query doesn't pay the refresh latency inline. RN timers
+  // don't fire while backgrounded, so the SDK's proactive refresh can miss its
+  // slot; getToken() renews only if the token has actually expired. Forcing a
+  // refresh here instead would spend a token exchange on every foreground.
   useEffect(() => {
     const subscription = AppState.addEventListener(
       "change",
       async (nextState) => {
         if (nextState === "active" && auth.currentUser) {
           try {
-            await forceRefreshToken();
+            await getToken();
           } catch (e) {
             console.warn("[AuthContext] Foreground token refresh failed:", e);
           }
@@ -133,10 +135,6 @@ export const AuthProvider = ({ children }) => {
 
       if (firebaseUser) {
         try {
-          const token = await firebaseUser.getIdToken();
-          if (!isCurrentAuthState()) return;
-          await AsyncStorage.setItem("authToken", token);
-
           // Fetch user profile from user management service
           const userProfileResponse = await authService.getCurrentUser(
             firebaseUser.uid,

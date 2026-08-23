@@ -206,9 +206,14 @@ class FakeAuthUser:
         self.uid = uid
         self.email = email
         self.display_name = display_name
+        self.custom_claims: Optional[Dict] = None
 
 
 class EmailAlreadyExistsError(Exception):
+    pass
+
+
+class UserNotFoundError(Exception):
     pass
 
 
@@ -236,3 +241,18 @@ class FakeAuth:
 
     def update_user(self, uid, **kwargs):
         return self.users.get(uid)
+
+    # -- custom claims ----------------------------------------------------
+    UserNotFoundError = UserNotFoundError
+
+    def get_user(self, uid):
+        user = self.users.get(uid)
+        if user is None:
+            raise UserNotFoundError(uid)
+        return user
+
+    def set_custom_user_claims(self, uid, claims):
+        user = self.users.get(uid)
+        if user is None:
+            raise UserNotFoundError(uid)
+        user.custom_claims = dict(claims) if claims else None

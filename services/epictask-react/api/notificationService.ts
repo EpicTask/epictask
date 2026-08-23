@@ -1,25 +1,10 @@
-import axios from "axios";
 import MicroserviceUrls from "@/constants/Microservices";
-import authService from "./authService";
+import createAuthenticatedClient from "./apiClient";
 
-const notificationApiClient = axios.create({
-  baseURL: MicroserviceUrls.notificationsManagement,
-});
-
-notificationApiClient.interceptors.request.use(
-  async (config) => {
-    // Refresh base URL in case MicroserviceUrls changes (e.g. strict mode)
-    config.baseURL = MicroserviceUrls.notificationsManagement;
-
-    const token = await authService.refreshToken();
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
-    }
-    return config;
-  },
-  (error) => {
-    return Promise.reject(error);
-  },
+// Shares the one place that knows how to attach a token and how to recover
+// from a 401 (this client used to attach a token but never retry).
+const notificationApiClient = createAuthenticatedClient(
+  MicroserviceUrls.notificationsManagement,
 );
 
 export const notificationService = {

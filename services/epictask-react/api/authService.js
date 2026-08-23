@@ -44,10 +44,6 @@ export const authService = {
         displayName: displayName,
       });
 
-      // Get the ID token
-      const token = await user.getIdToken();
-      await AsyncStorage.setItem("authToken", token);
-
       // Create user document in Firestore with enhanced error handling
       const userData = {
         email: user.email,
@@ -113,8 +109,6 @@ export const authService = {
         password,
       );
       const uid = userCredential.user.uid;
-      const token = await userCredential.user.getIdToken();
-      await AsyncStorage.setItem("authToken", token);
 
       // Then get user profile from user management service with caching
       const profileResponse = await firestoreService.getUserProfile(uid, true);
@@ -380,13 +374,7 @@ export const authService = {
     }
 
     // The account now exists — sign in so the app has a session.
-    const credential = await signInWithEmailAndPassword(
-      auth,
-      cleanEmail,
-      password,
-    );
-    const token = await credential.user.getIdToken();
-    await AsyncStorage.setItem("authToken", token);
+    await signInWithEmailAndPassword(auth, cleanEmail, password);
     firestoreService.cache.invalidateUser(redeemed.parent_id);
 
     return {
@@ -548,11 +536,12 @@ export const authService = {
     }
   },
 
-  // Refresh the Firebase ID token (delegates to the shared smart-refresh utility)
+  // Current Firebase ID token. The SDK refreshes it only when it has actually
+  // expired, so this is safe to call on any code path.
   refreshToken: async () => {
     try {
-      const { smartRefreshToken } = await import("./apiClient");
-      return await smartRefreshToken();
+      const { getToken } = await import("./apiClient");
+      return await getToken();
     } catch (error) {
       console.log("Token refresh error:", error);
       throw new Error("Failed to refresh token");

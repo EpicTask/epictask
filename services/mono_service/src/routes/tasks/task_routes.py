@@ -6,14 +6,22 @@ from ...domain.task_models import (
     TaskUpdated, TaskVerified
 )
 from ...services import task_service, leaderboard_service
-from ...config.security import get_current_user
+from ...config.security import get_current_user, get_current_user_strict
+from ...config.role_claims import sync_role_claim
 from ...storage import user_db
 
 router = APIRouter()
 
 
 def _get_caller_role(current_user: dict) -> str:
-    """Extract user role from decoded token or fallback to Firestore user profile."""
+    """
+    Role from the ID token's custom claims, falling back to Firestore.
+
+    The fallback covers users created before claims existed and the up-to-an-
+    hour window before a freshly written claim reaches the client's token. It
+    repairs the claim on the way through, so the read stops happening once the
+    caller's token refreshes.
+    """
     uid = current_user.get("uid")
     token_role = current_user.get("role")
     if token_role:
@@ -21,7 +29,9 @@ def _get_caller_role(current_user: dict) -> str:
     if uid:
         profile = user_db.get_user_profile(uid)
         if profile and profile.get("role"):
-            return profile.get("role")
+            role = profile.get("role")
+            sync_role_claim(uid, role)
+            return role
     return "kid"
 
 
@@ -118,7 +128,7 @@ async def update_rating(task_id: str, request: TaskRatingUpdate, current_user: d
 
 
 @router.post("/{task_id}/reward")
-async def reward_task(task_id: str, request: TaskRewarded, current_user: dict = Depends(get_current_user)):
+async def reward_task(task_id: str, request: TaskRewarded, current_user: dict = Depends(get_current_user_strict)):
     """Reward a user for completing a task."""
     caller_uid = _require_parent(current_user)
     if request.user_id != caller_uid:
