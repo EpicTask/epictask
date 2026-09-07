@@ -3,14 +3,6 @@
 Write path:  append_reward_event() -> rebuild_projection()
 Read path:   get_projection()
 
-The projection is always a full recompute from that user's events, never an
-increment. That is what makes a duplicated or retried credit harmless, and it
-means the projection can be thrown away and rebuilt at any time.
-
-Unlike the reward code this replaces, nothing here swallows exceptions. A
-failure to credit must surface to the caller so the request fails and can be
-retried — a silent warning is how the previous pipeline stayed broken through
-several releases.
 """
 from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional

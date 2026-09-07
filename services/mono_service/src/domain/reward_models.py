@@ -1,18 +1,5 @@
 """Reward domain models.
 
-The reward ledger is append-only. `RewardEvent` is the record of truth; the
-per-user document in the leaderboard collection is a *projection* derived by
-replaying that user's events, and can be rebuilt at any time.
-
-Two properties matter and are easy to lose in a refactor:
-
-1. **Deterministic event IDs.** `{source_id}:{state}` means a retried or
-   duplicated credit collapses onto the same document instead of adding a
-   second one. Verification and payment are both retryable, so this is load
-   bearing, not defensive.
-2. **The projection sums events; it never increments.** A duplicate write at
-   the same ID therefore cannot double-count, which is what removes the
-   read-modify-write race the old `update_enhanced_leaderboard` had.
 """
 from enum import Enum
 from typing import Dict, Optional
@@ -84,16 +71,37 @@ class CurrencyTotals(BaseModel):
     settled: float = 0.0
 
 
-# Token score weights. Preserved from the previous implementation so this change
-# is behaviour-neutral on scoring.
+# Token score weights: how many score points one unit of each currency is worth.
 #
-# TODO(rewards): revisit. Weighting XRP at 0.3 makes one XRP count for less than
-# one eTask point, which is inverted relative to real value. Reward data starts
-# from zero, so changing these is free right now and gets expensive later.
-CURRENCY_WEIGHTS = {"XRP": 0.3, "RLUSD": 1.0, "ETASK": 1.0}
+# These match the normalisation the achievement thresholds have always used
+# (`xrp + rlusd + etask/100`), which is the closest thing this project has to a
+# stated intent. XRP was previously weighted 0.3, which made one XRP worth less
+# than one eTask point — inverted against both real value and the achievement
+# code it sat next to. RLUSD is the anchor at 1.0.
+#
+# If you later want value-accurate weighting, XRP should track its USD rate,
+# which belongs in configuration rather than a module constant: a market price
+# frozen into source goes stale silently.
+CURRENCY_WEIGHTS = {"XRP": 1.0, "RLUSD": 1.0, "ETASK": 0.01}
 
-# One level per 1000 points of settled score.
-LEVEL_STEP = 1000.0
+# Score points per level.
+#
+# Tied to the weights above: with eTask at 0.01 a step of 1000 would have needed
+# 100,000 eTask to reach level 2, freezing every child at level 1. The
+# achievement ladder treats 1 -> 100 normalised points as the meaningful range
+# ("First Earnings" at 1, "Token Legend" at 100), so a step of 10 puts levels
+# 1-11 across that span and keeps the level badges in the kid view reachable.
+LEVEL_STEP = 10.0
+
+# How long a PENDING credit may sit unsettled before it is voided.
+#
+# Settlement needs the parent to sign in Xumm, which may never happen — an
+# unlinked wallet means it cannot. Without expiry a child keeps a balance that
+# will never arrive.
+#
+# NOT YET ENFORCED: the scheduled job that voids expired credits is Phase 6.
+# The window is recorded here so the decision is not lost.
+PENDING_EXPIRY_DAYS = 3
 
 
 class RewardProjection(BaseModel):

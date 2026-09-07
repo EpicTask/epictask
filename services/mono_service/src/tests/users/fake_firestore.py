@@ -43,8 +43,24 @@ class FieldFilter:
         actual = data.get(self.field)
         if self.op == "==":
             return actual == self.value
+        if self.op == "!=":
+            return actual != self.value
         if self.op == "in":
             return actual in self.value
+        if self.op == "array_contains":
+            return self.value in (actual or [])
+        if self.op in (">", ">=", "<", "<="):
+            # Firestore skips documents missing the compared field rather than
+            # treating them as zero, so range filters mirror that here.
+            if actual is None:
+                return False
+            if self.op == ">":
+                return actual > self.value
+            if self.op == ">=":
+                return actual >= self.value
+            if self.op == "<":
+                return actual < self.value
+            return actual <= self.value
         raise NotImplementedError(f"filter op {self.op}")
 
 
@@ -106,15 +122,33 @@ class FakeDocument:
 
 
 class FakeQuery:
-    def __init__(self, store: "FakeFirestore", prefix: str, filters: List[FieldFilter]):
+    def __init__(self, store: "FakeFirestore", prefix: str, filters: List[FieldFilter],
+                 order: Optional[tuple] = None, limit_to: Optional[int] = None):
         self._store = store
         self._prefix = prefix
         self._filters = filters
+        self._order = order
+        self._limit = limit_to
+
+    def _derive(self, **kwargs) -> "FakeQuery":
+        opts = {
+            "filters": self._filters,
+            "order": self._order,
+            "limit_to": self._limit,
+        }
+        opts.update(kwargs)
+        return FakeQuery(self._store, self._prefix, **opts)
 
     def where(self, filter=None, **_) -> "FakeQuery":
-        return FakeQuery(self._store, self._prefix, self._filters + [filter])
+        return self._derive(filters=self._filters + [filter])
 
-    def stream(self):
+    def order_by(self, field, direction="ASCENDING", **_) -> "FakeQuery":
+        return self._derive(order=(field, direction))
+
+    def limit(self, count: int) -> "FakeQuery":
+        return self._derive(limit_to=count)
+
+    def _rows(self):
         for path, data in list(self._store.docs.items()):
             if not path.startswith(self._prefix + "/"):
                 continue
@@ -122,14 +156,35 @@ class FakeQuery:
             if "/" in path[len(self._prefix) + 1:]:
                 continue
             if all(f.matches(data) for f in self._filters):
-                yield FakeSnapshot(
-                    path.split("/")[-1], data, FakeDocument(self._store, path)
-                )
+                yield path, data
+
+    def stream(self):
+        rows = list(self._rows())
+
+        if self._order:
+            field, direction = self._order
+            # Firestore excludes documents missing the ordered field entirely.
+            rows = [r for r in rows if r[1].get(field) is not None]
+            rows.sort(
+                key=lambda r: r[1].get(field),
+                reverse=str(direction).upper().startswith("DESC"),
+            )
+
+        if self._limit is not None:
+            rows = rows[: self._limit]
+
+        for path, data in rows:
+            yield FakeSnapshot(
+                path.split("/")[-1], data, FakeDocument(self._store, path)
+            )
+
+    def get(self):
+        return list(self.stream())
 
 
 class FakeCollection(FakeQuery):
     def __init__(self, store: "FakeFirestore", path: str):
-        super().__init__(store, path, [])
+        super().__init__(store, path, [], None, None)
         self.path = path
 
     def document(self, doc_id: str) -> FakeDocument:

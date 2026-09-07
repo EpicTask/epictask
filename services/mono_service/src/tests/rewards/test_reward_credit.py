@@ -1,10 +1,4 @@
 """Credit-path coverage for the reward ledger.
-
-These are the tests whose absence let the previous reward pipeline fail on its
-first line for every call, across several releases: nothing asserted that a
-credit actually landed. Per CLAUDE.md, a change to this path ships with a test
-that reads the store back and a test that proves a second call cannot
-double-credit.
 """
 import importlib
 import sys
@@ -172,7 +166,8 @@ def test_level_and_progress_are_derived_from_the_same_score(rewards):
         _task(amount=2500.0, currency="ETASK"), state=RewardState.SETTLED
     )
     projection = rewards.service.get_rewards(CHILD)
-    assert projection["token_score"] == 2500.0
+    # 2500 eTask at the corrected 0.01 weight.
+    assert projection["token_score"] == 25.0
     assert projection["level"] == 3
     assert projection["level_progress"] == 50.0
 
@@ -187,7 +182,8 @@ def test_many_settled_tasks_alone_cannot_desync_progress(rewards):
         )
     projection = rewards.service.get_rewards(CHILD)
     assert projection["tasks_settled"] == 60
-    assert projection["token_score"] == 60.0
+    # 60 eTask at the corrected 0.01 weight.
+    assert projection["token_score"] == 0.6
     assert projection["level"] == 1
     assert projection["level_progress"] == 6.0
 

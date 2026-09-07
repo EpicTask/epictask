@@ -119,6 +119,9 @@ class ComprehensiveRewards(BaseModel):
         "etask_earned": 0.0
     }
     tasks_completed: int = 0
+    # Approved but not yet settled on the ledger. Kept distinct from
+    # tasks_completed so a child is never shown money that has not moved.
+    tasks_pending: int = 0
     level: int = 1
     family_rank: int = 0
     global_rank: int = 0

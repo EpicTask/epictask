@@ -44,6 +44,26 @@ def _require_parent(current_user: dict) -> str:
 
 
 
+def _require_self_or_guardian(target_uid: str, current_user: dict) -> str:
+    """Allow the subject, their parent, or an admin. Otherwise 403.
+
+    Reward data is per-child financial information. Without this check any
+    signed-in user could read any family's earnings by putting someone else's
+    ID in the path.
+    """
+    caller_uid = current_user.get("uid")
+    if caller_uid == target_uid:
+        return caller_uid
+    if _get_caller_role(current_user) == "admin":
+        return caller_uid
+
+    profile = user_db.get_user_profile(caller_uid) or {}
+    if target_uid in (profile.get("children") or []):
+        return caller_uid
+
+    raise HTTPException(status_code=403, detail="Access denied")
+
+
 async def _require_task_owner(task_id: str, caller_uid: str) -> dict:
     """Fetch task and verify caller is the creator. Raises 404/403 as appropriate."""
     task = await task_service.get_task(task_id)
@@ -179,16 +199,28 @@ async def get_task(task_id: str, current_user: dict = Depends(get_current_user))
 @router.get("/leaderboard/family/{parent_id}")
 async def get_family_leaderboard(parent_id: str, current_user: dict = Depends(get_current_user)):
     """Get family leaderboard for parent view."""
+    caller_uid = current_user.get("uid")
+    if caller_uid != parent_id and _get_caller_role(current_user) != "admin":
+        raise HTTPException(status_code=403, detail="Access denied")
     return await leaderboard_service.get_family_leaderboard(parent_id)
 
 
 @router.get("/leaderboard/kid/{kid_id}")
 async def get_kid_leaderboard_view(kid_id: str, current_user: dict = Depends(get_current_user)):
     """Get kid-specific leaderboard view."""
+    _require_self_or_guardian(kid_id, current_user)
     return await leaderboard_service.get_kid_leaderboard_view(kid_id)
 
 
 @router.get("/leaderboard/global")
-async def get_global_leaderboard(limit: int = 100, current_user: dict = Depends(get_current_user)):
-    """Get enhanced global leaderboard."""
+async def get_global_leaderboard(
+    limit: int = Query(default=100, ge=1, le=100),
+    current_user: dict = Depends(get_current_user),
+):
+    """Get enhanced global leaderboard.
+
+    Open to any signed-in user by design — it is a global ranking. Note it
+    exposes children's display names across families; narrowing that to
+    initials or opt-in is a product decision, not a bug fix.
+    """
     return await leaderboard_service.get_enhanced_global_leaderboard(limit)

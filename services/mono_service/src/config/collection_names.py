@@ -1,15 +1,8 @@
 """Firestore collection names for the Unified Monorepo Service."""
 
-# Deliberate: every collection is test-prefixed, in all environments, including
-# production. `users` is the sole exception and is declared unprefixed below.
-#
-# This was previously written as a ternary whose branches were both "test_",
-# which read as environment-conditional but never was. Stated plainly here so a
-# future reader does not "fix" the ternary and silently repoint production at a
-# different set of collections.
-#
-# Kept as a module constant rather than an env lookup so the collection topology
-# cannot vary by deploy.
+# Deliberate: every collection is test-prefixed, in all environments.
+#  `users` is the sole exception and is declared unprefixed below.
+
 _prefix = "test_"
 
 
