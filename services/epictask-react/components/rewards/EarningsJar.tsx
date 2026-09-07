@@ -13,6 +13,12 @@ interface EarningsJarProps {
 const EarningsJar: React.FC<EarningsJarProps> = ({ totalCoins, pendingCoins = 0 }) => {
   const floatAnim = useRef(new Animated.Value(0)).current;
 
+  // Whole coins only. This badge is the 5-7 cohort's entire view of their
+  // money, and the source value is a weighted float — a six-year-old was being
+  // shown "12.75 coins". Rounded down so the jar never overstates.
+  const coins = Math.max(0, Math.floor(totalCoins || 0));
+  const pending = Math.max(0, Math.floor(pendingCoins || 0));
+
   useEffect(() => {
     Animated.loop(
       Animated.sequence([
@@ -36,17 +42,26 @@ const EarningsJar: React.FC<EarningsJarProps> = ({ totalCoins, pendingCoins = 0 
         <View style={styles.jar}>
           <MaterialCommunityIcons name="piggy-bank" size={responsiveHeight(20)} color="#FFB74D" />
           <View style={styles.coinCountBadge}>
-            <Text style={styles.coinCountText}>{totalCoins}</Text>
+            <Text style={styles.coinCountText}>{coins}</Text>
           </View>
         </View>
         <CustomText variant="bold" style={styles.label}>My Coins</CustomText>
       </Animated.View>
 
-      {pendingCoins > 0 && (
+      {pending > 0 && (
         <View style={styles.pendingSection}>
           <View style={styles.pendingBadge}>
             <MaterialCommunityIcons name="clock-outline" size={16} color="white" />
-            <Text style={styles.pendingText}>+{pendingCoins} waiting for Mom/Dad</Text>
+            <Text style={styles.pendingText}>+{pending} waiting for Mom/Dad</Text>
+          </View>
+        </View>
+      )}
+
+      {pending === 0 && pendingCoins > 0 && (
+        <View style={styles.pendingSection}>
+          <View style={styles.pendingBadge}>
+            <MaterialCommunityIcons name="clock-outline" size={16} color="white" />
+            <Text style={styles.pendingText}>Almost a coin on the way!</Text>
           </View>
         </View>
       )}

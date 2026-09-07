@@ -7,6 +7,7 @@ import {
   ScrollView,
   Animated,
   TouchableOpacity,
+  RefreshControl,
 } from 'react-native';
 import {
   responsiveFontSize,
@@ -23,11 +24,17 @@ interface KidData {
   user_id: string;
   display_name: string;
   currencies: {
+    // Settled — money the child actually has.
     xrp_earned: number;
     rlusd_earned: number;
     etask_earned: number;
+    // Approved by a parent but not yet signed for on the ledger.
+    xrp_pending?: number;
+    rlusd_pending?: number;
+    etask_pending?: number;
   };
   tasks_completed: number;
+  tasks_pending?: number;
   level: number;
   family_rank: number;
   global_rank: number;
@@ -46,6 +53,7 @@ interface KidLeaderboardData {
     current: number;
     next: number;
     progress: number;
+    points_to_next?: number;
   };
   global_context: {
     rank: number;
@@ -58,9 +66,45 @@ interface Props {
   childAge?: number;
   progressSummary?: any;
   onAchievementPress?: (achievement: string) => void;
+  refreshing?: boolean;
+  onRefresh?: () => void;
 }
 
-const KidRewardsView: React.FC<Props> = ({ kidData, childAge, progressSummary, onAchievementPress }) => {
+const KidRewardsView: React.FC<Props> = ({
+  kidData,
+  childAge,
+  progressSummary,
+  onAchievementPress,
+  refreshing = false,
+  onRefresh,
+}) => {
+  // The API shape is deep, and a partial or error-shaped payload used to crash
+  // the whole tab rather than degrade. Read defensively once, up front.
+  const kid = kidData?.kid_data ?? ({} as KidData);
+  const currencies = kid.currencies ?? {
+    xrp_earned: 0,
+    rlusd_earned: 0,
+    etask_earned: 0,
+  };
+  const milestone = kidData?.next_milestone ?? {
+    type: "level",
+    current: kid.level ?? 1,
+    next: (kid.level ?? 1) + 1,
+    progress: 0,
+  };
+  const globalContext = kidData?.global_context ?? { rank: 0, message: "" };
+  const achievements = kid.achievements ?? [];
+  const levelProgress = kid.next_level_progress ?? 0;
+
+  const settledTotal =
+    (currencies.xrp_earned ?? 0) +
+    (currencies.rlusd_earned ?? 0) +
+    (currencies.etask_earned ?? 0);
+  const pendingTotal =
+    (currencies.xrp_pending ?? 0) +
+    (currencies.rlusd_pending ?? 0) +
+    (currencies.etask_pending ?? 0);
+  const isYoungCohort = !!childAge && childAge >= 5 && childAge <= 7;
   const bounceAnim = useRef(new Animated.Value(1)).current;
   const progressAnim = useRef(new Animated.Value(0)).current;
   const coinAnim = useRef(new Animated.Value(0)).current;
@@ -68,7 +112,7 @@ const KidRewardsView: React.FC<Props> = ({ kidData, childAge, progressSummary, o
   useEffect(() => {
     // Animate progress bar
     Animated.timing(progressAnim, {
-      toValue: kidData.kid_data.next_level_progress / 100,
+      toValue: levelProgress / 100,
       duration: 1500,
       useNativeDriver: false,
     }).start();
@@ -88,7 +132,7 @@ const KidRewardsView: React.FC<Props> = ({ kidData, childAge, progressSummary, o
         }),
       ])
     ).start();
-  }, [kidData.kid_data.next_level_progress]);
+  }, [levelProgress]);
 
   const handleLevelPress = () => {
     Animated.sequence([
@@ -144,13 +188,25 @@ const KidRewardsView: React.FC<Props> = ({ kidData, childAge, progressSummary, o
   });
 
   return (
-    <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
+    <ScrollView
+      style={styles.container}
+      showsVerticalScrollIndicator={false}
+      refreshControl={
+        onRefresh ? (
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+        ) : undefined
+      }
+    >
       {/* 5-7 UI Overlay: Earnings Jar */}
-      {childAge && childAge >= 5 && childAge <= 7 ? (
+      {isYoungCohort ? (
         <View style={styles.jarSection}>
-          <EarningsJar 
-            totalCoins={kidData.kid_data.token_score || 0} 
-            pendingCoins={progressSummary?.total_payouts_pending || 0}
+          {/* Settled and pending come from the reward ledger. The old code
+              passed progressSummary.total_payouts_pending, which is a *count*
+              of pending payout requests, not an amount — so a child with one
+              pending 50-eTask story payout was shown "+1 waiting". */}
+          <EarningsJar
+            totalCoins={settledTotal}
+            pendingCoins={pendingTotal}
           />
         </View>
       ) : (
@@ -164,30 +220,30 @@ const KidRewardsView: React.FC<Props> = ({ kidData, childAge, progressSummary, o
                   { transform: [{ scale: bounceAnim }] },
                 ]}
               >
-                <Text style={styles.levelEmoji}>{getLevelIcon(kidData.kid_data.level)}</Text>
+                <Text style={styles.levelEmoji}>{getLevelIcon(kid.level ?? 1)}</Text>
               </Animated.View>
             </DebouncedTouchableOpacity>
             <View style={styles.levelBadge}>
               <CustomText variant="bold" style={styles.levelText}>
-                {kidData.kid_data.level}
+                {kid.level ?? 1}
               </CustomText>
             </View>
           </View>
 
           <CustomText variant="bold" style={styles.welcomeText}>
-            Hey {kidData.kid_data.display_name || 'Champion'}! 👋
+            Hey {kid.display_name || 'Champion'}! 👋
           </CustomText>
 
           <View style={styles.encouragementCard}>
             <CustomText variant="medium" style={styles.encouragementText}>
-              {kidData.encouragement_message}
+              {kidData?.encouragement_message}
             </CustomText>
           </View>
         </View>
       )}
 
       {/* Earnings Display - Hide if 5-7 (since Jar handles it) */}
-      {!(childAge && childAge >= 5 && childAge <= 7) && (
+      {!isYoungCohort && (
         <View style={styles.earningsSection}>
           <CustomText variant="semiBold" style={styles.sectionTitle}>
             💰 Your Treasure Chest
@@ -208,48 +264,72 @@ const KidRewardsView: React.FC<Props> = ({ kidData, childAge, progressSummary, o
               <FontAwesome5 name="coins" size={32} color="#FFD700" />
             </Animated.View>
             
+            {/* The headline is the balance. This used to be tasks_completed
+                under a coin icon in a section titled "Your Treasure Chest",
+                which meant the one number a child opens this tab for — how
+                much do I have — was not on the screen at all. */}
             <CustomText variant="bold" style={styles.totalValue}>
-              {kidData.kid_data.tasks_completed}
+              {settledTotal.toFixed(2)}
             </CustomText>
             <CustomText variant="medium" style={styles.totalLabel}>
-              Tasks Completed
+              Yours to keep
             </CustomText>
 
             {/* Currency Breakdown */}
             <View style={styles.currencyGrid}>
-              {kidData.kid_data.currencies.xrp_earned > 0 && (
+              {(currencies.xrp_earned ?? 0) > 0 && (
                 <View style={styles.currencyCard}>
                   <View style={[styles.currencyIcon, { backgroundColor: '#23292F' }]}>
                     <CustomText variant="bold" style={styles.currencySymbol}>XRP</CustomText>
                   </View>
                   <CustomText variant="semiBold" style={styles.currencyAmount}>
-                    {kidData.kid_data.currencies.xrp_earned.toFixed(2)}
+                    {(currencies.xrp_earned ?? 0).toFixed(2)}
                   </CustomText>
                 </View>
               )}
-              
-              {kidData.kid_data.currencies.rlusd_earned > 0 && (
+
+              {(currencies.rlusd_earned ?? 0) > 0 && (
                 <View style={styles.currencyCard}>
                   <View style={[styles.currencyIcon, { backgroundColor: '#1976D2' }]}>
                     <CustomText variant="bold" style={styles.currencySymbol}>RLUSD</CustomText>
                   </View>
                   <CustomText variant="semiBold" style={styles.currencyAmount}>
-                    {kidData.kid_data.currencies.rlusd_earned.toFixed(2)}
+                    {(currencies.rlusd_earned ?? 0).toFixed(2)}
                   </CustomText>
                 </View>
               )}
-              
-              {kidData.kid_data.currencies.etask_earned > 0 && (
+
+              {(currencies.etask_earned ?? 0) > 0 && (
                 <View style={styles.currencyCard}>
                   <View style={[styles.currencyIcon, { backgroundColor: '#4CAF50' }]}>
                     <CustomText variant="bold" style={styles.currencySymbol}>eTask</CustomText>
                   </View>
                   <CustomText variant="semiBold" style={styles.currencyAmount}>
-                    {kidData.kid_data.currencies.etask_earned.toFixed(0)}
+                    {(currencies.etask_earned ?? 0).toFixed(0)}
                   </CustomText>
                 </View>
               )}
             </View>
+
+            {/* Approved but not yet paid. Ages 8-18 previously had no pending
+                state at all, so approved-but-unsettled work — the state the app
+                spends most of its time in — was invisible to them. */}
+            {pendingTotal > 0 && (
+              <View style={styles.pendingRow}>
+                <MaterialIcons name="schedule" size={18} color="#F57F17" />
+                <CustomText variant="medium" style={styles.pendingRowText}>
+                  {pendingTotal.toFixed(2)} approved — waiting to arrive
+                </CustomText>
+              </View>
+            )}
+
+            {settledTotal === 0 && pendingTotal === 0 && (
+              <View style={styles.emptyChest}>
+                <CustomText variant="medium" style={styles.emptyChestText}>
+                  Your chest is empty. Finish a task to add your first coins!
+                </CustomText>
+              </View>
+            )}
           </View>
         </View>
       )}
@@ -263,10 +343,10 @@ const KidRewardsView: React.FC<Props> = ({ kidData, childAge, progressSummary, o
         <View style={styles.progressCard}>
           <View style={styles.progressHeader}>
             <CustomText variant="semiBold" style={styles.currentLevel}>
-              Level {kidData.next_milestone.current}
+              Level {milestone.current}
             </CustomText>
             <CustomText variant="semiBold" style={styles.nextLevel}>
-              Level {kidData.next_milestone.next}
+              Level {milestone.next}
             </CustomText>
           </View>
           
@@ -285,8 +365,10 @@ const KidRewardsView: React.FC<Props> = ({ kidData, childAge, progressSummary, o
           </View>
           
           <CustomText variant="medium" style={styles.progressText}>
-            {kidData.kid_data.next_level_progress.toFixed(0)}% Complete! 
-            Keep going! 💪
+            {levelProgress.toFixed(0)}% Complete!
+            {milestone.points_to_next
+              ? ` ${milestone.points_to_next} points to go! 💪`
+              : ' Keep going! 💪'}
           </CustomText>
         </View>
       </View>
@@ -300,26 +382,26 @@ const KidRewardsView: React.FC<Props> = ({ kidData, childAge, progressSummary, o
         <View style={styles.familyCard}>
           <View style={styles.familyPosition}>
             <Text style={styles.positionEmoji}>
-              {getFamilyPositionEmoji(kidData.family_position)}
+              {getFamilyPositionEmoji(kidData?.family_position ?? 0)}
             </Text>
             <CustomText variant="bold" style={styles.positionText}>
-              #{kidData.family_position}
+              #{kidData?.family_position ?? '-'}
             </CustomText>
             <CustomText variant="medium" style={styles.positionLabel}>
               in your family
             </CustomText>
           </View>
           
-          {kidData.family_total_kids > 1 && (
+          {(kidData?.family_total_kids ?? 0) > 1 && (
             <CustomText variant="medium" style={styles.familyContext}>
-              Out of {kidData.family_total_kids} kids in your family
+              Out of {kidData?.family_total_kids} kids in your family
             </CustomText>
           )}
         </View>
       </View>
 
       {/* Achievements */}
-      {kidData.kid_data.achievements.length > 0 && (
+      {achievements.length > 0 && (
         <View style={styles.achievementsSection}>
           <CustomText variant="semiBold" style={styles.sectionTitle}>
             🏆 Your Achievements
@@ -327,7 +409,7 @@ const KidRewardsView: React.FC<Props> = ({ kidData, childAge, progressSummary, o
           
           <ScrollView horizontal showsHorizontalScrollIndicator={false}>
             <View style={styles.achievementsGrid}>
-              {kidData.kid_data.achievements.map((achievement, index) => (
+              {achievements.map((achievement, index) => (
                 <TouchableOpacity
                   key={index}
                   style={styles.achievementBadge}
@@ -357,7 +439,7 @@ const KidRewardsView: React.FC<Props> = ({ kidData, childAge, progressSummary, o
           <View style={styles.statCard}>
             <MaterialIcons name="assignment-turned-in" size={32} color={COLORS.primary} />
             <CustomText variant="bold" style={styles.statNumber}>
-              {kidData.kid_data.tasks_completed}
+              {kid.tasks_completed ?? 0}
             </CustomText>
             <CustomText variant="medium" style={styles.statLabel}>
               Tasks Done
@@ -367,7 +449,7 @@ const KidRewardsView: React.FC<Props> = ({ kidData, childAge, progressSummary, o
           <View style={styles.statCard}>
             <MaterialIcons name="public" size={32} color="#FF9800" />
             <CustomText variant="bold" style={styles.statNumber}>
-              #{kidData.global_context.rank}
+              #{globalContext.rank || '-'}
             </CustomText>
             <CustomText variant="medium" style={styles.statLabel}>
               Global Rank
@@ -377,7 +459,7 @@ const KidRewardsView: React.FC<Props> = ({ kidData, childAge, progressSummary, o
         
         <View style={styles.globalMessage}>
           <CustomText variant="medium" style={styles.globalText}>
-            {kidData.global_context.message}
+            {globalContext.message}
           </CustomText>
         </View>
       </View>
@@ -513,6 +595,30 @@ const styles = StyleSheet.create({
     fontSize: FONT_SIZES.extraSmall,
     color: '#666',
     marginBottom: responsiveHeight(2),
+  },
+  pendingRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    marginTop: responsiveHeight(1.5),
+    backgroundColor: '#FFF8E1',
+    borderRadius: 12,
+    paddingVertical: responsiveHeight(1),
+    paddingHorizontal: responsiveWidth(3),
+  },
+  pendingRowText: {
+    fontSize: FONT_SIZES.extraSmall,
+    color: '#F57F17',
+  },
+  emptyChest: {
+    marginTop: responsiveHeight(1),
+    paddingHorizontal: responsiveWidth(4),
+  },
+  emptyChestText: {
+    fontSize: FONT_SIZES.extraSmall,
+    color: '#888',
+    textAlign: 'center',
+    lineHeight: 20,
   },
   currencyGrid: {
     flexDirection: 'row',

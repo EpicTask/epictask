@@ -1,14 +1,12 @@
 import { FONT_SIZES } from "@/constants/FontSize";
-import { ICONS, IMAGES } from "@/assets";
 import KidRewardsView from "@/components/rewards/KidRewardsView";
 import {
   StyleSheet,
   View,
   ActivityIndicator,
-  RefreshControl,
+  TouchableOpacity,
 } from "react-native";
 import {
-  responsiveFontSize,
   responsiveHeight,
   responsiveWidth,
 } from "react-native-responsive-dimensions";
@@ -21,32 +19,43 @@ import taskService from "@/api/taskService";
 import narrativeService from "@/api/narrativeService";
 
 export default function TabTwoScreen() {
-  const { user, effectiveUserId, childAge } = useAuth();
+  const { effectiveUserId, childAge } = useAuth();
   const [kidLeaderboardData, setKidLeaderboardData] = useState<any>(null);
   const [progressSummary, setProgressSummary] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
+  // Distinct from `refreshing`: only the first load may replace the screen
+  // with a spinner. A pull-to-refresh must leave the current numbers on screen.
+  const [initialLoading, setInitialLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [loadFailed, setLoadFailed] = useState(false);
 
   const fetchData = useCallback(async () => {
     if (!effectiveUserId) return;
 
-    try {
-      setLoading(true);
+    // allSettled, not all: the rewards ledger and the narrative summary come
+    // from different services. A narrative hiccup used to reject the whole
+    // batch and blank the screen even though the rewards call had succeeded.
+    const [rewards, summary] = await Promise.allSettled([
+      taskService.getKidLeaderboardView(effectiveUserId),
+      narrativeService.getKidProgressSummary(effectiveUserId),
+    ]);
 
-      // Fetch kid's leaderboard view and progress summary
-      const [kidData, summary] = await Promise.all([
-        taskService.getKidLeaderboardView(effectiveUserId),
-        narrativeService.getKidProgressSummary(effectiveUserId),
-      ]);
-
-      setKidLeaderboardData(kidData);
-      setProgressSummary(summary);
-    } catch (error) {
-      console.log("Failed to fetch kid rewards data:", error);
-    } finally {
-      setLoading(false);
-      setRefreshing(false);
+    if (rewards.status === "fulfilled") {
+      setKidLeaderboardData(rewards.value);
+      setLoadFailed(false);
+    } else {
+      console.log("Failed to fetch kid rewards:", rewards.reason);
+      setLoadFailed(true);
     }
+
+    // Story progress is supplementary — losing it must not hide the rewards.
+    if (summary.status === "fulfilled") {
+      setProgressSummary(summary.value);
+    } else {
+      console.log("Failed to fetch story progress:", summary.reason);
+    }
+
+    setInitialLoading(false);
+    setRefreshing(false);
   }, [effectiveUserId]);
 
   useEffect(() => {
@@ -59,11 +68,10 @@ export default function TabTwoScreen() {
   }, [fetchData]);
 
   const handleAchievementPress = (achievement: string) => {
-    // Show achievement details or celebration animation
-    console.log("Achievement pressed:", achievement);
+    // Reserved for a celebration animation; intentionally inert for now.
   };
 
-  if (loading) {
+  if (initialLoading) {
     return (
       <SafeAreaView style={styles.safeArea}>
         <View style={styles.loadingContainer}>
@@ -76,13 +84,27 @@ export default function TabTwoScreen() {
     );
   }
 
+  // Only a dead end if we have nothing to show. If a refresh fails we keep the
+  // last good data on screen rather than throwing it away.
   if (!kidLeaderboardData) {
     return (
       <SafeAreaView style={styles.safeArea}>
         <View style={styles.errorContainer}>
           <CustomText variant="medium" style={styles.errorText}>
-            Unable to load rewards data. Please try again.
+            {loadFailed
+              ? "We couldn't load your rewards just now."
+              : "No rewards yet — complete a task to get started!"}
           </CustomText>
+          <TouchableOpacity
+            style={styles.retryButton}
+            onPress={onRefresh}
+            accessibilityRole="button"
+            accessibilityLabel="Try loading rewards again"
+          >
+            <CustomText variant="semiBold" style={styles.retryText}>
+              Try Again
+            </CustomText>
+          </TouchableOpacity>
         </View>
       </SafeAreaView>
     );
@@ -95,6 +117,8 @@ export default function TabTwoScreen() {
         childAge={childAge}
         progressSummary={progressSummary}
         onAchievementPress={handleAchievementPress}
+        refreshing={refreshing}
+        onRefresh={onRefresh}
       />
     </SafeAreaView>
   );
@@ -130,5 +154,16 @@ const styles = StyleSheet.create({
     color: COLORS.grey,
     textAlign: "center",
     lineHeight: 24,
+  },
+  retryButton: {
+    marginTop: responsiveHeight(2.5),
+    paddingVertical: responsiveHeight(1.4),
+    paddingHorizontal: responsiveWidth(8),
+    borderRadius: 24,
+    backgroundColor: COLORS.primary,
+  },
+  retryText: {
+    color: "#FFF",
+    fontSize: FONT_SIZES.extraSmall,
   },
 });

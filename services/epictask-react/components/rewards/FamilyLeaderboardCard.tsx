@@ -23,8 +23,12 @@ interface ChildReward {
     xrp_earned: number;
     rlusd_earned: number;
     etask_earned: number;
+    xrp_pending?: number;
+    rlusd_pending?: number;
+    etask_pending?: number;
   };
   tasks_completed: number;
+  tasks_pending?: number;
   level: number;
   family_rank: number;
   global_rank: number;
@@ -97,12 +101,17 @@ const FamilyLeaderboardCard: React.FC<Props> = ({ familyData, onChildPress }) =>
               Active Children
             </CustomText>
           </View>
+          {/* family_global_rank is 0 (unranked) now that the inverted
+              `total / 100` formula is gone, so showing it rendered "#0". */}
           <View style={styles.summaryItem}>
             <CustomText variant="semiBold" style={styles.summaryValue}>
-              #{familyData.family_global_rank}
+              {familyData.children.reduce(
+                (sum, child) => sum + (child.tasks_pending || 0),
+                0,
+              )}
             </CustomText>
             <CustomText variant="medium" style={styles.summaryLabel}>
-              Family Rank
+              Awaiting Payment
             </CustomText>
           </View>
         </View>
@@ -146,7 +155,10 @@ const FamilyLeaderboardCard: React.FC<Props> = ({ familyData, onChildPress }) =>
                   {child.token_score.toFixed(1)} tokens
                 </CustomText>
                 <CustomText variant="medium" style={styles.tasksCount}>
-                  {child.tasks_completed} tasks
+                  {child.tasks_completed} paid
+                  {(child.tasks_pending || 0) > 0
+                    ? ` \u00B7 ${child.tasks_pending} pending`
+                    : ""}
                 </CustomText>
               </View>
             </View>
@@ -178,6 +190,22 @@ const FamilyLeaderboardCard: React.FC<Props> = ({ familyData, onChildPress }) =>
                 </View>
               )}
             </View>
+
+            {(() => {
+              const pending =
+                (child.currencies.xrp_pending || 0) +
+                (child.currencies.rlusd_pending || 0) +
+                (child.currencies.etask_pending || 0);
+              if (pending <= 0) return null;
+              return (
+                <View style={styles.pendingChip}>
+                  <MaterialIcons name="schedule" size={14} color="#F57F17" />
+                  <CustomText variant="medium" style={styles.pendingChipText}>
+                    {pending.toFixed(2)} approved, not yet sent
+                  </CustomText>
+                </View>
+              );
+            })()}
 
             {/* Progress Bar */}
             <View style={styles.progressContainer}>
@@ -373,6 +401,21 @@ const styles = StyleSheet.create({
   currencyText: {
     fontSize: FONT_SIZES.extraSmall,
     color: '#666',
+  },
+  pendingChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+    alignSelf: 'flex-start',
+    backgroundColor: '#FFF8E1',
+    borderRadius: 10,
+    paddingVertical: 4,
+    paddingHorizontal: 8,
+    marginBottom: responsiveHeight(1),
+  },
+  pendingChipText: {
+    fontSize: FONT_SIZES.extraSmall,
+    color: '#F57F17',
   },
   progressContainer: {
     marginBottom: responsiveHeight(1),

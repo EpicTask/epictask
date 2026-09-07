@@ -1,13 +1,11 @@
 import { FONT_SIZES } from "@/constants/FontSize";
-import { ICONS, IMAGES } from "@/assets";
-import Search from "@/components/search/Search";
+import { IMAGES } from "@/assets";
 import CustomText from "@/components/CustomText";
 import FamilyLeaderboardCard from "@/components/rewards/FamilyLeaderboardCard";
 import {
   StyleSheet,
   View,
   TouchableOpacity,
-  Image,
   ScrollView,
   ImageBackground,
   ActivityIndicator,
@@ -15,105 +13,54 @@ import {
   RefreshControl,
 } from "react-native";
 import {
-  responsiveFontSize,
   responsiveHeight,
   responsiveWidth,
 } from "react-native-responsive-dimensions";
 import { COLORS } from "@/constants/Colors";
-import { AntDesign, MaterialIcons } from "@expo/vector-icons";
+import { MaterialIcons } from "@expo/vector-icons";
 import { SafeAreaView } from "react-native-safe-area-context";
 import React, { useEffect, useState, useCallback } from "react";
 import { useAuth } from "@/context/AuthContext";
-import { firestoreService } from "@/api/firestoreService";
 import taskService from "@/api/taskService";
-
-// Type definitions
-interface UserRewards {
-  tokens_earned: number;
-  level: number;
-  rank: number;
-}
-
-interface LeaderboardEntry {
-  user_id: string;
-  display_name: string;
-  tokens_earned: number;
-  rank: number;
-}
-
-interface RewardHistory {
-  message: string;
-  timestamp: string;
-}
-
-interface AchievementData {
-  title: string;
-  description: string;
-}
-
-const RewardHistoryComponent: React.FC<{ history: RewardHistory }> = ({
-  history,
-}) => (
-  <View style={{ gap: 4, width: responsiveWidth(70) }}>
-    <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
-      `<MaterialIcons name="check-circle" size={20} color="#0ECC44" />`
-      <CustomText
-        style={{ color: "#000", fontSize: FONT_SIZES.small }}
-        variant="medium"
-      >
-        {history.message}
-      </CustomText>
-    </View>
-    <View style={{ gap: responsiveWidth(2), marginLeft: 28 }}>
-      <CustomText style={{ color: COLORS.grey, fontSize: 12 }} variant="medium">
-        {history.timestamp ? (typeof history.timestamp === 'number' && history.timestamp < 10000000000 ? new Date(history.timestamp * 1000).toLocaleString() : new Date(history.timestamp).toLocaleString()) : 'Not available'}
-      </CustomText>
-    </View>
-  </View>
-);
-
-const Achievement: React.FC<{ achievement: AchievementData }> = ({
-  achievement,
-}) => (
-  <View style={styles.achievementContainer}>
-    {ICONS.achievement}
-    <View style={{ paddingRight: 35 }}>
-      <CustomText style={styles.achievementTitle} variant="semiBold">
-        {achievement.title}
-      </CustomText>
-      <CustomText variant="medium" style={styles.achievementDescription}>
-        {achievement.description}
-      </CustomText>
-    </View>
-  </View>
-);
+import { useRouter } from "expo-router";
 
 export default function TabTwoScreen() {
   const { user } = useAuth();
   const [familyLeaderboard, setFamilyLeaderboard] = useState<any>(null);
   const [globalLeaderboard, setGlobalLeaderboard] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
+  // Only the first load may replace the screen with a spinner; a refresh has
+  // to leave the current numbers visible.
+  const [initialLoading, setInitialLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [loadFailed, setLoadFailed] = useState(false);
+  const router = useRouter();
 
   const fetchData = useCallback(async () => {
     if (!user) return;
 
-    try {
-      setLoading(true);
+    // Independent calls: losing the global leaderboard must not hide the
+    // family's own progress, which is the point of the screen.
+    const [family, global] = await Promise.allSettled([
+      taskService.getFamilyLeaderboard(user.uid),
+      taskService.getEnhancedGlobalLeaderboard(50),
+    ]);
 
-      // Fetch family leaderboard
-      const familyData = await taskService.getFamilyLeaderboard(user.uid);
-      setFamilyLeaderboard(familyData);
-
-      // Fetch enhanced global leaderboard
-      const globalData = await taskService.getEnhancedGlobalLeaderboard(50);
-      setGlobalLeaderboard(globalData.leaderboard || []);
-    } catch (error) {
-      console.log("Failed to fetch rewards data:", error);
-    } finally {
-      setLoading(false);
-      setRefreshing(false);
+    if (family.status === "fulfilled") {
+      setFamilyLeaderboard(family.value);
+      setLoadFailed(false);
+    } else {
+      console.log("Failed to fetch family leaderboard:", family.reason);
+      setLoadFailed(true);
     }
+
+    if (global.status === "fulfilled") {
+      setGlobalLeaderboard(global.value?.leaderboard || []);
+    } else {
+      console.log("Failed to fetch global leaderboard:", global.reason);
+    }
+
+    setInitialLoading(false);
+    setRefreshing(false);
   }, [user]);
 
   useEffect(() => {
@@ -126,16 +73,13 @@ export default function TabTwoScreen() {
   }, [fetchData]);
 
   const handleChildPress = (childId: string) => {
-    // Navigate to child detail view or show modal
-    console.log("Child pressed:", childId);
+    router.push({
+      pathname: "/(parent)/(app)/screens/kid-profile",
+      params: { childId },
+    });
   };
 
-  const handleViewAllGlobal = () => {
-    // Navigate to full global leaderboard
-    console.log("View all global leaderboard");
-  };
-
-  if (loading) {
+  if (initialLoading) {
     return (
       <SafeAreaView style={styles.safeArea}>
         <View style={styles.loadingContainer}>
@@ -197,16 +141,41 @@ export default function TabTwoScreen() {
                 </CustomText>
               </View>
 
+              {/* Was "#{family_global_rank}". That value is now 0 meaning
+                  unranked (a real family ranking needs a family-level
+                  aggregate that does not exist), and rendering it produced a
+                  literal "#0". Awaiting-payment is a number a parent can
+                  actually act on. */}
               <View style={styles.statCard}>
-                <MaterialIcons name="emoji-events" size={32} color="#FF9800" />
+                <MaterialIcons name="schedule" size={32} color="#FF9800" />
                 <CustomText variant="bold" style={styles.statNumber}>
-                  #{familyLeaderboard.family_global_rank || 0}
+                  {(familyLeaderboard.children || []).reduce(
+                    (sum: number, child: any) =>
+                      sum + (child.tasks_pending || 0),
+                    0,
+                  )}
                 </CustomText>
                 <CustomText variant="medium" style={styles.statLabel}>
-                  Family Rank
+                  Awaiting Payment
                 </CustomText>
               </View>
             </View>
+          </View>
+        )}
+
+        {/* Nothing to show and the call failed — say so instead of
+            rendering an empty shell with tips under it. */}
+        {!familyLeaderboard && loadFailed && (
+          <View style={styles.errorCard}>
+            <MaterialIcons name="cloud-off" size={40} color={COLORS.grey} />
+            <CustomText variant="medium" style={styles.errorText}>
+              {"We couldn't load your family's rewards."}
+            </CustomText>
+            <TouchableOpacity style={styles.retryButton} onPress={onRefresh}>
+              <CustomText variant="semiBold" style={styles.retryText}>
+                Try Again
+              </CustomText>
+            </TouchableOpacity>
           </View>
         )}
 
@@ -224,11 +193,6 @@ export default function TabTwoScreen() {
             <CustomText variant="semiBold" style={styles.sectionTitle}>
               🌍 Global Leaderboard
             </CustomText>
-            <TouchableOpacity onPress={handleViewAllGlobal}>
-              <CustomText variant="medium" style={styles.viewAllButton}>
-                View All
-              </CustomText>
-            </TouchableOpacity>
           </View>
 
           <View style={styles.globalLeaderboardCard}>
@@ -237,7 +201,7 @@ export default function TabTwoScreen() {
                 <View key={entry.user_id} style={styles.globalEntry}>
                   <View style={styles.globalRank}>
                     <CustomText variant="semiBold" style={styles.rankNumber}>
-                      #{index + 1}
+                      #{entry.rank ?? index + 1}
                     </CustomText>
                   </View>
                   <View style={styles.globalInfo}>
@@ -435,10 +399,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginBottom: responsiveHeight(1.5),
   },
-  viewAllButton: {
-    fontSize: FONT_SIZES.extraSmall,
-    color: COLORS.primary,
-  },
   globalLeaderboardCard: {
     backgroundColor: COLORS.white,
     borderRadius: 16,
@@ -497,6 +457,31 @@ const styles = StyleSheet.create({
     color: COLORS.grey,
     marginTop: responsiveHeight(1),
     textAlign: "center",
+  },
+  errorCard: {
+    backgroundColor: COLORS.white,
+    borderRadius: 16,
+    marginHorizontal: responsiveWidth(4),
+    marginBottom: responsiveHeight(2),
+    paddingVertical: responsiveHeight(4),
+    alignItems: "center",
+  },
+  errorText: {
+    fontSize: FONT_SIZES.extraSmall,
+    color: COLORS.grey,
+    marginTop: responsiveHeight(1),
+    textAlign: "center",
+  },
+  retryButton: {
+    marginTop: responsiveHeight(2),
+    paddingVertical: responsiveHeight(1.2),
+    paddingHorizontal: responsiveWidth(7),
+    borderRadius: 24,
+    backgroundColor: COLORS.primary,
+  },
+  retryText: {
+    color: COLORS.white,
+    fontSize: FONT_SIZES.extraSmall,
   },
   tipsSection: {
     paddingHorizontal: responsiveWidth(4),
