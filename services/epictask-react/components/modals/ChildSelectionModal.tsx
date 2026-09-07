@@ -79,7 +79,12 @@ const ChildSelectionModal: React.FC<ChildSelectionModalProps> = ({
     try {
       setLoading(true);
       setLoadError("");
-      const result = await authService.getLinkedChildrenWithSharing(user.uid);
+      // Always read the current linked-child list when opening the selector.
+      // A child may have been added since the parent's cached profile was read.
+      const result = await authService.getLinkedChildrenWithSharing(
+        user.uid,
+        false,
+      );
 
       if (result.success) {
         const decorated = withSwitchEligibility(result.children);
@@ -226,19 +231,23 @@ const ChildSelectionModal: React.FC<ChildSelectionModalProps> = ({
           </View>
 
           <View style={styles.footer}>
-            <CustomButton
-              text="Cancel"
-              fill={false}
-              onPress={onClose}
-              height={responsiveHeight(6)}
-            />
-            <CustomButton
-              text="Continue"
-              fill={true}
-              onPress={handleConfirmSelection}
-              height={responsiveHeight(6)}
-              disabled={!selectedChild}
-            />
+            <View style={styles.footerButton}>
+              <CustomButton
+                text="Cancel"
+                fill={false}
+                onPress={onClose}
+                height={responsiveHeight(6)}
+              />
+            </View>
+            <View style={styles.footerButton}>
+              <CustomButton
+                text="Continue"
+                fill={true}
+                onPress={handleConfirmSelection}
+                height={responsiveHeight(6)}
+                disabled={!selectedChild}
+              />
+            </View>
           </View>
         </View>
       </View>
@@ -257,6 +266,7 @@ const styles = StyleSheet.create({
     backgroundColor: "white",
     borderRadius: 16,
     width: responsiveWidth(90),
+    height: responsiveHeight(70),
     maxHeight: responsiveHeight(80),
     padding: 0,
     overflow: "hidden",
@@ -385,6 +395,9 @@ const styles = StyleSheet.create({
     padding: responsiveWidth(4),
     borderTopWidth: 1,
     borderTopColor: "#f0f0f0",
+  },
+  footerButton: {
+    flex: 1,
   },
 });
 

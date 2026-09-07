@@ -4,13 +4,21 @@ Settlement is the point where a reward stops being a promise and becomes money
 the child actually has. It is driven by the Xumm webhook in xrpl_management,
 which fires when the parent signs.
 """
+import base64
+import json
+import logging
+
 from fastapi import APIRouter, Depends, HTTPException, Request, status
 from pydantic import BaseModel
 
+from ...config.collection_names import collections
+from ...config.firebase_config import db
 from ...config.internal_auth import verify_internal_caller
 from ...domain.reward_models import RewardState
 from ...services.rewards import reward_service
 from ...storage import firestore_db as task_db
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/internal", tags=["internal"])
 
@@ -50,3 +58,76 @@ async def record_settlement(
         task, state=RewardState.SETTLED, tx_hash=notice.tx_hash
     )
     return {"success": True, "task_id": notice.task_id, "credited": result}
+
+
+@router.post("/pubsub/narrative-payout-confirmed")
+async def handle_narrative_payout_confirmed(
+    request: Request,
+    _: None = Depends(verify_internal_caller),
+):
+    """Pub/Sub push subscriber for narrative.payout.confirmed.v1.
+
+    The narrative engine has always published this topic and nothing has ever
+    subscribed to it, so story earnings reached no balance: a child could
+    finish a story, be paid on-chain, and see nothing in the app.
+
+    The event payload is treated as a *pointer*, not as truth. Amount and
+    currency are read from the stored payout record, exactly as the task path
+    reads them from the task document.
+
+    Returns 200 to ack. Raises 5xx to nack so Pub/Sub retries; crediting is
+    idempotent, so a redelivery cannot double-count.
+
+    GCP setup (run once):
+        gcloud pubsub subscriptions create narrative-payout-confirmed-sub \
+          --topic=narrative.payout.confirmed.v1 \
+          --push-endpoint=https://<mono-url>/api/internal/pubsub/narrative-payout-confirmed \
+          --ack-deadline=60
+    """
+    envelope = await request.json()
+    message = envelope.get("message") or {}
+    if not message:
+        return {"status": "ignored", "reason": "no message"}
+
+    try:
+        event = json.loads(base64.b64decode(message.get("data", "")).decode("utf-8"))
+    except Exception as e:
+        # Malformed messages are acked, not retried: redelivery cannot fix them
+        # and a poison message would block the subscription indefinitely.
+        logger.error("[pubsub] undecodable narrative payout event: %s", e)
+        return {"status": "ignored", "reason": "malformed message"}
+
+    request_id = event.get("request_id")
+    if not request_id:
+        logger.error("[pubsub] narrative payout event has no request_id")
+        return {"status": "ignored", "reason": "no request_id"}
+
+    snapshot = (
+        db.collection(collections.NARRATIVE_PAYOUT_REQUESTS)
+        .document(str(request_id))
+        .get()
+    )
+    if not snapshot.exists:
+        # Nack: the record may not have been committed yet when the event
+        # arrived, and a retry is likely to succeed.
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail=f"payout record {request_id} not found yet",
+        )
+
+    payout = snapshot.to_dict() or {}
+    payout.setdefault("request_id", request_id)
+
+    if payout.get("status") != "confirmed":
+        # Only a confirmed payout is money the child actually has.
+        logger.info(
+            "[pubsub] payout %s is %s, not confirmed; skipping credit",
+            request_id,
+            payout.get("status"),
+        )
+        return {"status": "ignored", "reason": "payout not confirmed"}
+
+    credited = reward_service.credit_narrative_payout(
+        payout, state=RewardState.SETTLED
+    )
+    return {"success": True, "request_id": request_id, "credited": credited}

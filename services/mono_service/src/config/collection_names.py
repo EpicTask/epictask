@@ -46,6 +46,15 @@ class Collections:
     # projection derived from it. See domain/reward_models.py.
     REWARD_EVENTS = f"{_prefix}reward_events"
 
+    # DELIBERATELY UNPREFIXED, unlike everything else here.
+    #
+    # This collection is owned and written by adaptive_narrative_engine, which
+    # uses unprefixed names throughout (see its own collection_names.py). We
+    # only read it, so the name has to match the writer — not our prefix policy.
+    # Adding `test_` here would silently read an empty collection and make story
+    # earnings vanish again.
+    NARRATIVE_PAYOUT_REQUESTS = "narrative_payout_requests"
+
     # Smart Contract / XRPL related (Legacy/Integration)
     CONTRACTS = f"{_prefix}contracts"
     INTERACTIONS = f"{_prefix}interactions"

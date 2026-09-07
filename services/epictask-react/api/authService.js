@@ -74,7 +74,7 @@ export const authService = {
           displayName: displayName,
           role: role,
         },
-        token,
+        // token,
       };
     } catch (error) {
       console.log("Registration error:", error);
@@ -117,7 +117,7 @@ export const authService = {
         return {
           success: true,
           user: profileResponse.user,
-          token,
+          // token,
           fromCache: profileResponse.fromCache || false,
         };
       } else {
@@ -133,7 +133,7 @@ export const authService = {
             email: userCredential.user.email,
             displayName: userCredential.user.displayName,
           },
-          token,
+          // token,
         };
       }
     } catch (error) {
@@ -387,7 +387,7 @@ export const authService = {
         parent_id: redeemed.parent_id,
       },
       parentName: redeemed.parent_name,
-      token,
+      // token,
     };
   },
 

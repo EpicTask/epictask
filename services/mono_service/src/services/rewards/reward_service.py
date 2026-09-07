@@ -65,6 +65,41 @@ def credit_task(task: Dict[str, Any], state: RewardState = RewardState.PENDING,
     return results
 
 
+def credit_narrative_payout(
+    payout: Dict[str, Any], state: RewardState = RewardState.SETTLED
+) -> Dict[str, str]:
+    """Credit a story payout through the same ledger as task rewards.
+
+    Story completion is the platform's second earning stream. Its payouts were
+    published to Pub/Sub with no subscriber, so they reached no balance at all —
+    a child could finish a story, be paid on-chain, and see nothing.
+
+    Like `credit_task`, the amount and currency come from the stored payout
+    record rather than from the caller.
+    """
+    request_id = _require(payout, "request_id")
+    user_id = _require(payout, "user_id")
+    currency = _require(payout, "token")
+    amount = payout.get("amount")
+
+    if amount is None:
+        raise RewardCreditError(
+            f"payout {request_id!r} cannot be credited: missing amount"
+        )
+
+    event = RewardEvent(
+        event_id=RewardEvent.make_id(request_id, state),
+        user_id=user_id,
+        source=RewardSource.NARRATIVE,
+        source_id=str(request_id),
+        state=state,
+        amount=float(amount),
+        currency=currency,
+        tx_hash=payout.get("transaction_hash"),
+    )
+    return {user_id: reward_db.append_reward_event(event)}
+
+
 def get_rewards(user_id: str) -> Dict[str, Any]:
     """Projection for one user."""
     return reward_db.get_projection(user_id)

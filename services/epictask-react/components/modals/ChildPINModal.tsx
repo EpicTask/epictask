@@ -1,5 +1,5 @@
 import { FONT_SIZES } from "@/constants/FontSize";
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState } from "react";
 import {
   Modal,
   View,
@@ -7,22 +7,22 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   TextInput,
-} from 'react-native';
+} from "react-native";
 import {
   responsiveHeight,
   responsiveWidth,
-} from 'react-native-responsive-dimensions';
+} from "react-native-responsive-dimensions";
 import {
   CodeField,
   Cursor,
   useBlurOnFulfill,
   useClearByFocusCell,
-} from 'react-native-confirmation-code-field';
-import { MaterialIcons } from '@expo/vector-icons';
-import CustomText from '@/components/CustomText';
-import CustomButton from '@/components/buttons/CustomButton';
-import { COLORS } from '@/constants/Colors';
-import { useAuth } from '@/context/AuthContext';
+} from "react-native-confirmation-code-field";
+import { MaterialIcons } from "@expo/vector-icons";
+import CustomText from "@/components/CustomText";
+import CustomButton from "@/components/buttons/CustomButton";
+import { COLORS } from "@/constants/Colors";
+import { useAuth } from "@/context/AuthContext";
 
 interface Child {
   uid: string;
@@ -54,9 +54,9 @@ const ChildPINModal: React.FC<ChildPINModalProps> = ({
   onSuccess,
 }) => {
   const { switchToChildContext } = useAuth();
-  const [value, setValue] = useState('');
+  const [value, setValue] = useState("");
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
+  const [error, setError] = useState("");
   const [lockedOut, setLockedOut] = useState(false);
 
   const ref = useBlurOnFulfill({ value, cellCount: CELL_COUNT });
@@ -67,8 +67,8 @@ const ChildPINModal: React.FC<ChildPINModalProps> = ({
 
   useEffect(() => {
     if (visible) {
-      setValue('');
-      setError('');
+      setValue("");
+      setError("");
       setLockedOut(false);
     }
   }, [visible, child?.uid]);
@@ -77,38 +77,38 @@ const ChildPINModal: React.FC<ChildPINModalProps> = ({
     if (!child || pin.length !== CELL_COUNT || loading) return;
 
     setLoading(true);
-    setError('');
+    setError("");
 
     const result = await switchToChildContext(child.uid, pin);
 
     setLoading(false);
 
     if (result.success) {
-      setValue('');
+      setValue("");
       onSuccess(child);
       return;
     }
 
-    setValue('');
+    setValue("");
     setLockedOut(!!result.locked);
-    setError(result.error || 'That PIN isn\'t right.');
+    setError(result.error || "That PIN isn't right.");
   };
 
   const handleChange = (next: string) => {
     setValue(next);
-    if (error) setError('');
+    if (error) setError("");
     // Submitting on the fourth digit saves a tap; a parent typing a PIN on a
     // shared device shouldn't have to reach for a button.
     if (next.length === CELL_COUNT) submit(next);
   };
 
   const handleClose = () => {
-    setValue('');
-    setError('');
+    setValue("");
+    setError("");
     onClose();
   };
 
-  const firstName = (child?.displayName || 'your kid').split(' ')[0];
+  const firstName = (child?.displayName || "your kid").split(" ")[0];
 
   return (
     <Modal
@@ -124,7 +124,9 @@ const ChildPINModal: React.FC<ChildPINModalProps> = ({
               {firstName}'s PIN
             </CustomText>
             <TouchableOpacity onPress={handleClose} style={styles.closeButton}>
-              <CustomText variant="regular" style={styles.closeText}>✕</CustomText>
+              <CustomText variant="regular" style={styles.closeText}>
+                ✕
+              </CustomText>
             </TouchableOpacity>
           </View>
 
@@ -167,7 +169,7 @@ const ChildPINModal: React.FC<ChildPINModalProps> = ({
                       onLayout={getCellOnLayoutHandler(index)}
                     >
                       <CustomText style={styles.cellText}>
-                        {symbol ? '●' : (isFocused ? <Cursor /> : '')}
+                        {symbol ? "●" : isFocused ? <Cursor /> : ""}
                       </CustomText>
                     </View>
                   )}
@@ -195,9 +197,9 @@ const ChildPINModal: React.FC<ChildPINModalProps> = ({
             </CustomText>
           </View>
 
-          <View style={styles.footer}>
+          <View style={styles.footerButton}>
             <CustomButton
-              text={lockedOut ? 'Close' : 'Cancel'}
+              text={lockedOut ? "Close" : "Cancel"}
               fill={false}
               onPress={handleClose}
               height={responsiveHeight(6)}
@@ -221,25 +223,25 @@ const ChildPINModal: React.FC<ChildPINModalProps> = ({
 const styles = StyleSheet.create({
   overlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    justifyContent: 'center',
-    alignItems: 'center',
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    justifyContent: "center",
+    alignItems: "center",
   },
   modalContainer: {
-    backgroundColor: 'white',
+    backgroundColor: "white",
     borderRadius: 16,
     width: responsiveWidth(85),
     maxHeight: responsiveHeight(75),
     padding: 0,
-    overflow: 'hidden',
+    overflow: "hidden",
   },
   header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     padding: responsiveWidth(4),
     borderBottomWidth: 1,
-    borderBottomColor: '#f0f0f0',
+    borderBottomColor: "#f0f0f0",
   },
   title: {
     fontSize: FONT_SIZES.large,
@@ -249,8 +251,8 @@ const styles = StyleSheet.create({
   closeButton: {
     width: 30,
     height: 30,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
   },
   closeText: {
     fontSize: FONT_SIZES.extraLarge,
@@ -258,65 +260,65 @@ const styles = StyleSheet.create({
   },
   content: {
     padding: responsiveWidth(4),
-    alignItems: 'center',
+    alignItems: "center",
     gap: responsiveHeight(2),
   },
   description: {
     fontSize: FONT_SIZES.medium,
     color: COLORS.grey,
-    textAlign: 'center',
+    textAlign: "center",
   },
   codeFieldRoot: {
-    justifyContent: 'space-between',
+    justifyContent: "space-between",
     width: responsiveWidth(60),
   },
   cell: {
     width: responsiveWidth(12),
     height: responsiveWidth(12),
     borderWidth: 2,
-    borderColor: '#E0E0E0',
-    backgroundColor: '#fff',
+    borderColor: "#E0E0E0",
+    backgroundColor: "#fff",
     borderRadius: 8,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
   },
   focusCell: {
     borderColor: COLORS.primary,
-    backgroundColor: '#f3f4f6',
+    backgroundColor: "#f3f4f6",
   },
   cellText: {
     fontSize: FONT_SIZES.title,
-    textAlign: 'center',
+    textAlign: "center",
     color: COLORS.primary,
   },
   errorText: {
     fontSize: FONT_SIZES.small,
     color: COLORS.red,
-    textAlign: 'center',
+    textAlign: "center",
   },
   lockoutContainer: {
-    alignItems: 'center',
+    alignItems: "center",
     gap: 6,
     padding: responsiveWidth(4),
-    backgroundColor: '#FFF3CD',
+    backgroundColor: "#FFF3CD",
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: '#FFE69C',
+    borderColor: "#FFE69C",
   },
   lockoutTitle: {
     fontSize: FONT_SIZES.medium,
-    color: '#856404',
+    color: "#856404",
   },
   lockoutText: {
     fontSize: FONT_SIZES.small,
-    color: '#856404',
-    textAlign: 'center',
+    color: "#856404",
+    textAlign: "center",
     lineHeight: 20,
   },
   loadingContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
     gap: 10,
   },
   loadingText: {
@@ -326,14 +328,17 @@ const styles = StyleSheet.create({
   footnote: {
     fontSize: 12,
     color: COLORS.grey,
-    textAlign: 'center',
+    textAlign: "center",
   },
   footer: {
-    flexDirection: 'row',
+    flexDirection: "row",
     gap: 10,
     padding: responsiveWidth(4),
     borderTopWidth: 1,
-    borderTopColor: '#f0f0f0',
+    borderTopColor: "#f0f0f0",
+  },
+  footerButton: {
+    flex: 1,
   },
 });
 
