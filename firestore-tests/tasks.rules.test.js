@@ -152,8 +152,8 @@ test("parent CANNOT edit task content client-side (goes via taskService.updateTa
 // The one temporary carve-out — remove at rewards-phase-2
 // ---------------------------------------------------------------------------
 
-test("parent CAN flip rewarded false -> true (temporary carve-out)", async () => {
-  await assertSucceeds(
+test("parent CANNOT flip rewarded — reward writes are server-only", async () => {
+  await assertFails(
     updateDoc(doc(asParent(), TASKS, TASK_ID), {
       rewarded: true,
       rewardedAt: new Date().toISOString(),
@@ -161,13 +161,14 @@ test("parent CAN flip rewarded false -> true (temporary carve-out)", async () =>
   );
 });
 
-test("parent CANNOT un-reward (rewarded is monotonic)", async () => {
-  await testEnv.withSecurityRulesDisabled(async (ctx) => {
-    await updateDoc(doc(ctx.firestore(), TASKS, TASK_ID), { rewarded: true });
-  });
-  await assertFails(
-    updateDoc(doc(asParent(), TASKS, TASK_ID), { rewarded: false }),
-  );
+test("no client can update a task at all", async () => {
+  for (const db of [asParent(), asChild(), asStranger()]) {
+    await assertFails(updateDoc(doc(db, TASKS, TASK_ID), { rewarded: true }));
+    await assertFails(updateDoc(doc(db, TASKS, TASK_ID), { task_title: "x" }));
+    await assertFails(
+      updateDoc(doc(db, TASKS, TASK_ID), { marked_completed: true }),
+    );
+  }
 });
 
 // ---------------------------------------------------------------------------
@@ -230,7 +231,7 @@ test("unprefixed `tasks` mirror is hardened identically", async () => {
   await assertFails(
     updateDoc(doc(asChild(), "tasks", TASK_ID), { verified: true }),
   );
-  await assertSucceeds(
+  await assertFails(
     updateDoc(doc(asParent(), "tasks", TASK_ID), { rewarded: true }),
   );
 });

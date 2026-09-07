@@ -23,6 +23,7 @@ import { router } from "expo-router";
 import CustomText from "@/components/CustomText";
 import { useAuth } from "@/context/AuthContext";
 import { firestoreService } from "@/api/firestoreService";
+import taskService from "@/api/taskService";
 import { TaskActionModal } from "@/components/modals/TaskActionModal";
 import { Task } from "@/constants/Interfaces";
 
@@ -230,7 +231,10 @@ const ManageTasks = () => {
       );
 
       // Backend logic handles marking complete and rewarding in one step
-      await firestoreService.rewardTask(taskId);
+      // Backend owns the reward write: it credits the reward ledger, kicks off
+      // the XRPL payment and dispatches notifications in one authorised call.
+      await taskService.taskRewarded({ task_id: taskId, user_id: user.uid });
+      firestoreService.invalidateTaskCaches();
       closeModal();
     } catch (error) {
       console.log("Error rewarding task:", error);

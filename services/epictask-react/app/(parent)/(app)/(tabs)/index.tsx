@@ -300,7 +300,7 @@ export default function HomeScreen() {
   ]);
 
   // Handler functions for child switching
-  const switchableKids = kidsWithTaskData.filter(
+  const switchableKids = (children as Kid[]).filter(
     (kid) =>
       deviceSharingAllowed(kid.age) && kid.device_sharing_enabled !== false,
   );
@@ -630,7 +630,13 @@ export default function HomeScreen() {
                             : t,
                         ),
                       );
-                      await firestoreService.rewardTask(task.task_id);
+                      // Backend owns the reward write (credit + XRPL payment
+                      // + notifications) behind one authorised call.
+                      await taskService.taskRewarded({
+                        task_id: task.task_id,
+                        user_id: user.uid,
+                      });
+                      firestoreService.invalidateTaskCaches();
 
                       if (
                         task.assigned_to_ids &&

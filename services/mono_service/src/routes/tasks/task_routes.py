@@ -153,6 +153,11 @@ async def reward_task(task_id: str, request: TaskRewarded, current_user: dict = 
     caller_uid = _require_parent(current_user)
     if request.user_id != caller_uid:
         raise HTTPException(status_code=403, detail="user_id must match your account")
+    if task_id != request.task_id:
+        raise HTTPException(status_code=400, detail="task_id in path and body must match")
+    # Parent role alone is not enough: without this, any parent could reward a
+    # task belonging to a different family and credit that family's child.
+    await _require_task_owner(request.task_id, caller_uid)
     response = await task_service.reward_task(request)
     return {"response": response}
 
@@ -172,6 +177,13 @@ async def verify_task(task_id: str, request: TaskVerified, raw_request: Request,
     caller_uid = _require_parent(current_user)
     if request.user_id != caller_uid:
         raise HTTPException(status_code=403, detail="user_id must match your account")
+    if task_id != request.task_id:
+        raise HTTPException(status_code=400, detail="task_id in path and body must match")
+    # Verification initiates an XRPL payment drawn against the *task owner's*
+    # wallet (task_service._trigger_xrpl_payment reads the owner's profile and
+    # Xumm user_token). Without an ownership check, any parent could push
+    # signing requests at another parent's wallet.
+    await _require_task_owner(request.task_id, caller_uid)
     auth_header = raw_request.headers.get("Authorization", "")
     token = auth_header.removeprefix("Bearer ").strip()
     response = await task_service.verify_task(request, auth_token=token)

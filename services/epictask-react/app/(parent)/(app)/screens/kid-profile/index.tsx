@@ -22,12 +22,14 @@ import { useRouter, useLocalSearchParams, Link } from "expo-router";
 import TaskCard from "@/components/cards/TaskCard";
 import CustomText from "@/components/CustomText";
 import { firestoreService } from "@/api/firestoreService";
+import { useAuth } from "@/context/AuthContext";
 import PlusButton from "@/components/PlusButton";
 import { TaskActionModal } from "@/components/modals/TaskActionModal";
 import { Task } from "@/constants/Interfaces";
 import taskService from "@/api/taskService";
 
 const KidProfile = () => {
+  const { user } = useAuth();
   const router = useRouter();
   const params = useLocalSearchParams();
 
@@ -146,7 +148,10 @@ const KidProfile = () => {
       );
 
       // Backend logic handles marking complete and rewarding in one step
-      await firestoreService.rewardTask(taskId);
+      // Backend owns the reward write: it credits the reward ledger, kicks off
+      // the XRPL payment and dispatches notifications in one authorised call.
+      await taskService.taskRewarded({ task_id: taskId, user_id: user.uid });
+      firestoreService.invalidateTaskCaches();
       closeModal();
     } catch (error) {
       console.log("Error rewarding task:", error);

@@ -807,39 +807,15 @@ export const firestoreService = {
     }
   },
 
-  // Enhanced task reward with cache invalidation
-  rewardTask: async (taskId, rewardData = {}) => {
-    const operation = "rewardTask";
-    PerformanceMonitor.start(operation);
-
-    try {
-      if (!taskId) {
-        throw new Error("Task ID is required");
-      }
-
-      const taskRef = doc(db, TestCollections.Tasks, taskId);
-      const updateData = {
-        rewarded: true,
-        rewardedAt: new Date().toISOString(),
-        ...rewardData,
-      };
-
-      await updateDoc(taskRef, updateData);
-
-      // Invalidate related caches
-      TaskCache.invalidate(new RegExp(`tasks:.*`));
-      TaskCache.invalidate(new RegExp(`family-tasks:.*`));
-
-      PerformanceMonitor.end(operation);
-      return {
-        success: true,
-        message: "Task rewarded successfully",
-        updateData,
-      };
-    } catch (error) {
-      ErrorHandler.logError(operation, error, { taskId, rewardData });
-      throw ErrorHandler.createError(operation, error, { taskId });
-    }
+  // Reward writes moved to the backend (taskService.taskRewarded) so that
+  // crediting, XRPL payment initiation and notification dispatch all happen
+  // behind one authorised call. A client-side write skipped every one of them.
+  //
+  // The cache housekeeping the old rewardTask did still has to happen, so it
+  // is exposed here for callers to run once the backend call resolves.
+  invalidateTaskCaches: () => {
+    TaskCache.invalidate(new RegExp(`tasks:.*`));
+    TaskCache.invalidate(new RegExp(`family-tasks:.*`));
   },
 
   // Batch operations for better performance

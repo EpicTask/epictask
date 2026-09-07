@@ -105,20 +105,17 @@ service cloud.firestore {
         && !request.resource.data.keys().hasAny(serverOnlyTaskFields())
         && request.resource.data.get('rewarded', false) == false;
 
-      // Assignees (children) have NO client write path. Completion goes through
-      // taskService.taskCompleted on mono_service.
+      // No client may update a task. Every mutation goes through mono_service
+      // with the Admin SDK, which bypasses these rules:
+      //   completion   -> taskService.taskCompleted
+      //   verification -> taskService.taskVerified
+      //   reward       -> taskService.taskRewarded
+      //   edits        -> taskService.updateTask
       //
-      // Creators (parents) keep one temporary carve-out: the reward flip still
-      // performed by firestoreService.rewardTask. It may only move rewarded
-      // false -> true, and may not touch anything else — notably not the
-      // economic terms (reward_amount, reward_currency, assigned_to_ids).
-      //
-      // TODO(rewards-phase-2): delete this allow block once the approve button
-      // calls taskService.taskRewarded instead. Target state is no client write
-      // at all; the app has no other client-side task write.
-      allow update: if signedIn() && isTaskCreator()
-        && taskWriteTouchesOnly(['rewarded', 'rewardedAt'])
-        && resource.data.get('rewarded', false) == false;
+      // The temporary reward carve-out that lived here is gone: the approve
+      // button now calls the backend, so nothing client-side writes a task.
+      // Reward state in particular must stay server-only, since granting it
+      // credits the reward ledger and initiates an XRPL payment.
 
       allow delete: if signedIn() && isTaskCreator();
     }
@@ -135,20 +132,17 @@ service cloud.firestore {
         && !request.resource.data.keys().hasAny(serverOnlyTaskFields())
         && request.resource.data.get('rewarded', false) == false;
 
-      // Assignees (children) have NO client write path. Completion goes through
-      // taskService.taskCompleted on mono_service.
+      // No client may update a task. Every mutation goes through mono_service
+      // with the Admin SDK, which bypasses these rules:
+      //   completion   -> taskService.taskCompleted
+      //   verification -> taskService.taskVerified
+      //   reward       -> taskService.taskRewarded
+      //   edits        -> taskService.updateTask
       //
-      // Creators (parents) keep one temporary carve-out: the reward flip still
-      // performed by firestoreService.rewardTask. It may only move rewarded
-      // false -> true, and may not touch anything else — notably not the
-      // economic terms (reward_amount, reward_currency, assigned_to_ids).
-      //
-      // TODO(rewards-phase-2): delete this allow block once the approve button
-      // calls taskService.taskRewarded instead. Target state is no client write
-      // at all; the app has no other client-side task write.
-      allow update: if signedIn() && isTaskCreator()
-        && taskWriteTouchesOnly(['rewarded', 'rewardedAt'])
-        && resource.data.get('rewarded', false) == false;
+      // The temporary reward carve-out that lived here is gone: the approve
+      // button now calls the backend, so nothing client-side writes a task.
+      // Reward state in particular must stay server-only, since granting it
+      // credits the reward ledger and initiates an XRPL payment.
 
       allow delete: if signedIn() && isTaskCreator();
     }

@@ -216,7 +216,10 @@ const ManageTasks = () => {
       );
 
       // Backend logic will handle marking complete + paying out reward in one step
-      await firestoreService.rewardTask(taskId);
+      // Backend owns the reward write: it credits the reward ledger, kicks off
+      // the XRPL payment and dispatches notifications in one authorised call.
+      await taskService.taskRewarded({ task_id: taskId, user_id: user.uid });
+      firestoreService.invalidateTaskCaches();
       closeModal();
     } catch (error) {
       console.log("Error rewarding task:", error);
