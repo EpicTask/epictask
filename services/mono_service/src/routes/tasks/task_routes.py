@@ -172,8 +172,20 @@ async def update_task(task_id: str, request: TaskUpdated, current_user: dict = D
 
 
 @router.post("/{task_id}/verify")
-async def verify_task(task_id: str, request: TaskVerified, raw_request: Request, current_user: dict = Depends(get_current_user)):
-    """Mark a task as verified."""
+async def verify_task(
+    task_id: str,
+    request: TaskVerified,
+    raw_request: Request,
+    current_user: dict = Depends(get_current_user_strict),
+):
+    """Mark a task as verified.
+
+    Uses the revocation-aware dependency because verification *moves money* —
+    it credits the reward ledger and initiates an XRPL payment. This route
+    previously used the plain check while `/reward`, which only credits, used
+    the strict one, so a parent whose refresh tokens had been revoked could
+    still trigger a payment. See the auth notes in CLAUDE.md.
+    """
     caller_uid = _require_parent(current_user)
     if request.user_id != caller_uid:
         raise HTTPException(status_code=403, detail="user_id must match your account")

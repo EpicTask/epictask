@@ -4,6 +4,10 @@ from ...domain.user_models import UserProfileUpdate, InviteCodeResponse, LinkChi
 from ...domain.notification_models import NotificationType, NotificationCreate
 from ..notifications.notification_service import notification_service
 
+from ...config.logging_config import get_logger
+
+logger = get_logger(__name__)
+
 class UserService:
     """Service for user management."""
 
@@ -73,7 +77,7 @@ class UserService:
                 await notification_service.send_notification(notification_parent)
                 
             except Exception as e:
-                print(f"Warning: Failed to send link notification: {e}")
+                logger.error(f"Warning: Failed to send link notification: {e}")
                 
         return result
 
@@ -114,7 +118,7 @@ class UserService:
             await notification_service.send_notification(notification)
             return True
         except Exception as e:
-            print(f"Failed to send help request notification: {e}")
+            logger.error(f"Failed to send help request notification: {e}")
             return False
 
 user_service = UserService()

@@ -3,6 +3,10 @@ from ..domain.xrpl_models import XrplLogEvent
 from ..config.error_handler import handle_firestore_exception, FirestoreOperationException
 from ..config.firebase_config import db
 
+from ..config.logging_config import get_logger
+
+logger = get_logger(__name__)
+
 def write_xrpl_event_to_firestore(event: XrplLogEvent):
     """Store the XRPL event in Firestore database"""
     try:
@@ -27,5 +31,5 @@ def write_xrpl_event_to_firestore(event: XrplLogEvent):
         return doc_id
     except Exception as e:
         # Re-raise as custom exception or handle
-        print(f"Error adding document: {e}")
+        logger.error(f"Error adding document: {e}")
         return None

@@ -1,6 +1,10 @@
 from google.cloud import secretmanager
 import os
 
+from .logging_config import get_logger
+
+logger = get_logger(__name__)
+
 def get_secret(secret_id: str, version_id: str = "latest") -> str:
     """
     Retrieve secret from Google Secret Manager.
@@ -26,5 +30,5 @@ def get_secret(secret_id: str, version_id: str = "latest") -> str:
         
         return response.payload.data.decode("UTF-8")
     except Exception as e:
-        print(f"Error retrieving secret {secret_id}: {e}")
+        logger.error(f"Error retrieving secret {secret_id}: {e}")
         return ""

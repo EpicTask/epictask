@@ -10,7 +10,16 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from fastapi.templating import Jinja2Templates
 
+from src.config.logging_config import configure_logging
+from src.config.rate_limit import RateLimitMiddleware
+from src.config.settings import validate_production_config
+
 load_dotenv()
+
+# Configure logging before anything else can emit, then fail fast if production
+# configuration is incomplete. Matches the narrative engine's startup order.
+logger = configure_logging()
+validate_production_config()
 
 # Setup Jinja2 templates
 templates = Jinja2Templates(directory="templates")
@@ -37,6 +46,11 @@ app.add_middleware(
     allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allow_headers=["Content-Type", "Authorization"],
 )
+
+# Abuse dampening. Deliberately after CORS so preflights are not counted, and
+# tuned to the same 100/60s as the narrative engine. Note the window is
+# per-instance and in-memory — see the module docstring.
+app.add_middleware(RateLimitMiddleware, max_requests=100, window_seconds=60)
 
 # Global exception handler
 @app.exception_handler(Exception)

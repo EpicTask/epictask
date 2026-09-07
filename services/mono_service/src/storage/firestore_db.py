@@ -19,6 +19,10 @@ from ..config.error_handler import (
 from ..config.collection_names import collections
 from ..config.firebase_config import db
 
+from ..config.logging_config import get_logger
+
+logger = get_logger(__name__)
+
 
 def create_task(response: TaskCreated):
     """Store new task in Firestore database"""
@@ -480,7 +484,7 @@ def get_kid_task_summary(user_id):
             "total": len(all_tasks),
         }
     except Exception as e:
-        print(f"Error getting task summary: {e}")
+        logger.error(f"Error getting task summary: {e}")
         return {"completed": 0, "in_progress": 0, "total": 0}
 
 
@@ -536,7 +540,7 @@ def get_user_metrics():
             "last_updated": datetime.now().isoformat(),
         }
     except Exception as e:
-        print(f"Error getting user metrics: {e}")
+        logger.error(f"Error getting user metrics: {e}")
         return {
             "total_users": 0,
             "active_users": 0,
@@ -596,7 +600,7 @@ def get_task_metrics():
             "last_updated": datetime.now().isoformat(),
         }
     except Exception as e:
-        print(f"Error getting task metrics: {e}")
+        logger.error(f"Error getting task metrics: {e}")
         return {
             "total_tasks": 0,
             "completed_tasks": 0,
@@ -643,7 +647,7 @@ def get_event_metrics():
             "last_updated": datetime.now().isoformat(),
         }
     except Exception as e:
-        print(f"Error getting event metrics: {e}")
+        logger.error(f"Error getting event metrics: {e}")
         return {
             "total_events": 0,
             "event_types": {},
@@ -673,7 +677,7 @@ def get_performance_metrics():
             "last_updated": datetime.now().isoformat(),
         }
     except Exception as e:
-        print(f"Error getting performance metrics: {e}")
+        logger.error(f"Error getting performance metrics: {e}")
         return {
             "api_response_times": {},
             "database_query_times": {},
@@ -703,7 +707,7 @@ def clear_test_data():
             "timestamp": datetime.now().isoformat(),
         }
     except Exception as e:
-        print(f"Error clearing test data: {e}")
+        logger.error(f"Error clearing test data: {e}")
         return {
             "success": False,
             "message": f"Failed to clear test data: {str(e)}",
@@ -722,6 +726,6 @@ def mark_payment_submitted(task_id: str) -> None:
             "payment_submitted_at": firestore.SERVER_TIMESTAMP,
         })
     except Exception as e:
-        print(f"Warning: Failed to mark payment submitted for task {task_id}: {e}")
+        logger.error(f"Warning: Failed to mark payment submitted for task {task_id}: {e}")
 
 

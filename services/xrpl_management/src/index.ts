@@ -127,8 +127,12 @@ router.post("/finish_escrow_xumm", requireAuthStrict, async (ctx) => {
 // Register the Xumm webhook URL as: https://<host>/xumm/webhook?token=<XUMM_WEBHOOK_TOKEN>
 router.post("/xumm/webhook", async (ctx) => {
   const expectedToken = process.env.XUMM_WEBHOOK_TOKEN;
-  console.log("[webhook] Received webhook request with query: %o", ctx.query);
-  console.log("Environment variable XUMM_WEBHOOK_TOKEN is %s", expectedToken);
+  // The shared secret arrives as ?token=..., so the query string must never be
+  // logged verbatim and the expected value must never be logged at all. Both
+  // used to be written to Cloud Logging on every request, which put the secret
+  // in the log sink twice and let anyone with log-viewer access forge webhooks.
+  const { token: _redactedToken, ...safeQuery } = ctx.query as Record<string, unknown>;
+  console.log("[webhook] Received webhook request with query: %o", safeQuery);
   if (!expectedToken) {
     console.error("[webhook] XUMM_WEBHOOK_TOKEN not configured — rejecting all webhook calls");
     ctx.status = 503;

@@ -12,6 +12,10 @@ from ..config import age_policy
 from ..config.role_claims import set_role_claim
 from ..domain.user_models import UserProfile, InviteCodeResponse, UserMetrics, NotificationPreferences
 
+from ..config.logging_config import get_logger
+
+logger = get_logger(__name__)
+
 # PIN brute-force protection. Enforced server-side and persisted in Firestore
 # so the counter survives process restarts and is shared across instances.
 PIN_MAX_ATTEMPTS = 5
@@ -112,7 +116,7 @@ def get_user_profile(uid: str) -> Optional[dict]:
         data['uid'] = uid
         return data
     except Exception as e:
-        print(f"Failed to get user profile: {e}")
+        logger.error(f"Failed to get user profile: {e}")
         # In a real app, you might want to raise a custom exception here
         return None
 
@@ -133,10 +137,10 @@ def update_user_profile(uid: str, profile_data: dict) -> bool:
         if auth_update:
             auth.update_user(uid, **auth_update)
             
-        print(f"Profile updated successfully for user: {uid}")
+        logger.info(f"Profile updated successfully for user: {uid}")
         return True
     except Exception as e:
-        print(f"Failed to update profile: {e}")
+        logger.error(f"Failed to update profile: {e}")
         return False
 
 def create_managed_child(parent_uid: str, child_data: dict) -> dict:
@@ -194,7 +198,7 @@ def create_managed_child(parent_uid: str, child_data: dict) -> dict:
             try:
                 auth.delete_user(child_user.uid)
             except Exception as cleanup_error:
-                print(f"Failed to clean up managed child Auth user: {cleanup_error}")
+                logger.error(f"Failed to clean up managed child Auth user: {cleanup_error}")
         raise
 
 def delete_user_account(uid: str) -> bool:
@@ -206,10 +210,10 @@ def delete_user_account(uid: str) -> bool:
         # Delete from Firebase Auth
         auth.delete_user(uid)
         
-        print(f"Deleted account for user: {uid}")
+        logger.info(f"Deleted account for user: {uid}")
         return True
     except Exception as e:
-        print(f"Error deleting user account: {e}")
+        logger.error(f"Error deleting user account: {e}")
         return False
 
 def generate_invite_code(child_id: str) -> InviteCodeResponse:
@@ -241,7 +245,7 @@ def generate_invite_code(child_id: str) -> InviteCodeResponse:
             child_id=child_id
         )
     except Exception as e:
-        print(f"Failed to generate invite code: {e}")
+        logger.error(f"Failed to generate invite code: {e}")
         raise e
 
 def link_child_account(parent_uid: str, invite_code: str) -> Dict[str, str]:
@@ -285,7 +289,7 @@ def link_child_account(parent_uid: str, invite_code: str) -> Dict[str, str]:
             "child_id": child_id
         }
     except Exception as e:
-        print(f"Failed to link child account: {e}")
+        logger.error(f"Failed to link child account: {e}")
         raise e
 
 def get_linked_children(parent_uid: str) -> List[dict]:
@@ -321,7 +325,7 @@ def get_linked_children(parent_uid: str) -> List[dict]:
                 
         return children
     except Exception as e:
-        print(f"Failed to get linked children: {e}")
+        logger.error(f"Failed to get linked children: {e}")
         raise e
 
 def get_fcm_token(uid: str) -> Optional[str]:
@@ -332,7 +336,7 @@ def get_fcm_token(uid: str) -> Optional[str]:
             return None
         return doc.to_dict().get("fcm_token")
     except Exception as e:
-        print(f"Failed to get FCM token for {uid}: {e}")
+        logger.error(f"Failed to get FCM token for {uid}: {e}")
         return None
 
 
@@ -344,7 +348,7 @@ def update_fcm_token(uid: str, token: str, platform: str) -> bool:
         )
         return True
     except Exception as e:
-        print(f"Failed to update FCM token for {uid}: {e}")
+        logger.error(f"Failed to update FCM token for {uid}: {e}")
         return False
 
 
@@ -356,7 +360,7 @@ def clear_fcm_token(uid: str) -> bool:
         )
         return True
     except Exception as e:
-        print(f"Failed to clear FCM token for {uid}: {e}")
+        logger.error(f"Failed to clear FCM token for {uid}: {e}")
         return False
 
 
@@ -397,7 +401,7 @@ def get_user_metrics() -> UserMetrics:
             last_updated=datetime.datetime.now()
         )
     except Exception as e:
-        print(f"Failed to get user metrics: {e}")
+        logger.error(f"Failed to get user metrics: {e}")
         # Return empty metrics on error
         return UserMetrics(
             total_users=0,
@@ -417,7 +421,7 @@ def get_notification_preferences(uid: str) -> NotificationPreferences:
             return NotificationPreferences(**doc.to_dict())
         return NotificationPreferences()  # Return defaults if not found
     except Exception as e:
-        print(f"Failed to get notification preferences for {uid}: {e}")
+        logger.error(f"Failed to get notification preferences for {uid}: {e}")
         return NotificationPreferences()
 
 def update_notification_preferences(uid: str, prefs_dict: dict) -> bool:
@@ -428,7 +432,7 @@ def update_notification_preferences(uid: str, prefs_dict: dict) -> bool:
         pref_ref.set(prefs_dict, merge=True)
         return True
     except Exception as e:
-        print(f"Failed to update notification preferences for {uid}: {e}")
+        logger.error(f"Failed to update notification preferences for {uid}: {e}")
         return False
 
 def verify_child_pin(child_id: str, pin: str) -> dict:
@@ -515,7 +519,7 @@ def verify_child_pin(child_id: str, pin: str) -> dict:
                 {"pin_hash": firestore.DELETE_FIELD, "pinHash": firestore.DELETE_FIELD}
             )
         except Exception as scrub_error:
-            print(f"Failed to scrub legacy PIN for {child_id}: {scrub_error}")
+            logger.error(f"Failed to scrub legacy PIN for {child_id}: {scrub_error}")
 
     return {
         "success": True,
@@ -758,11 +762,11 @@ def redeem_child_invite(code: str, email: str, password: str, pin: str, avatar_k
             try:
                 auth.delete_user(child_user.uid)
             except Exception as cleanup_error:
-                print(f"Failed to clean up teen Auth user: {cleanup_error}")
+                logger.error(f"Failed to clean up teen Auth user: {cleanup_error}")
         # Hand the code back so the teen can retry rather than being locked out
         # of an invite that was never actually consumed.
         try:
             invite_ref.update({"status": "pending", "updated_at": _utc_now().isoformat()})
         except Exception as release_error:
-            print(f"Failed to release invite {code}: {release_error}")
+            logger.error(f"Failed to release invite {code}: {release_error}")
         raise

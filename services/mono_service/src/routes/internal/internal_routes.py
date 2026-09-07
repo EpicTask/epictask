@@ -13,7 +13,7 @@ from pydantic import BaseModel
 
 from ...config.collection_names import collections
 from ...config.firebase_config import db
-from ...config.internal_auth import verify_internal_caller
+from ...config.internal_auth import verify_internal_caller, verify_pubsub_push_caller
 from ...domain.reward_models import RewardState
 from ...services.rewards import reward_service
 from ...storage import firestore_db as task_db
@@ -63,7 +63,7 @@ async def record_settlement(
 @router.post("/pubsub/narrative-payout-confirmed")
 async def handle_narrative_payout_confirmed(
     request: Request,
-    _: None = Depends(verify_internal_caller),
+    _: None = Depends(verify_pubsub_push_caller),
 ):
     """Pub/Sub push subscriber for narrative.payout.confirmed.v1.
 
@@ -78,11 +78,23 @@ async def handle_narrative_payout_confirmed(
     Returns 200 to ack. Raises 5xx to nack so Pub/Sub retries; crediting is
     idempotent, so a redelivery cannot double-count.
 
-    GCP setup (run once):
+    Auth is OIDC, not the shared header token: Pub/Sub push cannot send custom
+    headers, so `verify_internal_caller` can never be satisfied by a real
+    delivery. See `verify_pubsub_push_caller`.
+
+    GCP setup — see `resources/pubsub_subscription_setup.md` for the full
+    runbook including the topic, the push service account, the IAM binding and
+    the dead-letter topic. The subscription itself:
+
         gcloud pubsub subscriptions create narrative-payout-confirmed-sub \
           --topic=narrative.payout.confirmed.v1 \
           --push-endpoint=https://<mono-url>/api/internal/pubsub/narrative-payout-confirmed \
+          --push-auth-service-account=pubsub-push@<project>.iam.gserviceaccount.com \
           --ack-deadline=60
+
+    mono_service must also have PUBSUB_PUSH_SERVICE_ACCOUNT set to that same
+    address, or the route falls back to expecting the shared token and every
+    delivery is rejected.
     """
     envelope = await request.json()
     message = envelope.get("message") or {}

@@ -245,3 +245,17 @@ async def test_owner_can_verify_their_own_task(task_routes_with_owner):
     )
     assert result == {"response": "verified"}
     service.verify_task.assert_called_once()
+
+
+def test_money_routes_use_revocation_aware_auth():
+    """`/verify` initiates the XRPL payment, so it must reject a session whose
+    refresh tokens have been revoked. It previously used the plain check while
+    `/reward`, which only credits, used the strict one."""
+    import inspect
+
+    import src.routes.tasks.task_routes as task_routes
+    from src.config.security import get_current_user_strict
+
+    for handler in (task_routes.verify_task, task_routes.reward_task):
+        dependency = inspect.signature(handler).parameters["current_user"].default
+        assert dependency.dependency is get_current_user_strict, handler.__name__

@@ -14,6 +14,10 @@ from ...domain.task_models import (
 from ...domain.notification_models import NotificationType, NotificationCreate
 from ..notifications.notification_service import notification_service
 
+from ...config.logging_config import get_logger
+
+logger = get_logger(__name__)
+
 class TaskService:
     """Service for managing tasks."""
 
@@ -36,7 +40,7 @@ class TaskService:
                     task_id=request.task_id
                 )
         except Exception as e:
-            print(f"Warning: Failed to send notification: {e}")
+            logger.error(f"Warning: Failed to send notification: {e}")
             
         return result
 
@@ -56,7 +60,7 @@ class TaskService:
                     )
                     await notification_service.send_notification(notification)
         except Exception as e:
-            print(f"Warning: Failed to send cancellation notification: {e}")
+            logger.error(f"Warning: Failed to send cancellation notification: {e}")
             
         return task_db.delete_task("TaskCancelled", request)
 
@@ -83,7 +87,7 @@ class TaskService:
                         task_id=request.task_id
                     )
         except Exception as e:
-            print(f"Warning: Failed to send completion notification: {e}")
+            logger.error(f"Warning: Failed to send completion notification: {e}")
             
         return result
 
@@ -130,7 +134,7 @@ class TaskService:
                     )
                     await notification_service.send_notification(notification)
         except Exception as e:
-            print(f"Warning: Failed to send reward notification: {e}")
+            logger.error(f"Warning: Failed to send reward notification: {e}")
             
         return response
 
@@ -149,7 +153,7 @@ class TaskService:
                 if task.get("payment_method") == "Pay Directly" and request.verified:
                     await self._trigger_xrpl_payment(task, request.task_id, auth_token)
         except Exception as e:
-            print(f"Error triggering XRPL payment: {e}")
+            logger.error(f"Error triggering XRPL payment: {e}")
 
         # Verification is where payment is requested, so it is also where the
         # pending credit belongs. Idempotent with reward_task's credit.
@@ -170,7 +174,7 @@ class TaskService:
                         task_id=request.task_id
                     )
         except Exception as e:
-            print(f"Warning: Failed to send verification notification: {e}")
+            logger.error(f"Warning: Failed to send verification notification: {e}")
             
         return response
 
@@ -186,7 +190,7 @@ class TaskService:
 
     async def _trigger_xrpl_payment(self, task: dict, task_id: str, auth_token: str) -> None:
         if task.get("payment_submitted"):
-            print(f"Payment already submitted for task {task_id}, skipping duplicate")
+            logger.warning(f"Payment already submitted for task {task_id}, skipping duplicate")
             return
 
         xrpl_url = os.getenv("XRPL_SERVICE_URL", "")
@@ -199,7 +203,7 @@ class TaskService:
         dest_wallet = child_profile.get("wallet_address") if child_profile else None
 
         if not source_wallet or not dest_wallet:
-            print(f"Payment skipped for task {task_id}: missing wallet — source={bool(source_wallet)} dest={bool(dest_wallet)}")
+            logger.warning(f"Payment skipped for task {task_id}: missing wallet — source={bool(source_wallet)} dest={bool(dest_wallet)}")
             return
 
         xumm_token_obj = (parent_profile.get("userToken") or {})
@@ -223,7 +227,7 @@ class TaskService:
             )
             resp.raise_for_status()
             task_db.mark_payment_submitted(task_id)
-            print(f"Payment request submitted for task {task_id}")
+            logger.info(f"Payment request submitted for task {task_id}")
 
     async def get_all_tasks(self, user_id: str) -> Dict[str, Any]:
         """Get all tasks for a user."""

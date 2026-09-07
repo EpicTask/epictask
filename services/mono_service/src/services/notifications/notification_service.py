@@ -10,6 +10,10 @@ from ...domain.notification_models import (
     NotificationUpdate,
 )
 
+from ...config.logging_config import get_logger
+
+logger = get_logger(__name__)
+
 
 class NotificationService:
     """Service for managing notifications."""
@@ -161,14 +165,14 @@ class NotificationService:
             )
 
             messaging.send(message)
-            print(
+            logger.info(
                 f"FCM push sent to {notification.recipient_id} "
                 f"[{notification.type.value}]"
             )
 
         except messaging.UnregisteredError:
             # Token is no longer valid — clean it up so we don't retry
-            print(
+            logger.info(
                 f"FCM token for {notification.recipient_id} is unregistered; "
                 "clearing from profile."
             )
@@ -176,7 +180,7 @@ class NotificationService:
 
         except Exception as e:
             # Never let push failures bubble up to the caller
-            print(f"Warning: FCM dispatch failed for {notification.recipient_id}: {e}")
+            logger.error(f"Warning: FCM dispatch failed for {notification.recipient_id}: {e}")
 
 
 notification_service = NotificationService()
