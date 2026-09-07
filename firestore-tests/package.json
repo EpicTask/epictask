@@ -1,0 +1,15 @@
+{
+  "name": "epictask-firestore-rules-tests",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Security Rules tests. Rules are the trust boundary for task verification and reward state; they cannot be unverified.",
+  "scripts": {
+    "test": "firebase emulators:exec --only firestore --project demo-epictask 'node --test'"
+  },
+  "devDependencies": {
+    "@firebase/rules-unit-testing": "^4.0.1",
+    "firebase": "^11.0.0",
+    "firebase-tools": "^13.35.1"
+  }
+}

@@ -1,7 +1,16 @@
 """Firestore collection names for the Unified Monorepo Service."""
-import os
 
-_prefix = "test_" if os.getenv("ENV", "development") != "production" else "test_"
+# Deliberate: every collection is test-prefixed, in all environments, including
+# production. `users` is the sole exception and is declared unprefixed below.
+#
+# This was previously written as a ternary whose branches were both "test_",
+# which read as environment-conditional but never was. Stated plainly here so a
+# future reader does not "fix" the ternary and silently repoint production at a
+# different set of collections.
+#
+# Kept as a module constant rather than an env lookup so the collection topology
+# cannot vary by deploy.
+_prefix = "test_"
 
 
 class Collections:
@@ -39,6 +48,10 @@ class Collections:
     REWARDS = f"{_prefix}rewards"
 
     LEADERBOARD = f"{_prefix}leaderboard"
+
+    # Append-only reward ledger. Record of truth for earnings; LEADERBOARD is a
+    # projection derived from it. See domain/reward_models.py.
+    REWARD_EVENTS = f"{_prefix}reward_events"
 
     # Smart Contract / XRPL related (Legacy/Integration)
     CONTRACTS = f"{_prefix}contracts"

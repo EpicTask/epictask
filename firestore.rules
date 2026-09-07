@@ -61,25 +61,96 @@ service cloud.firestore {
       );
     }
 
+
+    // ---------------------------------------------------------------
+    // Task write constraints
+    //
+    // Verification and reward state drive real XRP payments, so they are
+    // server-only: mono_service writes them with the Admin SDK, which bypasses
+    // these rules. Before this restriction any assignee could set verified and
+    // rewarded on their own task and self-approve a payment to themselves.
+    // ---------------------------------------------------------------
+    function serverOnlyTaskFields() {
+      return ['verified', 'verification_method',
+              'payment_submitted', 'payment_submitted_at'];
+    }
+
+    // `resource != null` guard matters: Firestore evaluates every allow
+    // statement in a matched block, so the update rule is also evaluated for a
+    // create, where `resource` does not yet exist. Without the guard that is an
+    // evaluation error rather than a clean false.
+    function isTaskCreator() {
+      return signedIn()
+        && resource != null
+        && resource.data.get('user_id', null) == request.auth.uid;
+    }
+
+    // Only meaningful on create/update; `request.resource` is null on delete.
+    function taskWriteTouchesOnly(allowed) {
+      return request.resource != null
+        && resource != null
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(allowed);
+    }
+
     // Task Management
     match /tasks/{taskId} {
       allow read: if canAccessTask();
-      allow create: if signedIn() && request.resource.data.user_id == request.auth.uid;
-      allow update: if signedIn() && (
-        resource.data.user_id == request.auth.uid
-        || ('assigned_to_ids' in resource.data && request.auth.uid in resource.data.assigned_to_ids)
-      );
-      allow delete: if signedIn() && resource.data.user_id == request.auth.uid;
+
+      // No client path currently creates tasks (taskService.createTask goes
+      // through mono_service). Kept permissive-but-guarded rather than false so
+      // that a future client-side create cannot preset reward state; safe to
+      // tighten to `if false`.
+      allow create: if signedIn()
+        && request.resource.data.get('user_id', null) == request.auth.uid
+        && !request.resource.data.keys().hasAny(serverOnlyTaskFields())
+        && request.resource.data.get('rewarded', false) == false;
+
+      // Assignees (children) have NO client write path. Completion goes through
+      // taskService.taskCompleted on mono_service.
+      //
+      // Creators (parents) keep one temporary carve-out: the reward flip still
+      // performed by firestoreService.rewardTask. It may only move rewarded
+      // false -> true, and may not touch anything else — notably not the
+      // economic terms (reward_amount, reward_currency, assigned_to_ids).
+      //
+      // TODO(rewards-phase-2): delete this allow block once the approve button
+      // calls taskService.taskRewarded instead. Target state is no client write
+      // at all; the app has no other client-side task write.
+      allow update: if signedIn() && isTaskCreator()
+        && taskWriteTouchesOnly(['rewarded', 'rewardedAt'])
+        && resource.data.get('rewarded', false) == false;
+
+      allow delete: if signedIn() && isTaskCreator();
     }
 
     match /test_tasks/{taskId} {
       allow read: if canAccessTask();
-      allow create: if signedIn() && request.resource.data.user_id == request.auth.uid;
-      allow update: if signedIn() && (
-        resource.data.user_id == request.auth.uid
-        || ('assigned_to_ids' in resource.data && request.auth.uid in resource.data.assigned_to_ids)
-      );
-      allow delete: if signedIn() && resource.data.user_id == request.auth.uid;
+
+      // No client path currently creates tasks (taskService.createTask goes
+      // through mono_service). Kept permissive-but-guarded rather than false so
+      // that a future client-side create cannot preset reward state; safe to
+      // tighten to `if false`.
+      allow create: if signedIn()
+        && request.resource.data.get('user_id', null) == request.auth.uid
+        && !request.resource.data.keys().hasAny(serverOnlyTaskFields())
+        && request.resource.data.get('rewarded', false) == false;
+
+      // Assignees (children) have NO client write path. Completion goes through
+      // taskService.taskCompleted on mono_service.
+      //
+      // Creators (parents) keep one temporary carve-out: the reward flip still
+      // performed by firestoreService.rewardTask. It may only move rewarded
+      // false -> true, and may not touch anything else — notably not the
+      // economic terms (reward_amount, reward_currency, assigned_to_ids).
+      //
+      // TODO(rewards-phase-2): delete this allow block once the approve button
+      // calls taskService.taskRewarded instead. Target state is no client write
+      // at all; the app has no other client-side task write.
+      allow update: if signedIn() && isTaskCreator()
+        && taskWriteTouchesOnly(['rewarded', 'rewardedAt'])
+        && resource.data.get('rewarded', false) == false;
+
+      allow delete: if signedIn() && isTaskCreator();
     }
 
     // Task Comments
@@ -142,6 +213,20 @@ service cloud.firestore {
     }
 
     // Leaderboard (Public read for signed-in users, server-managed writes)
+    // Append-only reward ledger — the record of truth for earnings.
+    // Admin SDK only: a client able to write here could mint its own money.
+    // Readable by the earner and their family so the reward views can show a
+    // payout history without a backend round trip.
+    match /reward_events/{eventId} {
+      allow read: if signedIn() && isFamilyMember(resource.data.get('user_id', ''));
+      allow write: if false;
+    }
+
+    match /test_reward_events/{eventId} {
+      allow read: if signedIn() && isFamilyMember(resource.data.get('user_id', ''));
+      allow write: if false;
+    }
+
     match /leaderboard/{docId} {
       allow read: if signedIn();
       allow write: if false;

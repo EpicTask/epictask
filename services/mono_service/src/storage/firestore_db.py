@@ -5,11 +5,10 @@ from firebase_admin import firestore
 from ..domain.notification_models import NotificationCreate, NotificationType
 from ..services.notifications import notification_service
 
-from ..schema.schema import (
+from ..domain.task_models import (
     TaskCommentAdded,
     TaskCompleted,
     TaskCreated,
-    LeaderboardEntry,
     ComprehensiveRewards,
     FamilyLeaderboard,
     KidLeaderboardView,
@@ -455,95 +454,6 @@ def write_event_to_firestore(response: TaskEvent):
 # Leaderboard logic
 
 
-def update_leaderboard(response):
-    """Update the leaderboard for the user"""
-    try:
-        # Get the paid task document data
-        task_data = response
-
-        # Get the first value from assigned_to_ids array
-        assigned_to_id = task_data.assigned_to_ids[0]
-
-        # Increment the task count for the user in the leaderboard
-        leaderboard_ref = db.collection(collections.LEADERBOARD).document(
-            assigned_to_id
-        )
-
-        leaderboard_entry = leaderboard_ref.get()
-
-        if leaderboard_entry.exists:
-            # Update existing entry
-            current_tasks_completed = leaderboard_entry.get("tasks_completed")
-            tasks_completed = current_tasks_completed + 1
-            if task_data.reward_currency == "XRP":
-                xrp_earned = task_data.reward_amount + leaderboard_entry.get(
-                    "xrp_earned"
-                )
-                eTask_earned = leaderboard_entry.get("eTask_earned")
-            elif task_data.reward_currency == "eTask":
-                eTask_earned = task_data.reward_amount + leaderboard_entry.get(
-                    "eTask_earned"
-                )
-                xrp_earned = leaderboard_entry.get("xrp_earned")
-            leaderboard_ref.update(
-                {
-                    "tasks_completed": tasks_completed,
-                    "eTask_earned": eTask_earned,
-                    "xrp_earned": xrp_earned,
-                    "lastUpdated": firestore.SERVER_TIMESTAMP,
-                }
-            )
-        else:
-            # Create new entry
-            if task_data.reward_currency == "XRP":
-                xrp_earned = task_data.reward_amount
-                eTask_earned = 0.0
-            elif task_data.reward_currency == "eTask":
-                eTask_earned = task_data.reward_amount
-                xrp_earned = 0.0
-            leaderboard_entry_data = LeaderboardEntry(
-                user_id=assigned_to_id,
-                tasks_completed=1,
-                xrp_earned=xrp_earned,
-                eTask_earned=eTask_earned,
-            )
-            leaderboard_ref.set(leaderboard_entry_data.dict())
-            leaderboard_ref.update({"lastUpdated": firestore.SERVER_TIMESTAMP})
-
-        return f"Leaderboard updated for user {assigned_to_id}"
-    except FirestoreOperationException as e:
-        return handle_firestore_exception(e)
-
-
-def get_task_summary(user_id):
-    """Get task summary for a user that created them."""
-    try:
-        tasks_ref = db.collection(collections.TASKS)
-
-        # Get all tasks for user
-        all_tasks_query = tasks_ref.where("user_id", "==", user_id)
-        all_tasks = all_tasks_query.get()
-
-        # Count by status
-        completed_count = 0
-        in_progress_count = 0
-
-        for task in all_tasks:
-            task_data = task.to_dict()
-            status = task_data.get("rewarded", "")
-            if status == True:
-                completed_count += 1
-            else:
-                in_progress_count += 1
-
-        return {
-            "completed": completed_count,
-            "in_progress": in_progress_count,
-            "total": len(all_tasks),
-        }
-    except Exception as e:
-        print(f"Error getting task summary: {e}")
-        return {"completed": 0, "in_progress": 0, "total": 0}
 
 
 def get_kid_task_summary(user_id):
@@ -593,74 +503,10 @@ def get_recent_tasks(user_id, limit, days):
     return tasks
 
 
-def get_user_rewards(user_id):
-    """Get rewards for a user."""
-    try:
-        rewards_ref = db.collection(collections.PAID_TASKS).document(user_id)
-        rewards = rewards_ref.get()
-
-        if not rewards.exists:
-            return {"tokens_earned": 0, "level": 1, "rank": 0}
-
-        reward_data = rewards.to_dict()
-        tokens_earned = reward_data.get("tokens_earned", 0)
-
-        # Calculate level: Level = floor(tokens_earned / 1000) + 1
-        level = int(tokens_earned // 1000) + 1
-
-        # Get rank from leaderboard
-        rank = get_user_rank(user_id, tokens_earned)
-
-        return {"tokens_earned": tokens_earned, "level": level, "rank": rank}
-    except Exception as e:
-        print(f"Error getting user rewards: {e}")
-        return {"tokens_earned": 0, "level": 1, "rank": 0}
 
 
-def get_user_rank(user_id, tokens_earned):
-    """Calculate user's rank based on tokens earned."""
-    try:
-        leaderboard_ref = db.collection(collections.LEADERBOARD)
-        # Count users with more tokens
-        higher_users = leaderboard_ref.where("tokens_earned", ">", tokens_earned).get()
-        return len(higher_users) + 1
-    except Exception as e:
-        print(f"Error calculating user rank: {e}")
-        return 0
 
 
-def get_global_leaderboard():
-    """Get the global leaderboard."""
-    leaderboard_ref = db.collection(collections.LEADERBOARD)
-    query = leaderboard_ref.order_by(
-        "tokens_earned", direction=firestore.Query.DESCENDING
-    ).limit(100)
-
-    leaderboard = [doc.to_dict() for doc in query.get()]
-    return leaderboard
-
-
-def get_children_rewards(parent_id):
-    """Get rewards for a parent's children."""
-    users_ref = db.collection(collections.USERS).document(parent_id)
-    parent = users_ref.get()
-
-    if not parent.exists:
-        return []
-
-    child_ids = parent.to_dict().get("children", [])
-
-    if not child_ids:
-        return []
-
-    rewards_ref = db.collection(collections.REWARDS)
-    query = rewards_ref.where("user_id", "in", child_ids)
-
-    rewards = [doc.to_dict() for doc in query.get()]
-    return rewards
-
-
-# Admin/Metrics Functions
 def get_user_metrics():
     """Get comprehensive user metrics."""
     try:
@@ -1268,75 +1114,3 @@ def mark_payment_submitted(task_id: str) -> None:
         print(f"Warning: Failed to mark payment submitted for task {task_id}: {e}")
 
 
-def update_enhanced_leaderboard(task_data):
-    """Update the enhanced leaderboard with token-based scoring for multiple users"""
-    try:
-        if not task_data.assigned_to_ids or len(task_data.assigned_to_ids) == 0:
-            return "No assigned users to update leaderboard"
-        
-        updated_users = []
-        
-        # Loop through all assigned users
-        for assigned_to_id in task_data.assigned_to_ids:
-            try:
-                leaderboard_ref = db.collection(collections.LEADERBOARD).document(assigned_to_id)
-                leaderboard_entry = leaderboard_ref.get()
-                
-                # Initialize currency values
-                xrp_earned = 0.0
-                rlusd_earned = 0.0
-                etask_earned = 0.0
-                tasks_completed = 1
-                
-                if leaderboard_entry.exists:
-                    # Update existing entry
-                    current_data = leaderboard_entry.to_dict()
-                    tasks_completed = current_data.get("tasks_completed", 0) + 1
-                    xrp_earned = current_data.get("xrp_earned", 0.0)
-                    rlusd_earned = current_data.get("rlusd_earned", 0.0)
-                    etask_earned = current_data.get("eTask_earned", 0.0)
-                
-                # Add new reward based on currency
-                if task_data.reward_currency.upper() == "XRP":
-                    xrp_earned += task_data.reward_amount
-                elif task_data.reward_currency.upper() == "RLUSD":
-                    rlusd_earned += task_data.reward_amount
-                elif task_data.reward_currency.upper() == "ETASK":
-                    etask_earned += task_data.reward_amount
-                
-                # Calculate token score and level
-                token_score = calculate_total_token_score(xrp_earned, rlusd_earned, etask_earned)
-                tokens_dict = {
-                    'xrp_earned': xrp_earned,
-                    'rlusd_earned': rlusd_earned,
-                    'etask_earned': etask_earned
-                }
-                level = calculate_user_level(tokens_dict, tasks_completed)
-                
-                # Update leaderboard entry (no more USD values)
-                leaderboard_data = {
-                    "user_id": assigned_to_id,
-                    "tasks_completed": tasks_completed,
-                    "xrp_earned": xrp_earned,
-                    "rlusd_earned": rlusd_earned,
-                    "eTask_earned": etask_earned,
-                    "token_score": token_score,
-                    "level": level,
-                    "last_updated": firestore.SERVER_TIMESTAMP
-                }
-                
-                leaderboard_ref.set(leaderboard_data, merge=True)
-                updated_users.append(assigned_to_id)
-                
-            except Exception as user_error:
-                print(f"Error updating leaderboard for user {assigned_to_id}: {user_error}")
-                continue
-        
-        if updated_users:
-            return f"Enhanced leaderboard updated for {len(updated_users)} users: {', '.join(updated_users)}"
-        else:
-            return "Failed to update leaderboard for any users"
-        
-    except Exception as e:
-        print(f"Error updating enhanced leaderboard: {e}")
-        return f"Failed to update enhanced leaderboard: {str(e)}"

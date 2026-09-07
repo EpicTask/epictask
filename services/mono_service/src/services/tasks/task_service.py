@@ -4,6 +4,8 @@ import httpx
 
 from ...storage.db import user_db
 from ...storage.db import task_db
+from ...domain.reward_models import RewardState
+from ...services.rewards import reward_service
 from ...domain.task_models import (
     TaskCreated, TaskAssigned, TaskCancelled, TaskCommentAdded,
     TaskCompleted, TaskExpired, TaskRatingUpdate, TaskRewarded,
@@ -95,13 +97,20 @@ class TaskService:
 
     async def reward_task(self, request: TaskRewarded) -> str:
         """Reward a user for completing a task."""
+        task = task_db.get_task(request.task_id)
+        if not task or not isinstance(task, dict):
+            raise ValueError(f"task {request.task_id!r} not found; cannot reward")
+
+        # Credit BEFORE flipping task state: if crediting fails the task stays
+        # un-rewarded, so a retry is clean. The reverse order would leave a task
+        # marked rewarded with no credit behind it — which is the failure mode
+        # this whole rewrite exists to remove.
+        #
+        # Idempotent by construction (deterministic event ID), so it is safe for
+        # both this route and verify_task to credit. See reward_models.
+        self._credit(task)
+
         response = task_db.update_task("TaskRewarded", request)
-        
-        # Side effect: Update leaderboard
-        try:
-            task_db.update_enhanced_leaderboard(request)
-        except Exception as e:
-            print(f"Warning: Failed to update leaderboard: {e}")
         
         # Notify user of reward
         try:
@@ -142,11 +151,12 @@ class TaskService:
         except Exception as e:
             print(f"Error triggering XRPL payment: {e}")
 
-        # Side effect: Update leaderboard
-        try:
-            task_db.update_enhanced_leaderboard(request)
-        except Exception as e:
-            print(f"Warning: Failed to update leaderboard: {e}")
+        # Verification is where payment is requested, so it is also where the
+        # pending credit belongs. Idempotent with reward_task's credit.
+        if request.verified:
+            task = task_db.get_task(request.task_id)
+            if task and isinstance(task, dict):
+                self._credit(task)
             
         # Notify user (Child) that task is verified
         try:
@@ -163,6 +173,16 @@ class TaskService:
             print(f"Warning: Failed to send verification notification: {e}")
             
         return response
+
+    def _credit(self, task: dict) -> None:
+        """Append the pending reward credit for a task.
+
+        Deliberately not wrapped in a try/except. A credit that fails must fail
+        the request so it can be retried; the previous implementation printed a
+        warning and continued, which is why a 100%-failing credit path survived
+        several releases unnoticed.
+        """
+        reward_service.credit_task(task, state=RewardState.PENDING)
 
     async def _trigger_xrpl_payment(self, task: dict, task_id: str, auth_token: str) -> None:
         if task.get("payment_submitted"):
