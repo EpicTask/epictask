@@ -122,7 +122,12 @@ class RewardProjection(BaseModel):
     # score as `level`, so unlike the previous implementation it cannot be
     # pinned at 0 by a level earned through a different unit.
     level_progress: float = 0.0
+    # Written by the rank recompute job, not on the write path: rank is global,
+    # so it cannot be derived from one user's events. 0 means "not yet ranked",
+    # and reads fall back to a live count in that case.
+    global_rank: int = 0
     updated_at: Optional[str] = None
+    ranked_at: Optional[str] = None
 
 
 def token_score(currencies: Dict[str, CurrencyTotals]) -> float:

@@ -100,6 +100,16 @@ def credit_narrative_payout(
     return {user_id: reward_db.append_reward_event(event)}
 
 
+def expire_pending() -> Dict[str, Any]:
+    """Void pending credits past the expiry window. Scheduled job entrypoint."""
+    return reward_db.expire_pending_credits()
+
+
+def recompute_ranks() -> Dict[str, Any]:
+    """Refresh stored global ranks. Scheduled job entrypoint."""
+    return reward_db.recompute_global_ranks()
+
+
 def get_rewards(user_id: str) -> Dict[str, Any]:
     """Projection for one user."""
     return reward_db.get_projection(user_id)

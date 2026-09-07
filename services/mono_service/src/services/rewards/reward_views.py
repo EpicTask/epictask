@@ -32,15 +32,22 @@ def _display_name(user_id: str) -> str:
     return data.get("displayName") or data.get("display_name") or ""
 
 
-def _global_rank(user_id: str, score: float) -> int:
-    """Rank by counting only users who score higher.
+def _global_rank(projection: Dict[str, Any], score: float) -> int:
+    """Rank on settled score, preferring the value the rank job stored.
 
-    One filtered query rather than a scan of every leaderboard document. Ranking
-    is on `token_score` alone; the previous code ranked by a
+    Ranking is on `token_score` alone. The previous code ranked by a
     `score*0.7 + tasks*0.3` composite in one place and by raw `token_score` in
     another, so the rank a child saw disagreed with their row in the parent's
     list by construction.
+
+    The stored value is a cache maintained by `recompute_global_ranks`. The live
+    count below is the invariant: it runs for anyone credited since the last job
+    run, so rank is never wrong, only occasionally more expensive.
     """
+    stored = int(projection.get("global_rank") or 0)
+    if stored > 0:
+        return stored
+
     higher = db.collection(collections.LEADERBOARD).where(
         filter=FieldFilter("token_score", ">", score)
     )
@@ -145,7 +152,7 @@ def get_comprehensive_rewards(
         tasks_pending=int(projection.get("tasks_pending", 0)),
         level=level,
         family_rank=0,  # assigned by the family view, which knows the siblings
-        global_rank=_global_rank(user_id, score) if with_global_rank else 0,
+        global_rank=_global_rank(projection, score) if with_global_rank else 0,
         token_score=score,
         achievements=calculate_achievements(xrp, rlusd, etask, tasks_settled, level),
         next_level_progress=float(projection.get("level_progress", 0.0)),

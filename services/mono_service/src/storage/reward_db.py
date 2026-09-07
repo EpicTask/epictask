@@ -4,17 +4,20 @@ Write path:  append_reward_event() -> rebuild_projection()
 Read path:   get_projection()
 
 """
-from datetime import datetime, timezone
-from typing import Any, Dict, List, Optional
+from datetime import datetime, timedelta, timezone
+from typing import Any, Dict, List, Optional, Set
 
+from firebase_admin import firestore
 from google.cloud.firestore_v1.base_query import FieldFilter
 
 from ..config.collection_names import collections
 from ..config.firebase_config import db
 from ..domain.reward_models import (
+    PENDING_EXPIRY_DAYS,
     CurrencyTotals,
     RewardEvent,
     RewardProjection,
+    RewardSource,
     RewardState,
     level_for,
     level_progress_for,
@@ -73,11 +76,17 @@ def rebuild_projection(user_id: str) -> Dict[str, Any]:
         for e in events
         if e.get("state") == RewardState.SETTLED.value
     }
+    # Settled beats voided, deliberately.
+    #
+    # The expiry job and a late settlement can race: a parent who signs just as
+    # the credit expires produces both a VOIDED and a SETTLED event for the same
+    # source. The money did move, so honouring the void would delete earnings
+    # the child genuinely has.
     voided_sources = {
         e.get("source_id")
         for e in events
         if e.get("state") == RewardState.VOIDED.value
-    }
+    } - settled_sources
 
     for event in events:
         state = event.get("state")
@@ -129,3 +138,98 @@ def get_projection(user_id: str) -> Dict[str, Any]:
     if snapshot.exists:
         return snapshot.to_dict()
     return RewardProjection(user_id=user_id).model_dump(mode="json")
+
+
+# ---------------------------------------------------------------------------
+# Scheduled maintenance
+# ---------------------------------------------------------------------------
+
+def expire_pending_credits(older_than_days: int = PENDING_EXPIRY_DAYS) -> Dict[str, Any]:
+    """Void pending credits that have sat unsettled past the window.
+
+    Settlement requires the parent to sign in Xumm, and some never will — an
+    unlinked wallet means they cannot. Without this, a child keeps a balance
+    that will never arrive, which is a promise the app cannot keep.
+
+    Voiding is itself an appended event, so the history stays intact: you can
+    still see that a credit was granted and later expired.
+    """
+    cutoff = (datetime.now(timezone.utc) - timedelta(days=older_than_days)).isoformat()
+
+    query = db.collection(collections.REWARD_EVENTS).where(
+        filter=FieldFilter("state", "==", RewardState.PENDING.value)
+    )
+
+    voided: List[str] = []
+    affected_users: Set[str] = set()
+
+    for doc in query.stream():
+        event = doc.to_dict() or {}
+        created_at = event.get("created_at")
+        if not created_at or created_at >= cutoff:
+            continue
+
+        source_id = event.get("source_id")
+        user_id = event.get("user_id")
+        if not source_id or not user_id:
+            continue
+
+        # Already settled: nothing to expire, and voiding it would delete real
+        # earnings. Also covers the case where settlement landed after the
+        # pending credit was written.
+        settled_id = RewardEvent.make_id(source_id, RewardState.SETTLED)
+        if db.collection(collections.REWARD_EVENTS).document(settled_id).get().exists:
+            continue
+
+        void_event = RewardEvent(
+            event_id=RewardEvent.make_id(source_id, RewardState.VOIDED),
+            user_id=user_id,
+            source=RewardSource(event.get("source", RewardSource.TASK.value)),
+            source_id=source_id,
+            state=RewardState.VOIDED,
+            amount=float(event.get("amount") or 0.0),
+            currency=event.get("currency") or "ETASK",
+        )
+        # Bypasses the projection rebuild per event; rebuilt once per user below.
+        void_ref = db.collection(collections.REWARD_EVENTS).document(
+            void_event.event_id
+        )
+        if void_ref.get().exists:
+            continue
+
+        payload = void_event.model_dump(mode="json")
+        payload["created_at"] = _now()
+        void_ref.set(payload)
+
+        voided.append(void_event.event_id)
+        affected_users.add(user_id)
+
+    for user_id in affected_users:
+        rebuild_projection(user_id)
+
+    return {
+        "cutoff": cutoff,
+        "voided_count": len(voided),
+        "voided": voided,
+        "users_rebuilt": sorted(affected_users),
+    }
+
+
+def recompute_global_ranks() -> Dict[str, Any]:
+    """Write `global_rank` onto every projection, ordered by settled score.
+
+    Reads fall back to a live `token_score >` count when this has not run for a
+    user yet, so rank is always correct; this job exists to make the common case
+    a single document read instead of a query whose cost grows with how far down
+    the ranking the user sits.
+    """
+    query = db.collection(collections.LEADERBOARD).order_by(
+        "token_score", direction=firestore.Query.DESCENDING
+    )
+
+    ranked = 0
+    for position, doc in enumerate(query.stream(), start=1):
+        doc.reference.update({"global_rank": position, "ranked_at": _now()})
+        ranked += 1
+
+    return {"ranked_count": ranked}

@@ -131,3 +131,51 @@ async def handle_narrative_payout_confirmed(
         payout, state=RewardState.SETTLED
     )
     return {"success": True, "request_id": request_id, "credited": credited}
+
+
+# ---------------------------------------------------------------------------
+# Scheduled jobs
+#
+# Driven by Cloud Scheduler with the internal token in a header, rather than by
+# Cloud Functions — this project deliberately has no Functions infrastructure
+# (see the reward pipeline notes in CLAUDE.md).
+# ---------------------------------------------------------------------------
+
+@router.post("/jobs/expire-pending")
+async def run_expire_pending(
+    request: Request,
+    _: None = Depends(verify_internal_caller),
+):
+    """Void reward credits that have been pending past the expiry window.
+
+    Idempotent: re-running voids nothing extra, because a void is itself an
+    event at a deterministic ID.
+
+    GCP setup (run once):
+        gcloud scheduler jobs create http expire-pending-rewards \
+          --schedule="0 3 * * *" \
+          --uri=https://<mono-url>/api/internal/jobs/expire-pending \
+          --http-method=POST \
+          --headers="X-Internal-Token=<secret>"
+    """
+    return {"success": True, **reward_service.expire_pending()}
+
+
+@router.post("/jobs/recompute-ranks")
+async def run_recompute_ranks(
+    request: Request,
+    _: None = Depends(verify_internal_caller),
+):
+    """Refresh the stored global rank on every reward projection.
+
+    Safe to run at any cadence: reads fall back to a live count for anyone this
+    has not covered yet, so a missed run costs query time, never correctness.
+
+    GCP setup (run once):
+        gcloud scheduler jobs create http recompute-reward-ranks \
+          --schedule="*/15 * * * *" \
+          --uri=https://<mono-url>/api/internal/jobs/recompute-ranks \
+          --http-method=POST \
+          --headers="X-Internal-Token=<secret>"
+    """
+    return {"success": True, **reward_service.recompute_ranks()}
