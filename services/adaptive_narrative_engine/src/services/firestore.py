@@ -1,12 +1,17 @@
 """Firestore database operations for stories and progress."""
+import logging
 from datetime import datetime
 from typing import List, Optional, Dict, Any
+
+from fastapi import HTTPException, status
 from google.cloud.firestore import Query, ArrayUnion, transactional, Transaction
 from google.cloud.firestore_v1.base_query import FieldFilter
 
 from src.config.firebase_config import db
 from src.config.collection_names import collections
 from src.domain.models import Story, StoryNode, StoryProgress
+
+logger = logging.getLogger("ane").getChild("firestore")
 
 
 def resolve_user_age(user_id: str) -> int:
@@ -24,6 +29,62 @@ def resolve_user_age(user_id: str) -> int:
     except Exception:
         pass
     return 10
+
+
+def is_guardian_of(caller_uid: str, target_uid: str) -> bool:
+    """True when `target_uid` is a child of `caller_uid`, per server-side data.
+
+    Children aged 5-12 are "managed": they have a Firebase uid but no
+    credentials, so the device stays signed in as the **parent** while the app
+    runs with the child as the active context (`effectiveUserId` in
+    AuthContext). Every narrative call therefore arrives with the parent's
+    token and the child's `user_id`.
+
+    The link is read from Firestore, never from the request, so a caller cannot
+    claim guardianship of an arbitrary uid.
+
+    Both directions are accepted, matching `isFamilyMember()` in
+    firestore.rules and `_require_self_or_guardian` in mono_service: the
+    parent's `children` array is authoritative, and the child's `parent_id` is
+    a fallback for older child documents that predate that array.
+    """
+    if not caller_uid or not target_uid:
+        return False
+
+    try:
+        caller_doc = db.collection("users").document(caller_uid).get()
+        if caller_doc.exists:
+            children = (caller_doc.to_dict() or {}).get("children") or []
+            if target_uid in children:
+                return True
+
+        target_doc = db.collection("users").document(target_uid).get()
+        if target_doc.exists:
+            if (target_doc.to_dict() or {}).get("parent_id") == caller_uid:
+                return True
+    except Exception:
+        logger.warning(
+            "Guardianship lookup failed; denying access", exc_info=True
+        )
+
+    return False
+
+
+def validate_user_access(caller_uid: str, target_uid: str) -> None:
+    """Allow a user to act on their own data, or a parent on their child's.
+
+    Replaces bare `validate_user_ownership` on the narrative routes, which
+    required exact uid equality and so returned 403 for every managed child —
+    the app's entire 5-12 flow.
+    """
+    if caller_uid and caller_uid == target_uid:
+        return
+    if is_guardian_of(caller_uid, target_uid):
+        return
+    raise HTTPException(
+        status_code=status.HTTP_403_FORBIDDEN,
+        detail="You don't have permission to access this resource",
+    )
 
 
 class FirestoreService:

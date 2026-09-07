@@ -2,6 +2,24 @@
 EpicTask Monorepo Service
 Unified service combining all services for EpicTask.
 """
+# Fail with an actionable message rather than a cryptic ImportError deep in a
+# domain module. requirements.txt pins pydantic >= 2, but running `uvicorn
+# src.main:app` with a system interpreter that has pydantic 1.x dies on
+# `cannot import name 'field_validator' from 'pydantic'` several frames down,
+# which does not point at the real problem: the wrong interpreter.
+import pydantic as _pydantic
+
+if int(_pydantic.VERSION.split(".")[0]) < 2:
+    import sys as _sys
+
+    raise RuntimeError(
+        f"pydantic {_pydantic.VERSION} found, but this service requires >= 2 "
+        f"(see requirements.txt).\n"
+        f"Interpreter in use: {_sys.executable}\n"
+        f"Run via the project venv instead, e.g.:\n"
+        f"    .venv/bin/python -m uvicorn src.main:app --reload --port 8080"
+    )
+
 import os
 from dotenv import load_dotenv
 from datetime import datetime
@@ -77,13 +95,22 @@ async def health_check():
 # Root endpoint
 @app.get("/")
 async def root(request: Request):
+    # Keyword form on purpose. The legacy positional call
+    # `TemplateResponse("index.html", {...})` relied on a Starlette shim gated
+    # on `isinstance(args[0], str)`. That shim has been removed in current
+    # Starlette, so the template name was taken as the `request` and the
+    # context dict as the template name — which Jinja then tried to use as a
+    # cache key, giving `TypeError: unhashable type: 'dict'`.
+    #
+    # Matches the form adaptive_narrative_engine already uses, which is why
+    # that service was unaffected.
     return templates.TemplateResponse(
-        "index.html",
-        {
-            "request": request,
+        request=request,
+        name="index.html",
+        context={
             "service": "EpicTask Unified Service",
-            "version": "1.0.0"
-        }
+            "version": "1.0.0",
+        },
     )
 
 # Import and include routers

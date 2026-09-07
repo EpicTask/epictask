@@ -2,6 +2,24 @@
 Adaptive Narrative Engine (ANE) - Main Application
 Narrative-first learning for ages 5-18 with blockchain rewards
 """
+# Fail with an actionable message rather than a cryptic ImportError deep in a
+# domain module. Mirrors the identical guard in mono_service/src/main.py; keep
+# the two in sync. `src/domain/models.py` imports pydantic's `field_validator`,
+# which does not exist in pydantic 1.x, so a system interpreter with the older
+# version dies several frames down without pointing at the real cause.
+import pydantic as _pydantic
+
+if int(_pydantic.VERSION.split(".")[0]) < 2:
+    import sys as _sys
+
+    raise RuntimeError(
+        f"pydantic {_pydantic.VERSION} found, but this service requires >= 2 "
+        f"(see requirements.txt).\n"
+        f"Interpreter in use: {_sys.executable}\n"
+        f"Run via the project venv instead, e.g.:\n"
+        f"    .venv/bin/python -m uvicorn src.main:app --reload --port 8080"
+    )
+
 import os
 from dotenv import load_dotenv
 from datetime import datetime

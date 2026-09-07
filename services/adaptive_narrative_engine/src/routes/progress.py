@@ -20,9 +20,12 @@ from src.domain.validators import (
     validate_story_published,
     validate_node_exists,
     validate_choice_index,
-    validate_user_ownership
 )
-from src.services.firestore import firestore_service, resolve_user_age
+from src.services.firestore import (
+    firestore_service,
+    resolve_user_age,
+    validate_user_access,
+)
 from src.services.recommender_client import recommender_client
 from src.adapters.pubsub_publisher import pubsub_publisher
 from src.domain.models import RecommendRequest, UserProfile, KidProgressSummary
@@ -39,7 +42,7 @@ async def start_story(
     Start a new story for a user.
     """
     user_id = get_user_id(current_user)
-    validate_user_ownership(user_id, request.user_id)
+    validate_user_access(user_id, request.user_id)
     
     # Verify story exists and is published
     story = await firestore_service.get_story(request.story_id)
@@ -82,7 +85,7 @@ async def get_progress_summary(
     Get a summary of user's narrative progress and payouts.
     """
     auth_user_id = get_user_id(current_user)
-    validate_user_ownership(auth_user_id, user_id)
+    validate_user_access(auth_user_id, user_id)
     
     summary = await firestore_service.get_progress_summary(user_id)
     return summary
@@ -102,7 +105,7 @@ async def advance_progress(
     This endpoint handles the core progression logic.
     """
     user_id = get_user_id(current_user)
-    validate_user_ownership(user_id, request.user_id)
+    validate_user_access(user_id, request.user_id)
     user_age = resolve_user_age(user_id)
     validate_age(user_age)
     
@@ -235,7 +238,7 @@ async def get_progress(
     Returns progress data or 404 if not found.
     """
     auth_user_id = get_user_id(current_user)
-    validate_user_ownership(auth_user_id, user_id)
+    validate_user_access(auth_user_id, user_id)
     
     progress = await firestore_service.get_progress(user_id, story_id)
     
@@ -263,7 +266,7 @@ async def get_all_progress(
     Returns list of progress entries.
     """
     auth_user_id = get_user_id(current_user)
-    validate_user_ownership(auth_user_id, user_id)
+    validate_user_access(auth_user_id, user_id)
     
     progress_list = await firestore_service.get_all_user_progress(user_id)
     return progress_list
@@ -280,7 +283,7 @@ async def complete_money_moment(
     Idempotent: repeated calls with the same moment_id are no-ops.
     """
     auth_user_id = get_user_id(current_user)
-    validate_user_ownership(auth_user_id, request.user_id)
+    validate_user_access(auth_user_id, request.user_id)
 
     progress = await firestore_service.get_progress(request.user_id, request.story_id)
     if not progress:

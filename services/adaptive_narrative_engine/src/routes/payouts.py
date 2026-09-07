@@ -7,7 +7,8 @@ logger = logging.getLogger(__name__)
 
 from src.config.security import get_current_user, get_user_id
 from src.domain.models import PayoutRequest, PayoutRequestRecord
-from src.domain.validators import validate_payout_amount, validate_user_ownership
+from src.domain.validators import validate_payout_amount
+from src.services.firestore import validate_user_access
 from src.services.payout_service import payout_service
 from src.adapters.pubsub_publisher import pubsub_publisher
 
@@ -35,7 +36,7 @@ async def request_payout(
     - Funds go to parent's wallet address by default
     """
     user_id = get_user_id(current_user)
-    validate_user_ownership(user_id, request.user_id)
+    validate_user_access(user_id, request.user_id)
     
     # Validate amount
     validate_payout_amount(request.amount)
@@ -131,7 +132,7 @@ async def get_payout_request(
         )
     
     # Verify ownership
-    validate_user_ownership(user_id, payout.get("user_id"))
+    validate_user_access(user_id, payout.get("user_id"))
     
     return payout
 
@@ -151,7 +152,7 @@ async def get_user_payouts(
     Returns list of payout requests ordered by creation date (newest first).
     """
     auth_user_id = get_user_id(current_user)
-    validate_user_ownership(auth_user_id, user_id)
+    validate_user_access(auth_user_id, user_id)
     
     from src.config.firebase_config import db
     from src.config.collection_names import collections

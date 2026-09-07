@@ -237,3 +237,106 @@ async def test_the_subscriber_requires_the_internal_token(narrative):
     with pytest.raises(HTTPException) as exc:
         verify_internal_caller(_Req(_event(), headers={}))
     assert exc.value.status_code == 403
+
+
+# ---------------------------------------------------------------------------
+# Push authentication
+#
+# Pub/Sub push cannot send custom headers, so this route cannot use the shared
+# X-Internal-Token that every other internal route uses. Getting this wrong is
+# silent: the subscription looks configured and every delivery is rejected.
+# ---------------------------------------------------------------------------
+
+SA = "pubsub-push@task-coin-384722.iam.gserviceaccount.com"
+
+
+def test_without_a_push_identity_it_falls_back_to_the_shared_token(monkeypatch):
+    """Local development and the tests above rely on this path."""
+    from src.config.internal_auth import verify_pubsub_push_caller
+
+    monkeypatch.delenv("PUBSUB_PUSH_SERVICE_ACCOUNT", raising=False)
+    monkeypatch.setenv("INTERNAL_SERVICE_TOKEN", TOKEN)
+    assert verify_pubsub_push_caller(_Req(headers={"X-Internal-Token": TOKEN})) is None
+
+
+def test_the_shared_token_stops_working_once_a_push_identity_is_set(monkeypatch):
+    """A deployment configured for OIDC must not still honour the secret."""
+    from src.config.internal_auth import verify_pubsub_push_caller
+
+    monkeypatch.setenv("PUBSUB_PUSH_SERVICE_ACCOUNT", SA)
+    monkeypatch.setenv("INTERNAL_SERVICE_TOKEN", TOKEN)
+    with pytest.raises(HTTPException) as exc:
+        verify_pubsub_push_caller(_Req(headers={"X-Internal-Token": TOKEN}))
+    assert exc.value.status_code == 403
+
+
+def test_a_delivery_with_no_authorization_header_is_rejected(monkeypatch):
+    from src.config.internal_auth import verify_pubsub_push_caller
+
+    monkeypatch.setenv("PUBSUB_PUSH_SERVICE_ACCOUNT", SA)
+    with pytest.raises(HTTPException) as exc:
+        verify_pubsub_push_caller(_Req(headers={}))
+    assert exc.value.status_code == 403
+    assert "OIDC" in exc.value.detail
+
+
+def test_an_unverifiable_oidc_token_is_rejected(monkeypatch):
+    from src.config.internal_auth import verify_pubsub_push_caller
+
+    monkeypatch.setenv("PUBSUB_PUSH_SERVICE_ACCOUNT", SA)
+    with pytest.raises(HTTPException) as exc:
+        verify_pubsub_push_caller(
+            _Req(headers={"Authorization": "Bearer not-a-real-token"})
+        )
+    assert exc.value.status_code == 403
+
+
+def test_a_valid_token_from_the_wrong_service_account_is_rejected(monkeypatch):
+    """Any Google account can mint a valid OIDC token; only ours may deliver."""
+    import src.config.internal_auth as internal_auth
+    from google.oauth2 import id_token as google_id_token
+
+    monkeypatch.setenv("PUBSUB_PUSH_SERVICE_ACCOUNT", SA)
+    monkeypatch.setattr(
+        google_id_token,
+        "verify_oauth2_token",
+        lambda *a, **k: {"email": "someone-else@evil.example", "email_verified": True},
+    )
+    with pytest.raises(HTTPException) as exc:
+        internal_auth.verify_pubsub_push_caller(
+            _Req(headers={"Authorization": "Bearer x"})
+        )
+    assert exc.value.status_code == 403
+    assert "service account" in exc.value.detail
+
+
+def test_an_unverified_email_claim_is_rejected(monkeypatch):
+    import src.config.internal_auth as internal_auth
+    from google.oauth2 import id_token as google_id_token
+
+    monkeypatch.setenv("PUBSUB_PUSH_SERVICE_ACCOUNT", SA)
+    monkeypatch.setattr(
+        google_id_token,
+        "verify_oauth2_token",
+        lambda *a, **k: {"email": SA, "email_verified": False},
+    )
+    with pytest.raises(HTTPException) as exc:
+        internal_auth.verify_pubsub_push_caller(
+            _Req(headers={"Authorization": "Bearer x"})
+        )
+    assert exc.value.status_code == 403
+
+
+def test_a_valid_token_from_the_expected_service_account_passes(monkeypatch):
+    import src.config.internal_auth as internal_auth
+    from google.oauth2 import id_token as google_id_token
+
+    monkeypatch.setenv("PUBSUB_PUSH_SERVICE_ACCOUNT", SA)
+    monkeypatch.setattr(
+        google_id_token,
+        "verify_oauth2_token",
+        lambda *a, **k: {"email": SA, "email_verified": True},
+    )
+    assert internal_auth.verify_pubsub_push_caller(
+        _Req(headers={"Authorization": "Bearer x"})
+    ) is None
