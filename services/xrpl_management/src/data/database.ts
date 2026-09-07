@@ -17,7 +17,9 @@ export const writeResponseToDatabase = async (
     const res = await fetch(`${MONO_SERVICE_URL}/api/xrpl/log`, {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
+        // The log endpoint is no longer unauthenticated.
+        'X-Internal-Token': process.env.INTERNAL_SERVICE_TOKEN ?? ''
       },
       body: JSON.stringify(payload)
     });

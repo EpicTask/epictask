@@ -78,6 +78,7 @@ from src.routes.users import user_routes
 from src.routes.notifications import notification_routes
 # from src.routes.contracts import contract_routes
 from src.routes.xrpl import xrpl_routes
+from src.routes.internal import internal_routes
 
 
 # Task routes
@@ -94,6 +95,9 @@ app.include_router(notification_routes.router, prefix="/api/notifications", tags
 
 # XRPL routes
 app.include_router(xrpl_routes.router, prefix="/api/xrpl", tags=["xrpl"])
+
+# Service-to-service only; guarded by a shared internal token, never a user ID token.
+app.include_router(internal_routes.router, prefix="/api", tags=["internal"])
 
 if __name__ == "__main__":
     import uvicorn

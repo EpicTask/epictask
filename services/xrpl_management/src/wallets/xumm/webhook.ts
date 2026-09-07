@@ -6,6 +6,7 @@ import {
   notifyPaymentSent,
 } from "../../services/notificationHelper.js";
 import { updateUserToken } from "../../services/userTokenService.js";
+import { reportSettlement } from "../../services/settlementService.js";
 import { XummUserToken } from "./typings/index.js";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
@@ -73,6 +74,23 @@ async function _handleSignedTransaction(
   const { function: fn, uid, task_id } = blob;
 
   // uid is required for every notification — skip if absent
+  // Settlement first, and deliberately before the uid check below.
+  //
+  // A settled credit only needs task_id — mono_service reads the amount,
+  // currency and assignees from the task document. Gating it on uid would mean
+  // never settling anything, because the payment payload's blob is built as
+  // `{ task_id, function }` with no uid (see payments.ts generatePayload).
+  //
+  // create_escrow_xumm is excluded: locking funds is not releasing them.
+  // cancel_escrow_xumm is not handled here either — a cancelled escrow leaves a
+  // pending credit that will never settle, which the Phase 6 expiry job voids.
+  if (task_id && (fn === "payment_request" || fn === "finish_escrow_xumm")) {
+    await reportSettlement({
+      task_id,
+      payload_uuid: webhookBody.payloadUuidv4,
+    });
+  }
+
   if (!uid) {
     console.warn(
       `[webhook] Signed transaction for fn="${fn}" has no uid in blob; skipping notification.`
