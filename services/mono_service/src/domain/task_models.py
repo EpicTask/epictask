@@ -95,19 +95,6 @@ class TaskVerified(BaseModel):
     user_id: str
 
 # Enhanced Leaderboard and Rewards Schemas
-class LeaderboardEntry(BaseModel):
-    """Enhanced leaderboard entry schema with token-only support"""
-    user_id: str
-    display_name: str = ""
-    tasks_completed: int
-    xrp_earned: float = 0.0
-    rlusd_earned: float = 0.0
-    eTask_earned: float = 0.0
-    token_score: float = 0.0
-    level: int = 1
-    global_rank: int = 0
-    family_rank: int = 0
-    last_updated: Optional[str] = None
 
 class ComprehensiveRewards(BaseModel):
     """Comprehensive rewards schema for enhanced UI - token-only"""
@@ -148,15 +135,4 @@ class KidLeaderboardView(BaseModel):
     next_milestone: dict
     global_context: dict
 
-class UserRewards(BaseModel):
-    """Legacy user rewards schema - maintained for backward compatibility"""
-    user_id: str
-    tokens_earned: float
-    level: int
-    rank: int
 
-class TaskSummary(BaseModel):
-    """Task summary schema"""
-    completed: int
-    in_progress: int
-    total: int

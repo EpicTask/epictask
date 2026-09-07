@@ -25,6 +25,7 @@ import {
 } from "@/hooks/useXummAuth";
 import { XummQrModal } from "@/components/modals/XummQrModal";
 import { firestoreService } from "@/api/firestoreService";
+import taskService from "@/api/taskService";
 import { COLORS } from "@/constants/Colors";
 import { ICONS } from "@/assets";
 
@@ -68,7 +69,22 @@ export default function ParentWalletScreen() {
     setLoading(true);
     try {
       const [rewardsResult, familyTasksResult] = await Promise.all([
-        firestoreService.getChildrenRewards(user.uid).catch(() => []),
+        // Was firestoreService.getChildrenRewards, which fanned out to
+        // getUserRewards per child against the orphaned `paid_tasks`
+        // collection. It threw on every child and the .catch() below turned
+        // that into a silent empty list, so this panel has always read zero.
+        taskService
+          .getFamilyLeaderboard(user.uid)
+          .then((family: any) =>
+            (family?.children ?? []).map((child: any) => ({
+              user_id: child.user_id,
+              display_name: child.display_name,
+              tokens_earned: child.token_score ?? 0,
+              level: child.level ?? 1,
+              rank: child.global_rank ?? 0,
+            })),
+          )
+          .catch(() => []),
         firestoreService.getTasksForFamily(user.uid).catch(() => ({ familyTasks: {} })),
       ]);
 

@@ -37,8 +37,6 @@ class Collections:
     TASKS = f"{_prefix}tasks"
     TASK_EVENTS = f"{_prefix}task_events"
     TASK_COMMENTS = f"{_prefix}task_comments"
-    PAID_TASKS = f"{_prefix}paid_tasks"
-    REWARDS = f"{_prefix}rewards"
 
     LEADERBOARD = f"{_prefix}leaderboard"
 

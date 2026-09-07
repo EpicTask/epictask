@@ -17,13 +17,20 @@ import { useFocusEffect } from "expo-router";
 import { MaterialIcons } from "@expo/vector-icons";
 import { useAuth } from "@/context/AuthContext";
 import { firestoreService } from "@/api/firestoreService";
+import taskService from "@/api/taskService";
 import { COLORS } from "@/constants/Colors";
 import * as Progress from "react-native-progress";
 
 interface Rewards {
   tokens_earned: number;
+  pending: number;
   level: number;
   rank: number;
+  // Percent toward the next level, computed server-side from the same score as
+  // the level itself. The screen used to derive this from a hardcoded
+  // TOKENS_PER_LEVEL = 1000, which no longer matches the level curve.
+  levelProgress: number;
+  pointsToNext: number;
 }
 
 interface RewardedTask {
@@ -32,8 +39,6 @@ interface RewardedTask {
   reward_amount?: number;
   timestamp?: any;
 }
-
-const TOKENS_PER_LEVEL = 1000;
 
 export default function KidWalletScreen() {
   const { effectiveUserId } = useAuth();
@@ -46,11 +51,31 @@ export default function KidWalletScreen() {
     if (!effectiveUserId) return;
     setLoading(true);
     try {
+      // Reads the reward projection through the backend rather than the old
+      // firestoreService.getUserRewards, which queried the orphaned
+      // `paid_tasks` collection via an undefined collection-name key and threw
+      // on every call.
       const [rewardsData, tasks] = await Promise.all([
-        firestoreService.getUserRewards(effectiveUserId),
+        taskService.getKidLeaderboardView(effectiveUserId),
         firestoreService.getRecentTasks(effectiveUserId, 10, 30),
       ]);
-      setRewards(rewardsData as Rewards);
+
+      const kid = (rewardsData as any)?.kid_data ?? {};
+      const currencies = kid.currencies ?? {};
+      setRewards({
+        tokens_earned:
+          (currencies.xrp_earned ?? 0) +
+          (currencies.rlusd_earned ?? 0) +
+          (currencies.etask_earned ?? 0),
+        pending:
+          (currencies.xrp_pending ?? 0) +
+          (currencies.rlusd_pending ?? 0) +
+          (currencies.etask_pending ?? 0),
+        level: kid.level ?? 1,
+        rank: kid.global_rank ?? 0,
+        levelProgress: kid.next_level_progress ?? 0,
+        pointsToNext: (rewardsData as any)?.next_milestone?.points_to_next ?? 0,
+      });
       const rewarded = (tasks as RewardedTask[]).filter(
         (t: any) => t.rewarded === true || t.status === "completed"
       );
@@ -68,10 +93,10 @@ export default function KidWalletScreen() {
     }, [loadData])
   );
 
-  const tokensIntoLevel = rewards ? rewards.tokens_earned % TOKENS_PER_LEVEL : 0;
-  const progressToNext = tokensIntoLevel / TOKENS_PER_LEVEL;
-  const tokensToNext = rewards ? TOKENS_PER_LEVEL - tokensIntoLevel : TOKENS_PER_LEVEL;
-  const nextLevel = rewards ? rewards.level + 1 : 2;
+  // All derived server-side now, so the level badge and the bar cannot disagree.
+  const progressToNext = (rewards?.levelProgress ?? 0) / 100;
+  const tokensToNext = rewards?.pointsToNext ?? 0;
+  const nextLevel = (rewards?.level ?? 1) + 1;
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -139,7 +164,7 @@ export default function KidWalletScreen() {
             </View>
             <View style={styles.progressLabels}>
               <CustomText variant="regular" style={styles.progressCaption}>
-                {tokensIntoLevel} / {TOKENS_PER_LEVEL}
+                {(rewards?.levelProgress ?? 0).toFixed(0)}%
               </CustomText>
               <CustomText variant="regular" style={styles.progressCaption}>
                 Level {nextLevel}

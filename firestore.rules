@@ -61,7 +61,6 @@ service cloud.firestore {
       );
     }
 
-
     // ---------------------------------------------------------------
     // Task write constraints
     //
@@ -180,31 +179,6 @@ service cloud.firestore {
     }
 
     // User Rewards & Paid Tasks (Calculated/Updated server-side via Admin SDK)
-    match /paid_tasks/{userId} {
-      allow read: if isFamilyMember(userId);
-      allow write: if false;
-    }
-
-    match /test_paid_tasks/{userId} {
-      allow read: if isFamilyMember(userId);
-      allow write: if false;
-    }
-
-    match /rewards/{rewardId} {
-      allow read: if signedIn() && (
-        resource.data.get('user_id', null) == request.auth.uid
-        || resource.data.get('user_id', null) in me().get('children', [])
-      );
-      allow write: if false;
-    }
-
-    match /test_rewards/{rewardId} {
-      allow read: if signedIn() && (
-        resource.data.get('user_id', null) == request.auth.uid
-        || resource.data.get('user_id', null) in me().get('children', [])
-      );
-      allow write: if false;
-    }
 
     // Leaderboard (Public read for signed-in users, server-managed writes)
     // Append-only reward ledger — the record of truth for earnings.

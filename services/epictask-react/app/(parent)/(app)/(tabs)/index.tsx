@@ -198,14 +198,35 @@ export default function HomeScreen() {
         }
 
         const safeChildren = Array.isArray(children) ? children : [];
+
+        // Earnings and level for every child in one request. The star count
+        // below reads kid.tokens_earned, which nothing had ever populated —
+        // the merge only set task counts, so the dashboard showed 0 stars for
+        // every child regardless of what they had earned.
+        const rewardsByKid = new Map<string, { tokens: number; level: number }>();
+        try {
+          const family: any = await taskService.getFamilyLeaderboard(user.uid);
+          (family?.children ?? []).forEach((child: any) => {
+            rewardsByKid.set(child.user_id, {
+              tokens: child.token_score ?? 0,
+              level: child.level ?? 1,
+            });
+          });
+        } catch (err) {
+          console.log("Failed to fetch family rewards", err);
+        }
+
         const kidsWithTaskSummary = await Promise.all(
           safeChildren.map(async (kid: Kid) => {
+            const earned = rewardsByKid.get(kid.uid);
             try {
               const kidTaskSummary = (await firestoreService.getKidTaskSummary(
                 kid.uid,
               )) as TaskSummary;
               return {
                 ...kid,
+                tokens_earned: earned?.tokens ?? 0,
+                level: earned?.level ?? kid.level ?? 1,
                 tasks_completed: kidTaskSummary?.completed || 0,
                 tasks_pending: kidTaskSummary?.in_progress || 0,
               };
@@ -213,6 +234,8 @@ export default function HomeScreen() {
               console.log(`Failed to fetch summary for kid ${kid.uid}`, err);
               return {
                 ...kid,
+                tokens_earned: earned?.tokens ?? 0,
+                level: earned?.level ?? kid.level ?? 1,
                 tasks_completed: 0,
                 tasks_pending: 0,
               };

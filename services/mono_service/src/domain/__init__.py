@@ -15,12 +15,9 @@ from .task_models import (
     TaskRewarded,
     TaskUpdated,
     TaskVerified,
-    LeaderboardEntry,
     ComprehensiveRewards,
     FamilyLeaderboard,
     KidLeaderboardView,
-    UserRewards,
-    TaskSummary
 )
 
 from .user_models import (
