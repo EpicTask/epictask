@@ -111,7 +111,7 @@ const RolesScreen = () => {
     >
       <View style={styles.bottomContent}>
         <View style={styles.pv_10}>
-          <Text style={styles.screenText}>WHO'S USING</Text>
+           <Text style={styles.screenText}>WHO&apos;S USING</Text>
           <Text style={[styles.fw, styles.screenText]}>THE APP?</Text>
         </View>
         <View style={styles.gp_10}>

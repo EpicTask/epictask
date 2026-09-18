@@ -335,7 +335,7 @@ const KidProfiles = () => {
                 Waiting to join
               </CustomText>
               <CustomText style={styles.sectionSubtitle}>
-                These teens have a code but haven't signed up yet.
+                 These teens have a code but haven&apos;t signed up yet.
               </CustomText>
 
               {invites.map((invite) => (

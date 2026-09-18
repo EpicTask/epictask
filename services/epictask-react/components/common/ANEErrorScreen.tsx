@@ -66,7 +66,7 @@ export default function ANEErrorScreen({
             <View style={styles.tipItem}>
               <Text style={styles.tipBullet}>•</Text>
               <Text style={styles.tipText}>
-                Make sure you're connected to WiFi or mobile data
+                 Make sure you&apos;re connected to WiFi or mobile data
               </Text>
             </View>
             <View style={styles.tipItem}>

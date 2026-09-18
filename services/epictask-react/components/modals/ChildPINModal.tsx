@@ -121,7 +121,7 @@ const ChildPINModal: React.FC<ChildPINModalProps> = ({
         <View style={styles.modalContainer}>
           <View style={styles.header}>
             <CustomText variant="semiBold" style={styles.title}>
-              {firstName}'s PIN
+               {firstName}&apos;s PIN
             </CustomText>
             <TouchableOpacity onPress={handleClose} style={styles.closeButton}>
               <CustomText variant="regular" style={styles.closeText}>

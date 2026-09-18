@@ -167,7 +167,7 @@ const Register = () => {
     <View style={{ gap: responsiveHeight(2) }}>
       <View>
         <CustomText variant="semiBold" style={styles.heading}>
-          Join Your Parent's Household
+           Join Your Parent&apos;s Household
         </CustomText>
         <CustomText variant="medium" style={styles.subheading}>
           Enter the 6-character code your parent gave you.
@@ -195,7 +195,7 @@ const Register = () => {
       />
 
       <CustomText style={styles.footnote}>
-        Under 13? You don't need a code — ask your parent to open your profile
+         Under 13? You don&apos;t need a code — ask your parent to open your profile
         from their account.
       </CustomText>
     </View>

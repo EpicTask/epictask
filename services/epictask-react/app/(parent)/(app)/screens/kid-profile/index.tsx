@@ -303,7 +303,7 @@ const KidProfile = () => {
               variant="semiBold"
               style={{ fontSize: FONT_SIZES.extraLarge }}
             >
-              {kidName}'s Tasks
+               {kidName}&apos;s Tasks
             </CustomText>
             <PlusButton
               onPress={() => {

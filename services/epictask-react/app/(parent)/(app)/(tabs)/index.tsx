@@ -523,7 +523,7 @@ export default function HomeScreen() {
                       {payout.kid_name || "Child"} earned {payout.amount} tokens
                     </CustomText>
                     <CustomText style={styles.payoutDetail}>
-                      For completing "{payout.story_id}"
+                       For completing &quot;{payout.story_id}&quot;
                     </CustomText>
                   </View>
                   <View style={styles.payoutActions}>

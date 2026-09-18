@@ -40,12 +40,12 @@ export default function KidTermsAndConditionsScreen() {
 
           <ThemedText style={styles.heading}>5. Your Privacy</ThemedText>
           <ThemedText style={styles.paragraph}>
-            We take your privacy seriously. EpicTask follows children's privacy laws (COPPA) and only collects information needed to run the app. We do not share your personal information with advertisers. Your parent can ask us to delete your data at any time.
+             We take your privacy seriously. EpicTask follows children&apos;s privacy laws (COPPA) and only collects information needed to run the app. We do not share your personal information with advertisers. Your parent can ask us to delete your data at any time.
           </ThemedText>
 
           <ThemedText style={styles.heading}>6. Acceptable Use</ThemedText>
           <ThemedText style={styles.paragraph}>
-            Use EpicTask fairly and honestly. Do not try to cheat to earn rewards, and do not use the app for anything your parent hasn't approved. We may suspend accounts that misuse the platform.
+             Use EpicTask fairly and honestly. Do not try to cheat to earn rewards, and do not use the app for anything your parent hasn&apos;t approved. We may suspend accounts that misuse the platform.
           </ThemedText>
 
           <ThemedText style={styles.heading}>7. Contact Us</ThemedText>

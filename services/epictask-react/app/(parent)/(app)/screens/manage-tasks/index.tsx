@@ -375,8 +375,8 @@ const ManageTasks = () => {
                 }}
               >
                 {filteredTasks.length} result
-                {filteredTasks.length !== 1 ? "s" : ""} found for "{searchQuery}
-                "
+                 {filteredTasks.length !== 1 ? "s" : ""} found for &quot;{searchQuery}
+                 &quot;
               </CustomText>
               {filteredTasks.length > 0 && (
                 <CustomText

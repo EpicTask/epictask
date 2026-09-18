@@ -296,7 +296,7 @@ const NarrativeDashboard = () => {
                 No narrative data yet
               </CustomText>
               <CustomText style={styles.emptySubtext}>
-                Kids haven't started any stories
+                 Kids haven&apos;t started any stories
               </CustomText>
             </View>
           )}

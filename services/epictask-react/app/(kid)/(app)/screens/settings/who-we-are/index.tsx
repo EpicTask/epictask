@@ -26,7 +26,7 @@ export default function KidWhoWeAreScreen() {
 
           <ThemedText style={styles.heading}>Why We Built This</ThemedText>
           <ThemedText style={styles.paragraph}>
-            We built EpicTask because traditional methods of teaching financial literacy often fall short. Children learn best through experience and play. Our unique integration of a dynamic narrative engine and real-world value systems ensures that kids aren't just completing tasks—they are earning, managing, and understanding the value of their efforts.
+             We built EpicTask because traditional methods of teaching financial literacy often fall short. Children learn best through experience and play. Our unique integration of a dynamic narrative engine and real-world value systems ensures that kids aren&apos;t just completing tasks—they are earning, managing, and understanding the value of their efforts.
           </ThemedText>
         </View>
 

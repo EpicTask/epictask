@@ -457,7 +457,7 @@ const AddKid = () => {
           Create {fullName.split(" ")[0] || "their"} PIN
         </CustomText>
         <CustomText style={styles.stepSubtitle}>
-          They'll type this to open their profile on your device. You can reset
+           They&apos;ll type this to open their profile on your device. You can reset
           it any time from Kid Profiles.
         </CustomText>
         <CodeField
@@ -521,8 +521,8 @@ const AddKid = () => {
           Check before we send
         </CustomText>
         <CustomText style={styles.stepSubtitle}>
-          The invite is single-use and tied to this email. If it's wrong, go
-          back and fix it — a typo means the code won't work.
+           The invite is single-use and tied to this email. If it&apos;s wrong, go
+           back and fix it — a typo means the code won&apos;t work.
         </CustomText>
 
         <View style={styles.summaryCard}>
@@ -575,7 +575,7 @@ const AddKid = () => {
           {isTeen ? (
             <>
               <CustomText style={styles.doneBody}>
-                Send this code to {fullName.split(" ")[0]}. They'll open
+                 Send this code to {fullName.split(" ")[0]}. They&apos;ll open
                 EpicTask, tap{" "}
                 <CustomText variant="semiBold">
                   Teen/Child → I have an invite code

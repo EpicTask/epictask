@@ -30,12 +30,12 @@ export default function ParentTermsAndConditionsScreen() {
 
           <ThemedText style={styles.heading}>3. User Responsibilities</ThemedText>
           <ThemedText style={styles.paragraph}>
-            You are responsible for maintaining the confidentiality of your account credentials, including your PIN. You agree not to share your account with others or use the platform for any unlawful purpose. Parents are responsible for supervising their children's use of EpicTask.
+             You are responsible for maintaining the confidentiality of your account credentials, including your PIN. You agree not to share your account with others or use the platform for any unlawful purpose. Parents are responsible for supervising their children&apos;s use of EpicTask.
           </ThemedText>
 
-          <ThemedText style={styles.heading}>4. Children's Privacy (COPPA)</ThemedText>
+           <ThemedText style={styles.heading}>4. Children&apos;s Privacy (COPPA)</ThemedText>
           <ThemedText style={styles.paragraph}>
-            EpicTask complies with the Children's Online Privacy Protection Act (COPPA). We collect only the minimum personal information necessary to operate the service for child accounts. We do not sell or share children's personal data with third parties for marketing purposes. Parents may request the deletion of their child's data at any time by contacting us.
+             EpicTask complies with the Children&apos;s Online Privacy Protection Act (COPPA). We collect only the minimum personal information necessary to operate the service for child accounts. We do not sell or share children&apos;s personal data with third parties for marketing purposes. Parents may request the deletion of their child&apos;s data at any time by contacting us.
           </ThemedText>
 
           <ThemedText style={styles.heading}>5. Digital Rewards and Payments</ThemedText>

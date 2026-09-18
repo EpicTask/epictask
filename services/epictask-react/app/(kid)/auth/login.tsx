@@ -175,8 +175,8 @@ const Login = () => {
                 Under {TEEN_MIN_AGE}?
               </CustomText>
               <CustomText style={styles.infoBody}>
-                You don't have your own login. Ask your parent to sign in and tap
-                "Switch to Kid Profile" — then type your PIN.
+                 You don&apos;t have your own login. Ask your parent to sign in and tap
+                 &quot;Switch to Kid Profile&quot; — then type your PIN.
               </CustomText>
             </View>
           </View>

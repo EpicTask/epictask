@@ -108,7 +108,7 @@ export default function TabTwoScreen() {
               Family Rewards Dashboard
             </CustomText>
             <CustomText variant="medium" style={styles.headerSubtitle}>
-              Track your children's progress and achievements
+               Track your children&apos;s progress and achievements
             </CustomText>
           </View>
         </ImageBackground>

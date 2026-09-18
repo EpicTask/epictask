@@ -338,7 +338,7 @@ const ProfileScreen = () => {
                   No children linked yet
                 </CustomText>
                 <CustomText variant="regular" style={styles.emptySubtext}>
-                  Use an invite code to link your child's account
+                   Use an invite code to link your child&apos;s account
                 </CustomText>
               </View>
             )}

@@ -158,7 +158,7 @@ export default function HomeScreen() {
   if (isError) {
     return (
       <View style={styles.centered}>
-        <Text>Oops! We couldn't load your tasks.</Text>
+         <Text>Oops! We couldn&apos;t load your tasks.</Text>
         <TouchableOpacity onPress={() => refetch()}>
           <Text style={{ color: COLORS.primary, marginTop: 10 }}>Retry</Text>
         </TouchableOpacity>
@@ -259,7 +259,7 @@ export default function HomeScreen() {
                 <View>{ICONS.kidCard}</View>
                 <View style={styles.cardOverlay}>
                   <CustomText variant="semiBold" style={styles.progressTitle}>
-                    ✅ Today's Tasks
+                     ✅ Today&apos;s Tasks
                   </CustomText>
                   <View style={styles.progressSummaryRow}>
                     <Progress.Circle

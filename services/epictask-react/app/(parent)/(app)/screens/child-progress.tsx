@@ -93,7 +93,7 @@ export default function ChildProgressScreen() {
           />
         </TouchableOpacity>
         <CustomText variant="bold" style={styles.headerTitle}>
-          {kidName}'s Progress
+           {kidName}&apos;s Progress
         </CustomText>
       </View>
 
