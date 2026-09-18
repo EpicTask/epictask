@@ -12,7 +12,21 @@
       "Bash(grep -v \"test\\\\|mock\\\\|jest\\\\|Bearer \\\\${token}\\\\|PASSWORD\\\\|password:\")",
       "Bash(npm list *)",
       "Bash(npm test *)",
-      "Bash(cargo check *)"
+      "Bash(cargo check *)",
+      "Bash(.venv/bin/python -c ' *)",
+      "Bash(python3 -)",
+      "Bash(npx jest *)",
+      "WebSearch",
+      "WebFetch(domain:firebase.google.com)",
+      "WebFetch(domain:github.com)",
+      "Read(//private/tmp/**)",
+      "Bash(node -e ' *)",
+      "Bash(cd /Users/randynolden/VisualStudio/epictask && find . -path ./node_modules -prune -o -type f \\\\\\( -name \"*reward*\" -o -name \"*leaderboard*\" -o -name \"*Reward*\" -o -name \"*Leaderboard*\" \\\\\\) -print 2>/dev/null | head -50)",
+      "Read(//Users/randynolden/VisualStudio/epictask/**)",
+      "Bash(git check-ignore *)",
+      "Bash(awk '{print $2}')",
+      "Bash(git add *)",
+      "Bash(grep -cEi \"BEGIN \\(RSA \\)?PRIVATE KEY|sk-[A-Za-z0-9]{20,}|AIza[A-Za-z0-9_-]{30,}\")"
     ]
   }
 }
