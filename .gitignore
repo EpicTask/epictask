@@ -2,11 +2,16 @@
 .DS_Store
 .env
 .env.*
+# ...but the templates are meant to be committed. Without this negation the
+# `.env.*` rule above silently swallows every .env.example in the repo.
+!.env.example
+!**/.env.example
 .idea/
 .vscode/
 *.log
 *.apk
 *.ipa
+*.venv
 
 # Node.js
 node_modules/
@@ -31,8 +36,8 @@ dist/
 *.jks
 *.p12
 *.keystore
-google-services.json
-GoogleService-Info.plist
+# google-services.json
+# GoogleService-Info.plist
 
 # Service-specific
 services/epictask-react/firebaseConfig.js
@@ -58,7 +63,10 @@ services/pubsub/.env
 services/admin_management/
 
 # Other
-resources/developmentDocs/
+resources/ 
+#is deliberately tracked: it holds the architecture docs, sprint plans and review
+# post-mortems that CLAUDE.md's working agreements depend on. Untracked docs cannot bind a future
+# session. Keep credentials out of it — .env and service_account files are ignored elsewhere.
 services/epictask-react/constants/Microservices.ts
 services/epictask-react/constants/CollectionNames.ts
 
@@ -73,3 +81,10 @@ services/epictask-react/api/metricsService.js
 services/epictask-react/scripts/updateFontSizes.js
 
 services/adaptive_narrative_engine/firestore.indexes.json
+services/epictask-react/google-services.json
+services/mono_service/src/config/collection_names.py
+# CLAUDE.md is deliberately tracked: it carries the working agreements that prevent the
+# partial-implementation / silent-invalidation pattern documented in
+# resources/rewards_leaderboard_review.md. Ignoring it makes those agreements unenforceable.
+
+CLAUDE.md

@@ -25,15 +25,30 @@ In the output, you'll find options to open the app in a
 
 You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
 
-## Get a fresh project
+## Testing
 
-When you're ready, run:
+This project uses **Jest** and **React Native Testing Library** for unit, integration, and component snapshot testing.
+
+To run the test suite in interactive watch mode:
 
 ```bash
-npm run reset-project
+npm test
 ```
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+### Useful Testing Commands
+
+- **Run all tests once (CI/CD mode):**
+  ```bash
+  npm test -- --watchAll=false
+  ```
+- **Update failing component snapshots:**
+  ```bash
+  npm test -- -u
+  ```
+- **Run a specific test file:**
+  ```bash
+  npm test -- <filename>
+  ```
 
 ## Learn more
 
