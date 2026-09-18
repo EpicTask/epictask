@@ -473,7 +473,7 @@ const KidRewardsView: React.FC<Props> = ({
           </CustomText>
           <CustomText variant="medium" style={styles.motivationText}>
             Every task you complete makes you stronger and smarter! 
-            You're doing amazing! 🎉
+             You&apos;re doing amazing! 🎉
           </CustomText>
         </View>
       </View>
