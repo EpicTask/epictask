@@ -1,4 +1,3 @@
-import HomeIcon from "@/assets/icons/Home";
 import KidsCard from "@/components/cards/KidsCard";
 import TaskCard from "@/components/cards/TaskCard";
 import Heading from "@/components/headings/Heading";
@@ -8,7 +7,7 @@ import {
   responsiveWidth,
 } from "react-native-responsive-dimensions";
 import PlusButton from "@/components/PlusButton";
-import { router } from "expo-router";
+import { router, Link } from "expo-router";
 import { ICONS, IMAGES } from "@/assets";
 import { COLORS } from "@/constants/Colors";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -24,18 +23,34 @@ import {
   Alert,
   RefreshControl,
 } from "react-native";
-import { Link, useFocusEffect } from "expo-router";
-import React, { useEffect, useState, useCallback, useRef } from "react";
+import React, { useState, useCallback } from "react";
+import {
+  Query,
+  UseQueryResult,
+  useQuery,
+  useQueryClient,
+} from "@tanstack/react-query";
+import {
+  childrenQuery,
+  summaryQuery,
+  recentQuery,
+  rewardsQuery,
+  payoutsQuery,
+  notificationsQuery,
+  kidSummaryQuery,
+  homeKeys,
+  HomeKid,
+  FamilyRewards,
+} from "@/api/homeQueries";
+import { useScreenRefresh } from "@/hooks/useScreenRefresh";
+import { QuerySection } from "@/components/common/QuerySection";
 import { useAuth } from "@/context/AuthContext";
 import SetupChecklist from "@/components/onboarding/SetupChecklist";
-import { firestoreService } from "@/api/firestoreService";
 import taskService from "@/api/taskService";
 import { narrativeService, PendingPayout } from "@/api/narrativeService";
-import { notificationService } from "@/api/notificationService";
 import ChildSelectionModal from "@/components/modals/ChildSelectionModal";
 import ChildPINModal from "@/components/modals/ChildPINModal";
 import { deviceSharingAllowed } from "@/constants/AgePolicy";
-import { useFamilyTasks } from "@/hooks/useTaskManagement";
 import CustomText from "@/components/CustomText";
 import { MaterialIcons } from "@expo/vector-icons";
 import {
@@ -44,13 +59,6 @@ import {
   XummUserToken,
 } from "@/hooks/useXummAuth";
 import { XummQrModal } from "@/components/modals/XummQrModal";
-
-// Type definitions
-interface TaskSummary {
-  completed: number;
-  in_progress: number;
-  total: number;
-}
 
 interface RecentTask {
   task_id: string;
@@ -62,22 +70,48 @@ interface RecentTask {
   node_id?: string;
 }
 
-interface Kid {
-  uid: string;
-  displayName: string;
-  age: number;
-  grade_level: string;
-  device_sharing_enabled?: boolean;
-  level?: number;
-  tokens_earned?: number;
-  tasks_completed?: number;
-  tasks_pending?: number;
+function KidProfileCard({
+  kid,
+  parentId,
+  rewards,
+}: {
+  kid: HomeKid;
+  parentId: string;
+  rewards: UseQueryResult<FamilyRewards, Error>;
+}) {
+  const summary = useQuery(kidSummaryQuery(parentId, kid.uid));
+  const earned = rewards.data?.children?.find(
+    (child) => child.user_id === kid.uid,
+  );
+  return (
+    <View style={{ flex: 1 }}>
+      {(!summary.data || !rewards.data) && (
+        <CustomText variant="semiBold">{kid.displayName}</CustomText>
+      )}
+      <QuerySection query={summary} label={`${kid.displayName}'s tasks`}>
+        <QuerySection query={rewards} label={`${kid.displayName}'s earnings`}>
+          <KidsCard
+            name={kid.displayName}
+            uid={kid.uid}
+            level={earned?.level ?? 1}
+            stars={earned?.token_score ?? 0}
+            completed={summary.data?.completed ?? 0}
+            pending={summary.data?.in_progress ?? 0}
+          />
+        </QuerySection>
+      </QuerySection>
+    </View>
+  );
 }
 
 export default function HomeScreen() {
   const { user } = useAuth();
-  const { connectWallet, showQrModal, qrUrl, closeModal, isConnecting } =
-    useXummAuth();
+  return <ParentHomeScreen key={user?.uid || "signed-out"} />;
+}
+
+function ParentHomeScreen() {
+  const { user } = useAuth();
+  const { connectWallet, showQrModal, qrUrl, closeModal } = useXummAuth();
   const walletConnected = isXummWalletConnected(
     user?.userToken as XummUserToken | undefined,
   );
@@ -93,237 +127,48 @@ export default function HomeScreen() {
     }
   };
 
-  const [taskSummary, setTaskSummary] = useState<TaskSummary>({
-    completed: 0,
-    in_progress: 0,
-    total: 0,
-  });
-  const [recentTasks, setRecentTasks] = useState<RecentTask[]>([]);
-  const [pendingPayouts, setPendingPayouts] = useState<PendingPayout[]>([]);
-  const [kidsWithTaskData, setKidsWithTaskData] = useState<Kid[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [refreshing, setRefreshing] = useState(false);
+  const uid = user?.uid || "";
+  const client = useQueryClient();
+  const summary = useQuery(summaryQuery(uid));
+  const recent = useQuery(recentQuery(uid));
+  const payouts = useQuery(payoutsQuery(uid));
+  const rewards = useQuery(rewardsQuery(uid));
+  const childrenResult = useQuery(childrenQuery(uid));
+  const notifications = useQuery(notificationsQuery(uid));
+  const taskSummary = summary.data;
+  const recentTasks: RecentTask[] = recent.data || [];
+  const pendingPayouts = payouts.data || [];
+  const children = childrenResult.data || [];
+  const unreadNotifications = notifications.data || 0;
   const [payoutLoading, setPayoutLoading] = useState<Record<string, boolean>>(
     {},
   );
   const [rewardingTaskId, setRewardingTaskId] = useState<string | null>(null);
-  const [lastRefreshTime, setLastRefreshTime] = useState<number>(0);
-  const [unreadNotifications, setUnreadNotifications] = useState(0);
-  const requestIdRef = useRef(0);
-  const currentUserIdRef = useRef<string | undefined>(user?.uid);
-  const REFRESH_COOLDOWN = 5000; // 5 seconds cooldown
-
-  // Child switching modals
   const [childSelectionModalVisible, setChildSelectionModalVisible] =
     useState(false);
   const [childPINModalVisible, setChildPINModalVisible] = useState(false);
-  const [selectedChildForPIN, setSelectedChildForPIN] = useState<Kid | null>(
-    null,
+  const [selectedChildForPIN, setSelectedChildForPIN] =
+    useState<HomeKid | null>(null);
+  const matchesScreen = useCallback(
+    ({ queryKey: key }: Query) =>
+      !!uid &&
+      key[1] === uid &&
+      ["home", "linkedChildren", "notifications"].includes(String(key[0])),
+    [uid],
   );
+  const { refreshing, onRefresh } = useScreenRefresh(matchesScreen);
 
-  const {
-    familyTasks,
-    children,
-    loading: familyTasksLoading,
-    error: familyTasksError,
-    refreshFamilyTasks,
-    refreshChildren,
-  } = useFamilyTasks(user?.uid, { realTime: true });
-
-  useEffect(() => {
-    currentUserIdRef.current = user?.uid;
-    requestIdRef.current += 1;
-
-    if (!user?.uid) {
-      setTaskSummary({ completed: 0, in_progress: 0, total: 0 });
-      setRecentTasks([]);
-      setPendingPayouts([]);
-      setKidsWithTaskData([]);
-      setUnreadNotifications(0);
-      setLoading(false);
-      setRefreshing(false);
-    }
-  }, [user?.uid]);
-
-  const fetchData = useCallback(
-    async (isRefresh = false) => {
-      const userId = user?.uid;
-      const requestId = ++requestIdRef.current;
-      const isCurrentRequest = () =>
-        requestId === requestIdRef.current &&
-        currentUserIdRef.current === userId;
-
-      if (!userId) {
-        return;
-      }
-
-      try {
-        if (!isRefresh) setLoading(true);
-        const summary = (await firestoreService.getTaskSummary(
-          userId,
-        )) as TaskSummary;
-        if (!isCurrentRequest()) return;
-        setTaskSummary(summary || { completed: 0, in_progress: 0, total: 0 });
-
-        const tasks = (await firestoreService.getRecentTasks(
-          userId,
-        )) as RecentTask[];
-        if (!isCurrentRequest()) return;
-        setRecentTasks(Array.isArray(tasks) ? tasks : []);
-
-        // Fetch pending narrative payouts
-        try {
-          const payouts = await narrativeService.getPendingPayouts(userId);
-          if (!isCurrentRequest()) return;
-          setPendingPayouts(Array.isArray(payouts) ? payouts : []);
-        } catch (e) {
-          if (!isCurrentRequest()) return;
-          console.log("Failed to fetch pending payouts", e);
-          setPendingPayouts([]);
-        }
-
-        // Fetch unread notifications count
-        try {
-          const notifications = await notificationService.getNotifications(
-            20,
-            true,
-          );
-          if (!isCurrentRequest()) return;
-          setUnreadNotifications(
-            Array.isArray(notifications) ? notifications.length : 0,
-          );
-        } catch (e) {
-          if (!isCurrentRequest()) return;
-          console.log("Failed to fetch notifications count", e);
-        }
-
-        const safeChildren = Array.isArray(children) ? children : [];
-
-        // Earnings and level for every child in one request. The star count
-        // below reads kid.tokens_earned, which nothing had ever populated —
-        // the merge only set task counts, so the dashboard showed 0 stars for
-        // every child regardless of what they had earned.
-        const rewardsByKid = new Map<string, { tokens: number; level: number }>();
-        try {
-          const family: any = await taskService.getFamilyLeaderboard(user.uid);
-          (family?.children ?? []).forEach((child: any) => {
-            rewardsByKid.set(child.user_id, {
-              tokens: child.token_score ?? 0,
-              level: child.level ?? 1,
-            });
-          });
-        } catch (err) {
-          console.log("Failed to fetch family rewards", err);
-        }
-
-        const kidsWithTaskSummary = await Promise.all(
-          safeChildren.map(async (kid: Kid) => {
-            const earned = rewardsByKid.get(kid.uid);
-            try {
-              const kidTaskSummary = (await firestoreService.getKidTaskSummary(
-                kid.uid,
-              )) as TaskSummary;
-              return {
-                ...kid,
-                tokens_earned: earned?.tokens ?? 0,
-                level: earned?.level ?? kid.level ?? 1,
-                tasks_completed: kidTaskSummary?.completed || 0,
-                tasks_pending: kidTaskSummary?.in_progress || 0,
-              };
-            } catch (err) {
-              console.log(`Failed to fetch summary for kid ${kid.uid}`, err);
-              return {
-                ...kid,
-                tokens_earned: earned?.tokens ?? 0,
-                level: earned?.level ?? kid.level ?? 1,
-                tasks_completed: 0,
-                tasks_pending: 0,
-              };
-            }
-          }),
-        );
-        if (!isCurrentRequest()) return;
-        setKidsWithTaskData(kidsWithTaskSummary);
-      } catch (error) {
-        if (!isCurrentRequest()) return;
-        console.log("Failed to fetch dashboard data:", error);
-      } finally {
-        if (!isRefresh && isCurrentRequest()) setLoading(false);
-      }
-    },
-    [user, children],
-  );
-
-  useEffect(() => {
-    fetchData();
-  }, [fetchData]);
-
-  // Refresh notifications and the kids list when the screen comes into focus.
-  // Coming back from Add Kid is the common case — the new profile has to show
-  // up without the parent restarting the app.
-  const hasFocusedRef = useRef(false);
-  useFocusEffect(
-    useCallback(() => {
-      const userId = user?.uid;
-      let active = true;
-
-      if (userId) {
-        if (hasFocusedRef.current) {
-          refreshChildren();
-        } else {
-          hasFocusedRef.current = true;
-        }
-
-        notificationService
-          .getNotifications(20, true)
-          .then((notifications) => {
-            if (active && currentUserIdRef.current === userId) {
-              setUnreadNotifications(
-                Array.isArray(notifications) ? notifications.length : 0,
-              );
-            }
-          })
-          .catch((e) => {
-            if (active && currentUserIdRef.current === userId) {
-              console.log("Failed to refresh notifications count", e);
-            }
-          });
-      }
-
-      return () => {
-        active = false;
-      };
-    }, [user?.uid, refreshChildren]),
-  );
-
-  const onRefresh = useCallback(async () => {
-    const now = Date.now();
-    if (now - lastRefreshTime < REFRESH_COOLDOWN) {
-      return; // Skip if cooling down
-    }
-
-    setRefreshing(true);
-    setLastRefreshTime(now);
-
-    const userId = user?.uid;
-    try {
-      await Promise.all([refreshChildren?.(), refreshFamilyTasks?.()]);
-      await fetchData(true);
-    } finally {
-      if (currentUserIdRef.current === userId) {
-        setRefreshing(false);
-      }
-    }
-  }, [
-    fetchData,
-    refreshFamilyTasks,
-    refreshChildren,
-    lastRefreshTime,
-    user?.uid,
-  ]);
+  const removePayout = (requestId: string) => {
+    // Returning undefined after logout leaves an absent query absent.
+    client.setQueryData(
+      homeKeys.payouts(uid),
+      (previous: PendingPayout[] | undefined) =>
+        previous?.filter((payout) => payout.request_id !== requestId),
+    );
+  };
 
   // Handler functions for child switching
-  const switchableKids = (children as Kid[]).filter(
+  const switchableKids = children.filter(
     (kid) =>
       deviceSharingAllowed(kid.age) && kid.device_sharing_enabled !== false,
   );
@@ -339,7 +184,7 @@ export default function HomeScreen() {
     setChildSelectionModalVisible(true);
   };
 
-  const handleChildSelected = (child: Kid) => {
+  const handleChildSelected = (child: HomeKid) => {
     setChildSelectionModalVisible(false);
     setSelectedChildForPIN(child);
     setChildPINModalVisible(true);
@@ -347,7 +192,7 @@ export default function HomeScreen() {
 
   // The PIN modal already put the app into shared mode via AuthContext, so all
   // that's left is to land on the kid dashboard.
-  const handleChildPINSuccess = (_child: Kid) => {
+  const handleChildPINSuccess = (_child: HomeKid) => {
     setChildPINModalVisible(false);
     setSelectedChildForPIN(null);
     router.replace("/(kid)/(app)/(tabs)" as any);
@@ -358,14 +203,6 @@ export default function HomeScreen() {
     setChildPINModalVisible(false);
     setSelectedChildForPIN(null);
   };
-
-  if (loading) {
-    return (
-      <SafeAreaView style={styles.safeArea}>
-        <ActivityIndicator size="large" color={COLORS.primary} />
-      </SafeAreaView>
-    );
-  }
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -421,36 +258,42 @@ export default function HomeScreen() {
             </View>
           </View>
 
+          {notifications.isError && (
+            <QuerySection query={notifications} label="notifications" />
+          )}
           {/* Tasks Overview */}
           <View style={{ gap: 10 }}>
             <Heading title="Tasks Overview" />
-            <View style={{ flexDirection: "row", gap: 10 }}>
-              <ProgressCard
-                tab={true}
-                progress={
-                  (taskSummary?.total || 0) > 0
-                    ? (taskSummary?.completed || 0) / (taskSummary?.total || 1)
-                    : 0
-                }
-                completed={taskSummary?.completed || 0}
-                total={taskSummary?.total || 0}
-                text="Completed"
-                color={COLORS.purple}
-              />
-              <ProgressCard
-                tab={true}
-                progress={
-                  (taskSummary?.total || 0) > 0
-                    ? (taskSummary?.in_progress || 0) /
-                      (taskSummary?.total || 1)
-                    : 0
-                }
-                completed={taskSummary?.in_progress || 0}
-                text="In Progress"
-                total={taskSummary?.total || 0}
-                color={COLORS.grey}
-              />
-            </View>
+            <QuerySection query={summary} label="task overview">
+              <View style={{ flexDirection: "row", gap: 10 }}>
+                <ProgressCard
+                  tab={true}
+                  progress={
+                    (taskSummary?.total || 0) > 0
+                      ? (taskSummary?.completed || 0) /
+                        (taskSummary?.total || 1)
+                      : 0
+                  }
+                  completed={taskSummary?.completed || 0}
+                  total={taskSummary?.total || 0}
+                  text="Completed"
+                  color={COLORS.purple}
+                />
+                <ProgressCard
+                  tab={true}
+                  progress={
+                    (taskSummary?.total || 0) > 0
+                      ? (taskSummary?.in_progress || 0) /
+                        (taskSummary?.total || 1)
+                      : 0
+                  }
+                  completed={taskSummary?.in_progress || 0}
+                  text="In Progress"
+                  total={taskSummary?.total || 0}
+                  color={COLORS.grey}
+                />
+              </View>
+            </QuerySection>
           </View>
 
           {/* Kids Profiles */}
@@ -465,156 +308,152 @@ export default function HomeScreen() {
                 />
               }
             />
-            {kidsWithTaskData.length > 0 ? (
-              <>
-                <View style={{ flexDirection: "row", gap: 10, flex: 1 }}>
-                  {kidsWithTaskData.map((kid) => (
-                    <KidsCard
-                      key={kid.uid}
-                      name={kid.displayName}
-                      level={kid.level || 1}
-                      stars={kid.tokens_earned || 0}
-                      completed={kid.tasks_completed || 0}
-                      pending={kid.tasks_pending || 0}
-                      uid={kid.uid}
-                    />
-                  ))}
-                </View>
+            <QuerySection query={childrenResult} label="kids profiles">
+              {children.length > 0 ? (
+                <>
+                  <View style={{ flexDirection: "row", gap: 10, flex: 1 }}>
+                    {children.map((kid) => (
+                      <KidProfileCard
+                        key={kid.uid}
+                        kid={kid}
+                        parentId={uid}
+                        rewards={rewards}
+                      />
+                    ))}
+                  </View>
 
-                {/* Child Switching Button — only shown when at least one kid
+                  {/* Child Switching Button — only shown when at least one kid
                     actually has a shared profile on this device. */}
-                {switchableKids.length > 0 && (
-                  <TouchableOpacity
-                    style={styles.childSwitchButton}
-                    onPress={handleChildSwitchPress}
-                    accessibilityRole="button"
-                  >
-                    <MaterialIcons
-                      name="switch-account"
-                      size={18}
-                      color="#fff"
-                    />
-                    <Text style={styles.childSwitchButtonText}>
-                      {switchableKids.length === 1
-                        ? `Switch to ${switchableKids[0].displayName.split(" ")[0]}'s Profile`
-                        : "Switch to Kid Profile"}
-                    </Text>
-                  </TouchableOpacity>
-                )}
-              </>
-            ) : (
-              <View>
-                <Text>
-                  No kids linked yet. Link your first child to get started!
-                </Text>
-                <SetupChecklist />
-              </View>
-            )}
+                  {switchableKids.length > 0 && (
+                    <TouchableOpacity
+                      style={styles.childSwitchButton}
+                      onPress={handleChildSwitchPress}
+                      accessibilityRole="button"
+                    >
+                      <MaterialIcons
+                        name="switch-account"
+                        size={18}
+                        color="#fff"
+                      />
+                      <Text style={styles.childSwitchButtonText}>
+                        {switchableKids.length === 1
+                          ? `Switch to ${
+                              switchableKids[0].displayName.split(" ")[0]
+                            }'s Profile`
+                          : "Switch to Kid Profile"}
+                      </Text>
+                    </TouchableOpacity>
+                  )}
+                </>
+              ) : (
+                <View>
+                  <Text>
+                    No kids linked yet. Link your first child to get started!
+                  </Text>
+                  <SetupChecklist />
+                </View>
+              )}
+            </QuerySection>
           </View>
 
           {/* Pending Narrative Rewards */}
-          {pendingPayouts.length > 0 && (
-            <View style={{ gap: 10 }}>
-              <Heading title="Pending Rewards" />
-              {pendingPayouts.map((payout) => (
-                <View key={payout.request_id} style={styles.payoutCard}>
-                  <View style={styles.payoutInfo}>
-                    <CustomText variant="semiBold" style={styles.payoutTitle}>
-                      {payout.kid_name || "Child"} earned {payout.amount} tokens
-                    </CustomText>
-                    <CustomText style={styles.payoutDetail}>
-                       For completing &quot;{payout.story_id}&quot;
-                    </CustomText>
-                  </View>
-                  <View style={styles.payoutActions}>
-                    <TouchableOpacity
-                      style={[
-                        styles.payoutButton,
-                        styles.approveButton,
-                        payoutLoading[payout.request_id] &&
-                          styles.buttonDisabled,
-                      ]}
-                      disabled={!!payoutLoading[payout.request_id]}
-                      onPress={async () => {
-                        setPayoutLoading((prev) => ({
-                          ...prev,
-                          [payout.request_id]: true,
-                        }));
-                        try {
-                          await narrativeService.approvePayout(
-                            payout.request_id,
-                          );
-                          setPendingPayouts((prev) =>
-                            prev.filter(
-                              (p) => p.request_id !== payout.request_id,
-                            ),
-                          );
-                        } catch (e) {
-                          Alert.alert(
-                            "Error",
-                            "Failed to approve reward. Please try again.",
-                          );
-                        } finally {
+          <QuerySection query={payouts} label="pending rewards" height={90}>
+            {pendingPayouts.length > 0 && (
+              <View style={{ gap: 10 }}>
+                <Heading title="Pending Rewards" />
+                {pendingPayouts.map((payout) => (
+                  <View key={payout.request_id} style={styles.payoutCard}>
+                    <View style={styles.payoutInfo}>
+                      <CustomText variant="semiBold" style={styles.payoutTitle}>
+                        {payout.kid_name || "Child"} earned {payout.amount}{" "}
+                        tokens
+                      </CustomText>
+                      <CustomText style={styles.payoutDetail}>
+                        For completing &quot;{payout.story_id}&quot;
+                      </CustomText>
+                    </View>
+                    <View style={styles.payoutActions}>
+                      <TouchableOpacity
+                        style={[
+                          styles.payoutButton,
+                          styles.approveButton,
+                          payoutLoading[payout.request_id] &&
+                            styles.buttonDisabled,
+                        ]}
+                        disabled={!!payoutLoading[payout.request_id]}
+                        onPress={async () => {
                           setPayoutLoading((prev) => ({
                             ...prev,
-                            [payout.request_id]: false,
+                            [payout.request_id]: true,
                           }));
-                        }
-                      }}
-                    >
-                      {payoutLoading[payout.request_id] ? (
-                        <ActivityIndicator size="small" color="#fff" />
-                      ) : (
-                        <Text style={styles.payoutButtonText}>Approve</Text>
-                      )}
-                    </TouchableOpacity>
-                    <TouchableOpacity
-                      style={[
-                        styles.payoutButton,
-                        styles.rejectButton,
-                        payoutLoading[payout.request_id] &&
-                          styles.buttonDisabled,
-                      ]}
-                      disabled={!!payoutLoading[payout.request_id]}
-                      onPress={async () => {
-                        setPayoutLoading((prev) => ({
-                          ...prev,
-                          [payout.request_id]: true,
-                        }));
-                        try {
-                          await narrativeService.rejectPayout(
-                            payout.request_id,
-                            "Rejected by parent",
-                          );
-                          setPendingPayouts((prev) =>
-                            prev.filter(
-                              (p) => p.request_id !== payout.request_id,
-                            ),
-                          );
-                        } catch (e) {
-                          Alert.alert(
-                            "Error",
-                            "Failed to reject reward. Please try again.",
-                          );
-                        } finally {
+                          try {
+                            await narrativeService.approvePayout(
+                              payout.request_id,
+                            );
+                            removePayout(payout.request_id);
+                          } catch (e) {
+                            Alert.alert(
+                              "Error",
+                              "Failed to approve reward. Please try again.",
+                            );
+                          } finally {
+                            setPayoutLoading((prev) => ({
+                              ...prev,
+                              [payout.request_id]: false,
+                            }));
+                          }
+                        }}
+                      >
+                        {payoutLoading[payout.request_id] ? (
+                          <ActivityIndicator size="small" color="#fff" />
+                        ) : (
+                          <Text style={styles.payoutButtonText}>Approve</Text>
+                        )}
+                      </TouchableOpacity>
+                      <TouchableOpacity
+                        style={[
+                          styles.payoutButton,
+                          styles.rejectButton,
+                          payoutLoading[payout.request_id] &&
+                            styles.buttonDisabled,
+                        ]}
+                        disabled={!!payoutLoading[payout.request_id]}
+                        onPress={async () => {
                           setPayoutLoading((prev) => ({
                             ...prev,
-                            [payout.request_id]: false,
+                            [payout.request_id]: true,
                           }));
-                        }
-                      }}
-                    >
-                      {payoutLoading[payout.request_id] ? (
-                        <ActivityIndicator size="small" color="#fff" />
-                      ) : (
-                        <Text style={styles.payoutButtonText}>Reject</Text>
-                      )}
-                    </TouchableOpacity>
+                          try {
+                            await narrativeService.rejectPayout(
+                              payout.request_id,
+                              "Rejected by parent",
+                            );
+                            removePayout(payout.request_id);
+                          } catch (e) {
+                            Alert.alert(
+                              "Error",
+                              "Failed to reject reward. Please try again.",
+                            );
+                          } finally {
+                            setPayoutLoading((prev) => ({
+                              ...prev,
+                              [payout.request_id]: false,
+                            }));
+                          }
+                        }}
+                      >
+                        {payoutLoading[payout.request_id] ? (
+                          <ActivityIndicator size="small" color="#fff" />
+                        ) : (
+                          <Text style={styles.payoutButtonText}>Reject</Text>
+                        )}
+                      </TouchableOpacity>
+                    </View>
                   </View>
-                </View>
-              ))}
-            </View>
-          )}
+                ))}
+              </View>
+            )}
+          </QuerySection>
 
           {/* Recent Tasks */}
           <View style={{ gap: 10, paddingVertical: 20 }}>
@@ -628,83 +467,71 @@ export default function HomeScreen() {
                 />
               }
             />
-            {recentTasks.length > 0 ? (
-              recentTasks.map((task) => (
-                <TaskCard
-                  key={task.task_id}
-                  name={task.task_title}
-                  stars={task.reward_amount}
-                  taskData={task}
-                  isRewarding={rewardingTaskId === task.task_id}
-                  onReward={async () => {
-                    if (rewardingTaskId) return;
-                    setRewardingTaskId(task.task_id);
-                    const snapshot = [...recentTasks];
-                    try {
-                      setRecentTasks((prev) =>
-                        prev.map((t) =>
-                          t.task_id === task.task_id
-                            ? {
-                                ...t,
-                                rewarded: true,
-                                marked_completed: true,
-                                status: "completed",
-                              }
-                            : t,
-                        ),
-                      );
-                      // Backend owns the reward write (credit + XRPL payment
-                      // + notifications) behind one authorised call.
-                      await taskService.taskRewarded({
-                        task_id: task.task_id,
-                        user_id: user.uid,
-                      });
-                      firestoreService.invalidateTaskCaches();
+            <QuerySection query={recent} label="recent tasks">
+              {recentTasks.length > 0 ? (
+                recentTasks.map((task) => (
+                  <TaskCard
+                    key={task.task_id}
+                    name={task.task_title}
+                    stars={task.reward_amount}
+                    taskData={task}
+                    isRewarding={rewardingTaskId === task.task_id}
+                    onReward={async () => {
+                      if (rewardingTaskId) return;
+                      setRewardingTaskId(task.task_id);
+                      try {
+                        // Backend owns the reward write (credit + XRPL payment
+                        // + notifications) behind one authorised call.
+                        await taskService.taskRewarded({
+                          task_id: task.task_id,
+                          user_id: user.uid,
+                        });
 
-                      if (
-                        task.assigned_to_ids &&
-                        task.assigned_to_ids.length > 0
-                      ) {
-                        try {
-                          const kidId = task.assigned_to_ids[0];
-                          const progress =
-                            await narrativeService.getProgress(kidId);
-                          if (progress && progress.length > 0) {
-                            const activeStory =
-                              progress.find(
-                                (p: any) => p.status === "in_progress",
-                              ) || progress[0];
-                            await narrativeService.createPayout({
-                              kid_id: kidId,
-                              story_id: activeStory.story_id,
-                              node_id: activeStory.current_node,
-                              token_amount: task.reward_amount,
-                              task_id: task.task_id,
-                            });
+                        if (
+                          task.assigned_to_ids &&
+                          task.assigned_to_ids.length > 0
+                        ) {
+                          try {
+                            const kidId = task.assigned_to_ids[0];
+                            const progress = await narrativeService.getProgress(
+                              kidId,
+                            );
+                            if (progress && progress.length > 0) {
+                              const activeStory =
+                                progress.find(
+                                  (p: any) => p.status === "in_progress",
+                                ) || progress[0];
+                              await narrativeService.createPayout({
+                                kid_id: kidId,
+                                story_id: activeStory.story_id,
+                                node_id: activeStory.current_node,
+                                token_amount: task.reward_amount,
+                                task_id: task.task_id,
+                              });
+                            }
+                          } catch (payoutError) {
+                            console.log(
+                              "Failed to create narrative payout:",
+                              payoutError,
+                            );
                           }
-                        } catch (payoutError) {
-                          console.log(
-                            "Failed to create narrative payout:",
-                            payoutError,
-                          );
                         }
+                      } catch (e) {
+                        Alert.alert(
+                          "Error",
+                          "Failed to reward task. Please try again.",
+                        );
+                      } finally {
+                        setRewardingTaskId(null);
                       }
-                    } catch (e) {
-                      setRecentTasks(snapshot);
-                      Alert.alert(
-                        "Error",
-                        "Failed to reward task. Please try again.",
-                      );
-                    } finally {
-                      setRewardingTaskId(null);
-                    }
-                  }}
-                  isParentView={true}
-                />
-              ))
-            ) : (
-              <Text>No recent activity. Create tasks to see them here!</Text>
-            )}
+                    }}
+                    isParentView={true}
+                  />
+                ))
+              ) : (
+                <Text>No recent activity. Create tasks to see them here!</Text>
+              )}
+            </QuerySection>
           </View>
         </View>
       </ScrollView>

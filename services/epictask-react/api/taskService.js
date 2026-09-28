@@ -1,3 +1,4 @@
+import { invalidateTaskQueries } from "./queryInvalidation";
 import MicroserviceUrls from "@/constants/Microservices";
 import { Alert } from "react-native";
 import { firestoreService } from "./firestoreService";
@@ -16,6 +17,7 @@ export const taskService = {
       const response = await taskApiClient.post("/", taskData);
       // Invalidate cache after creating a task
       firestoreService.cache.clearTasks();
+      invalidateTaskQueries();
       return response.data;
     } catch (error) {
       console.log("Create task error:", error);
@@ -30,6 +32,7 @@ export const taskService = {
         assignmentData,
       );
       firestoreService.cache.clearTasks();
+      invalidateTaskQueries();
       return response.data;
     } catch (error) {
       console.log("Task assigned error:", error);
@@ -46,6 +49,7 @@ export const taskService = {
       );
       Alert.alert(response.data.response || "Task canceled successfully");
       firestoreService.cache.clearTasks();
+      invalidateTaskQueries();
       return response.data;
     } catch (error) {
       console.log("Task canceled error:", error);
@@ -66,6 +70,7 @@ export const taskService = {
         updatedData,
       );
       firestoreService.cache.clearTasks();
+      invalidateTaskQueries();
       return response.data;
     } catch (error) {
       console.log("Update task error:", error);
@@ -81,6 +86,8 @@ export const taskService = {
         `/${commentData.task_id}/comment`,
         commentData,
       );
+      firestoreService.cache.clearTasks();
+      invalidateTaskQueries();
       return response.data;
     } catch (error) {
       console.log("Task comment added error:", error);
@@ -108,6 +115,8 @@ export const taskService = {
         `/${completionData.task_id}/complete`,
         payload,
       );
+      firestoreService.cache.clearTasks();
+      invalidateTaskQueries();
       return response.data;
     } catch (error) {
       console.log("Task completed error:", error);
@@ -121,6 +130,8 @@ export const taskService = {
         `/${expirationData.task_id}/expire`,
         expirationData,
       );
+      firestoreService.cache.clearTasks();
+      invalidateTaskQueries();
       return response.data;
     } catch (error) {
       console.log("Task expired error:", error);
@@ -134,6 +145,8 @@ export const taskService = {
         `/${ratingData.task_id}/rating`,
         ratingData,
       );
+      firestoreService.cache.clearTasks();
+      invalidateTaskQueries();
       return response.data;
     } catch (error) {
       console.log("Task rating update error:", error);
@@ -147,6 +160,8 @@ export const taskService = {
         `/${rewardData.task_id}/reward`,
         rewardData,
       );
+      firestoreService.cache.clearTasks();
+      invalidateTaskQueries();
       return response.data;
     } catch (error) {
       console.log("Task rewarded error:", error);
@@ -160,6 +175,8 @@ export const taskService = {
         `/${verificationData.task_id}/verify`,
         verificationData,
       );
+      firestoreService.cache.clearTasks();
+      invalidateTaskQueries();
       return response.data;
     } catch (error) {
       console.log("Task verified error:", error);

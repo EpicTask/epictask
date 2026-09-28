@@ -1,3 +1,4 @@
+import { invalidateChildrenQueries } from "./queryInvalidation";
 import axios from "axios";
 import userApiClient from "./userService";
 import { auth } from "../config/firebaseConfig";
@@ -238,6 +239,7 @@ export const authService = {
       const result = response.data;
       if (result?.child?.parent_id) {
         firestoreService.cache.invalidateUser(result.child.parent_id);
+        invalidateChildrenQueries(result.child.parent_id);
       }
       return result;
     } catch (error) {
@@ -259,10 +261,15 @@ export const authService = {
 
   // Link child account (for parents)
   linkChild: async (inviteCode) => {
+    const parentId = auth.currentUser?.uid;
     try {
       const response = await userApiClient.post("/link-child", {
         inviteCode,
       });
+      if (parentId) {
+        firestoreService.cache.invalidateUser(parentId);
+        invalidateChildrenQueries(parentId);
+      }
       return response.data;
     } catch (error) {
       console.log("Link child error:", error);
@@ -376,6 +383,7 @@ export const authService = {
     // The account now exists — sign in so the app has a session.
     await signInWithEmailAndPassword(auth, cleanEmail, password);
     firestoreService.cache.invalidateUser(redeemed.parent_id);
+    invalidateChildrenQueries(redeemed.parent_id);
 
     return {
       success: true,

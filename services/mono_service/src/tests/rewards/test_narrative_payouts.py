@@ -5,6 +5,7 @@ nothing subscribed, so story earnings reached no balance. These tests hold the
 subscriber down, and in particular hold down that the event payload is treated
 as a pointer rather than as truth.
 """
+
 import base64
 import importlib
 import json
@@ -15,7 +16,6 @@ import pytest
 from fastapi import HTTPException
 
 from src.tests.users.fake_firestore import FakeFirestore, FieldFilter
-
 
 KID = "child_1"
 REQUEST_ID = "payout_1"
@@ -47,15 +47,18 @@ def narrative(monkeypatch):
     sys.modules["src.config.firebase_config"] = stub_config
 
     import src.storage.reward_db as reward_db
+
     reward_db = importlib.reload(reward_db)
     monkeypatch.setattr(reward_db, "db", fake_db)
     monkeypatch.setattr(reward_db, "FieldFilter", FieldFilter)
 
     import src.services.rewards.reward_service as reward_service
+
     reward_service = importlib.reload(reward_service)
     monkeypatch.setattr(reward_service, "reward_db", reward_db)
 
     import src.routes.internal.internal_routes as internal_routes
+
     internal_routes = importlib.reload(internal_routes)
     monkeypatch.setattr(internal_routes, "db", fake_db)
     monkeypatch.setattr(internal_routes, "reward_service", reward_service)
@@ -63,8 +66,11 @@ def narrative(monkeypatch):
     monkeypatch.setenv("INTERNAL_SERVICE_TOKEN", TOKEN)
 
     from src.config.collection_names import collections
+
     return types.SimpleNamespace(
-        routes=internal_routes, service=reward_service, db=fake_db,
+        routes=internal_routes,
+        service=reward_service,
+        db=fake_db,
         collections=collections,
     )
 
@@ -103,12 +109,11 @@ def _event(request_id=REQUEST_ID, **overrides):
 # The gap this closes
 # ---------------------------------------------------------------------------
 
+
 @pytest.mark.asyncio
 async def test_a_confirmed_story_payout_credits_the_child(narrative):
     _seed_payout(narrative)
-    result = await narrative.routes.handle_narrative_payout_confirmed(
-        _Req(_event())
-    )
+    result = await narrative.routes.handle_narrative_payout_confirmed(_Req(_event()))
     assert result["success"] is True
 
     projection = narrative.service.get_rewards(KID)
@@ -156,6 +161,7 @@ async def test_the_transaction_hash_is_recorded(narrative):
 # The event is a pointer, not truth
 # ---------------------------------------------------------------------------
 
+
 @pytest.mark.asyncio
 async def test_the_event_cannot_inflate_the_amount(narrative):
     """A forged or stale event claiming a bigger payout must not be believed."""
@@ -171,9 +177,7 @@ async def test_the_event_cannot_inflate_the_amount(narrative):
 @pytest.mark.asyncio
 async def test_an_unconfirmed_payout_is_not_credited(narrative):
     _seed_payout(narrative, status="pending")
-    result = await narrative.routes.handle_narrative_payout_confirmed(
-        _Req(_event())
-    )
+    result = await narrative.routes.handle_narrative_payout_confirmed(_Req(_event()))
     assert result["status"] == "ignored"
     assert narrative.service.get_rewards(KID)["token_score"] == 0.0
 
@@ -188,6 +192,7 @@ async def test_a_failed_payout_is_not_credited(narrative):
 # ---------------------------------------------------------------------------
 # Delivery semantics
 # ---------------------------------------------------------------------------
+
 
 @pytest.mark.asyncio
 async def test_a_redelivered_event_does_not_credit_twice(narrative):
@@ -247,7 +252,7 @@ async def test_the_subscriber_requires_the_internal_token(narrative):
 # silent: the subscription looks configured and every delivery is rejected.
 # ---------------------------------------------------------------------------
 
-SA = "pubsub-push@task-coin-384722.iam.gserviceaccount.com"
+SA = "pub-sub-task-coin@task-coin-384722.iam.gserviceaccount.com"
 
 
 def test_without_a_push_identity_it_falls_back_to_the_shared_token(monkeypatch):
@@ -337,6 +342,9 @@ def test_a_valid_token_from_the_expected_service_account_passes(monkeypatch):
         "verify_oauth2_token",
         lambda *a, **k: {"email": SA, "email_verified": True},
     )
-    assert internal_auth.verify_pubsub_push_caller(
-        _Req(headers={"Authorization": "Bearer x"})
-    ) is None
+    assert (
+        internal_auth.verify_pubsub_push_caller(
+            _Req(headers={"Authorization": "Bearer x"})
+        )
+        is None
+    )

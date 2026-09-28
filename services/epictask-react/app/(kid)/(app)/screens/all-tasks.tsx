@@ -9,9 +9,9 @@ import {
   ActivityIndicator,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { router, useFocusEffect } from "expo-router";
+import { router } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
-import { useQuery } from "@tanstack/react-query";
+import { Query, useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/context/AuthContext";
 import { KidTaskModal } from "@/components/modals/KidTaskModal";
 import TaskCard from "@/components/cards/kid/TaskCard";
@@ -19,20 +19,9 @@ import CustomText from "@/components/CustomText";
 import { COLORS } from "@/constants/Colors";
 import { responsiveWidth } from "react-native-responsive-dimensions";
 import taskService from "@/api/taskService";
-import MicroserviceUrls from "@/constants/Microservices";
 import { Task } from "@/constants/Interfaces";
-import { firestoreService } from "@/api/firestoreService";
-
-const fetchTasks = async (userId: string) => {
-  const data = await firestoreService.getTasksForUser(userId);
-  if (Array.isArray(data)) {
-    return data;
-  }
-  if (data && Array.isArray(data.tasks)) {
-    return data.tasks;
-  }
-  return [];
-};
+import { tasksQuery } from "@/api/homeQueries";
+import { useScreenRefresh } from "@/hooks/useScreenRefresh";
 
 export default function AllTasksScreen() {
   const { user, effectiveUserId } = useAuth();
@@ -43,24 +32,15 @@ export default function AllTasksScreen() {
     isLoading,
     isError,
     error,
-    refetch,
-  } = useQuery({
-    queryKey: ["allTasks", effectiveUserId],
-    queryFn: () => fetchTasks(effectiveUserId || ""),
-    enabled: !!effectiveUserId,
-  });
-
-  useFocusEffect(
-    useCallback(() => {
-      refetch();
-    }, [refetch]),
-  );
+  } = useQuery(tasksQuery(effectiveUserId || ""));
+  const matchesScreen = useCallback(({ queryKey: key }: Query) => key[0] === "allTasks" && key[1] === effectiveUserId, [effectiveUserId]);
+  const { refreshing, onRefresh } = useScreenRefresh(matchesScreen);
 
   if (isLoading) {
     return <ActivityIndicator size="large" style={styles.centered} />;
   }
 
-  if (isError) {
+  if (isError && tasks.length === 0) {
     return <Text style={styles.centered}>Error: {error.message}</Text>;
   }
 
@@ -80,7 +60,9 @@ export default function AllTasksScreen() {
         </View>
         <FlatList
           data={tasks}
-          keyExtractor={(item) => item.id.toString()}
+          onRefresh={onRefresh}
+          refreshing={refreshing}
+          keyExtractor={(item) => item.task_id}
           renderItem={({ item, index }) => (
             <TaskCard
               bg={
@@ -101,7 +83,6 @@ export default function AllTasksScreen() {
                     task_id: item.task_id,
                     completed_by_id: effectiveUserId || user?.uid || "",
                   });
-                  refetch();
                 } catch (e) {
                   console.log("Failed to complete task:", e);
                 }
@@ -121,7 +102,6 @@ export default function AllTasksScreen() {
           setModalVisible(false);
           setSelectedTask(null);
         }}
-        onRefresh={refetch}
       />
     </SafeAreaView>
   );

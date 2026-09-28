@@ -1,3 +1,4 @@
+import { progressQuery } from "@/api/homeQueries";
 import React from "react";
 import {
   View,
@@ -47,11 +48,7 @@ export default function StoriesScreen() {
     data: progressList = [],
     isLoading: progressLoading,
     refetch: refetchProgress,
-  } = useQuery({
-    queryKey: ["storyProgress", effectiveUserId],
-    queryFn: () => narrativeService.getProgress(effectiveUserId || ""),
-    enabled: !!effectiveUserId,
-  });
+  } = useQuery(progressQuery(effectiveUserId || ""));
 
   const [refreshing, setRefreshing] = React.useState(false);
 

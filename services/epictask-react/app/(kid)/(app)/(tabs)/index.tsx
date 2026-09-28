@@ -1,19 +1,17 @@
 import { FONT_SIZES } from "@/constants/FontSize";
-import React, { useState, useCallback, useEffect } from "react";
+import React, { useState, useCallback } from "react";
 import {
   Image,
   ScrollView,
   StyleSheet,
   Text,
   View,
-  ActivityIndicator,
   RefreshControl,
-  Pressable,
   TouchableOpacity,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { useQuery } from "@tanstack/react-query";
-import { router, Link, useFocusEffect } from "expo-router";
+import { Query, useQuery } from "@tanstack/react-query";
+import { router, Link } from "expo-router";
 import { KidTaskModal } from "@/components/modals/KidTaskModal";
 import * as Progress from "react-native-progress";
 import { useAuth } from "@/context/AuthContext";
@@ -21,112 +19,55 @@ import { useAuth } from "@/context/AuthContext";
 import TaskCard from "@/components/cards/kid/TaskCard";
 import Heading from "@/components/headings/Heading";
 import CustomText from "@/components/CustomText";
-import KidArrowIcon from "@/assets/icons/KidArrow";
 import { ICONS, IMAGES } from "@/assets";
 import { COLORS } from "@/constants/Colors";
 import {
-  responsiveFontSize,
   responsiveHeight,
   responsiveWidth,
 } from "react-native-responsive-dimensions";
 import taskService from "@/api/taskService";
-import { firestoreService } from "@/api/firestoreService";
-import { notificationService } from "@/api/notificationService";
-import MicroserviceUrls from "@/constants/Microservices";
 import { Task } from "@/constants/Interfaces";
 import DebouncedTouchableOpacity from "@/components/buttons/DebouncedTouchableOpacity";
 import StoryProgressCard from "@/components/cards/kid/StoryProgressCard";
 import ActiveStoryCard from "@/components/cards/kid/ActiveStoryCard";
-import narrativeService, { StoryProgress, Story } from "@/api/narrativeService";
+import narrativeService, { StoryProgress } from "@/api/narrativeService";
 
-const fetchTasks = async (userId: string) => {
-  const data = await firestoreService.getTasksForUser(userId);
-  if (Array.isArray(data)) {
-    return data;
-  }
-  if (data && Array.isArray(data.tasks)) {
-    return data.tasks;
-  }
-  // Return an empty array if the response is not in the expected format.
-  return [];
-};
+import {
+  tasksQuery,
+  progressQuery,
+  notificationsQuery,
+} from "@/api/homeQueries";
+import { useScreenRefresh } from "@/hooks/useScreenRefresh";
+import { QuerySection } from "@/components/common/QuerySection";
 
 export default function HomeScreen() {
   const { user, effectiveUserId } = useAuth();
-  const [unreadNotifications, setUnreadNotifications] = useState(0);
+  return <KidHomeScreen key={`${user?.uid}:${effectiveUserId}`} />;
+}
+
+function KidHomeScreen() {
+  const { user, effectiveUserId } = useAuth();
+  const uid = effectiveUserId || "";
+  const accountId = user?.uid || "";
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const [modalVisible, setModalVisible] = useState(false);
-
-  const {
-    data: tasks = [],
-    isLoading,
-    isError,
-    error,
-    refetch,
-  } = useQuery({
-    queryKey: ["allTasks", effectiveUserId],
-    queryFn: () => fetchTasks(effectiveUserId || ""),
-    enabled: !!effectiveUserId,
-  });
-
-  // Fetch story progress
-  const {
-    data: storyProgress = [],
-    isLoading: storyProgressLoading,
-    refetch: refetchStoryProgress,
-  } = useQuery({
-    queryKey: ["homeStoryProgress", effectiveUserId],
-    queryFn: () => narrativeService.getProgress(effectiveUserId || ""),
-    enabled: !!effectiveUserId,
-  });
-
-  const [refreshing, setRefreshing] = useState(false);
-  const [lastRefreshTime, setLastRefreshTime] = useState<number>(0);
-  const REFRESH_COOLDOWN = 5000; // 5 seconds cooldown
-
-  // Fetch notifications count
-  const fetchNotificationCount = useCallback(async () => {
-    if (user) {
-      try {
-        const notifications = await notificationService.getNotifications(
-          20,
-          true,
-        );
-        setUnreadNotifications(notifications.length);
-      } catch (e) {
-        console.log("Failed to fetch notifications count", e);
-      }
-    }
-  }, [user]);
-
-  useEffect(() => {
-    fetchNotificationCount();
-  }, [fetchNotificationCount]);
-
-  // Refresh tasks, story progress, and notifications when screen comes into focus
-  useFocusEffect(
-    useCallback(() => {
-      refetch();
-      refetchStoryProgress();
-      fetchNotificationCount();
-    }, [refetch, refetchStoryProgress, fetchNotificationCount]),
+  const taskResult = useQuery(tasksQuery(uid));
+  const storyResult = useQuery(progressQuery(uid));
+  const notifications = useQuery(notificationsQuery(accountId));
+  const tasks = taskResult.data || [];
+  const storyProgress = storyResult.data || [];
+  const unreadNotifications = notifications.data || 0;
+  const matchesScreen = useCallback(
+    ({ queryKey: key }: Query) =>
+      (!!uid &&
+        key[1] === uid &&
+        ["allTasks", "storyProgress", "activeStoryNode"].includes(
+          String(key[0]),
+        )) ||
+      (!!accountId && key[0] === "notifications" && key[1] === accountId),
+    [uid, accountId],
   );
-
-  const onRefresh = useCallback(async () => {
-    const now = Date.now();
-    if (now - lastRefreshTime < REFRESH_COOLDOWN) {
-      return; // Skip if cooling down
-    }
-
-    setRefreshing(true);
-    setLastRefreshTime(now);
-    await Promise.all([
-      refetch(),
-      refetchStoryProgress(),
-      fetchNotificationCount(),
-    ]);
-    setRefreshing(false);
-  }, [refetch, refetchStoryProgress, fetchNotificationCount, lastRefreshTime]);
+  const { refreshing, onRefresh } = useScreenRefresh(matchesScreen);
 
   // Derive activeProgress before any early returns so hooks stay stable
   const activeProgress = storyProgress.find(
@@ -149,22 +90,8 @@ export default function HomeScreen() {
           )
         : null,
     enabled: !!activeProgress,
+    staleTime: 60_000,
   });
-
-  if (isLoading) {
-    return <ActivityIndicator size="large" style={styles.centered} />;
-  }
-
-  if (isError) {
-    return (
-      <View style={styles.centered}>
-         <Text>Oops! We couldn&apos;t load your tasks.</Text>
-        <TouchableOpacity onPress={() => refetch()}>
-          <Text style={{ color: COLORS.primary, marginTop: 10 }}>Retry</Text>
-        </TouchableOpacity>
-      </View>
-    );
-  }
 
   const completedTasks = tasks.filter(
     (task: Task) => task.status === "completed",
@@ -251,91 +178,114 @@ export default function HomeScreen() {
             </View>
           </View>
 
+          {notifications.isError && (
+            <QuerySection query={notifications} label="notifications" />
+          )}
           {/* Progress Cards */}
           <View style={{ paddingVertical: 10 }}>
             <View style={{ flexDirection: "row", gap: 10 }}>
               {/* Tasks Progress */}
-              <View style={{ width: responsiveWidth(44), height: 165 }}>
-                <View>{ICONS.kidCard}</View>
-                <View style={styles.cardOverlay}>
-                  <CustomText variant="semiBold" style={styles.progressTitle}>
-                     ✅ Today&apos;s Tasks
-                  </CustomText>
-                  <View style={styles.progressSummaryRow}>
-                    <Progress.Circle
-                      size={48}
-                      progress={progress}
-                      thickness={3}
-                      color={COLORS.purple}
-                      unfilledColor="#E5E7EB"
-                      borderWidth={0}
-                      showsText={true}
-                      formatText={() => `${Math.round(progress * 100)}%`}
-                      textStyle={styles.progressPercent}
-                    />
-                    <View style={styles.progressSummaryText}>
+              <View style={{ width: responsiveWidth(44) }}>
+                <QuerySection
+                  query={taskResult}
+                  label="task progress"
+                  height={165}
+                >
+                  <View style={{ width: responsiveWidth(44), height: 165 }}>
+                    <View>{ICONS.kidCard}</View>
+                    <View style={styles.cardOverlay}>
                       <CustomText
                         variant="semiBold"
-                        style={styles.progressStatus}
+                        style={styles.progressTitle}
                       >
-                        {tasks.length > 0 && completedTasks === tasks.length
-                          ? "All done!"
-                          : "Keep going!"}
+                        ✅ Today&apos;s Tasks
                       </CustomText>
-                      <Text style={styles.progressDetail}>
-                        {tasks.length > 0 && completedTasks === tasks.length
-                          ? "Ready for a new challenge"
-                          : `${completedTasks} of ${tasks.length} complete`}
-                      </Text>
+                      <View style={styles.progressSummaryRow}>
+                        <Progress.Circle
+                          size={48}
+                          progress={progress}
+                          thickness={3}
+                          color={COLORS.purple}
+                          unfilledColor="#E5E7EB"
+                          borderWidth={0}
+                          showsText={true}
+                          formatText={() => `${Math.round(progress * 100)}%`}
+                          textStyle={styles.progressPercent}
+                        />
+                        <View style={styles.progressSummaryText}>
+                          <CustomText
+                            variant="semiBold"
+                            style={styles.progressStatus}
+                          >
+                            {tasks.length > 0 && completedTasks === tasks.length
+                              ? "All done!"
+                              : "Keep going!"}
+                          </CustomText>
+                          <Text style={styles.progressDetail}>
+                            {tasks.length > 0 && completedTasks === tasks.length
+                              ? "Ready for a new challenge"
+                              : `${completedTasks} of ${tasks.length} complete`}
+                          </Text>
+                        </View>
+                      </View>
                     </View>
+                    <TouchableOpacity
+                      style={styles.arrow}
+                      onPress={() => router.push("../screens/all-tasks")}
+                    >
+                      {ICONS.kidArrow}
+                    </TouchableOpacity>
                   </View>
-                </View>
-                <TouchableOpacity
-                  style={styles.arrow}
-                  onPress={() => router.push("../screens/all-tasks")}
-                >
-                  {ICONS.kidArrow}
-                </TouchableOpacity>
+                </QuerySection>
               </View>
-
               {/* Story Progress */}
-              <StoryProgressCard
-                inProgressCount={inProgressStories}
-                completedCount={completedStories}
-                totalXpEarned={totalStoryXp}
-                onPress={() => router.push("./stories")}
-              />
+              <View style={{ flex: 1 }}>
+                <QuerySection
+                  query={storyResult}
+                  label="story progress"
+                  height={165}
+                >
+                  <StoryProgressCard
+                    inProgressCount={inProgressStories}
+                    completedCount={completedStories}
+                    totalXpEarned={totalStoryXp}
+                    onPress={() => router.push("./stories")}
+                  />
+                </QuerySection>
+              </View>
             </View>
           </View>
 
           {/* Active Story / Adventure Section */}
           <View style={{ paddingVertical: 5 }}>
             <Heading title="Your Lesson" />
-            <ActiveStoryCard
-              title={
-                activeProgress?.story_id === "broken-toy-5-7"
-                  ? "The Broken Toy"
-                  : activeProgress?.story_id === "cookie-jar-5-7"
+            <QuerySection query={storyResult} label="your lesson">
+              <ActiveStoryCard
+                title={
+                  activeProgress?.story_id === "broken-toy-5-7"
+                    ? "The Broken Toy"
+                    : activeProgress?.story_id === "cookie-jar-5-7"
                     ? "The Cookie Jar"
                     : activeProgress
-                      ? "Current Lesson"
-                      : "Start a New Lesson!"
-              }
-              progress={
-                activeProgress ? activeProgress.completed_nodes.length / 3 : 0
-              } // Assuming 3 nodes for seeded stories
-              isNew={!activeProgress}
-              onPress={() => {
-                if (activeProgress) {
-                  router.push({
-                    pathname: "../screens/story",
-                    params: { storyId: activeProgress.story_id },
-                  });
-                } else {
-                  router.push("./stories");
+                    ? "Current Lesson"
+                    : "Start a New Lesson!"
                 }
-              }}
-            />
+                progress={
+                  activeProgress ? activeProgress.completed_nodes.length / 3 : 0
+                } // Assuming 3 nodes for seeded stories
+                isNew={!activeProgress}
+                onPress={() => {
+                  if (activeProgress) {
+                    router.push({
+                      pathname: "../screens/story",
+                      params: { storyId: activeProgress.story_id },
+                    });
+                  } else {
+                    router.push("./stories");
+                  }
+                }}
+              />
+            </QuerySection>
           </View>
 
           {/* Upcoming Tasks */}
@@ -371,41 +321,46 @@ export default function HomeScreen() {
                 </CustomText>
               </DebouncedTouchableOpacity>
             </View>
-            {tasks.length > 0 ? (
-              tasks.map((task: Task, index: number) => (
-                <TaskCard
-                  bg={
-                    index % 3 === 0
-                      ? COLORS.light_grey
-                      : index % 3 === 1
+            <QuerySection
+              query={taskResult}
+              label="upcoming tasks"
+              height={180}
+            >
+              {tasks.length > 0 ? (
+                tasks.map((task: Task, index: number) => (
+                  <TaskCard
+                    bg={
+                      index % 3 === 0
+                        ? COLORS.light_grey
+                        : index % 3 === 1
                         ? COLORS.light_yellow
                         : COLORS.light_purple
-                  }
-                  key={index}
-                  task={task}
-                  isStoryTask={activeNode?.task_gate === task.task_title}
-                  onPress={() => {
-                    setSelectedTask(task);
-                    setModalVisible(true);
-                  }}
-                  onComplete={async () => {
-                    try {
-                      await taskService.taskCompleted({
-                        task_id: task.task_id,
-                        completed_by_id: effectiveUserId || user?.uid || "",
-                      });
-                      refetch();
-                    } catch (e) {
-                      console.log("Failed to complete task:", e);
                     }
-                  }}
-                />
-              ))
-            ) : (
-              <View style={styles.centered}>
-                <Text>No tasks for today. Great job!</Text>
-              </View>
-            )}
+                    key={task.task_id}
+                    task={task}
+                    isStoryTask={activeNode?.task_gate === task.task_title}
+                    onPress={() => {
+                      setSelectedTask(task);
+                      setModalVisible(true);
+                    }}
+                    onComplete={async () => {
+                      try {
+                        await taskService.taskCompleted({
+                          task_id: task.task_id,
+                          completed_by_id: effectiveUserId || user?.uid || "",
+                        });
+                      } catch (e) {
+                        console.log("Failed to complete task:", e);
+                      }
+                    }}
+                  />
+                ))
+              ) : (
+                <View style={styles.centered}>
+                  <Text>No tasks for today. Great job!</Text>
+                </View>
+              )}
+            </QuerySection>
           </View>
         </View>
       </ScrollView>
@@ -417,7 +372,6 @@ export default function HomeScreen() {
           setModalVisible(false);
           setSelectedTask(null);
         }}
-        onRefresh={refetch}
       />
     </SafeAreaView>
   );

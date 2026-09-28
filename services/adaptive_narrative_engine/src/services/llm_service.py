@@ -69,7 +69,7 @@ class LLMService:
             self.openai_client = openai.OpenAI(api_key=self.openai_key)
 
             genai.configure(api_key=self.gemini_key)
-            self.gemini_model = genai.GenerativeModel('gemini-3.1-flash-lite')
+            self.gemini_model = genai.GenerativeModel('gemini-3.5-flash')
 
             logging.info("LLMService: initialized with OpenAI + Gemini.")
 
@@ -95,7 +95,7 @@ class LLMService:
         logging.info(f"Generating content with OpenAI. Prompt length: {len(prompt)}")
         try:
             response = self.openai_client.chat.completions.create(
-                model="gpt-4",
+                model="gpt-5-nano-2025-08-07",
                 messages=[
                     {
                         "role": "system",

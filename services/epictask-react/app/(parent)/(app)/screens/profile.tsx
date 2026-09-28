@@ -1,3 +1,4 @@
+import { childrenQuery } from "@/api/homeQueries";
 import { FONT_SIZES } from "@/constants/FontSize";
 import React, { useContext, useState } from "react";
 import {
@@ -27,20 +28,6 @@ import {
   responsiveHeight,
   responsiveWidth,
 } from "react-native-responsive-dimensions";
-import { firestoreService } from "@/api/firestoreService";
-
-const fetchLinkedChildren = async (uid: string) => {
-  try {
-    const result = await firestoreService.getLinkedChildren(uid);
-    if (result.success) {
-      return result.children || [];
-    }
-    return [];
-  } catch (error) {
-    console.log("Error fetching linked children:", error);
-    return [];
-  }
-};
 
 const ProfileScreen = () => {
   const { user, updateProfile } = useContext(AuthContext);
@@ -54,11 +41,7 @@ const ProfileScreen = () => {
     setProfileImage(user?.imageUrl || user?.photoURL || null);
   }, [user]);
 
-  const { data: children, isLoading: isLoadingChildren } = useQuery({
-    queryKey: ["linkedChildren", user?.uid],
-    queryFn: () => fetchLinkedChildren(user?.uid || ""),
-    enabled: !!user?.uid,
-  });
+  const { data: children, isLoading: isLoadingChildren } = useQuery(childrenQuery(user?.uid || ""));
 
   const updateProfileMutation = useMutation({
     mutationFn: async (updatedProfile: {

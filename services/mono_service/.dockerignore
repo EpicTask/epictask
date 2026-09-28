@@ -1,0 +1,15 @@
+.git
+.env
+.env.*
+**/service_accounts
+**/*service_account*.json
+**/application_default_credentials.json
+**/*.pem
+**/*.key
+.venv
+venv
+**/__pycache__
+.pytest_cache
+*.log
+.DS_Store
+coverage

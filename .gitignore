@@ -88,3 +88,9 @@ services/mono_service/src/config/collection_names.py
 # resources/rewards_leaderboard_review.md. Ignoring it makes those agreements unenforceable.
 
 CLAUDE.md
+cloudbuild.yaml
+skaffold.yaml
+services/adaptive_narrative_engine/k8s/service.yaml
+services/mono_service/k8s/service.yaml
+services/xrpl_management/skaffold.yaml
+services/xrpl_management/k8s/service.yaml

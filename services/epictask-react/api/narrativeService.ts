@@ -1,3 +1,5 @@
+import { isAxiosError } from "axios";
+import { invalidateProgressQueries, invalidatePayoutQueries } from "./queryInvalidation";
 import MicroserviceUrls from "@/constants/Microservices";
 import createAuthenticatedClient from "./apiClient";
 
@@ -285,8 +287,10 @@ export const narrativeService = {
       return Array.isArray(data) ? data : [data];
     } catch (error) {
       console.log("Get story progress error:", error);
-      // Return empty array instead of throwing to avoid breaking the UI on fresh starts
-      return [];
+      // An unstarted individual story is empty; network/auth/server failures
+      // must reject so queries keep the last successful progress.
+      if (storyId && isAxiosError(error) && error.response?.status === 404) return [];
+      throw error;
     }
   },
 
@@ -300,6 +304,7 @@ export const narrativeService = {
         user_id: userId,
         story_id: storyId,
       });
+      invalidateProgressQueries(userId);
       return response.data;
     } catch (error) {
       console.log("Start story error:", error);
@@ -313,6 +318,7 @@ export const narrativeService = {
   ): Promise<AdvanceProgressResponse> => {
     try {
       const response = await narrativeApiClient.post("/progress/advance", data);
+      invalidateProgressQueries(data.user_id);
       return response.data;
     } catch (error) {
       console.log("Advance progress error:", error);
@@ -343,6 +349,7 @@ export const narrativeService = {
   requestPayout: async (data: PayoutRequest): Promise<PayoutResponse> => {
     try {
       const response = await narrativeApiClient.post("/payouts/request", data);
+      invalidatePayoutQueries();
       return response.data;
     } catch (error) {
       console.log("Request payout error:", error);
@@ -427,6 +434,7 @@ export const narrativeService = {
       const response = await narrativeApiClient.post(
         `/parent/payouts/${requestId}/approve`,
       );
+      invalidatePayoutQueries();
       return response.data;
     } catch (error) {
       console.log("Approve payout error:", error);
@@ -444,6 +452,7 @@ export const narrativeService = {
         `/parent/payouts/${requestId}/reject`,
         { reason },
       );
+      invalidatePayoutQueries();
       return response.data;
     } catch (error) {
       console.log("Reject payout error:", error);

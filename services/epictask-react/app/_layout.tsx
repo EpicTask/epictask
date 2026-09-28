@@ -4,7 +4,7 @@ import {
   DarkTheme,
   DefaultTheme,
   ThemeProvider,
-} from "@react-navigation/native";
+} from "expo-router/react-navigation";
 import { useEffect, useContext } from "react";
 import { Stack, useRouter, useSegments } from "expo-router";
 import { useFonts } from "expo-font";
@@ -13,6 +13,7 @@ import { useColorScheme } from "@/hooks/useColorScheme";
 import { QueryClientProvider } from '@tanstack/react-query';
 import { queryClient } from '../api/queryClient';
 import { AuthProvider, AuthContext } from '../context/AuthContext';
+import { useQueryLifecycle } from "@/hooks/useQueryLifecycle";
 import { usePushNotifications } from '@/hooks/usePushNotifications';
 
 // Prevent the splash screen from auto-hiding before asset loading is complete.
@@ -100,6 +101,7 @@ function RootLayout() {
 }
 
 export default function AppWrapper() {
+  useQueryLifecycle();
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>

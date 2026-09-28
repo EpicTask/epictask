@@ -1,0 +1,14 @@
+.git
+.env
+.env.*
+**/service_accounts
+**/*service_account*.json
+**/application_default_credentials.json
+**/*.pem
+**/*.key
+node_modules
+dist
+coverage
+.yarn
+*.log
+.DS_Store

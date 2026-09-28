@@ -1,3 +1,4 @@
+import { invalidateNotificationQueries } from "./queryInvalidation";
 import MicroserviceUrls from "@/constants/Microservices";
 import createAuthenticatedClient from "./apiClient";
 
@@ -25,6 +26,7 @@ export const notificationService = {
       const response = await notificationApiClient.patch(
         `/${notificationId}/read`,
       );
+      invalidateNotificationQueries();
       return response.data;
     } catch (error) {
       console.log("Mark as read error:", error);
@@ -35,6 +37,7 @@ export const notificationService = {
   markAllAsRead: async () => {
     try {
       const response = await notificationApiClient.post("/mark-all-read");
+      invalidateNotificationQueries();
       return response.data;
     } catch (error) {
       console.log("Mark all as read error:", error);
@@ -45,6 +48,7 @@ export const notificationService = {
   deleteNotification: async (notificationId: string) => {
     try {
       const response = await notificationApiClient.delete(`/${notificationId}`);
+      invalidateNotificationQueries();
       return response.data;
     } catch (error) {
       console.log("Delete notification error:", error);
