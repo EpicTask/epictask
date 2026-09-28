@@ -9,8 +9,10 @@ from typing import List, Dict, Any, Optional, Literal
 # Configure logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
+
 # Master kill-switch — set LLM_DISABLED=true to bypass all LLM calls
-LLM_DISABLED = os.getenv("LLM_DISABLED", "true").lower() == "true"
+LLM_DISABLED = os.getenv("LLM_DISABLED", "false").lower() in ("true", "1", "yes")
+OPENAI_MODEL = "gpt-5-nano-2025-08-07"
 
 if LLM_DISABLED:
     logging.info("LLM_DISABLED=true — LLM service running in stub mode. No API calls will be made.")
@@ -18,7 +20,7 @@ if LLM_DISABLED:
 
 def get_secret(secret: str) -> str:
     """
-    Retrieve secret from Google Secret Manager.
+    Retrieve secret from environment variable or Google Secret Manager.
 
     Args:
         secret: Secret name to retrieve
@@ -26,13 +28,22 @@ def get_secret(secret: str) -> str:
     Returns:
         Secret value as string
     """
-    from google.cloud import secretmanager
-    client = secretmanager.SecretManagerServiceClient()
-    project_id = "api-project-371618"
-    version_id = "latest"
-    name = f"projects/{project_id}/secrets/{secret}/versions/{version_id}"
-    response = client.access_secret_version(request={"name": name})
-    return response.payload.data.decode("UTF-8")
+    # Check environment variable first (supporting both exact and uppercase naming)
+    env_val = os.getenv(secret) or os.getenv(secret.upper())
+    if env_val:
+        return env_val.strip()
+
+    try:
+        from google.cloud import secretmanager
+        client = secretmanager.SecretManagerServiceClient()
+        project_id = os.getenv("GOOGLE_CLOUD_PROJECT", os.getenv("GCP_PROJECT_ID", "task-coin-384722"))
+        version_id = "latest"
+        name = f"projects/{project_id}/secrets/{secret}/versions/{version_id}"
+        response = client.access_secret_version(request={"name": name})
+        return response.payload.data.decode("UTF-8").strip()
+    except Exception as e:
+        logging.warning(f"Could not retrieve secret '{secret}' from Secret Manager: {e}")
+        return ""
 
 
 # Stub content returned when LLM_DISABLED=true
@@ -58,23 +69,39 @@ class LLMService:
 
         # Only import and initialize when LLM is enabled
         try:
-            from google.cloud import secretmanager as _sm  # noqa: F401 (validates import)
             import openai
             import google.generativeai as genai
 
-            self.openai_key = get_secret("openai_cal_key")
-            self.gemini_key = get_secret("gemini_api")
+            # Try OPENAI_API_KEY -> open-ai -> openai_cal_key
+            self.openai_key = (
+                get_secret("OPENAI_API_KEY")
+                or get_secret("open-ai")
+                or get_secret("openai_cal_key")
+            )
+            # Try GEMINI_API_KEY -> gemini_api
+            self.gemini_key = (
+                get_secret("GEMINI_API_KEY")
+                or get_secret("gemini_api")
+            )
 
-            openai.api_key = self.openai_key
-            self.openai_client = openai.OpenAI(api_key=self.openai_key)
+            if self.openai_key:
+                self.openai_client = openai.AsyncOpenAI(api_key=self.openai_key)
+            else:
+                self.openai_client = None
 
-            genai.configure(api_key=self.gemini_key)
-            self.gemini_model = genai.GenerativeModel('gemini-3.5-flash')
+            if self.gemini_key:
+                genai.configure(api_key=self.gemini_key)
+                self.gemini_model = genai.GenerativeModel('gemini-3.5-flash')
+            else:
+                self.gemini_model = None
 
-            logging.info("LLMService: initialized with OpenAI + Gemini.")
+            logging.info(
+                f"LLMService initialized. OpenAI: {'ready' if self.openai_client else 'disabled'}, "
+                f"Gemini: {'ready' if self.gemini_model else 'disabled'}"
+            )
 
         except Exception as e:
-            logging.warning(f"LLMService: failed to initialize LLM clients ({e}). Falling back to stub mode.")
+            logging.error(f"LLMService: failed to initialize LLM clients ({e}). OpenAI generation is unavailable.")
             self.openai_client = None
             self.gemini_model = None
 
@@ -85,17 +112,29 @@ class LLMService:
     async def generate_with_openai(
         self,
         prompt: str,
-        temperature: float = 0.7,
-        max_tokens: int = 2000
+        max_completion_tokens: int = 4096,
+        response_schema: Optional[Dict[str, Any]] = None,
     ) -> str:
-        if LLM_DISABLED or self.openai_client is None:
+        if LLM_DISABLED:
             logging.info("generate_with_openai: returning stub.")
             return _STUB_CONTENT
+        if self.openai_client is None:
+            raise RuntimeError("OpenAI is not configured; check the API key and client initialization")
 
         logging.info(f"Generating content with OpenAI. Prompt length: {len(prompt)}")
         try:
-            response = self.openai_client.chat.completions.create(
-                model="gpt-5-nano-2025-08-07",
+            format_options = {}
+            if response_schema is not None:
+                format_options["response_format"] = {
+                    "type": "json_schema",
+                    "json_schema": {
+                        "name": "story_content",
+                        "strict": True,
+                        "schema": response_schema,
+                    },
+                }
+            response = await self.openai_client.chat.completions.create(
+                model=OPENAI_MODEL,
                 messages=[
                     {
                         "role": "system",
@@ -103,11 +142,25 @@ class LLMService:
                     },
                     {"role": "user", "content": prompt}
                 ],
-                temperature=temperature,
-                max_tokens=max_tokens
+                # GPT-5 nano does not accept custom temperature/top_p. The token
+                # budget includes reasoning as well as the visible JSON output.
+                reasoning_effort="low",
+                verbosity="low",
+                max_completion_tokens=max_completion_tokens,
+                **format_options,
             )
+            if not response.choices:
+                raise RuntimeError("OpenAI returned no completion choices")
+            choice = response.choices[0]
+            if choice.message.refusal:
+                raise RuntimeError("OpenAI declined to generate this story content")
+            if choice.finish_reason != "stop":
+                raise RuntimeError(f"OpenAI generation was incomplete (finish_reason={choice.finish_reason})")
+            content = choice.message.content
+            if not content or not content.strip():
+                raise RuntimeError("OpenAI returned empty story content")
             logging.info("Successfully generated content with OpenAI.")
-            return response.choices[0].message.content
+            return content
         except Exception as e:
             logging.error(f"OpenAI generation error: {str(e)}")
             raise
@@ -137,15 +190,17 @@ class LLMService:
         self,
         prompt: str,
         provider: Literal["openai", "gemini"] = "openai",
-        temperature: float = 0.7,
-        max_tokens: int = 2000
+        max_completion_tokens: int = 4096,
+        response_schema: Optional[Dict[str, Any]] = None,
     ) -> str:
         if LLM_DISABLED:
             logging.info(f"generate_content [{provider}]: returning stub.")
             return _STUB_CONTENT
 
         if provider == "openai":
-            return await self.generate_with_openai(prompt, temperature, max_tokens)
+            return await self.generate_with_openai(
+                prompt, max_completion_tokens=max_completion_tokens, response_schema=response_schema
+            )
         elif provider == "gemini":
             return await self.generate_with_gemini(prompt)
         else:
@@ -181,7 +236,6 @@ Age-appropriate version for {min_age}-{max_age} year olds:"""
             adapted_text = await self.generate_content(
                 prompt=prompt,
                 provider=provider,
-                temperature=0.5
             )
             variants[age_key] = adapted_text.strip()
 
@@ -228,7 +282,6 @@ JSON response:"""
         response = await self.generate_content(
             prompt=prompt,
             provider=provider,
-            temperature=0.5
         )
 
         try:

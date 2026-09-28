@@ -269,8 +269,12 @@
                     <input type="text" id="baseUrl" value="{{ base_url }}" placeholder="http://localhost:8080">
                 </div>
                 <div class="form-group">
-                    <label>Authorization Token (Optional)</label>
-                    <input type="text" id="authToken" placeholder="Bearer token for authenticated endpoints">
+                    <label>Admin Token (X-Admin-Token Secret)</label>
+                    <input type="password" id="adminToken" placeholder="Pre-shared ADMIN_TOKEN secret for story management">
+                </div>
+                <div class="form-group">
+                    <label>Authorization Token (Firebase Bearer Token)</label>
+                    <input type="text" id="authToken" placeholder="Bearer token for authenticated user endpoints">
                 </div>
             </div>
         </div>
@@ -496,7 +500,8 @@
     <script>
         async function callEndpoint(method, path, data, responseId) {
             const baseUrl = document.getElementById('baseUrl').value;
-            const authToken = document.getElementById('authToken').value;
+            const adminToken = (document.getElementById('adminToken')?.value || '').trim();
+            const authToken = (document.getElementById('authToken')?.value || '').trim();
             
             // Generate ID or use provided one
             const id = responseId || `response-${path.replace(/[\/\{\}]/g, '-').replace(/^-/, '').replace(/-+/g, '-')}`;
@@ -507,6 +512,10 @@
                     'Content-Type': 'application/json'
                 };
                 
+                if (adminToken) {
+                    headers['X-Admin-Token'] = adminToken;
+                }
+
                 if (authToken) {
                     headers['Authorization'] = authToken.startsWith('Bearer ') ? authToken : `Bearer ${authToken}`;
                 }

@@ -14,20 +14,24 @@ from src.domain.models import Story, StoryNode, StoryProgress
 logger = logging.getLogger("ane").getChild("firestore")
 
 
-def resolve_user_age(user_id: str) -> int:
+def resolve_user_age(user_id: str, *, required: bool = False) -> int:
     """
     Resolve user's age from trusted profile data in Firestore.
-    Returns safe default age (10) if profile data is missing or unconfigured.
+    Story reads require a valid profile age; legacy callers retain their fallback.
     """
     try:
         user_doc = db.collection("users").document(user_id).get()
         if user_doc.exists:
             data = user_doc.to_dict() or {}
             age = data.get("age")
-            if isinstance(age, int) and 5 <= age <= 18:
+            if type(age) is int and 5 <= age <= 18:
                 return age
-    except Exception:
-        pass
+    except Exception as exc:
+        logger.error("Failed to resolve user age", exc_info=True)
+        if required:
+            raise HTTPException(503, detail="Unable to load child profile; please retry") from exc
+    if required:
+        raise HTTPException(422, detail="Child profile needs a valid age before loading a story")
     return 10
 
 

@@ -204,8 +204,8 @@ def get_node_generation_prompt(
     """
     node_type_info = template["structure"]["node_types"][node_index]
     node_type = node_type_info["type"]
-    has_choices = node_type_info.get("has_choices", False)
-    num_options = node_type_info.get("options", 0)
+    has_choices = node_index < template["structure"]["total_nodes"] - 1
+    num_options = 4 if has_choices else 0
     
     prompt = f"""Generate a story node for a financial literacy story about {template['topic']}.
 
@@ -224,24 +224,28 @@ Node Information:
         prompt += f"\nPrevious story context:\n{previous_context}\n"
     
     if has_choices:
-        prompt += f"\nThis node requires {num_options} meaningful choices that teach about {template['topic']}.\n"
+        prompt += f"\nThis node requires {num_options} meaningful choices about {template['topic']}. Put the two simplest concrete choices first. End with one direct question.\n"
+    else:
+        prompt += "\nThis is the closing scene: give a brief encouraging recap and no choices.\n"
     
     prompt += """
 Generate a JSON object with the following structure:
 {
     "title": "Brief node title",
-    "prompt": "The main narrative text (2-4 paragraphs)",
+    "prompt": "At most 35 words: a short engaging situation and one straightforward decision question",
     "educational_note": "What financial concept this teaches",
     "options": [
         {
-            "text": "Choice text",
+            "text": "Concrete action, at most 6 words",
             "is_good_choice": true/false,
             "explanation": "Why this choice matters"
         }
     ]
 }
 
-Make the story engaging, age-appropriate for kids, and focused on teaching financial literacy.
-The prompt should be narrative and immersive, not instructional."""
+Keep the base scene accessible to ages 5-8: one idea, familiar objects and small whole numbers.
+No long paragraphs, financial jargon, lectures, quizzes about definitions, or shaming choices.
+Each non-final scene must invite a multiple-choice decision. Older age versions will add depth.
+Do not introduce several questions or ask for free-text answers."""
     
     return prompt

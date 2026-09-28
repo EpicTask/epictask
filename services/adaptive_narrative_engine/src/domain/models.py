@@ -32,6 +32,8 @@ class NodeOption(BaseModel):
     text: str
     leads_to: str  # Next node ID
     reward_xp: int = Field(default=0, ge=0)
+    option_id: Optional[str] = None
+    age_variants: Dict[str, str] = Field(default_factory=dict)
 
 
 class PayoutHint(BaseModel):
@@ -62,6 +64,7 @@ class StoryNode(BaseModel):
     is_terminal: bool = Field(default=False)
     order: int = Field(default=0, ge=0)
     metadata: Optional[Dict[str, Any]] = None
+    age_variants: Dict[str, str] = Field(default_factory=dict)
     
     @field_validator('age_range')
     @classmethod

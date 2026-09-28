@@ -10,6 +10,9 @@ from src.services.llm_service import llm_service
 from src.services.story_templates import get_template, get_all_topics, get_node_generation_prompt
 from src.config.firebase_config import db
 from src.config.collection_names import collections
+from src.domain.models import StoryNode
+from src.domain.generation_schema import SCENE_SCHEMA, age_variants_schema
+from src.domain.story_reading import READING_LEVELS, validate_generated_reading
 
 
 # Configure logging
@@ -83,6 +86,10 @@ class StoryGeneratorService:
         # Generate age variants for all nodes
         logging.info("Generating age-appropriate variants...")
         await self._generate_age_variants(story, template["age_ranges"], provider)
+        self._link_story_nodes(story)
+        for node in story["nodes"]:
+            StoryNode.model_validate(node)
+        validate_generated_reading(story)
         
         logging.info(f"Successfully generated story with ID: {story_id}")
         return story
@@ -116,7 +123,7 @@ class StoryGeneratorService:
         response = await llm_service.generate_content(
             prompt=prompt,
             provider=provider,
-            temperature=0.7
+            response_schema=SCENE_SCHEMA,
         )
         
         # Parse JSON response
@@ -133,13 +140,7 @@ class StoryGeneratorService:
         except json.JSONDecodeError as e:
             logging.error(f"Failed to parse JSON response for node {node_index + 1}: {e}")
             logging.error(f"Response was: {response}")
-            # Fallback structure
-            node_data = {
-                "title": f"Node {node_index + 1}",
-                "prompt": response,
-                "educational_note": "Financial literacy concept",
-                "options": []
-            }
+            raise ValueError("Story generation did not return valid JSON") from e
         
         # Build node structure
         node = {
@@ -147,6 +148,12 @@ class StoryGeneratorService:
             "order": node_index,
             "title": node_data.get("title", f"Node {node_index + 1}"),
             "prompt": node_data.get("prompt", ""),
+            "lesson_key": template["topic"],
+            "age_range": [
+                min(ar[0] for ar in template["age_ranges"]),
+                max(ar[1] for ar in template["age_ranges"]),
+            ],
+            "is_terminal": node_index == template["structure"]["total_nodes"] - 1,
             "node_type": node_type_info["type"],
             "educational_note": node_data.get("educational_note", ""),
             "xp_reward": self._calculate_xp_reward(node_type_info),
@@ -156,16 +163,19 @@ class StoryGeneratorService:
         }
         
         # Add options if this is a choice point
-        if node_type_info.get("has_choices", False):
+        if not node["is_terminal"]:
             for option_data in node_data.get("options", []):
                 option = {
                     "option_id": str(uuid.uuid4()),
                     "text": option_data.get("text", ""),
                     "is_good_choice": option_data.get("is_good_choice", True),
                     "explanation": option_data.get("explanation", ""),
-                    "next_node_id": None  # Will be linked during finalization
+                    "leads_to": None,  # Linked before returning or saving the story
+                    "reward_xp": 0,
                 }
                 node["options"].append(option)
+            if len(node["options"]) != 4:
+                raise ValueError("Each generated decision scene must have four base choices")
         
         return node
     
@@ -220,64 +230,59 @@ class StoryGeneratorService:
             age_ranges: List of (min_age, max_age) tuples
             provider: LLM provider
         """
-        # Generate variants for the main prompt using batch generation (single LLM call)
-        node["age_variants"] = await llm_service.generate_age_variants_batch(
-            base_text=node["prompt"],
-            age_ranges=age_ranges,
-            provider=provider
+        levels = [
+            level for level in READING_LEVELS
+            if any(low <= level["max_age"] and high >= level["min_age"] for low, high in age_ranges)
+        ]
+        requirements = []
+        for level in levels:
+            key = f"{level['min_age']}-{level['max_age']}"
+            count = 0 if node["is_terminal"] else level["choices"]
+            requirements.append(
+                f"{key}: prompt <= {level['words']} words; exactly {count} choices, each <= {level['choice_words']} words. {level['guidance']}"
+            )
+        prompt = (
+            "Create age-specific versions of this interactive story scene and its choices together.\n"
+            + "\n".join(requirements)
+            + "\nKeep the characters, financial concept and decision meanings consistent. For each band, adapt only the first required number of base choices, in the same order. "
+              "Young children should make a simple concrete choice; older children should weigh more elaborate tradeoffs. "
+              "No lectures, long paragraphs, free-text responses or shaming. A non-final scene ends with one direct question. "
+              "For a final scene, provide a short encouraging recap with an empty options array.\n"
+            + "Return ONLY JSON: {\"5-8\": {\"prompt\": \"...\", \"options\": [\"choice text\", \"choice text\"]}, ...}, with every requested age band.\n"
+            + json.dumps({
+                "prompt": node["prompt"],
+                "is_terminal": node["is_terminal"],
+                "options": [o["text"] for o in node["options"]],
+            })
         )
-        
-        # Generate variants for all options concurrently
-        if node.get("options"):
-            option_tasks = []
-            for option in node["options"]:
-                option_tasks.append(
-                    self._generate_option_variants(option, age_ranges, provider)
-                )
-            await asyncio.gather(*option_tasks)
-    
-    async def _generate_option_variants(
-        self,
-        option: Dict[str, Any],
-        age_ranges: List[tuple],
-        provider: str
-    ):
-        """
-        Generate age variants for a single option using batch processing.
-        
-        Args:
-            option: Option to generate variants for
-            age_ranges: List of (min_age, max_age) tuples
-            provider: LLM provider
-        """
-        option["age_variants"] = await llm_service.generate_age_variants_batch(
-            base_text=option["text"],
-            age_ranges=age_ranges,
-            provider=provider
+        # One request per scene keeps question and choices coherent across age bands.
+        response = await llm_service.generate_content(
+            prompt=prompt, provider=provider, response_schema=age_variants_schema(levels)
         )
+        if "```" in response:
+            response = response.split("```", 2)[1].removeprefix("json").strip()
+        variants = json.loads(response)
+        for level in levels:
+            key = f"{level['min_age']}-{level['max_age']}"
+            variant = variants[key]
+            count = 0 if node["is_terminal"] else level["choices"]
+            if len(variant["options"]) != count:
+                raise ValueError(f"Scene {key} needs exactly {count} choices")
+            node["age_variants"][key] = variant["prompt"]
+            for option, text in zip(node["options"], variant["options"]):
+                option.setdefault("age_variants", {})[key] = text
     
     def _link_story_nodes(self, story: Dict[str, Any]):
-        """
-        Link story nodes together based on options.
-        
-        Args:
-            story: Story structure to link
-        """
+        """Link the generated multiple-choice decisions to the following scene."""
         nodes = story["nodes"]
-        
-        for i, node in enumerate(nodes):
-            if node.get("options"):
-                # Link each option to the next appropriate node
-                next_node_idx = i + 1
-                
-                for j, option in enumerate(node["options"]):
-                    # Simple linear linking for now
-                    # Can be enhanced with more sophisticated branching logic
-                    if next_node_idx < len(nodes):
-                        option["next_node_id"] = nodes[next_node_idx]["node_id"]
-                    else:
-                        option["next_node_id"] = None  # Terminal node
-    
+        for index, node in enumerate(nodes):
+            if node["is_terminal"]:
+                node["options"] = []
+                continue
+            next_id = nodes[index + 1]["node_id"]
+            for option in node["options"]:
+                option["leads_to"] = next_id
+
     async def save_draft_story(
         self,
         story: Dict[str, Any]
@@ -291,8 +296,9 @@ class StoryGeneratorService:
         Returns:
             Story ID
         """
-        # Link nodes
-        self._link_story_nodes(story)
+        for node in story["nodes"]:
+            StoryNode.model_validate(node)
+        validate_generated_reading(story)
         
         # Save to draft_stories collection
         story_ref = db.collection("draft_stories").document(story["story_id"])
@@ -325,9 +331,22 @@ class StoryGeneratorService:
         draft_doc = draft_ref.get()
         
         if not draft_doc.exists:
-            raise ValueError(f"Draft story not found: {story_id}")
+            raise FileNotFoundError(f"Draft story not found: {story_id}")
         
         story_data = draft_doc.to_dict()
+        # Reject invalid drafts before any publication writes. Do not repair data.
+        for node in story_data["nodes"]:
+            StoryNode.model_validate(node)
+        node_ids = {node["node_id"] for node in story_data["nodes"]}
+        if not node_ids:
+            raise ValueError("Story has no nodes")
+        if len(node_ids) != len(story_data["nodes"]) or not all(node_ids):
+            raise ValueError("Story nodes must have unique, nonempty IDs")
+        for node in story_data["nodes"]:
+            for option in node["options"]:
+                if option["leads_to"] not in node_ids:
+                    raise ValueError(f"Node {node['node_id']} links to a missing node")
+        validate_generated_reading(story_data)
         
         # Update status and metadata
         story_data["status"] = "published"

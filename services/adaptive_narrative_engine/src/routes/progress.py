@@ -10,6 +10,7 @@ from src.domain.models import (
     AdvanceRequest,
     AdvanceResponse,
     StoryProgress,
+    StoryNode,
     StartStoryRequest,
     StartStoryResponse,
     MoneyMomentCompleteRequest,
@@ -19,6 +20,7 @@ from src.domain.validators import (
     validate_story_exists,
     validate_story_published,
     validate_node_exists,
+    validate_node_age,
     validate_choice_index,
 )
 from src.services.firestore import (
@@ -29,11 +31,12 @@ from src.services.firestore import (
 from src.services.recommender_client import recommender_client
 from src.adapters.pubsub_publisher import pubsub_publisher
 from src.domain.models import RecommendRequest, UserProfile, KidProgressSummary
+from src.domain.story_reading import present_node
 
 router = APIRouter(prefix="/progress", tags=["progress"])
 
 
-@router.post("/start", response_model=dict)
+@router.post("/start", response_model=StartStoryResponse)
 async def start_story(
     request: StartStoryRequest,
     current_user: dict = Depends(get_current_user)
@@ -43,11 +46,25 @@ async def start_story(
     """
     user_id = get_user_id(current_user)
     validate_user_access(user_id, request.user_id)
+    user_age = resolve_user_age(request.user_id, required=True)
     
     # Verify story exists and is published
     story = await firestore_service.get_story(request.story_id)
     validate_story_exists(story, request.story_id)
     validate_story_published(story)
+
+    # Retrying start must not erase a child's existing position or earned progress.
+    existing = await firestore_service.get_progress(request.user_id, request.story_id)
+    if existing:
+        node = await firestore_service.get_node(request.story_id, existing["current_node"])
+        validate_node_exists(node, existing["current_node"])
+        node = StoryNode.model_validate(node).model_dump()
+        validate_node_age(node, user_age)
+        node = present_node(node, user_age)
+        return {
+            "node": node,
+            "progress": {**existing, "user_id": request.user_id, "story_id": request.story_id},
+        }
     
     # Get all nodes to find the first one (order=0)
     nodes = await firestore_service.get_story_nodes(request.story_id)
@@ -55,6 +72,9 @@ async def start_story(
         raise HTTPException(status_code=404, detail="Story has no nodes")
         
     first_node = next((n for n in nodes if n.get("order", 0) == 0), nodes[0])
+    first_node = StoryNode.model_validate(first_node).model_dump()
+    validate_node_age(first_node, user_age)
+    first_node = present_node(first_node, user_age)
     
     # Create initial progress
     progress = StoryProgress(
@@ -106,7 +126,7 @@ async def advance_progress(
     """
     user_id = get_user_id(current_user)
     validate_user_access(user_id, request.user_id)
-    user_age = resolve_user_age(user_id)
+    user_age = resolve_user_age(request.user_id, required=True)
     validate_age(user_age)
     
     # Verify story exists and is published
@@ -117,6 +137,9 @@ async def advance_progress(
     # Get current node
     node = await firestore_service.get_node(request.story_id, request.current_node_id)
     validate_node_exists(node, request.current_node_id)
+    node = StoryNode.model_validate(node).model_dump()
+    validate_node_age(node, user_age)
+    node = present_node(node, user_age)
     
     # Get selected option
     options = node.get("options", [])
@@ -136,6 +159,10 @@ async def advance_progress(
     # Verify next node exists
     next_node = await firestore_service.get_node(request.story_id, next_node_id)
     validate_node_exists(next_node, next_node_id)
+    # Validate before saving progress, so an invalid response cannot strand a child.
+    next_node = StoryNode.model_validate(next_node).model_dump()
+    validate_node_age(next_node, user_age)
+    next_node = present_node(next_node, user_age)
     
     # Get or create progress
     progress = await firestore_service.get_progress(request.user_id, request.story_id)

@@ -38,6 +38,12 @@ def validate_age_for_node(age: int, age_range: list) -> bool:
     return age_range[0] <= age <= age_range[1]
 
 
+def validate_node_age(node: dict, age: int) -> None:
+    """Apply the same node age policy on start, resume and advance."""
+    if not validate_age_for_node(age, node["age_range"]):
+        raise HTTPException(403, detail=f"This content is not appropriate for age {age}")
+
+
 def validate_choice_index(choice_index: int, num_options: int) -> None:
     """
     Validate that choice index is within available options.

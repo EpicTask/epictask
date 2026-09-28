@@ -9,6 +9,15 @@ from src.domain.models import Story, StoryNode
 client = TestClient(app)
 
 
+@pytest.fixture(autouse=True)
+def mock_external_services(monkeypatch):
+    # Route tests must not contact real profile storage or publish real events.
+    monkeypatch.setattr("src.routes.stories.resolve_user_age", lambda *a, **k: 10)
+    monkeypatch.setattr("src.routes.progress.resolve_user_age", lambda *a, **k: 10)
+    monkeypatch.setattr("src.services.firestore.is_guardian_of", lambda *a: False)
+    monkeypatch.setattr("src.routes.progress.pubsub_publisher", AsyncMock())
+
+
 class TestStoryRoutes:
     """Tests for story routes."""
     
@@ -91,6 +100,9 @@ class TestStoryRoutes:
         })
         mock_firestore.get_node = AsyncMock(return_value={
             "node_id": "node_1",
+            "title": "Older story",
+            "lesson_key": "saving",
+            "prompt": "A scene",
             "age_range": [15, 18],
             "options": []
         })
@@ -121,6 +133,10 @@ class TestProgressRoutes:
         mock_firestore.get_node = AsyncMock(side_effect=[
             {
                 "node_id": "node_1",
+                "title": "First scene",
+                "lesson_key": "saving",
+                "age_range": [5, 18],
+                "prompt": "Choose",
                 "options": [
                     {"text": "Choice 1", "leads_to": "node_2", "reward_xp": 10}
                 ]
@@ -168,6 +184,10 @@ class TestProgressRoutes:
         })
         mock_firestore.get_node = AsyncMock(return_value={
             "node_id": "node_1",
+            "title": "First scene",
+            "lesson_key": "saving",
+            "age_range": [5, 18],
+            "prompt": "Choose",
             "options": [
                 {"text": "Choice 1", "leads_to": "node_2", "reward_xp": 10}
             ]

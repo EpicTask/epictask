@@ -10,9 +10,10 @@ from src.domain.validators import (
     validate_story_exists,
     validate_story_published,
     validate_node_exists,
-    validate_age_for_node
+    validate_node_age,
 )
-from src.services.firestore import firestore_service, resolve_user_age
+from src.services.firestore import firestore_service, resolve_user_age, validate_user_access
+from src.domain.story_reading import present_node
 
 router = APIRouter(prefix="/stories", tags=["stories"])
 
@@ -70,7 +71,9 @@ async def get_story(
 async def get_node(
     story_id: str,
     node_id: str,
-    age: Optional[int] = Query(None, ge=5, le=18, description="User's age for age-appropriate filtering"),
+    user_id: Optional[str] = Query(
+        None, min_length=1, description="Active child; caller must be that child or their guardian"
+    ),
     current_user: dict = Depends(get_current_user)
 ):
     """
@@ -78,16 +81,15 @@ async def get_node(
     
     - **story_id**: Story identifier
     - **node_id**: Node identifier
-    - **age**: Optional user's age (5-18). Resolved server-side from trusted profile if omitted.
+    - **user_id**: Active child, or the authenticated user if omitted.
     
     Returns node if it exists and is age-appropriate.
     Options may be filtered based on age.
     """
-    user_id = get_user_id(current_user)
-    if age is None:
-        age = resolve_user_age(user_id)
-    else:
-        validate_age(age)
+    caller_id = get_user_id(current_user)
+    target_id = user_id or caller_id
+    validate_user_access(caller_id, target_id)
+    age = resolve_user_age(target_id, required=True)
     
     # Verify story exists and is published
     story = await firestore_service.get_story(story_id)
@@ -99,17 +101,10 @@ async def get_node(
     validate_node_exists(node, node_id)
     
     # Check if age is appropriate for this node
-    age_range = node.get("age_range", [5, 18])
-    if not validate_age_for_node(age, age_range):
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail=f"This content is not appropriate for age {age}"
-        )
+    node = StoryNode.model_validate(node).model_dump()
+    validate_node_age(node, age)
     
-    # Filter options based on age (if options have age requirements)
-    # For now, return all options; future enhancement could filter per-option
-    
-    return node
+    return present_node(node, age)
 
 
 @router.post("", response_model=dict, status_code=status.HTTP_201_CREATED)
