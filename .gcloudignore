@@ -1,0 +1,28 @@
+# Explicit backend-only Cloud Build source package. Do not include .gitignore:
+# it excludes required tracked source files (e.g. collection_names.py).
+/*
+!cloudbuild.yaml
+!skaffold.yaml
+!services/
+/services/*
+!services/mono_service/
+!services/adaptive_narrative_engine/
+!services/xrpl_management/
+**/.env
+**/.env.*
+**/service_accounts/
+**/*service_account*.json
+**/application_default_credentials.json
+**/*.pem
+**/*.key
+**/node_modules/
+**/.venv/
+**/venv/
+**/__pycache__/
+**/.pytest_cache/
+**/.git/
+**/.DS_Store
+**/*.log
+**/dist/
+**/coverage/
+**/.yarn/
