@@ -3,6 +3,7 @@ from typing import List, Optional
 from fastapi import APIRouter, Depends, Query, HTTPException, status
 
 from src.config.security import get_current_user, get_user_id
+from src.routes.admin_stories import get_admin_user
 from src.domain.models import Story, StoryNode
 from src.domain.validators import (
     validate_age,
@@ -114,7 +115,7 @@ async def get_node(
 @router.post("", response_model=dict, status_code=status.HTTP_201_CREATED)
 async def create_story(
     story: Story,
-    current_user: dict = Depends(get_current_user)
+    current_user: dict = Depends(get_admin_user)
 ):
     """
     Create a new story (admin/parent only).
@@ -123,7 +124,6 @@ async def create_story(
     
     Returns the created story ID.
     """
-    verify_admin_or_parent(current_user)
     story_id = await firestore_service.create_story(story)
     return {"story_id": story_id, "message": "Story created successfully"}
 
@@ -132,7 +132,7 @@ async def create_story(
 async def create_node(
     story_id: str,
     node: StoryNode,
-    current_user: dict = Depends(get_current_user)
+    current_user: dict = Depends(get_admin_user)
 ):
     """
     Create a new node for a story (admin/parent only).
@@ -142,8 +142,6 @@ async def create_node(
     
     Returns the created node ID.
     """
-    verify_admin_or_parent(current_user)
-    
     # Verify story exists
     story = await firestore_service.get_story(story_id)
     validate_story_exists(story, story_id)

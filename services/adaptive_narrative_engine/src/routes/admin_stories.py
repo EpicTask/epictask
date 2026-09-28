@@ -1,13 +1,71 @@
 """Admin API routes for LLM-powered story generation."""
+import hmac
+import logging
+import os
 from typing import Optional, Literal
-from fastapi import APIRouter, Depends, HTTPException, status, Body
+from fastapi import APIRouter, Depends, HTTPException, Request, status, Body
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from pydantic import BaseModel, Field
 
 from src.config.security import get_current_user, get_user_id
 from src.services.story_generator_service import story_generator
 
+logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/admin/stories", tags=["admin-stories"])
+admin_security = HTTPBearer(auto_error=False)
+
+
+def get_admin_token() -> str:
+    """Retrieve ADMIN_TOKEN from environment or Google Secret Manager."""
+    token = os.getenv("ADMIN_TOKEN", "").strip()
+    if token:
+        return token
+    try:
+        from google.cloud import secretmanager
+        client = secretmanager.SecretManagerServiceClient()
+        project_id = os.getenv("GOOGLE_CLOUD_PROJECT", os.getenv("GCP_PROJECT_ID", "task-coin-384722"))
+        name = f"projects/{project_id}/secrets/ADMIN_TOKEN/versions/latest"
+        response = client.access_secret_version(request={"name": name})
+        return response.payload.data.decode("UTF-8").strip()
+    except Exception as e:
+        logger.debug(f"Could not read ADMIN_TOKEN from Secret Manager: {e}")
+        return ""
+
+
+async def get_admin_user(
+    request: Request,
+    credentials: Optional[HTTPAuthorizationCredentials] = Depends(admin_security),
+) -> dict:
+    """
+    Authenticate admin requests via either:
+    1. Pre-shared secret ADMIN_TOKEN in:
+       - Header: X-Admin-Token or X-Internal-Token
+       - Bearer Token: Authorization: Bearer <ADMIN_TOKEN>
+    2. Standard Firebase ID Token with admin claims (delegated to get_current_user).
+    """
+    admin_token = get_admin_token()
+    if admin_token:
+        # Check custom header
+        header_token = (
+            request.headers.get("X-Admin-Token")
+            or request.headers.get("X-Internal-Token")
+            or ""
+        ).strip()
+        if header_token and hmac.compare_digest(header_token, admin_token):
+            return {"uid": "admin_token_user", "role": "admin", "admin": True}
+
+        # Check Bearer token
+        if credentials and credentials.credentials:
+            bearer_token = credentials.credentials.strip()
+            if bearer_token and hmac.compare_digest(bearer_token, admin_token):
+                return {"uid": "admin_token_user", "role": "admin", "admin": True}
+
+    # Fall back to standard Firebase ID Token verification
+    current_user = await get_current_user(credentials)
+    verify_admin(current_user)
+    return current_user
+
 
 
 class GenerateStoryRequest(BaseModel):
@@ -59,7 +117,7 @@ def verify_admin(current_user: dict) -> str:
 
 @router.get("/topics")
 async def get_available_topics(
-    current_user: dict = Depends(get_current_user)
+    current_user: dict = Depends(get_admin_user)
 ):
     """
     Get list of available story topics.
@@ -68,8 +126,6 @@ async def get_available_topics(
     
     **Admin Access Required**
     """
-    verify_admin(current_user)
-    
     topics = story_generator.get_available_topics()
     return {
         "topics": topics,
@@ -80,7 +136,7 @@ async def get_available_topics(
 @router.post("/generate", status_code=status.HTTP_202_ACCEPTED)
 async def generate_story(
     request: GenerateStoryRequest,
-    current_user: dict = Depends(get_current_user)
+    current_user: dict = Depends(get_admin_user)
 ):
     """
     Generate a new story using LLM and templates.
@@ -96,7 +152,7 @@ async def generate_story(
     
     **Admin Access Required**
     """
-    user_id = verify_admin(current_user)
+    user_id = current_user.get("uid")
     
     try:
         # Prepare custom parameters if provided
@@ -141,7 +197,7 @@ async def generate_story(
 async def list_draft_stories(
     status_filter: Optional[str] = None,
     limit: int = 50,
-    current_user: dict = Depends(get_current_user)
+    current_user: dict = Depends(get_admin_user)
 ):
     """
     List draft stories.
@@ -154,8 +210,6 @@ async def list_draft_stories(
     
     **Admin Access Required**
     """
-    verify_admin(current_user)
-    
     stories = await story_generator.list_draft_stories(
         status=status_filter,
         limit=limit
@@ -170,7 +224,7 @@ async def list_draft_stories(
 @router.get("/drafts/{story_id}")
 async def get_draft_story(
     story_id: str,
-    current_user: dict = Depends(get_current_user)
+    current_user: dict = Depends(get_admin_user)
 ):
     """
     Get a draft story by ID with full node details.
@@ -179,8 +233,6 @@ async def get_draft_story(
     
     **Admin Access Required**
     """
-    verify_admin(current_user)
-    
     story = await story_generator.get_draft_story(story_id)
     
     if not story:
@@ -195,7 +247,7 @@ async def get_draft_story(
 @router.post("/publish")
 async def publish_story(
     request: PublishStoryRequest,
-    current_user: dict = Depends(get_current_user)
+    current_user: dict = Depends(get_admin_user)
 ):
     """
     Publish a draft story to production.
@@ -210,7 +262,7 @@ async def publish_story(
     
     **Admin Access Required**
     """
-    user_id = verify_admin(current_user)
+    user_id = current_user.get("uid")
     
     try:
         story = await story_generator.publish_story(
@@ -242,7 +294,7 @@ async def publish_story(
 @router.post("/reject")
 async def reject_story(
     request: RejectStoryRequest,
-    current_user: dict = Depends(get_current_user)
+    current_user: dict = Depends(get_admin_user)
 ):
     """
     Reject a draft story.
@@ -252,7 +304,7 @@ async def reject_story(
     
     **Admin Access Required**
     """
-    user_id = verify_admin(current_user)
+    user_id = current_user.get("uid")
     
     try:
         await story_generator.reject_story(
@@ -278,7 +330,7 @@ async def reject_story(
 @router.delete("/drafts/{story_id}")
 async def delete_draft_story(
     story_id: str,
-    current_user: dict = Depends(get_current_user)
+    current_user: dict = Depends(get_admin_user)
 ):
     """
     Delete a draft story.
@@ -288,8 +340,6 @@ async def delete_draft_story(
     
     **Admin Access Required**
     """
-    verify_admin(current_user)
-    
     try:
         # Get story to check status
         story = await story_generator.get_draft_story(story_id)
