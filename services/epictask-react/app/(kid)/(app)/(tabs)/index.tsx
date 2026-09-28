@@ -83,13 +83,14 @@ function KidHomeScreen() {
       activeProgress?.current_node,
     ],
     queryFn: () =>
-      activeProgress
+      activeProgress && effectiveUserId
         ? narrativeService.getNode(
             activeProgress.story_id,
             activeProgress.current_node,
+            effectiveUserId,
           )
         : null,
-    enabled: !!activeProgress,
+    enabled: !!activeProgress && !!effectiveUserId,
     staleTime: 60_000,
   });
 

@@ -20,6 +20,7 @@ import narrativeService, {
   StoryProgress,
   Story,
   MoneyMoment,
+  storyLoadErrorMessage,
 } from "@/api/narrativeService";
 import {
   responsiveHeight,
@@ -88,6 +89,7 @@ export default function StoryViewerScreen() {
   }, [effectiveUserId, storyId]);
 
   const loadStoryData = async () => {
+    if (!effectiveUserId || !storyId) return;
     try {
       setLoading(true);
       setError(null);
@@ -108,6 +110,7 @@ export default function StoryViewerScreen() {
         const node = await narrativeService.getNode(
           storyId,
           currentProgress.current_node,
+          effectiveUserId,
         );
         setCurrentNode(node);
       } else {
@@ -119,7 +122,7 @@ export default function StoryViewerScreen() {
       }
     } catch (error) {
       console.log("Failed to load story:", error);
-      setError("Failed to load story. Please try again.");
+      setError(storyLoadErrorMessage(error));
     } finally {
       setLoading(false);
     }
@@ -264,7 +267,7 @@ export default function StoryViewerScreen() {
           {/* Options */}
           <View style={styles.optionsContainer}>
             <CustomText variant="semiBold" style={styles.optionsTitle}>
-              What will you do?
+              Choose one
             </CustomText>
             {currentNode.options.map((option, index) => (
               <TouchableOpacity

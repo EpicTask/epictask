@@ -8,6 +8,18 @@ const narrativeApiClient = createAuthenticatedClient(
   MicroserviceUrls.narrativeEngine,
 );
 
+export function storyLoadErrorMessage(error: unknown): string {
+  if (isAxiosError(error)) {
+    if (error.response?.status === 401) return "Please sign in again to continue your story.";
+    if (error.response?.status === 403) return "This story is not available for the selected child.";
+    if (error.response?.status === 404) return "This story or saved scene is no longer available.";
+    if (error.response?.status === 422 && error.response.data?.detail === "Child profile needs a valid age before loading a story") {
+      return "Ask your parent to update your age in your profile, then try again.";
+    }
+  }
+  return "Failed to load story. Please try again.";
+}
+
 export interface Story {
   story_id: string;
   title: string;
@@ -251,7 +263,7 @@ export const narrativeService = {
       return response.data;
     } catch (error) {
       console.log("Get story error:", error);
-      throw new Error("Failed to get story");
+      throw error;
     }
   },
 
@@ -259,16 +271,18 @@ export const narrativeService = {
   getNode: async (
     storyId: string,
     nodeId: string,
-    age: number = 10,
+    userId: string,
   ): Promise<Node> => {
+    if (!userId) throw new Error("An active child is required to load a story node");
     try {
       const response = await narrativeApiClient.get(
-        `/stories/${storyId}/nodes/${nodeId}?age=${age}`,
+        `/stories/${storyId}/nodes/${nodeId}`,
+        { params: { user_id: userId } },
       );
       return response.data;
     } catch (error) {
       console.log("Get node error:", error);
-      throw new Error("Failed to get node");
+      throw error;
     }
   },
 
@@ -308,7 +322,7 @@ export const narrativeService = {
       return response.data;
     } catch (error) {
       console.log("Start story error:", error);
-      throw new Error("Failed to start story");
+      throw error;
     }
   },
 

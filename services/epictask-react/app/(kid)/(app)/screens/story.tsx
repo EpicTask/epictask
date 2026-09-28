@@ -18,6 +18,7 @@ import {
   Node,
   StoryProgress,
   Story,
+  storyLoadErrorMessage,
 } from "@/api/narrativeService";
 import { taskService } from "@/api/taskService";
 import {
@@ -26,7 +27,7 @@ import {
 } from "react-native-responsive-dimensions";
 
 export default function StoryScreen() {
-  const { effectiveUserId, childAge } = useAuth();
+  const { effectiveUserId } = useAuth();
   const params = useLocalSearchParams();
   const storyId = params.storyId as string;
 
@@ -46,6 +47,7 @@ export default function StoryScreen() {
   }, [storyId, effectiveUserId]);
 
   const loadStoryData = async () => {
+    if (!effectiveUserId || !storyId) return;
     try {
       setLoading(true);
 
@@ -58,7 +60,8 @@ export default function StoryScreen() {
       );
       let currentProgress = progressList.find(
         (p) => p.status === "in_progress",
-      );
+      ) ?? progressList[0];
+      let node: Node;
 
       if (!currentProgress) {
         const startResult = await narrativeService.startStory(
@@ -66,30 +69,25 @@ export default function StoryScreen() {
           storyId,
         );
         currentProgress = startResult.progress;
-        setCurrentNode(startResult.node);
+        node = startResult.node;
       } else {
-        const node = await narrativeService.getNode(
+        node = await narrativeService.getNode(
           storyId,
           currentProgress.current_node,
+          effectiveUserId,
         );
-        setCurrentNode(node);
       }
 
+      setCurrentNode(node);
       setProgress(currentProgress);
 
       // Check if current node has a task gate
-      if (currentProgress.current_node) {
-        const node = await narrativeService.getNode(
-          storyId,
-          currentProgress.current_node,
-        );
-        if (node.task_gate) {
-          await checkTaskGate(node.task_gate);
-        }
+      if (node.task_gate) {
+        await checkTaskGate(node.task_gate);
       }
     } catch (error) {
       console.log("Failed to load story:", error);
-      Alert.alert("Error", "Failed to load story. Please try again.");
+      Alert.alert("Error", storyLoadErrorMessage(error));
     } finally {
       setLoading(false);
     }
