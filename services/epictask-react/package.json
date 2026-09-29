@@ -12,10 +12,10 @@
     "test": "jest --watchAll",
     "lint": "expo lint",
     "test:ci": "jest --runInBand",
-    "preflight:ios": "npm run test:ci && npm run lint",
+    "preflight:ios": "npm run test:ci && npm run lint && npx expo prebuild",
     "ios:pods": "cd ios && pod install",
     "ios:archive": "xcodebuild -workspace ios/epictask.xcworkspace -scheme epictask -configuration Release -destination 'generic/platform=iOS' -archivePath ios/build/epictask.xcarchive archive",
-    "ios:release": "npm ci && npm run preflight:ios && npm run ios:pods && npm run ios:archive && open ios/build"
+    "ios:release": "npm ci && npm run preflight:ios && npm run ios:pods && npm run ios:archive && open ios/build/epictask.xcarchive"
   },
   "jest": {
     "preset": "jest-expo",
