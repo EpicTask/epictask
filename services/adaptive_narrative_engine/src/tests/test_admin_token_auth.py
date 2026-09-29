@@ -13,11 +13,11 @@ def test_admin_token_header_access(monkeypatch):
     monkeypatch.setenv("ADMIN_TOKEN", "test-secret-token-12345")
 
     response = client.get(
-        "/admin/stories/topics",
+        "/admin/stories/drafts",
         headers={"X-Admin-Token": "test-secret-token-12345"},
     )
     assert response.status_code == 200
-    assert "topics" in response.json()
+    assert "stories" in response.json()
 
 
 def test_admin_token_internal_header_access(monkeypatch):
@@ -25,11 +25,11 @@ def test_admin_token_internal_header_access(monkeypatch):
     monkeypatch.setenv("ADMIN_TOKEN", "test-secret-token-12345")
 
     response = client.get(
-        "/admin/stories/topics",
+        "/admin/stories/drafts",
         headers={"X-Internal-Token": "test-secret-token-12345"},
     )
     assert response.status_code == 200
-    assert "topics" in response.json()
+    assert "stories" in response.json()
 
 
 def test_admin_token_bearer_access(monkeypatch):
@@ -37,11 +37,11 @@ def test_admin_token_bearer_access(monkeypatch):
     monkeypatch.setenv("ADMIN_TOKEN", "test-secret-token-12345")
 
     response = client.get(
-        "/admin/stories/topics",
+        "/admin/stories/drafts",
         headers={"Authorization": "Bearer test-secret-token-12345"},
     )
     assert response.status_code == 200
-    assert "topics" in response.json()
+    assert "stories" in response.json()
 
 
 def test_invalid_admin_token_rejected(monkeypatch):
@@ -53,7 +53,7 @@ def test_invalid_admin_token_rejected(monkeypatch):
     app.dependency_overrides.pop(get_admin_user, None)
 
     response = client.get(
-        "/admin/stories/topics",
+        "/admin/stories/drafts",
         headers={"X-Admin-Token": "wrong-token"},
     )
     assert response.status_code == 401

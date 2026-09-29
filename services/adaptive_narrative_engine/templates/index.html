@@ -252,6 +252,161 @@
             margin-top: 4px;
             font-style: italic;
         }
+
+        /* Drafts & Story Viewer Explorer */
+        .story-explorer {
+            margin-top: 20px;
+            background: white;
+            border: 2px solid var(--border);
+            border-radius: 12px;
+            padding: 20px;
+        }
+
+        .draft-card {
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 12px 16px;
+            margin-bottom: 12px;
+            background: var(--bg);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .draft-info {
+            flex: 1;
+            min-width: 250px;
+        }
+
+        .draft-title {
+            font-weight: 700;
+            font-size: 1rem;
+            color: var(--primary);
+            margin-bottom: 4px;
+        }
+
+        .draft-meta {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .draft-actions {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .btn-sm {
+            padding: 6px 12px;
+            font-size: 0.8rem;
+            border-radius: 6px;
+            border: none;
+            cursor: pointer;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            transition: all 0.2s;
+        }
+
+        .btn-view { background: #3b82f6; color: white; }
+        .btn-view:hover { background: #2563eb; }
+        .btn-pub { background: #10b981; color: white; }
+        .btn-pub:hover { background: #059669; }
+        .btn-del { background: #ef4444; color: white; }
+        .btn-del:hover { background: #dc2626; }
+
+        .node-accordion {
+            margin-top: 15px;
+            border-top: 2px solid var(--border);
+            padding-top: 15px;
+        }
+
+        .node-item {
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            margin-bottom: 12px;
+            background: white;
+            overflow: hidden;
+        }
+
+        .node-header-bar {
+            background: #f1f5f9;
+            padding: 10px 14px;
+            font-weight: 700;
+            font-size: 0.9rem;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .node-content-body {
+            padding: 14px;
+            font-size: 0.88rem;
+        }
+
+        .node-prompt-text {
+            background: #f8fafc;
+            border-left: 3px solid var(--primary);
+            padding: 10px;
+            margin-bottom: 12px;
+            border-radius: 0 4px 4px 0;
+            line-height: 1.5;
+        }
+
+        .choices-list {
+            margin-top: 10px;
+        }
+
+        .choice-item {
+            background: #fdfdfd;
+            border: 1px solid #e2e8f0;
+            border-radius: 6px;
+            padding: 8px 12px;
+            margin-bottom: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+        }
+
+        .age-tabs {
+            display: flex;
+            gap: 6px;
+            margin: 10px 0 6px 0;
+        }
+
+        .age-tab-btn {
+            padding: 3px 8px;
+            font-size: 0.75rem;
+            border-radius: 4px;
+            border: 1px solid #cbd5e1;
+            background: white;
+            cursor: pointer;
+            font-weight: 600;
+        }
+
+        .age-tab-btn.active {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+
+        .age-variant-box {
+            background: #f8fafc;
+            border: 1px dashed #cbd5e1;
+            border-radius: 6px;
+            padding: 8px 12px;
+            font-size: 0.82rem;
+            line-height: 1.4;
+            color: #334155;
+        }
     </style>
 </head>
 <body>
@@ -495,14 +650,72 @@
                 </div>
             </div>
         </div>
+        <!-- Story & Node Visual Explorer Section -->
+        <div id="story-explorer-section" class="story-explorer" style="display: none;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                <h3 id="explorer-title" style="margin: 0; color: var(--primary);">📖 Story & Nodes Explorer</h3>
+                <button class="btn-sm btn-del" onclick="closeStoryExplorer()">✕ Close</button>
+            </div>
+            <div id="explorer-content"></div>
+        </div>
     </div>
 
     <script>
-        async function callEndpoint(method, path, data, responseId) {
-            const baseUrl = document.getElementById('baseUrl').value;
+        // Persist adminToken and baseUrl in localStorage
+        window.addEventListener('DOMContentLoaded', () => {
+            const adminTokenInput = document.getElementById('adminToken');
+            const savedToken = localStorage.getItem('ane_admin_token');
+            if (savedToken && adminTokenInput) {
+                adminTokenInput.value = savedToken;
+            }
+
+            if (adminTokenInput) {
+                adminTokenInput.addEventListener('input', () => {
+                    localStorage.setItem('ane_admin_token', adminTokenInput.value.trim());
+                });
+            }
+
+            // Populate topics dropdown automatically on page load
+            loadTopicsDropdown();
+        });
+
+        async function loadTopicsDropdown() {
+            try {
+                const baseUrl = document.getElementById('baseUrl').value.trim().replace(/\/+$/, '');
+                const res = await fetch(`${baseUrl}/admin/stories/topics`);
+                if (res.ok) {
+                    const data = await res.json();
+                    if (data.topics && Array.isArray(data.topics)) {
+                        const select = document.getElementById('gen-topic');
+                        if (select) {
+                            select.innerHTML = data.topics.map(t => 
+                                `<option value="${t.topic_id}">${t.title} (${t.topic_id})</option>`
+                            ).join('');
+                        }
+                    }
+                }
+            } catch (e) {
+                console.debug('Topics pre-fetch:', e);
+            }
+        }
+
+        async function callEndpoint(method, path, data, responseId, customCallback) {
+            const baseUrl = document.getElementById('baseUrl').value.trim().replace(/\/+$/, '');
             const adminToken = (document.getElementById('adminToken')?.value || '').trim();
             const authToken = (document.getElementById('authToken')?.value || '').trim();
             
+            // Check if admin endpoint without token
+            if (path.startsWith('/admin') && !adminToken && !authToken && path !== '/admin/stories/topics') {
+                const entered = prompt('Please enter your ADMIN_TOKEN secret to authenticate admin requests:');
+                if (entered) {
+                    document.getElementById('adminToken').value = entered.trim();
+                    localStorage.setItem('ane_admin_token', entered.trim());
+                } else {
+                    alert('Admin Token is required for story generation and management.');
+                    return;
+                }
+            }
+
             // Generate ID or use provided one
             const id = responseId || `response-${path.replace(/[\/\{\}]/g, '-').replace(/^-/, '').replace(/-+/g, '-')}`;
             const responseDiv = document.getElementById(id);
@@ -512,8 +725,9 @@
                     'Content-Type': 'application/json'
                 };
                 
-                if (adminToken) {
-                    headers['X-Admin-Token'] = adminToken;
+                const currentAdminToken = (document.getElementById('adminToken')?.value || '').trim();
+                if (currentAdminToken) {
+                    headers['X-Admin-Token'] = currentAdminToken;
                 }
 
                 if (authToken) {
@@ -525,21 +739,31 @@
                     headers: headers
                 };
                 
-                if (method !== 'GET' && Object.keys(data).length > 0) {
+                if (method !== 'GET' && data && Object.keys(data).length > 0) {
                     options.body = JSON.stringify(data);
                 }
                 
                 const url = `${baseUrl}${path}`;
                 const response = await fetch(url, options);
-                const result = await response.json();
+                let result;
+                try {
+                    result = await response.json();
+                } catch {
+                    result = { text: await response.text() };
+                }
                 
                 displayResponse(responseDiv, response.status, result);
+
+                if (customCallback) {
+                    customCallback(response.status, result);
+                }
             } catch (error) {
                 displayResponse(responseDiv, 0, { error: error.message });
             }
         }
 
         function displayResponse(element, status, data) {
+            if (!element) return;
             const isSuccess = status >= 200 && status < 300;
             
             element.style.display = 'block';
@@ -596,7 +820,34 @@
                 data.custom_title = title;
             }
             
-            callEndpoint('POST', '/admin/stories/generate', data, 'response-generate');
+            callEndpoint('POST', '/admin/stories/generate', data, 'response-generate', (status, res) => {
+                if (status >= 200 && status < 300 && res.story_id) {
+                    const sid = res.story_id;
+                    setFieldIfExists('draft-id', sid);
+                    setFieldIfExists('publish-id', sid);
+                    setFieldIfExists('reject-id', sid);
+                    setFieldIfExists('delete-id', sid);
+                    setFieldIfExists('story-id', sid);
+
+                    const respCard = document.getElementById('response-generate');
+                    if (respCard) {
+                        const actionDiv = document.createElement('div');
+                        actionDiv.style.marginTop = '10px';
+                        actionDiv.style.display = 'flex';
+                        actionDiv.style.gap = '8px';
+                        actionDiv.innerHTML = `
+                            <button class="btn-sm btn-view" onclick="quickViewStory('${sid}')">👁️ View Story & Nodes</button>
+                            <button class="btn-sm btn-pub" onclick="quickPublishStory('${sid}')">🚀 Publish Now</button>
+                        `;
+                        respCard.appendChild(actionDiv);
+                    }
+                }
+            });
+        }
+
+        function setFieldIfExists(id, val) {
+            const el = document.getElementById(id);
+            if (el) el.value = val;
         }
 
         function listDrafts() {
@@ -608,7 +859,113 @@
                 query += `&status_filter=${status}`;
             }
             
-            callEndpoint('GET', `/admin/stories/drafts${query}`, {}, 'response-drafts');
+            callEndpoint('GET', `/admin/stories/drafts${query}`, {}, 'response-drafts', (statusCode, res) => {
+                if (statusCode >= 200 && statusCode < 300 && res.stories) {
+                    renderDraftsUI(res.stories);
+                }
+            });
+        }
+
+        function renderDraftsUI(stories) {
+            const container = document.getElementById('response-drafts');
+            if (!container || !stories || !stories.length) return;
+
+            const cardsHtml = stories.map(s => `
+                <div class="draft-card" id="card-${s.story_id}">
+                    <div class="draft-info">
+                        <div class="draft-title">${s.title}</div>
+                        <div class="draft-meta">
+                            <span><strong>ID:</strong> <code>${s.story_id}</code></span>
+                            <span><strong>Topic:</strong> ${s.topic}</span>
+                            <span><strong>Nodes:</strong> ${s.total_nodes || s.node_count || 8}</span>
+                            <span><strong>Status:</strong> <span class="badge ${s.status === 'published' ? 'status-success' : 'status-error'}">${s.status}</span></span>
+                            <span><strong>Provider:</strong> ${s.provider || 'gemini'}</span>
+                        </div>
+                    </div>
+                    <div class="draft-actions">
+                        <button class="btn-sm btn-view" onclick="quickViewStory('${s.story_id}')">👁️ View</button>
+                        ${s.status !== 'published' ? `<button class="btn-sm btn-pub" onclick="quickPublishStory('${s.story_id}')">🚀 Publish</button>` : ''}
+                        <button class="btn-sm btn-del" onclick="quickDeleteStory('${s.story_id}')">🗑️ Delete</button>
+                    </div>
+                </div>
+            `).join('');
+
+            const uiWrapper = document.createElement('div');
+            uiWrapper.style.marginTop = '15px';
+            uiWrapper.innerHTML = `
+                <h4 style="margin: 0 0 10px 0; color: var(--primary);">📋 Draft Stories (${stories.length})</h4>
+                ${cardsHtml}
+            `;
+            container.appendChild(uiWrapper);
+        }
+
+        async function quickPublishStory(storyId) {
+            if (!confirm(`Publish story '${storyId}' to production?`)) return;
+            setFieldIfExists('publish-id', storyId);
+            await callEndpoint('POST', '/admin/stories/publish', { story_id: storyId }, 'response-publish', (status, res) => {
+                if (status >= 200 && status < 300) {
+                    alert('Story published successfully!');
+                    listDrafts();
+                }
+            });
+        }
+
+        async function quickDeleteStory(storyId) {
+            if (!confirm(`Delete draft '${storyId}'?`)) return;
+            setFieldIfExists('delete-id', storyId);
+            await callEndpoint('DELETE', `/admin/stories/drafts/${storyId}`, {}, 'response-delete', (status) => {
+                if (status >= 200 && status < 300) {
+                    const card = document.getElementById(`card-${storyId}`);
+                    if (card) card.remove();
+                }
+            });
+        }
+
+        async function quickViewStory(storyId) {
+            setFieldIfExists('draft-id', storyId);
+            setFieldIfExists('publish-id', storyId);
+            
+            const baseUrl = document.getElementById('baseUrl').value.trim().replace(/\/+$/, '');
+            const adminToken = (document.getElementById('adminToken')?.value || '').trim();
+            const authToken = (document.getElementById('authToken')?.value || '').trim();
+
+            const headers = { 'Content-Type': 'application/json' };
+            if (adminToken) headers['X-Admin-Token'] = adminToken;
+            if (authToken) headers['Authorization'] = authToken.startsWith('Bearer ') ? authToken : `Bearer ${authToken}`;
+
+            const explorerSection = document.getElementById('story-explorer-section');
+            const explorerContent = document.getElementById('explorer-content');
+            explorerSection.style.display = 'block';
+            explorerContent.innerHTML = '<p>Loading story details and nodes...</p>';
+            explorerSection.scrollIntoView({ behavior: 'smooth' });
+
+            try {
+                let res = await fetch(`${baseUrl}/admin/stories/drafts/${storyId}`, { headers });
+                let story = null;
+                if (res.ok) {
+                    story = await res.json();
+                } else {
+                    res = await fetch(`${baseUrl}/stories/${storyId}`, { headers });
+                    if (res.ok) {
+                        story = await res.json();
+                        const nodesRes = await fetch(`${baseUrl}/stories/${storyId}/nodes`, { headers });
+                        if (nodesRes.ok) story.nodes = await nodesRes.json();
+                    }
+                }
+
+                if (!story) {
+                    explorerContent.innerHTML = `<p style="color: var(--danger);">Failed to load story: ${storyId}</p>`;
+                    return;
+                }
+
+                renderStoryExplorer(story);
+            } catch (err) {
+                explorerContent.innerHTML = `<p style="color: var(--danger);">Error: ${err.message}</p>`;
+            }
+        }
+
+        function closeStoryExplorer() {
+            document.getElementById('story-explorer-section').style.display = 'none';
         }
 
         function getDraft() {
@@ -617,7 +974,7 @@
                 alert('Please enter a story ID');
                 return;
             }
-            callEndpoint('GET', `/admin/stories/drafts/${storyId}`, {}, 'response-draft');
+            quickViewStory(storyId);
         }
 
         function publishStory() {
@@ -626,8 +983,99 @@
                 alert('Please enter a story ID');
                 return;
             }
-            callEndpoint('POST', '/admin/stories/publish', { story_id: storyId }, 'response-publish');
+            quickPublishStory(storyId);
         }
+
+        function renderStoryExplorer(story) {
+            const explorerTitle = document.getElementById('explorer-title');
+            const explorerContent = document.getElementById('explorer-content');
+            
+            explorerTitle.innerHTML = `📖 ${story.title} <span class="badge ${story.status === 'published' ? 'status-success' : 'status-error'}">${story.status || 'draft'}</span>`;
+            
+            const nodes = story.nodes || [];
+            
+            let nodesHtml = nodes.map((node, index) => {
+                const options = node.options || [];
+                const ageVariants = node.age_variants || {};
+                const ageBands = Object.keys(ageVariants);
+
+                const optionsHtml = options.length > 0 ? options.map((opt, optIdx) => `
+                    <div class="choice-item">
+                        <div>
+                            <strong>Choice ${optIdx + 1}:</strong> ${opt.text || opt.prompt || ''}
+                            ${opt.explanation ? `<div style="font-size: 0.8rem; color: #64748b;">💡 ${opt.explanation}</div>` : ''}
+                        </div>
+                        <span class="badge" style="background: #e2e8f0; color: #334155;">
+                            → Next: <code>${opt.leads_to || opt.next_node_id || 'Terminal'}</code>
+                        </span>
+                    </div>
+                `).join('') : '<em style="color: #94a3b8;">No choices (Terminal or continuation scene)</em>';
+
+                const ageTabsHtml = ageBands.length > 0 ? `
+                    <div style="margin-top: 10px;">
+                        <span style="font-size: 0.8rem; font-weight: 700; color: #475569;">Age-Adapted Versions:</span>
+                        <div class="age-tabs">
+                            ${ageBands.map((band, bIdx) => `
+                                <button class="age-tab-btn ${bIdx === 0 ? 'active' : ''}" onclick="switchAgeTab('${node.node_id}', '${band}', this)">
+                                    Ages ${band}
+                                </button>
+                            `).join('')}
+                        </div>
+                        ${ageBands.map((band, bIdx) => `
+                            <div class="age-variant-box" id="variant-${node.node_id}-${band}" style="display: ${bIdx === 0 ? 'block' : 'none'};">
+                                ${ageVariants[band]}
+                            </div>
+                        `).join('')}
+                    </div>
+                ` : '';
+
+                return `
+                    <div class="node-item">
+                        <div class="node-header-bar" onclick="toggleNodeContent('${node.node_id}')">
+                            <span>📍 Node ${index + 1}: ${node.title || 'Scene'}</span>
+                            <span style="font-size: 0.75rem; color: #64748b;">ID: <code>${node.node_id}</code> ▼</span>
+                        </div>
+                        <div class="node-content-body" id="node-body-${node.node_id}">
+                            <div class="node-prompt-text">${node.prompt || ''}</div>
+                            ${node.educational_note ? `<p style="margin: 0 0 10px 0; font-size: 0.82rem; color: #059669;"><strong>🎓 Educational Note:</strong> ${node.educational_note}</p>` : ''}
+                            <div style="font-weight: 700; font-size: 0.85rem; margin-bottom: 6px;">Available Choices:</div>
+                            <div class="choices-list">${optionsHtml}</div>
+                            ${ageTabsHtml}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            explorerContent.innerHTML = `
+                <div style="margin-bottom: 15px; font-size: 0.9rem; color: #475569;">
+                    <p><strong>Topic:</strong> ${story.topic} | <strong>Total Nodes:</strong> ${nodes.length} | <strong>Age Range:</strong> ${story.age_min || 5}–${story.age_max || 18}</p>
+                    <p><strong>Description:</strong> ${story.description || 'No description provided'}</p>
+                </div>
+                <div class="node-accordion">
+                    <h4 style="margin: 0 0 12px 0;">Story Scenes & Branching Flow (${nodes.length} Nodes)</h4>
+                    ${nodesHtml}
+                </div>
+            `;
+        }
+
+        function toggleNodeContent(nodeId) {
+            const body = document.getElementById(`node-body-${nodeId}`);
+            if (body) {
+                body.style.display = body.style.display === 'none' ? 'block' : 'none';
+            }
+        }
+
+        function switchAgeTab(nodeId, band, btn) {
+            const parent = btn.parentElement;
+            parent.querySelectorAll('.age-tab-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+
+            const container = parent.parentElement;
+            container.querySelectorAll('.age-variant-box').forEach(box => box.style.display = 'none');
+            const targetBox = document.getElementById(`variant-${nodeId}-${band}`);
+            if (targetBox) targetBox.style.display = 'block';
+        }
+
 
         function rejectStory() {
             const storyId = document.getElementById('reject-id').value;

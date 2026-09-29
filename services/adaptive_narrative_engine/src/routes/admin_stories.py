@@ -116,15 +116,12 @@ def verify_admin(current_user: dict) -> str:
 
 
 @router.get("/topics")
-async def get_available_topics(
-    current_user: dict = Depends(get_admin_user)
-):
+async def get_available_topics():
     """
     Get list of available story topics.
     
     Returns list of topics with templates that can be used for generation.
-    
-    **Admin Access Required**
+    Publicly accessible so admin/authoring tools and client UI can list available templates.
     """
     topics = story_generator.get_available_topics()
     return {
